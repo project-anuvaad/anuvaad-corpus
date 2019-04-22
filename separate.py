@@ -2,6 +2,7 @@ import codecs
 import string
 import re
 import sys
+from nltk import tokenize
 
 
 def detect_language(str):
@@ -20,9 +21,10 @@ def detect_language(str):
 
 with codecs.open(sys.argv[1], encoding='utf-8') as f:
     input = f.readline()
+    sentences = tokenize.sent_tokenize(input)
     f_hin = open(sys.argv[2]+"_hin.txt", "w+")
     f_eng = open(sys.argv[2]+"_eng.txt", "w+")
-    for i in f:
+    for i in sentences:
         isEng = detect_language(i)
         if isEng == "hindi":
             f_hin.write(i)
