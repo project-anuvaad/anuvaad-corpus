@@ -108,7 +108,8 @@ function startApp() {
           exec(exec_cmd, (err, stdout, stderr) => {
             if (err) {
               // node couldn't execute the command
-              return;
+              let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, 'app').getRspStatus()
+              return res.status(apistatus.http.status).json(apistatus);
             }
             const { Translate } = require('@google-cloud/translate');
 
@@ -129,13 +130,19 @@ function startApp() {
             // Translates some text into English
 
             fs.readFile(imagePath.replace('.png', '_hin') + '.txt', 'utf8', function (err, data) {
-              if (err) throw err;
+              if (err) {
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, 'app').getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+              }
               translate
                 .translate(data, target)
                 .then(results => {
                   const translation = results[0];
                   fs.writeFile(imagePath.replace('.png', '_eng_tran') + '.txt', translation, function (err) {
-                    if (err) throw err;
+                    if (err) {
+                      let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, 'app').getRspStatus()
+                      return res.status(apistatus.http.status).json(apistatus);
+                    }
                     console.log('Saved!');
                     let corpus_cmd = './helpers/bleualign.py -s ' + __dirname + '/' + imagePath.replace('.png', '_hin') + '.txt' + ' -t ' + __dirname + '/' + imagePath.replace('.png', '_eng') + '.txt' + ' --srctotarget ' + __dirname + '/' + imagePath.replace('.png', '_eng_tran') + '.txt' + ' -o ' + __dirname + '/' + imagePath.replace('.png', '_output')
                     exec(corpus_cmd, (err, stdout, stderr) => {
