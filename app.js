@@ -105,7 +105,7 @@ function startApp() {
           // the *entire* stdout and stderr (buffered)
           console.log(`stdout: ${stdout}`);
           console.log(`stderr: ${stderr}`);
-          var exec_cmd = 'pyhton separate.py ' + imagePath.replace('.png', '.txt') + ' ' + imagePath.replace('.png', '')
+          var exec_cmd = 'python separate.py ' + imagePath.replace('.png', '.txt') + ' ' + imagePath.replace('.png', '')
           console.log(exec_cmd)
           exec(exec_cmd, (err, stdout, stderr) => {
             if (err) {
