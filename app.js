@@ -47,7 +47,7 @@ function startApp() {
   var router = express.Router();
   require('./routes/user/user.route')(router);
 
-  app.post('/test', function(req, res){
+  app.get('/test', function(req, res){
     res.send("Hello world!");
  });
 
@@ -58,7 +58,9 @@ function startApp() {
   //     return res.status(apistatus.http.status).json(apistatus);
   //   })
 
-  //app.use('/aidemo/v1', router);
+
+  // app.use('/aidemo/v1', router);
+
 
   app.post('/', upload.single('file'), function (req, res) {
     var tmp_path = req.file.path;
@@ -92,7 +94,7 @@ function startApp() {
       image_paths.push(imagePath)
       // fs.existsSync(imagePath) // => true
     }).catch(function (e) {
-      console.log(image_paths)
+      console.log(e)
       pdfImage.combineImages(image_paths).then(function (imagePath) {
         console.log(imagePath)
         const { exec } = require('child_process');
