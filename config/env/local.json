@@ -1,0 +1,6 @@
+{
+    "local": {
+        "PORT": 9090,
+        "PASSPORTJS_SECRET": "M2M-DEV-123$"
+    }
+}

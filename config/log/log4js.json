@@ -1,0 +1,9 @@
+{
+  "appenders": {
+    "out":{ "type": "console" },
+    "app":{ "type": "dateFile", "filename": "logs/site.log", "backups": 10, "maxLogSize": 20480, "pattern": ".yyyy-MM-dd.log", "alwaysIncludePattern": true}
+  },
+  "categories": {
+    "default": { "appenders": [ "out", "app" ], "level": "all" }
+  }
+}
