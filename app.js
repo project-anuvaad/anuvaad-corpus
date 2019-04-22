@@ -58,7 +58,9 @@ function startApp() {
   //     return res.status(apistatus.http.status).json(apistatus);
   //   })
 
+
   // app.use('/aidemo/v1', router);
+
 
   app.post('/', upload.single('file'), function (req, res) {
     var tmp_path = req.file.path;
