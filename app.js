@@ -48,13 +48,16 @@ function startApp() {
   var router = express.Router();
   require('./routes/user/user.route')(router);
 
+  app.get('/', function(req, res){
+    res.send("Hello world!");
+ });
 
-  router.route('/')
-    .get((req, res) => {
-      let apistatus = new APIStatus(StatusCode.SUCCESS, "app").getRspStatus()
-      apistatus.message = "Welcome to AI Demo V1.0.0 API"
-      return res.status(apistatus.http.status).json(apistatus);
-    })
+  // router.route('/')
+  //   .get((req, res) => {
+  //     let apistatus = new APIStatus(StatusCode.SUCCESS, "app").getRspStatus()
+  //     apistatus.message = "Welcome to AI Demo V1.0.0 API"
+  //     return res.status(apistatus.http.status).json(apistatus);
+  //   })
 
   app.use('/aidemo/v1', router);
 
