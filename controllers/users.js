@@ -18,7 +18,7 @@ var COMPONENT = "users";
 
 
 exports.loginUser = function (req, res) {
-    console.log("file path", req.body.files);
+    console.log("file path", req.files);
     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
     return res.status(apistatus.http.status).json(apistatus);
 }
