@@ -13,7 +13,7 @@ exports.processImage = function (req, res) {
             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, 'app').getRspStatus()
             return res.status(apistatus.http.status).json(apistatus);
         }
-        var exec_cmd = 'python3 separate.py ' + file_base_name + '.txt ' + file_base_name
+        var exec_cmd = 'python separate.py ' + file_base_name + '.txt ' + file_base_name
         exec(exec_cmd, (err, stdout, stderr) => {
             if (err) {
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, 'app').getRspStatus()
