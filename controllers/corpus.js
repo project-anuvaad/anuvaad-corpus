@@ -2,7 +2,7 @@ var Response = require('../models/response')
 var APIStatus = require('../errors/apistatus')
 var StatusCode = require('../errors/statuscodes').StatusCode
 var fs = require("fs");
-
+var glob = require("glob")
 
 exports.processImage = function (req, res) {
     let imagePath = req.imagePath
@@ -50,6 +50,13 @@ exports.processImage = function (req, res) {
                                     output_data.hindi = data.split('\n')
                                     fs.readFile(file_base_name + '_output-t', 'utf8', function (err, data) {
                                         output_data.english = data.split('\n')
+                                        glob(file_base_name + "*", function (er, files) {
+                                            if(files && files.length > 0){
+                                                files.map((fileName)=>{
+                                                    fs.unlink(fileName, function () { })
+                                                })
+                                            }
+                                        })
                                         let apistatus = new Response(StatusCode.SUCCESS, output_data).getRsp()
                                         return res.status(apistatus.http.status).json(apistatus);
                                     })
