@@ -5,6 +5,27 @@ function PdfToImage(file_path) {
     this.file_path = file_path;
 }
 
+PdfToImage.convertToMultipleImage = function(file_path, cb){
+  var pdfImage = new PDFImage(file_path, {
+      convertOptions: {
+        '-background': 'white',
+        '-density': '300',
+        '-flatten': ''
+      }
+    });
+    var pageNumber = 0, image_paths = [];
+    saveToMultipleFile(pageNumber, image_paths, pdfImage, cb)
+}
+
+function saveToMultipleFile(pageNumber, image_paths, pdfImage, cb){
+  pdfImage.convertPage(pageNumber).then(function (imagePath) {
+      pageNumber = pageNumber + 1
+      saveToMultipleFile(pageNumber, image_paths, pdfImage, cb)
+      image_paths.push(imagePath)
+    }).catch(function (e) {
+        cb(image_paths)
+  })
+}
 
 PdfToImage.convertToImage = function(file_path, cb){
     var pdfImage = new PDFImage(file_path, {
