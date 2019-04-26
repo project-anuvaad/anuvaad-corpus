@@ -81,6 +81,49 @@ function startApp() {
 
   })
 
+
+  app.post('/hindi', upload.array('files', 2), function (req, res) {
+    var tmp_path = req.files[0].path;
+    let time_stamp = new Date().getTime()
+    let output_base_name = 'upload/' + time_stamp
+    var file_path = "upload/" + time_stamp + '_hin' + ".pdf"
+    fs.readFile(tmp_path, function (err, buf) {
+      fs.writeFile(file_path, buf, function (err) {
+        if (err) {
+          let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, 'app').getRspStatus()
+          return res.status(apistatus.http.status).json(apistatus);
+        }
+        fs.unlink(tmp_path, function () { })
+        PdfToImage.convertToMultipleImage(file_path, function (imagePaths) {
+          req.imagePaths = imagePaths
+          req.type = 'hin'
+          Corpus.processMultipleImage(req, res, output_base_name, function (err, imagePath) {
+            var tmp_path = req.files[1].path;
+            var file_path = "upload/" + time_stamp + '_eng' + ".pdf"
+            fs.readFile(tmp_path, function (err, buf) {
+              fs.writeFile(file_path, buf, function (err) {
+                if (err) {
+                  let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, 'app').getRspStatus()
+                  return res.status(apistatus.http.status).json(apistatus);
+                }
+                fs.unlink(tmp_path, function () { })
+                PdfToImage.convertToMultipleImage(file_path, function (imagePaths) {
+                  req.imagePaths = imagePaths
+                  req.type = 'eng'
+                  Corpus.processMultipleImage(req, res, output_base_name, function (err, imagePath) {
+                    req.file_base_name = output_base_name
+                    Corpus.converAndCreateCorpus(req, res)
+                  })
+                });
+              });
+            });
+          })
+        });
+      });
+    });
+
+  })
+
   app.use(function (err, req, res, next) {
     if (err && !err.ok) {
       console.log(err)
