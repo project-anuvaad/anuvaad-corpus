@@ -5,7 +5,7 @@ var fs = require("fs");
 var glob = require("glob")
 const { exec } = require('child_process');
 
-const python_version = 'python3'
+const python_version = 'python'
 
 const { Translate } = require('@google-cloud/translate');
 const projectId = "translate-1552888031121";
