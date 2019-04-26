@@ -82,7 +82,7 @@ function startApp() {
   })
 
 
-  app.post('/hindi', upload.array('files', 2), function (req, res) {
+  app.post('/multiple', upload.array('files', 2), function (req, res) {
     var tmp_path = req.files[0].path;
     let time_stamp = new Date().getTime()
     let output_base_name = 'upload/' + time_stamp
