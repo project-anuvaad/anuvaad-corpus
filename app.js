@@ -136,5 +136,5 @@ function startApp() {
   });
 
   var server = app.listen(APP_CONFIG.PORT);
-  server.timeout = 100000;
+  server.timeout = 1000000;
 }
