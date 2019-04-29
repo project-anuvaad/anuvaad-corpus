@@ -112,7 +112,7 @@ function startApp() {
                   req.type = 'eng'
                   Corpus.processMultipleImage(req, res, output_base_name, function (err, imagePath) {
                     req.file_base_name = output_base_name
-                    Corpus.converAndCreateCorpus(req, res)
+                    Corpus.convertAndCreateCorpus(req, res)
                   })
                 });
               });
@@ -136,5 +136,5 @@ function startApp() {
   });
 
   var server = app.listen(APP_CONFIG.PORT);
-  server.timeout = 1000000;
+  server.timeout = 10000000;
 }

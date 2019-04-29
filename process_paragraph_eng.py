@@ -18,7 +18,6 @@ def remove_newlines(fname):
         return str
 
 english = remove_newlines(sys.argv[1])
-print(english)
 sent_text = sent_tokenize(english)
 f_eng = open(sys.argv[2]+"_eng.txt", "w+")
 
