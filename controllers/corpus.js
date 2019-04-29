@@ -74,7 +74,7 @@ exports.processImage = function (req, res) {
 }
 
 
-exports.converAndCreateCorpus = function (req, res) {
+exports.convertAndCreateCorpus = function (req, res) {
     let file_base_name = req.file_base_name
     const { Translate } = require('@google-cloud/translate');
     const projectId = "translate-1552888031121";
