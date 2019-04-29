@@ -193,30 +193,54 @@ function transalteBigText(i, loops, data_arr, res, translated_text, file_base_na
 exports.processMultipleImage = async function (req, res, output_base_name, cb) {
     let imagePaths = req.imagePaths
     let tesseract_run = 0;
-    for (var index = 0; index < imagePaths.length; index++) {
-        // imagePaths.map((imagePath, index) => {
-            if (index % 5 == 0) {
-                await sleep(10000)
-            }
-            let file_base_name = imagePaths[index].replace('.png', '').split('-')[0]
-            exec('tesseract ' + imagePaths[index] + ' - >> ' + file_base_name + '.txt' + ' -l hin+eng', (err, stdout, stderr) => {
-                tesseract_run++;
+    callTesseract(imagePaths, 0, req, res, output_base_name, cb)
+    // for (var index = 0; index < imagePaths.length; index++) {
+    //     // imagePaths.map((imagePath, index) => {
+    //         if (index % 5 == 0) {
+    //             await sleep(10000)
+    //         }
+    //         let file_base_name = imagePaths[index].replace('.png', '').split('-')[0]
+    //         exec('tesseract ' + imagePaths[index] + ' - >> ' + file_base_name + '.txt' + ' -l hin+eng', (err, stdout, stderr) => {
+    //             tesseract_run++;
+    //             if (err) {
+    //                 cb(err, null)
+    //             }
+    //             if (tesseract_run == imagePaths.length) {
+    //                 var exec_cmd = python_version + ' ' + (req.type === 'hin' ? 'process_paragraph.py' : 'process_paragraph_eng.py') + ' ' + file_base_name + '.txt ' + output_base_name
+    //                 exec(exec_cmd, (err, stdout, stderr) => {
+    //                     if (err) {
+    //                         cb(err, null)
+    //                     }
+    //                     cb(null, file_base_name + '.txt')
+    //                 })
+    //             }
+    //         });
+    //     // })
+    // }
+
+}
+
+
+function callTesseract(imagePaths, index, req, res, output_base_name, cb){
+    let file_base_name = imagePaths[index].replace('.png', '').split('-')[0]
+    exec('tesseract ' + imagePaths[index] + ' - >> ' + file_base_name + '.txt' + ' -l hin+eng', (err, stdout, stderr) => {
+        index++;
+        if (err) {
+            cb(err, null)
+        }
+        if (index == imagePaths.length) {
+            var exec_cmd = python_version + ' ' + (req.type === 'hin' ? 'process_paragraph.py' : 'process_paragraph_eng.py') + ' ' + file_base_name + '.txt ' + output_base_name
+            exec(exec_cmd, (err, stdout, stderr) => {
                 if (err) {
                     cb(err, null)
                 }
-                if (tesseract_run == imagePaths.length) {
-                    var exec_cmd = python_version + ' ' + (req.type === 'hin' ? 'process_paragraph.py' : 'process_paragraph_eng.py') + ' ' + file_base_name + '.txt ' + output_base_name
-                    exec(exec_cmd, (err, stdout, stderr) => {
-                        if (err) {
-                            cb(err, null)
-                        }
-                        cb(null, file_base_name + '.txt')
-                    })
-                }
-            });
-        // })
-    }
-
+                cb(null, file_base_name + '.txt')
+            })
+        }
+        else{
+            callTesseract(imagePaths, index, req, res, output_base_name, cb)
+        }
+    });
 }
 
 
