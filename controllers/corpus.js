@@ -140,7 +140,7 @@ exports.convertAndCreateCorpus = function (req, res) {
 
 
 function transalteBigText(i, loops, data_arr, res, translated_text, file_base_name) {
-    let endCount = 100  > data_arr.length ? data_arr.length % 100 : 100
+    let endCount = 100 > data_arr.length ? data_arr.length % 100 : 100
     translate
         .translate(data_arr.splice(0, endCount), target)
         .then(results => {
@@ -190,26 +190,38 @@ function transalteBigText(i, loops, data_arr, res, translated_text, file_base_na
 
 
 
-exports.processMultipleImage = function (req, res, output_base_name, cb) {
+exports.processMultipleImage = async function (req, res, output_base_name, cb) {
     let imagePaths = req.imagePaths
     let tesseract_run = 0;
-    imagePaths.map((imagePath, index) => {
-        let file_base_name = imagePath.replace('.png', '').split('-')[0]
-        exec('tesseract ' + imagePath + ' - >> ' + file_base_name + '.txt' + ' -l hin+eng', (err, stdout, stderr) => {
-            tesseract_run++;
-            if (err) {
-                cb(err, null)
+    for (var index = 0; index < imagePaths.length; index++) {
+        // imagePaths.map((imagePath, index) => {
+            if (index % 5 == 0) {
+                await sleep(10000)
             }
-            if (tesseract_run == imagePaths.length) {
-                var exec_cmd = python_version + ' ' + (req.type === 'hin' ? 'process_paragraph.py' : 'process_paragraph_eng.py') + ' ' + file_base_name + '.txt ' + output_base_name
-                exec(exec_cmd, (err, stdout, stderr) => {
-                    if (err) {
-                        cb(err, null)
-                    }
-                    cb(null, file_base_name + '.txt')
-                })
-            }
-        });
-    })
+            let file_base_name = imagePaths[index].replace('.png', '').split('-')[0]
+            exec('tesseract ' + imagePaths[index] + ' - >> ' + file_base_name + '.txt' + ' -l hin+eng', (err, stdout, stderr) => {
+                tesseract_run++;
+                if (err) {
+                    cb(err, null)
+                }
+                if (tesseract_run == imagePaths.length) {
+                    var exec_cmd = python_version + ' ' + (req.type === 'hin' ? 'process_paragraph.py' : 'process_paragraph_eng.py') + ' ' + file_base_name + '.txt ' + output_base_name
+                    exec(exec_cmd, (err, stdout, stderr) => {
+                        if (err) {
+                            cb(err, null)
+                        }
+                        cb(null, file_base_name + '.txt')
+                    })
+                }
+            });
+        // })
+    }
 
+}
+
+
+function sleep(ms) {
+    return new Promise(resolve => {
+        setTimeout(resolve, ms)
+    })
 }
