@@ -49,9 +49,9 @@ exports.processImage = function (req, res) {
                                     return res.status(apistatus.http.status).json(apistatus);
                                 }
                                 let output_data = {}
-                                fs.readFile(file_base_name + '_output-s', 'utf8', function (err, data) {
+                                fs.readFile('output_'+file_base_name + '-s', 'utf8', function (err, data) {
                                     output_data.hindi = data.split('\n')
-                                    fs.readFile(file_base_name + '_output-t', 'utf8', function (err, data) {
+                                    fs.readFile('output_'+file_base_name + '-t', 'utf8', function (err, data) {
                                         output_data.english = data.split('\n')
                                         glob(file_base_name + "*", function (er, files) {
                                             if (files && files.length > 0) {
