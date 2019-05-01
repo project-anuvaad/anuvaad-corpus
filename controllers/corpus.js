@@ -49,9 +49,9 @@ exports.processImage = function (req, res) {
                                     return res.status(apistatus.http.status).json(apistatus);
                                 }
                                 let output_data = {}
-                                fs.readFile('output_'+file_base_name + '-s', 'utf8', function (err, data) {
+                                fs.readFile(file_base_name + '_output-s', 'utf8', function (err, data) {
                                     output_data.hindi = data.split('\n')
-                                    fs.readFile('output_'+file_base_name + '-t', 'utf8', function (err, data) {
+                                    fs.readFile(file_base_name + '_output-t', 'utf8', function (err, data) {
                                         output_data.english = data.split('\n')
                                         glob(file_base_name + "*", function (er, files) {
                                             if (files && files.length > 0) {
@@ -107,7 +107,7 @@ exports.convertAndCreateCorpus = function (req, res) {
                             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, 'app').getRspStatus()
                             return res.status(apistatus.http.status).json(apistatus);
                         }
-                        let corpus_cmd = './helpers/bleualign.py -s ' + __dirname + '/../' + file_base_name + '_hin' + '.txt' + ' -t ' + __dirname + '/../' + file_base_name + '_eng' + '.txt' + ' --srctotarget ' + __dirname + '/../' + file_base_name + '_eng_tran' + '.txt' + ' -o ' + __dirname + '/../' + 'output_' + file_base_name
+                        let corpus_cmd = './helpers/bleualign.py -s ' + __dirname + '/../' + file_base_name + '_hin' + '.txt' + ' -t ' + __dirname + '/../' + file_base_name + '_eng' + '.txt' + ' --srctotarget ' + __dirname + '/../' + file_base_name + '_eng_tran' + '.txt' + ' -o ' + __dirname + '/../' + file_base_name + '_output'
                         exec(corpus_cmd, (err, stdout, stderr) => {
                             if (err) {
                                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, 'app').getRspStatus()
@@ -154,16 +154,16 @@ function transalteBigText(i, loops, data_arr, res, translated_text, file_base_na
                         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, 'app').getRspStatus()
                         return res.status(apistatus.http.status).json(apistatus);
                     }
-                    let corpus_cmd = './helpers/bleualign.py -s ' + __dirname + '/../' + file_base_name + '_hin' + '.txt' + ' -t ' + __dirname + '/../' + file_base_name + '_eng' + '.txt' + ' --srctotarget ' + __dirname + '/../' + file_base_name + '_eng_tran' + '.txt' + ' -o ' + __dirname + '/../' + file_base_name + '_output'
+                    let corpus_cmd = './helpers/bleualign.py -s ' + __dirname + '/../' + file_base_name + '_hin' + '.txt' + ' -t ' + __dirname + '/../' + file_base_name + '_eng' + '.txt' + ' --srctotarget ' + __dirname + '/../' + file_base_name + '_eng_tran' + '.txt' + ' -o ' + __dirname + '/../' + 'output_' + file_base_name
                     exec(corpus_cmd, (err, stdout, stderr) => {
                         if (err) {
                             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, 'app').getRspStatus()
                             return res.status(apistatus.http.status).json(apistatus);
                         }
                         let output_data = {}
-                        fs.readFile(file_base_name + '_output-s', 'utf8', function (err, data) {
+                        fs.readFile('output_' + file_base_name + '-s', 'utf8', function (err, data) {
                             output_data.hindi = data.split('\n')
-                            fs.readFile(file_base_name + '_output-t', 'utf8', function (err, data) {
+                            fs.readFile('output_' + file_base_name + '-t', 'utf8', function (err, data) {
                                 output_data.english = data.split('\n')
                                 glob(file_base_name + "*", function (er, files) {
                                     if (files && files.length > 0) {
