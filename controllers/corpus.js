@@ -107,7 +107,7 @@ exports.convertAndCreateCorpus = function (req, res) {
                             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, 'app').getRspStatus()
                             return res.status(apistatus.http.status).json(apistatus);
                         }
-                        let corpus_cmd = './helpers/bleualign.py -s ' + __dirname + '/../' + file_base_name + '_hin' + '.txt' + ' -t ' + __dirname + '/../' + file_base_name + '_eng' + '.txt' + ' --srctotarget ' + __dirname + '/../' + file_base_name + '_eng_tran' + '.txt' + ' -o ' + __dirname + '/../' + file_base_name + '_output'
+                        let corpus_cmd = './helpers/bleualign.py -s ' + __dirname + '/../' + file_base_name + '_hin' + '.txt' + ' -t ' + __dirname + '/../' + file_base_name + '_eng' + '.txt' + ' --srctotarget ' + __dirname + '/../' + file_base_name + '_eng_tran' + '.txt' + ' -o ' + __dirname + '/../' + 'output_' + file_base_name
                         exec(corpus_cmd, (err, stdout, stderr) => {
                             if (err) {
                                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, 'app').getRspStatus()
@@ -221,7 +221,7 @@ exports.processMultipleImage = function (req, res, output_base_name, cb) {
 }
 
 
-function callTesseract(imagePaths, index, req, res, output_base_name, cb){
+function callTesseract(imagePaths, index, req, res, output_base_name, cb) {
     let file_base_name = imagePaths[index].replace('.png', '').split('-')[0]
     exec('tesseract ' + imagePaths[index] + ' - >> ' + file_base_name + '.txt' + ' -l hin+eng', (err, stdout, stderr) => {
         index++;
@@ -237,7 +237,7 @@ function callTesseract(imagePaths, index, req, res, output_base_name, cb){
                 cb(null, file_base_name + '.txt')
             })
         }
-        else{
+        else {
             callTesseract(imagePaths, index, req, res, output_base_name, cb)
         }
     });
