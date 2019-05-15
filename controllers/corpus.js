@@ -28,45 +28,60 @@ exports.processImage = function (req, res) {
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, 'app').getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
-            fs.readFile(file_base_name + '_hin' + '.txt', 'utf8', function (err, data) {
+            var exec_cmd = python_version + ' ' + 'process_paragraph.py' + ' ' + file_base_name + '_hin.txt ' + file_base_name
+            exec(exec_cmd, (err, stdout, stderr) => {
                 if (err) {
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, 'app').getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);
                 }
-                translate
-                    .translate(data, target)
-                    .then(results => {
-                        const translation = results[0];
-                        fs.writeFile(file_base_name + '_eng_tran' + '.txt', translation, function (err) {
-                            if (err) {
-                                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, 'app').getRspStatus()
-                                return res.status(apistatus.http.status).json(apistatus);
-                            }
-                            let corpus_cmd = './helpers/bleualign.py -s ' + __dirname + '/../' + file_base_name + '_hin' + '.txt' + ' -t ' + __dirname + '/../' + file_base_name + '_eng' + '.txt' + ' --srctotarget ' + __dirname + '/../' + file_base_name + '_eng_tran' + '.txt' + ' -o ' + __dirname + '/../' + file_base_name + '_output'
-                            exec(corpus_cmd, (err, stdout, stderr) => {
-                                if (err) {
-                                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, 'app').getRspStatus()
-                                    return res.status(apistatus.http.status).json(apistatus);
-                                }
-                                let output_data = {}
-                                fs.readFile(file_base_name + '_output-s', 'utf8', function (err, data) {
-                                    output_data.hindi = data.split('\n')
-                                    fs.readFile(file_base_name + '_output-t', 'utf8', function (err, data) {
-                                        output_data.english = data.split('\n')
-                                        glob(file_base_name + "*", function (er, files) {
-                                            if (files && files.length > 0) {
-                                                files.map((fileName) => {
-                                                    fs.unlink(fileName, function () { })
-                                                })
-                                            }
-                                        })
-                                        let apistatus = new Response(StatusCode.SUCCESS, output_data).getRsp()
+                var exec_cmd = python_version + ' ' + 'process_paragraph_eng.py' + ' ' + file_base_name + '_eng.txt ' + file_base_name
+                exec(exec_cmd, (err, stdout, stderr) => {
+                    if (err) {
+                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, 'app').getRspStatus()
+                        return res.status(apistatus.http.status).json(apistatus);
+                    }
+
+                    fs.readFile(file_base_name + '_hin' + '.txt', 'utf8', function (err, data) {
+                        if (err) {
+                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, 'app').getRspStatus()
+                            return res.status(apistatus.http.status).json(apistatus);
+                        }
+                        translate
+                            .translate(data, target)
+                            .then(results => {
+                                const translation = results[0];
+                                fs.writeFile(file_base_name + '_eng_tran' + '.txt', translation, function (err) {
+                                    if (err) {
+                                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, 'app').getRspStatus()
                                         return res.status(apistatus.http.status).json(apistatus);
+                                    }
+                                    let corpus_cmd = './helpers/bleualign.py -s ' + __dirname + '/../' + file_base_name + '_hin' + '.txt' + ' -t ' + __dirname + '/../' + file_base_name + '_eng' + '.txt' + ' --srctotarget ' + __dirname + '/../' + file_base_name + '_eng_tran' + '.txt' + ' -o ' + __dirname + '/../' + file_base_name + '_output'
+                                    exec(corpus_cmd, (err, stdout, stderr) => {
+                                        if (err) {
+                                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, 'app').getRspStatus()
+                                            return res.status(apistatus.http.status).json(apistatus);
+                                        }
+                                        let output_data = {}
+                                        fs.readFile(file_base_name + '_output-s', 'utf8', function (err, data) {
+                                            output_data.hindi = data.split('\n')
+                                            fs.readFile(file_base_name + '_output-t', 'utf8', function (err, data) {
+                                                output_data.english = data.split('\n')
+                                                glob(file_base_name + "*", function (er, files) {
+                                                    if (files && files.length > 0) {
+                                                        files.map((fileName) => {
+                                                            fs.unlink(fileName, function () { })
+                                                        })
+                                                    }
+                                                })
+                                                let apistatus = new Response(StatusCode.SUCCESS, output_data).getRsp()
+                                                return res.status(apistatus.http.status).json(apistatus);
+                                            })
+                                        });
                                     })
                                 });
                             })
-                        });
                     })
+                })
             });
         });
     });
@@ -108,6 +123,7 @@ exports.convertAndCreateCorpus = function (req, res) {
                             return res.status(apistatus.http.status).json(apistatus);
                         }
                         let corpus_cmd = './helpers/bleualign.py -s ' + __dirname + '/../' + file_base_name + '_hin' + '.txt' + ' -t ' + __dirname + '/../' + file_base_name + '_eng' + '.txt' + ' --srctotarget ' + __dirname + '/../' + file_base_name + '_eng_tran' + '.txt' + ' -o ' + __dirname + '/../' + file_base_name + '_output'
+                        console.log(corpus_cmd)
                         exec(corpus_cmd, (err, stdout, stderr) => {
                             if (err) {
                                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, 'app').getRspStatus()
@@ -156,6 +172,7 @@ function transalteBigText(i, loops, data_arr, res, translated_text, file_base_na
                     }
                     let output_file_base = new Date().getTime()
                     let corpus_cmd = './helpers/bleualign.py -s ' + __dirname + '/../' + file_base_name + '_hin' + '.txt' + ' -t ' + __dirname + '/../' + file_base_name + '_eng' + '.txt' + ' --srctotarget ' + __dirname + '/../' + file_base_name + '_eng_tran' + '.txt' + ' -o ' + __dirname + '/../upload/' + output_file_base + '_output'
+                    console.log(corpus_cmd)
                     exec(corpus_cmd, (err, stdout, stderr) => {
                         if (err) {
                             console.log(err)
@@ -194,7 +211,6 @@ function transalteBigText(i, loops, data_arr, res, translated_text, file_base_na
 
 exports.processMultipleImage = function (req, res, output_base_name, cb) {
     let imagePaths = req.imagePaths
-    let tesseract_run = 0;
     callTesseract(imagePaths, 0, req, res, output_base_name, cb)
     // for (var index = 0; index < imagePaths.length; index++) {
     //     // imagePaths.map((imagePath, index) => {
@@ -222,6 +238,24 @@ exports.processMultipleImage = function (req, res, output_base_name, cb) {
 
 }
 
+exports.filterCorpusText = function (req, type, cb) {
+    var file_base_name = req.file_base_name + '_' + type
+    var exec_cmd = python_version + ' ' + 'remove_page_number_filter.py' + ' ' + file_base_name + '.txt ' + file_base_name
+    exec(exec_cmd, (err, stdout, stderr) => {
+        if (err) {
+            cb(err, null)
+        }
+        var exec_cmd = python_version + ' ' + (type === 'hin' ? 'process_paragraph.py' : 'process_paragraph_eng.py') + ' ' + file_base_name + '_filtered.txt ' + req.file_base_name
+        console.log(exec_cmd)
+        exec(exec_cmd, (err, stdout, stderr) => {
+            if (err) {
+                cb(err, null)
+            }
+            cb(null, file_base_name + '.txt')
+        })
+    })
+}
+
 
 function callTesseract(imagePaths, index, req, res, output_base_name, cb) {
     let file_base_name = imagePaths[index].replace('.png', '').split('-')[0]
@@ -231,23 +265,23 @@ function callTesseract(imagePaths, index, req, res, output_base_name, cb) {
             cb(err, null)
         }
         if (index == imagePaths.length) {
-            var exec_cmd = python_version + ' ' + (req.type === 'hin' ? 'process_paragraph.py' : 'process_paragraph_eng.py') + ' ' + file_base_name + '.txt ' + output_base_name
+            var exec_cmd = python_version + ' ' + 'remove_page_number_filter.py' + ' ' + file_base_name + '.txt ' + file_base_name
             exec(exec_cmd, (err, stdout, stderr) => {
                 if (err) {
                     cb(err, null)
                 }
-                cb(null, file_base_name + '.txt')
+                var exec_cmd = python_version + ' ' + (req.type === 'hin' ? 'process_paragraph.py' : 'process_paragraph_eng.py') + ' ' + file_base_name + '_filtered.txt ' + output_base_name
+                exec(exec_cmd, (err, stdout, stderr) => {
+                    if (err) {
+                        cb(err, null)
+                    }
+                    cb(null, file_base_name + '.txt')
+                })
             })
+
         }
         else {
             callTesseract(imagePaths, index, req, res, output_base_name, cb)
         }
     });
-}
-
-
-function sleep(ms) {
-    return new Promise(resolve => {
-        setTimeout(resolve, ms)
-    })
 }

@@ -142,6 +142,7 @@ class Aligner:
       self.sources_out,self.targets_out = [],[]
       self.finalbleu = []
       self.bleualign = []
+      self.blue_points = []
       self.close_src, self.close_target = False, False
       self.close_srctotarget, self.close_targettosrc = [], []
       self.close_out1, self.close_out2 = False, False
@@ -243,7 +244,7 @@ class Aligner:
             #wait till result #i is populated
             while True:
                 try:
-                    data,multialign,bleualign,scoredict = scores[i]
+                    data,multialign,bleualign,scoredict,blue_points = scores[i]
                     break
                 except:
                     time.sleep(0.1)
@@ -257,8 +258,10 @@ class Aligner:
 
             (sourcelist,targetlist,translist1,translist2) = data
             self.scoredict = scoredict
+            self.blue_points = blue_points
             self.multialign = multialign
             self.bleualign = bleualign
+            self.log(len(bleualign))
 
             #normal case: translation from source to target exists
             if translist1:
@@ -270,8 +273,7 @@ class Aligner:
                     translist = [item[0] for item in sourcelist]
                 else:
                     translist = sourcelist
-
-            self.printout(sourcelist, translist, targetlist)
+            self.printout(sourcelist, translist, targetlist, self.blue_points)
 
             if self.options['eval']:
                 self.log('evaluation ' + str(i))
@@ -292,7 +294,7 @@ class Aligner:
                 translist = [item[0] for item in sourcelist]
               else:
                 translist = sourcelist
-          self.printout(sourcelist, translist, targetlist)
+          self.printout(sourcelist, translist, targetlist, [])
           if self.options['eval']:
             self.log('evaluation ' + str(i))
             results[i] = evaluate(self.options, self.multialign,self.options['eval'][i],self.log)
@@ -386,7 +388,7 @@ class Aligner:
         
       elif phase2:
         multialign = [((j,k),t) for ((k,j),t) in phase2]
-
+      self.log(multialign)
       return multialign
 
 
@@ -414,6 +416,7 @@ class Aligner:
         self.gapfinder(translist, targetlist)
         self.log('finished',1)
         self.log(time.asctime(),2)
+        self.log(len(self.multialign))
         return self.multialign
 
 
@@ -519,25 +522,34 @@ class Aligner:
 
 
     #follow the backpointers in score matrix to extract best path of 1-to-1 alignments
-    def extract_best_path(self,pointers):
-
+    def extract_best_path(self,pointers, matrix):
+        self.log(matrix[1][1])
         i = len(pointers)-1
+        self.log('i value'+str(i))
         j = len(pointers[0])-1
+        self.log('j value'+str(j))
         pointer = ''
         best_path = []
+        best_points = []
 
         while i >= 0 and j >= 0:
             pointer = pointers[i][j]
+            point = matrix[i+1][j+1]
             if pointer == '^':
                 i -= 1
             elif pointer == '<':
                 j -= 1
             elif pointer == 'match':
                 best_path.append((i,j))
+                # self.log((i,j))
+                # self.log(matrix[i+1][j+1])
+                best_points.append(point)
                 i -= 1
                 j -= 1
-
+        
         best_path.reverse()
+        best_points.reverse()
+        self.blue_points = best_points
         return best_path
 
 
@@ -547,10 +559,8 @@ class Aligner:
         # add an extra row/column to the matrix and start filling it from 1,1 (to avoid exceptions for first row/column)
         matrix = [[0 for column in range(len(targetlist)+1)] for row in range(len(translist)+1)]
         pointers = [['' for column in range(len(targetlist))] for row in range(len(translist))]
-
         for i in range(len(translist)):
             alignments = dict([(target, score) for (score, target, correct) in self.scoredict[i]])
-
             for j in range(len(targetlist)):
 
                 best_score = matrix[i][j+1]
@@ -563,16 +573,22 @@ class Aligner:
 
                 if j in alignments:
                     score = alignments[j] + matrix[i][j]
-
+                    if i == 0 and j == 0 :
+                      self.log(score)
                     if score > best_score:
+                        # self.log((i,j))
+                        # self.log(best_score)
                         best_score = score
                         best_pointer = 'match'
 
                 matrix[i+1][j+1] = best_score
                 pointers[i][j] = best_pointer
-
-        self.bleualign = self.extract_best_path(pointers)
-
+                if best_pointer == 'match':
+                  if i ==0 and j == 0 :
+                    self.log(best_score)
+                    self.log((i,j))
+                    self.log(matrix[i+1][j+1])
+        self.bleualign = self.extract_best_path(pointers, matrix)
 
     #find unaligned sentences and create work packets for gapfiller()
     #gapfiller() takes two sentence pairs and all unaligned sentences in between as arguments; gapfinder() extracts these.
@@ -583,8 +599,9 @@ class Aligner:
       #find gaps: lastpair is considered pre-gap, pair is post-gap
       lastpair = ((),())
       src, target = None, None
+      index = 0
       for src,target in self.bleualign:
-
+        
         oldsrc, oldtarget = lastpair
         #in first iteration, gap will start at 0
         if not oldsrc:
@@ -599,8 +616,14 @@ class Aligner:
         if targetgap or sourcegap:
           lastpair = self.gapfiller(sourcegap, targetgap, lastpair, ((src,),(target,)), translist, targetlist)
         else:
-          self.addtoAlignments(lastpair)
+          bleu_score = ''
+          if self.blue_points[index-1] - self.blue_points[index-2] < 0:
+            bleu_score = str((self.blue_points[index-1]))
+          else:
+            bleu_score = str((self.blue_points[index-1] - self.blue_points[index-2]))
+          self.addtoAlignments(lastpair, "BLEU-"+bleu_score)
           lastpair = ((src,),(target,))
+        index = index + 1
 
       #if self.bleualign is empty, gap will start at 0
       if src is None:
@@ -614,8 +637,9 @@ class Aligner:
 
       if targetgap or sourcegap:
         lastpair = self.gapfiller(sourcegap, targetgap, lastpair, ((),()), translist, targetlist)
+      self.log(index)
+      self.addtoAlignments(lastpair,"BLEU-"+str(self.blue_points[index-1] - self.blue_points[index-2]))
       
-      self.addtoAlignments(lastpair)
 
 
     #apply heuristics to align all sentences that remain unaligned after finding best path of 1-to-1 alignments
@@ -911,10 +935,9 @@ class Aligner:
 
 
     #print out some debugging info, and print output to file
-    def printout(self, sourcelist, translist, targetlist):
+    def printout(self, sourcelist, translist, targetlist, blue_points):
 
       self.print_alignment_statistics(len(sourcelist), len(targetlist))
-
       sources = []
       translations = []
       targets = []
@@ -931,7 +954,8 @@ class Aligner:
       sentscores = {}
       lastsrc,lasttarget = 0,0
       for j,(src,target) in enumerate([i[0] for i in self.multialign]):
-
+        ((s,t),score)=self.multialign[j]
+        self.log(score)
         if self.options['printempty']:
             if src[0] != lastsrc + 1:
                 sources.extend([sourcelist[ID] for ID in range(lastsrc+1,src[0])])
@@ -955,25 +979,26 @@ class Aligner:
 
         else:
             sources.append(' '.join([sourcelist[ID] for ID in src]))
-            targets.append(' '.join([targetlist[ID] for ID in target]))
+            targets.append(' '.join([targetlist[ID] for ID in target])+ ":::::" +score)
 
         if self.options['filter'] == 'sentences':
             self.check_sentence_pair(j, sources[-1], translations[-1], targets[-1], sources_output[-1], targets_output[-1], sentscores)
 
       if self.options['filter'] == 'sentences':
-              self.filter_sentence_pairs(sentscores, sources_output, targets_output)
+        self.filter_sentence_pairs(sentscores, sources_output, targets_output)
 
       if self.options['filter'] == 'articles':
         self.filter_article_pairs(sources, translations, targets, sources_output, targets_output)
 
       self.log("\nfinished with article",1)
       self.log("\n====================\n",1)
-
       if self.out1 and self.out2 and not self.options['filter']:
         if self.options['factored']:
             self.out1.write('\n'.join(sources_factored) + '\n')
             self.out2.write('\n'.join(targets_factored) + '\n')
         else:
+            self.log(len(sources))
+            self.log(len(blue_points))
             self.out1.write('\n'.join(sources) + '\n')
             self.out2.write('\n'.join(targets) + '\n')
 
@@ -1153,6 +1178,7 @@ if multiprocessing_enabled:
       self.options = options
       self.tasks = tasks
       self.scores = scores
+      self.blue_points = []
       self.log = log
       self.bleualign = []
       self.scoredict = None
@@ -1165,6 +1191,6 @@ if multiprocessing_enabled:
         self.log('reading in article ' + str(i) + ': ',1)
         sourcelist,targetlist,translist1,translist2 = data
         self.multialign = self.process(sourcelist,targetlist,translist1,translist2)
-        self.scores[i] = (data,self.multialign,self.bleualign,self.scoredict)
+        self.scores[i] = (data,self.multialign,self.bleualign,self.scoredict, self.blue_points)
         
         i,data = self.tasks.get()

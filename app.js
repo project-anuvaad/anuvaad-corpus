@@ -12,7 +12,19 @@ var Corpus = require('./controllers/corpus')
 var StatusCode = require('./errors/statuscodes').StatusCode
 var multer = require('multer');
 var upload = multer({ dest: 'upload/' });
+var async = require('async')
 var fs = require("fs");
+// Imports the Google Cloud client library
+const { Storage } = require('@google-cloud/storage');
+
+// Creates a client
+const storage = new Storage();
+
+// Imports the Google Cloud client libraries
+const vision = require('@google-cloud/vision').v1;
+
+// Creates a client
+const client = new vision.ImageAnnotatorClient();
 
 process.on('SIGINT', function () {
   LOG.info("stopping the application")
@@ -81,8 +93,205 @@ function startApp() {
 
   })
 
+  function processFiles(req, res, base_path) {
+    let time_stamp = new Date().getTime()
+    async.parallel({
+      one: function (callback) {
+        var data = '';
+        readFiles(`upload/results/${base_path}/hi/`, function (filename, content) {
+          fs.writeFile('upload/' + time_stamp + '_hin.txt', content, function (err) {
+            if (err) {
+              console.log(err)
+            }
+            req.file_base_name = 'upload/' + time_stamp
+            req.type = 'hin'
+            Corpus.filterCorpusText(req, 'hin', function (err, imagePath) {
+              callback(null, imagePath)
+            })
+          })
+        }, function (err) {
+          console.log(err)
+          throw err;
+        });
+      },
+      two: function (callback) {
+        readFiles(`upload/results/${base_path}/en/`, function (filename, content) {
+          fs.writeFile('upload/' + time_stamp + '_eng.txt', content, function (err) {
+            if (err) {
+              console.log(err)
+            }
+            req.file_base_name = 'upload/' + time_stamp
+            req.type = 'eng'
+            Corpus.filterCorpusText(req, 'eng', function (err, imagePath) {
+              callback(null, imagePath)
+            })
+          })
+        }, function (err) {
+          console.log(err)
+          throw err;
+        });
+      }
+    }, function (err, results) {
+      req.file_base_name = 'upload/' + time_stamp
+      Corpus.convertAndCreateCorpus(req, res)
+    })
+  }
+
+
+  function readFiles(dirname, onFileContent, onError) {
+    let text_data = ''
+    let count = 0
+    fs.readdir(dirname, function (err, filenames) {
+      if (err) {
+        onError(err);
+        return;
+      }
+      readFile(filenames, dirname, onFileContent, onError, count, text_data)
+    });
+  }
+
+  function readFile(filenames, dirname, onFileContent, onError, count, text_data) {
+    fs.readFile(dirname + filenames[count], 'utf-8', function (err, content) {
+      count = count + 1
+      if (err) {
+        onError(err);
+        return;
+      }
+      let data = JSON.parse(content);
+      data.responses.map((response) => {
+        text_data += response.fullTextAnnotation.text
+      });
+      if (count == filenames.length)
+        onFileContent(filenames, text_data);
+      else
+        readFile(filenames, dirname, onFileContent, onError, count, text_data)
+    });
+  }
 
   app.post('/multiple', upload.array('files', 2), function (req, res) {
+    let time_stamp = new Date().getTime()
+    async.parallel({
+      hin: function (callback) {
+        saveToBucket(req, res, 'hi', req.files[0].path, time_stamp + '_hin.pdf', time_stamp, callback)
+      },
+      eng: function (callback) {
+        saveToBucket(req, res, 'en', req.files[1].path, time_stamp + '_eng.pdf', time_stamp, callback)
+      }
+    }, function (err, results) {
+      async.parallel({
+        hin: function (callback) {
+          saveFromBucket(results, time_stamp, 'hi', results.hin, callback)
+        },
+        eng: function (callback) {
+          saveFromBucket(results, time_stamp, 'en', results.eng, callback)
+        }
+      }, function (err, results) {
+        processFiles(req, res, time_stamp)
+      })
+    });
+  })
+
+  async function saveFromBucket(results, time_stamp, type, prefix, callback) {
+    const options = {
+      // The path to which the file should be downloaded, e.g. "./file.txt"
+      prefix: prefix,
+    };
+    const [files] = await storage.bucket('nlp-nmt').getFiles(options).catch((e) => {
+      console.log(e)
+    });
+    let count = 0;
+    files.map((file, index) => {
+      if (!fs.existsSync('upload/results/' + time_stamp))
+        fs.mkdirSync('upload/results/' + time_stamp)
+      if (!fs.existsSync('upload/results/' + time_stamp + '/' + type + '/'))
+        fs.mkdirSync('upload/results/' + time_stamp + '/' + type + '/')
+      fs.open('upload/' + file.name, 'w', function (err, file2) {
+        if (err) throw err;
+        storage
+          .bucket('nlp-nmt')
+          .file(file.name)
+          .download({
+            // The path to which the file should be downloaded, e.g. "./file.txt"
+            destination: 'upload/' + file.name,
+          })
+          .then(() => {
+            count = count + 1
+            if (count == files.length)
+              callback()
+          })
+          .catch((e) => {
+            console.log(e)
+          });
+      });
+
+    });
+  }
+
+  function saveToBucket(req, res, languageHints, tmp_path, fileName, time_stamp, callback) {
+    const bucketName = 'nlp-nmt';
+    // Uploads a local file to the bucket
+    storage.bucket(bucketName).upload(tmp_path, {
+      // Support for HTTP requests made with `Accept-Encoding: gzip`
+      // gzip: true,
+      destination: fileName,
+      // By setting the option `destination`, you can change the name of the
+      // object you are uploading to a bucket.
+      metadata: {
+        // Enable long-lived HTTP caching headers
+        // Use only if the contents of the file will never change
+        // (If the contents will change, use cacheControl: 'no-cache')
+        // cacheControl: 'public, max-age=31536000',
+        contentType: 'application/pdf'
+      },
+    }).then(async () => {
+      // Path to PDF file within bucket
+      console.log(fileName)
+      // The folder to store the results
+      const outputPrefix = `results/${time_stamp}/${languageHints}`
+
+      // const gcsSourceUri = `gs://${bucketName}/${fileName}`;
+      const gcsSourceUri = `gs://${bucketName}/${fileName}`;
+      const gcsDestinationUri = `gs://${bucketName}/${outputPrefix}/`;
+
+      const inputConfig = {
+        // Supported mime_types are: 'application/pdf' and 'image/tiff'
+        mimeType: 'application/pdf',
+        gcsSource: {
+          uri: gcsSourceUri,
+        },
+      };
+      const outputConfig = {
+        gcsDestination: {
+          uri: gcsDestinationUri,
+        },
+      };
+      const features = [{ type: 'DOCUMENT_TEXT_DETECTION', languageHints: 'hi' }];
+      const request = {
+        requests: [
+          {
+            inputConfig: inputConfig,
+            features: features,
+            imageContext: {
+              languageHints: [languageHints],
+            },
+            outputConfig: outputConfig,
+          },
+        ],
+      };
+
+      const [operation] = await client.asyncBatchAnnotateFiles(request);
+      const [filesResponse] = await operation.promise();
+      const destinationUri =
+        filesResponse.responses[0].outputConfig.gcsDestination.uri;
+      console.log('Json saved to: ', destinationUri);
+      fs.unlink(tmp_path, function () { })
+      callback(null, outputPrefix);
+    }).catch((e) => {
+      console.log(e)
+    });
+  }
+
+  app.post('/multiple-old', upload.array('files', 2), function (req, res) {
     var tmp_path = req.files[0].path;
     let time_stamp = new Date().getTime()
     let output_base_name = 'upload/' + time_stamp

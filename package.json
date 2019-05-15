@@ -10,7 +10,10 @@
     "m2m"
   ],
   "dependencies": {
+    "@google-cloud/storage": "^2.5.0",
     "@google-cloud/translate": "^3.0.1",
+    "@google-cloud/vision": "^0.25.0",
+    "async": "^2.6.2",
     "body-parser": "^1.0.2",
     "cookie-session": "^2.0.0-beta.3",
     "crypto-js": "^3.1.9-1",
