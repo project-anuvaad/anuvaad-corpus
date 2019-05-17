@@ -23,6 +23,8 @@ const storage = new Storage();
 // Imports the Google Cloud client libraries
 const vision = require('@google-cloud/vision').v1;
 
+const GOOGLE_BUCKET_NAME = 'nlp-nmt'
+
 // Creates a client
 const client = new vision.ImageAnnotatorClient();
 
@@ -84,8 +86,8 @@ function startApp() {
           return res.status(apistatus.http.status).json(apistatus);
         }
         fs.unlink(tmp_path, function () { })
-        PdfToImage.convertToImage(file_path, function (imagePath) {
-          req.imagePath = imagePath
+        PdfToImage.convertToImage(file_path, function (image_paths) {
+          req.image_paths = image_paths
           Corpus.processImage(req, res)
         });
       });
@@ -168,7 +170,7 @@ function startApp() {
     });
   }
 
-  app.post('/multiple', upload.array('files', 2), function (req, res) {
+  app.post('/multiple-google', upload.array('files', 2), function (req, res) {
     let time_stamp = new Date().getTime()
     async.parallel({
       hin: function (callback) {
@@ -196,7 +198,7 @@ function startApp() {
       // The path to which the file should be downloaded, e.g. "./file.txt"
       prefix: prefix,
     };
-    const [files] = await storage.bucket('nlp-nmt').getFiles(options).catch((e) => {
+    const [files] = await storage.bucket(GOOGLE_BUCKET_NAME).getFiles(options).catch((e) => {
       console.log(e)
     });
     let count = 0;
@@ -208,7 +210,7 @@ function startApp() {
       fs.open('upload/' + file.name, 'w', function (err, file2) {
         if (err) throw err;
         storage
-          .bucket('nlp-nmt')
+          .bucket(GOOGLE_BUCKET_NAME)
           .file(file.name)
           .download({
             // The path to which the file should be downloaded, e.g. "./file.txt"
@@ -228,7 +230,7 @@ function startApp() {
   }
 
   function saveToBucket(req, res, languageHints, tmp_path, fileName, time_stamp, callback) {
-    const bucketName = 'nlp-nmt';
+    const bucketName = GOOGLE_BUCKET_NAME;
     // Uploads a local file to the bucket
     storage.bucket(bucketName).upload(tmp_path, {
       // Support for HTTP requests made with `Accept-Encoding: gzip`
@@ -291,7 +293,7 @@ function startApp() {
     });
   }
 
-  app.post('/multiple-old', upload.array('files', 2), function (req, res) {
+  app.post('/multiple', upload.array('files', 2), function (req, res) {
     var tmp_path = req.files[0].path;
     let time_stamp = new Date().getTime()
     let output_base_name = 'upload/' + time_stamp
