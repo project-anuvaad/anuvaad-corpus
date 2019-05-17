@@ -20,12 +20,6 @@ Response.prototype.getRsp = function () {
     if(this.data){
         result.data = this.data;
     }
-    if(this.shop){
-        result.shop = this.shop;
-    }
-    if(this.offers){
-        result.offers = this.offers;
-    }
     return result
 };
 
