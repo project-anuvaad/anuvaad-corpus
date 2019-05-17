@@ -51,9 +51,7 @@ function saveToFile(pageNumber, image_paths, pdfImage, cb) {
     saveToFile(pageNumber, image_paths, pdfImage, cb)
     image_paths.push(imagePath)
   }).catch(function (e) {
-    pdfImage.combineImages(image_paths).then(function (imagePath) {
-      cb(imagePath)
-    })
+    cb(image_paths)
   })
 }
 
