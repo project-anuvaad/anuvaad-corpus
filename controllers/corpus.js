@@ -25,7 +25,6 @@ function callTesseractForMultipleLanguage(imagePaths, index, res, file_base_name
     exec('tesseract ' + imagePaths[index] + ' - >> ' + file_base_name + '.txt -l hin+eng', (err, stdout, stderr) => {
         index++;
         if (err) {
-            console.log(err)
             if (!dontSendRes) {
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, 'app').getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
@@ -66,8 +65,8 @@ function callTesseractForMultipleLanguage(imagePaths, index, res, file_base_name
                                 }
                             }
                             let data_arr = data.split('\n')
-                            if (data_arr.length > 100) {
-                                let loops = Math.ceil(data_arr.length / 100)
+                            if (data_arr.length > 20) {
+                                let loops = Math.ceil(data_arr.length / 20)
                                 let translated_text = ''
                                 transalteBigText(0, loops, data_arr, res, translated_text, file_base_name, dontSendRes)
                             }
@@ -113,6 +112,9 @@ function callTesseractForMultipleLanguage(imagePaths, index, res, file_base_name
                                             })
                                         });
                                     })
+                                    .catch((e)=>{
+                                        console.log(e)
+                                    })
                             }
                         })
                     })
@@ -141,8 +143,8 @@ exports.convertAndCreateCorpus = function (req, res) {
             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, 'app').getRspStatus()
             return res.status(apistatus.http.status).json(apistatus);
         }
-        if (data_arr.length > 100) {
-            let loops = Math.ceil(data_arr.length / 100)
+        if (data_arr.length > 20) {
+            let loops = Math.ceil(data_arr.length / 20)
             let translated_text = ''
             transalteBigText(0, loops, data_arr, res, translated_text, file_base_name)
         }
@@ -194,7 +196,7 @@ exports.convertAndCreateCorpus = function (req, res) {
 
 
 function transalteBigText(i, loops, data_arr, res, translated_text, file_base_name, dontSendRes) {
-    let endCount = 100 > data_arr.length ? data_arr.length % 100 : 100
+    let endCount = 20 > data_arr.length ? data_arr.length % 20 : 20
     translate
         .translate(data_arr.splice(0, endCount), target)
         .then(results => {
