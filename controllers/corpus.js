@@ -100,8 +100,7 @@ function callTesseractForMultipleLanguage(imagePaths, index, res, file_base_name
                                                         glob(file_base_name + "*", function (er, files) {
                                                             if (files && files.length > 0) {
                                                                 files.map((fileName) => {
-                                                                    if (fileName.indexOf('pdf') == -1)
-                                                                        fs.unlink(fileName, function () { })
+                                                                    fs.unlink(fileName, function () { })
                                                                 })
                                                             }
                                                         })
@@ -230,8 +229,7 @@ function transalteBigText(i, loops, data_arr, res, translated_text, file_base_na
                                 glob(file_base_name + "*", function (er, files) {
                                     if (files && files.length > 0) {
                                         files.map((fileName) => {
-                                            if (fileName.indexOf('pdf') == -1)
-                                                fs.unlink(fileName, function () { })
+                                            fs.unlink(fileName, function () { })
                                         })
                                     }
                                 })
