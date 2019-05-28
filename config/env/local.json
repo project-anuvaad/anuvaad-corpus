@@ -2,6 +2,7 @@
     "local": {
         "PORT": 9090,
         "PASSPORTJS_SECRET": "M2M-DEV-123$",
-        "LOG_DIRECTORY": "../app_log/aidemo-dev"
+        "LOG_DIRECTORY": "../app_log/aidemo-dev",
+        "MONGO_URL":"mongodb://localhost/preprocessing"
     }
 }

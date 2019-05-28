@@ -1,11 +1,13 @@
 var Response = require('../models/response')
 var APIStatus = require('../errors/apistatus')
+var ProcessWords = require('./process_words')
+var WordDispatcher = require('./dispatch/word.dispatch');
 var StatusCode = require('../errors/statuscodes').StatusCode
 var fs = require("fs");
 var glob = require("glob")
 const { exec } = require('child_process');
 
-const python_version = 'python'
+const python_version = 'python3'
 
 const { Translate } = require('@google-cloud/translate');
 const projectId = "translate-1552888031121";
@@ -112,7 +114,7 @@ function callTesseractForMultipleLanguage(imagePaths, index, res, file_base_name
                                             })
                                         });
                                     })
-                                    .catch((e)=>{
+                                    .catch((e) => {
                                         console.log(e)
                                     })
                             }
@@ -226,6 +228,13 @@ function transalteBigText(i, loops, data_arr, res, translated_text, file_base_na
                         let output_data = {}
                         fs.readFile('upload/' + output_file_base + '_output' + '-s', 'utf8', function (err, data) {
                             output_data.hindi = data.split('\n')
+                            let scores = []
+                            output_data.hindi.map((hindi, index)=>{
+                                WordDispatcher.fetchWords(hindi, file_base_name.split('/')[1], function(err, result){
+                                    scores.push(result)
+                                })
+                            })
+                            
                             fs.readFile('upload/' + output_file_base + '_output' + '-t', 'utf8', function (err, data) {
                                 output_data.english = data.split('\n')
                                 glob(file_base_name + "*", function (er, files) {
@@ -305,29 +314,33 @@ exports.filterCorpusText = function (req, type, cb) {
 
 function callTesseract(imagePaths, index, req, res, output_base_name, cb) {
     let file_base_name = imagePaths[index].replace('.png', '').split('-')[0]
-    exec('tesseract ' + imagePaths[index] + ' - >> ' + file_base_name + '.txt' + ' -l hin+eng', (err, stdout, stderr) => {
-        index++;
-        if (err) {
-            cb(err, null)
-        }
-        if (index == imagePaths.length) {
-            var exec_cmd = python_version + ' ' + 'remove_page_number_filter.py' + ' ' + file_base_name + '.txt ' + file_base_name
-            exec(exec_cmd, (err, stdout, stderr) => {
-                if (err) {
-                    cb(err, null)
-                }
-                var exec_cmd = python_version + ' ' + (req.type === 'hin' ? 'process_paragraph.py' : 'process_paragraph_eng.py') + ' ' + file_base_name + '_filtered.txt ' + output_base_name
+    exec('tesseract --oem 1 --psm 6 ' + imagePaths[index] + ' - >> ' + file_base_name + '.txt' + ' -l hin+eng', (err, stdout, stderr) => {
+        exec('tesseract --oem 1 --psm 6 ' + imagePaths[index]  +' '+ imagePaths[index].replace('.png','')  + ' -l hin+eng' + ' tsv', (err, stdout, stderr) => {
+            if (err) {
+                console.log(err)
+                cb(err, null)
+            }
+            ProcessWords.saveWords(imagePaths[index].replace('.png','.tsv'), output_base_name.split('/')[1])
+            index++;
+            if (index == imagePaths.length) {
+                var exec_cmd = python_version + ' ' + 'remove_page_number_filter.py' + ' ' + file_base_name + '.txt ' + file_base_name
                 exec(exec_cmd, (err, stdout, stderr) => {
                     if (err) {
                         cb(err, null)
                     }
-                    cb(null, file_base_name + '.txt')
+                    var exec_cmd = python_version + ' ' + (req.type === 'hin' ? 'process_paragraph.py' : 'process_paragraph_eng.py') + ' ' + file_base_name + '_filtered.txt ' + output_base_name
+                    exec(exec_cmd, (err, stdout, stderr) => {
+                        if (err) {
+                            cb(err, null)
+                        }
+                        cb(null, file_base_name + '.txt')
+                    })
                 })
-            })
 
-        }
-        else {
-            callTesseract(imagePaths, index, req, res, output_base_name, cb)
-        }
+            }
+            else {
+                callTesseract(imagePaths, index, req, res, output_base_name, cb)
+            }
+        });
     });
 }
