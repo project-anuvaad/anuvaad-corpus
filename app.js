@@ -310,7 +310,6 @@ function startApp() {
           return res.status(apistatus.http.status).json(apistatus);
         }
         fs.unlink(tmp_path, function () { })
-        console.log('done')
         PdfToImage.convertToMultipleImage(file_path, function (imagePaths) {
           req.imagePaths = imagePaths
           req.type = 'hin'
@@ -324,15 +323,15 @@ function startApp() {
                   return res.status(apistatus.http.status).json(apistatus);
                 }
                 fs.unlink(tmp_path, function () { })
-                console.log('done')
-                // PdfToImage.convertToMultipleImage(file_path, function (imagePaths) {
-                //   req.imagePaths = imagePaths
-                //   req.type = 'eng'
-                //   Corpus.processMultipleImage(req, res, output_base_name, function (err, imagePath) {
-                //     req.file_base_name = output_base_name
-                //     Corpus.convertAndCreateCorpus(req, res)
-                //   })
-                // });
+                PdfToImage.convertToMultipleImage(file_path, function (imagePaths) {
+                  req.imagePaths = imagePaths
+                  req.type = 'eng'
+                  Corpus.processMultipleImage(req, res, output_base_name, function (err, imagePath) {
+                    req.file_base_name = output_base_name
+                    console.log('done')
+                    // Corpus.convertAndCreateCorpus(req, res)
+                  })
+                });
               });
             });
           })
