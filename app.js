@@ -297,6 +297,7 @@ function startApp() {
     });
   }
 
+
   app.post('/multiple', upload.array('files', 2), function (req, res) {
     console.log('test')
   })
