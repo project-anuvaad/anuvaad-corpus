@@ -13,6 +13,7 @@ var StatusCode = require('./errors/statuscodes').StatusCode
 var multer = require('multer');
 var upload = multer({ dest: 'upload/' });
 var async = require('async')
+var _ = require('lodash');
 var fs = require("fs");
 // Imports the Google Cloud client library
 const { Storage } = require('@google-cloud/storage');
@@ -161,7 +162,10 @@ function startApp() {
       }
       let data = JSON.parse(content);
       data.responses.map((response) => {
-        text_data += response.fullTextAnnotation.text
+        var confidence_score = _.get(response, 'fullTextAnnotation.pages[0].blocks[0].confidence', [0])
+        if (confidence_score > .9) {
+          text_data += response.fullTextAnnotation.text
+        }
       });
       if (count == filenames.length)
         onFileContent(filenames, text_data);
@@ -170,7 +174,7 @@ function startApp() {
     });
   }
 
-  app.post('/multiple-google', upload.array('files', 2), function (req, res) {
+  app.post('/multiple-new', upload.array('files', 2), function (req, res) {
     let time_stamp = new Date().getTime()
     async.parallel({
       hin: function (callback) {
