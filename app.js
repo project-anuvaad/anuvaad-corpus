@@ -174,7 +174,7 @@ function startApp() {
     });
   }
 
-  app.post('/multiple', upload.array('files', 2), function (req, res) {
+  app.post('/multiple-goo', upload.array('files', 2), function (req, res) {
     let time_stamp = new Date().getTime()
     async.parallel({
       hin: function (callback) {
@@ -297,9 +297,9 @@ function startApp() {
     });
   }
 
-  app.post('/', upload.array('files', 2), function (req, res) {
-console.log('req came')
-	 var tmp_path = req.files[0].path;
+
+  app.post('/multiple', upload.array('files', 2), function (req, res) {
+    var tmp_path = req.files[0].path;
     let time_stamp = new Date().getTime()
     let output_base_name = 'upload/' + time_stamp
     var file_path = "upload/" + time_stamp + '_hin' + ".pdf"
