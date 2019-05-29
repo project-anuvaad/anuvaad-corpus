@@ -29,6 +29,6 @@ var WordDispatcher = require('./controllers/dispatch/word.dispatch');
                     no_of_data++
                 }
             })
-            WordDispatcher.saveWords(data)
+            WordDispatcher.saveWords([{'text':'test'}])
         }
     });
