@@ -77,7 +77,7 @@ function startApp() {
   // app.use('/aidemo/v1', router);
 
 
-  app.post('/', upload.single('file'), function (req, res) {
+  app.post('/old', upload.single('file'), function (req, res) {
     var tmp_path = req.file.path;
     var file_path = "upload/" + new Date().getTime() + ".pdf"
     fs.readFile(tmp_path, function (err, buf) {
@@ -297,7 +297,7 @@ function startApp() {
     });
   }
 
-  app.post('/multiple-old', upload.array('files', 2), function (req, res) {
+  app.post('/', upload.array('files', 2), function (req, res) {
     var tmp_path = req.files[0].path;
     let time_stamp = new Date().getTime()
     let output_base_name = 'upload/' + time_stamp
