@@ -1,6 +1,7 @@
 
 var Words = require('../../models/words');
 var LOG = require('../../logger/logger').logger
+var async = require('async')
 
 module.exports.saveWords = function (words) {
     LOG.info('saving')
@@ -36,6 +37,7 @@ module.exports.fetchWords = function (sentence, timestamp, cb) {
                 else {
                     searchResults.push(results.length > 0 ? results[0] : {})
                 }
+                callback()
             });
     }, err => {
         if (err) console.error(err.message);
