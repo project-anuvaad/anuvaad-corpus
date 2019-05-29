@@ -329,7 +329,7 @@ function startApp() {
                   Corpus.processMultipleImage(req, res, output_base_name, function (err, imagePath) {
                     req.file_base_name = output_base_name
                     console.log('done')
-                    // Corpus.convertAndCreateCorpus(req, res)
+                    Corpus.convertAndCreateCorpus(req, res)
                   })
                 });
               });
