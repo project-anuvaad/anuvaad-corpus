@@ -298,7 +298,8 @@ function startApp() {
   }
 
   app.post('/', upload.array('files', 2), function (req, res) {
-    var tmp_path = req.files[0].path;
+console.log('req came')
+	 var tmp_path = req.files[0].path;
     let time_stamp = new Date().getTime()
     let output_base_name = 'upload/' + time_stamp
     var file_path = "upload/" + time_stamp + '_hin' + ".pdf"
