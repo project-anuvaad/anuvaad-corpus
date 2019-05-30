@@ -247,6 +247,7 @@ function transalteBigText(i, loops, data_arr, res, translated_text, file_base_na
                         let output_data = {}
                         fs.readFile('upload/' + output_file_base + '_output' + '-s', 'utf8', function (err, data) {
                             output_data.hindi = data.split('\n')
+                            output_data.hindi = output_data.hindi.slice(0, output_data.hindi.length - 1)
                             let hindi_scores = []
                             async.forEachOf(output_data.hindi, (hindi, index, callback) => {
                                 WordDispatcher.fetchWords(hindi, file_base_name.split('/')[1], function (err, result) {
@@ -259,6 +260,7 @@ function transalteBigText(i, loops, data_arr, res, translated_text, file_base_na
                                 fs.readFile('upload/' + output_file_base + '_output' + '-t', 'utf8', function (err, data) {
                                     output_data.english = data.split('\n')
                                     let english_scores = []
+                                    output_data.english = output_data.english.slice(0, output_data.english.length - 1)
                                     async.forEachOf(output_data.english, (english, index, callback) => {
                                         WordDispatcher.fetchWords(english, file_base_name.split('/')[1], function (err, result) {
                                             english_scores.push(result)
@@ -372,7 +374,7 @@ function callTesseract(imagePaths, type, index, req, res, output_base_name, cb) 
 
             }
             else {
-                callTesseract(imagePaths,type, index, req, res, output_base_name, cb)
+                callTesseract(imagePaths, type, index, req, res, output_base_name, cb)
             }
         });
     });
