@@ -298,9 +298,8 @@ function transalteBigText(i, loops, data_arr, res, translated_text, file_base_na
 
 
 
-exports.processMultipleImage = function (req, res, output_base_name, cb) {
-    let imagePaths = req.imagePaths
-    callTesseract(imagePaths, 0, req, res, output_base_name, cb)
+exports.processMultipleImage = function (req, res, imagePaths, type, output_base_name, cb) {
+    callTesseract(imagePaths, type, 0, req, res, output_base_name, cb)
     // for (var index = 0; index < imagePaths.length; index++) {
     //     // imagePaths.map((imagePath, index) => {
     //         if (index % 5 == 0) {
@@ -346,10 +345,10 @@ exports.filterCorpusText = function (req, type, cb) {
 }
 
 
-function callTesseract(imagePaths, index, req, res, output_base_name, cb) {
+function callTesseract(imagePaths, type, index, req, res, output_base_name, cb) {
     let file_base_name = imagePaths[index].replace('.png', '').split('-')[0]
-    exec('tesseract --oem 1 --psm 6 ' + imagePaths[index] + ' - >> ' + file_base_name + '.txt' + ' -l hin+eng', (err, stdout, stderr) => {
-        exec('tesseract --oem 1 --psm 6 ' + imagePaths[index] + ' ' + imagePaths[index].replace('.png', '') + ' -l hin+eng' + ' tsv', (err, stdout, stderr) => {
+    exec('tesseract --oem 1 ' + imagePaths[index] + ' - >> ' + file_base_name + '.txt' + ' -l hin+eng', (err, stdout, stderr) => {
+        exec('tesseract --oem 1  ' + imagePaths[index] + ' ' + imagePaths[index].replace('.png', '') + ' -l hin+eng' + ' tsv', (err, stdout, stderr) => {
             if (err) {
                 console.log(err)
                 cb(err, null)
@@ -362,7 +361,7 @@ function callTesseract(imagePaths, index, req, res, output_base_name, cb) {
                     if (err) {
                         cb(err, null)
                     }
-                    var exec_cmd = python_version + ' ' + (req.type === 'hin' ? 'process_paragraph.py' : 'process_paragraph_eng.py') + ' ' + file_base_name + '_filtered.txt ' + output_base_name
+                    var exec_cmd = python_version + ' ' + (type === 'hin' ? 'process_paragraph.py' : 'process_paragraph_eng.py') + ' ' + file_base_name + '_filtered.txt ' + output_base_name
                     exec(exec_cmd, (err, stdout, stderr) => {
                         if (err) {
                             cb(err, null)
@@ -373,7 +372,7 @@ function callTesseract(imagePaths, index, req, res, output_base_name, cb) {
 
             }
             else {
-                callTesseract(imagePaths, index, req, res, output_base_name, cb)
+                callTesseract(imagePaths,type, index, req, res, output_base_name, cb)
             }
         });
     });
