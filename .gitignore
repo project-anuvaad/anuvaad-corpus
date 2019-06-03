@@ -2,6 +2,9 @@
 
 # dependencies
 /node_modules
+/python/env
+/python/upload
+**__pycache__
 
 /egag
 
