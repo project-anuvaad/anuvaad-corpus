@@ -6,7 +6,7 @@ import os
 from flask import jsonify
 
 
-def convertimagetotext(imagepaths):
+def convertimagetotext(imagepaths, outputfilename, basename):
     words = []
     for imagepath in imagepaths:
         image = cv2.imread(imagepath)
@@ -20,11 +20,21 @@ def convertimagetotext(imagepaths):
         # apply OCR to it
         filename = "{}.png".format(os.getpid())
         cv2.imwrite(filename, gray)
-        text = pytesseract.image_to_data(Image.open(filename),lang = 'hin+eng', output_type="dict")
+        conf_data = pytesseract.image_to_data(Image.open(filename),config='-l hin+eng --oem 1', output_type="dict")
+        text = pytesseract.image_to_string(Image.open(filename),config='-l hin+eng --oem 1')
+        f=open(outputfilename, "a+")
+        f.write(text)
+        f.close()
         index = 0
         os.remove(filename)
-        for t in text['conf']:
-            word = {'text':text['text'][index], 'conf':t}
+        for t in conf_data['conf']:
+            next_word = ''
+            previous_word = ''
+            if index is not 0:
+                previous_word = conf_data['text'][index-1]
+            if index < (len(conf_data['conf']) - 1):
+                next_word = conf_data['text'][index+1]
+            word = {'text':conf_data['text'][index], 'conf':t, 'next':next_word, 'previous': previous_word, 'timestamp': basename}
             words.append(word)
             index = index + 1
         
