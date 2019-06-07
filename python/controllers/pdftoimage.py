@@ -1,7 +1,7 @@
 from pdf2image import convert_from_path
 
 
-def converttoimage(filepath, name):
+def converttoimage(filepath, name, basename):
     pages = convert_from_path(filepath, 500)
     count = 0
     imagenames = []
@@ -9,4 +9,4 @@ def converttoimage(filepath, name):
         page.save(name+'_'+str(count)+'.jpg', 'JPEG')
         imagenames.append(name+'_'+str(count)+'.jpg')
         count = count+1
-    return imagenames
+    return {'imagenames': imagenames, 'basename': basename}

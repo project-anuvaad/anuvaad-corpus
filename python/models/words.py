@@ -1,6 +1,7 @@
 from db.conmgr import getinstance
 from elasticsearch.helpers import bulk, streaming_bulk
 
+
 def savewords(words):
     es = getinstance()
     bulk(es, gendata(words))
@@ -8,7 +9,6 @@ def savewords(words):
 
 def gendata(words):
     for word in words:
-        print(word)
         yield {
             "_index": "words",
             "_type": "document",

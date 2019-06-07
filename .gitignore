@@ -5,6 +5,7 @@
 /python/env
 /python/upload
 **__pycache__
+**.vscode
 
 /egag
 
