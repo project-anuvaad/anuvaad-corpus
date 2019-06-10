@@ -25,7 +25,7 @@ from models.response import Response
 
 
 app = Flask(__name__)
-# app.debug = True
+app.debug = True
 CORS(app)
 
 UPLOAD_FOLDER = 'upload'
@@ -41,6 +41,7 @@ def index():
 
 @app.route('/multiple', methods=['POST'])
 def upload_file():
+    print(mp.cpu_count())
     pool = mp.Pool(mp.cpu_count())
     basename = str(int(time.time()))
     f = request.files['hindi']
