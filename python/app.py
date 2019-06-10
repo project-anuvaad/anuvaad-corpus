@@ -1,27 +1,32 @@
 from flask import Flask, jsonify, request
-import os
+import os, glob
+import sys
 from datetime import datetime
 import time
 from db.conmgr import getinstance
-from controllers.pdftoimage import converttoimage
-from controllers.imagetotext import convertimagetotext
+from utils.pdftoimage import converttoimage
+from utils.imagetotext import convertimagetotext
 from utils.process_paragraph import processhindi
 from utils.process_paragraph_eng import processenglish
 from utils.remove_page_number_filter import filtertext
 from utils.translatewithgoogle import translatewithgoogle
 from models.words import savewords
+from models.words import fetchwordsfromsentence
 from werkzeug.utils import secure_filename
 import subprocess
 import json
 import multiprocessing as mp
 import codecs
+from flask_cors import CORS
 from flask import Response
 from models.status import Status
 from models.response import Response
-pool = mp.Pool(mp.cpu_count())
+
 
 
 app = Flask(__name__)
+# app.debug = True
+CORS(app)
 
 UPLOAD_FOLDER = 'upload'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -34,8 +39,9 @@ def index():
     return jsonify(results['_source'])
 
 
-@app.route('/uploader', methods=['GET', 'POST'])
+@app.route('/multiple', methods=['POST'])
 def upload_file():
+    pool = mp.Pool(mp.cpu_count())
     basename = str(int(time.time()))
     f = request.files['hindi']
     f_eng = request.files['english']
@@ -66,14 +72,23 @@ def upload_file():
               '_eng_filtered' + '.txt' + ' --srctotarget ' + os.getcwd() + '/upload/' + basename + '_eng_tran' + '.txt' + ' -o ' + os.getcwd() + '/upload/' + basename + '_output')
     english_res = []
     hindi_res = []
+    english_points = []
+    hindi_points = []
     f_eng = open('upload/' + basename + '_output-t', 'r')
     for f in f_eng:
         english_res.append(f)
-    f_hin=open('upload/' + basename + '_output-s','r')
+        point = fetchwordsfromsentence(f, basename)
+        english_points.append(point)
+    f_hin = open('upload/' + basename + '_output-s', 'r')
     for f in f_hin:
         hindi_res.append(f)
-    data = {'hindi': hindi_res, 'english': english_res}
+        point = fetchwordsfromsentence(f, basename)
+        hindi_points.append(point)
+    data = {'hindi': hindi_res, 'english': english_res,
+            'english_scores': english_points, 'hindi_scores': hindi_points}
     res = Response(Status.SUCCESS.value, data)
+    for f in glob.glob('upload/'+basename+'*'):
+        os.remove(f)
     return res.getres()
 
 
