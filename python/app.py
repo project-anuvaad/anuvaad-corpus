@@ -54,26 +54,26 @@ def upload_file():
         app.config['UPLOAD_FOLDER'], basename + '_eng.pdf')
     f.save(filepath)
     f_eng.save(filepath_eng)
-    hin_result = converttoimage(
-        filepath, app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin', basename)
-    eng_result = converttoimage(
-        filepath_eng, app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng', basename)
-    print(hin_result['imagenames'])
-    for imagename in hin_result['imagenames']:
-        pool.apply_async(convertimagetotextv2, args=(
-            os.getcwd() + '/'+ imagename, os.getcwd() + '/'+app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin.txt', basename), callback=capturewords)
-    for imagename in eng_result['imagenames']:
-        pool.apply_async(convertimagetotextv2, args=(
-            imagename, app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng.txt', basename), callback=capturewords)
+    # hin_result = converttoimage(
+    #     filepath, app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin', basename)
+    # eng_result = converttoimage(
+    #     filepath_eng, app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng', basename)
+    # print(hin_result['imagenames'])
+    # for imagename in hin_result['imagenames']:
+    #     pool.apply_async(convertimagetotextv2, args=(
+    #         os.getcwd() + '/'+ imagename, os.getcwd() + '/'+app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin.txt', basename), callback=capturewords)
+    # for imagename in eng_result['imagenames']:
+    #     pool.apply_async(convertimagetotextv2, args=(
+    #         imagename, app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng.txt', basename), callback=capturewords)
+    
+    pool.apply_async(converttoimage, args=(
+        filepath, app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin', basename), callback=capturehindi)
+    pool.apply_async(converttoimage, args=(
+        filepath_eng, app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng', basename), callback=captureenglish)
     pool.close()
     pool.join()
-    # pool.apply_async(converttoimage, args=(
-    #     filepath, app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin', basename), callback=capturehindi)
-    # pool.apply_async(converttoimage, args=(
-    #     filepath_eng, app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng', basename), callback=captureenglish)
-
-    global words
-    savewords(words)
+    # global words
+    # savewords(words)
     filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin.txt',
                app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin_filtered.txt')
     filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_eng.txt',
