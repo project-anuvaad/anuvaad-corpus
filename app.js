@@ -24,6 +24,20 @@ const storage = new Storage();
 // Imports the Google Cloud client libraries
 const vision = require('@google-cloud/vision').v1;
 
+const automl = require(`@google-cloud/automl`).v1beta1;
+const { Translate } = require('@google-cloud/translate');
+
+// Create client for prediction service.
+const client = new automl.PredictionServiceClient();
+
+/**
+ * TODO(developer): Uncomment the following line before running the sample.
+ */
+const projectId = "translate-1552888031121";
+const computeRegion = "us-central1";
+const modelId = "TRL3776294168538164590";
+const translationAllowFallback = "False";
+
 const GOOGLE_BUCKET_NAME = 'nlp-nmt'
 
 // Creates a client
@@ -65,6 +79,73 @@ function startApp() {
   app.get('/test', function (req, res) {
     res.send("Hello world!");
   });
+
+
+  app.post('/hin', async (req, res) => {
+    let text = req.body.text;
+
+    try {
+      // Instantiates a client
+      const translate = new Translate({
+        projectId: projectId,
+      });
+
+      // The text to translate
+      // The target language
+      const target = 'eng';
+
+      // Translates some text into English
+      translate
+        .translate(text, target)
+        .then(results => {
+          const translation = results[0];
+
+          console.log(`Text: ${text}`);
+          console.log(`Translation: ${translation}`);
+          return res.status(200).json(translation);
+        })
+        .catch(err => {
+          return res.status(200).json(err);
+        });
+    }
+    catch (e) {
+      console.log(e)
+      return res.status(200).json(e);
+    }
+  })
+
+  app.post('/eng', (req, res) => {
+    let text = req.body.text;
+
+    try {
+      // Instantiates a client
+      const translate = new Translate({
+        projectId: projectId,
+      });
+
+      // The text to translate
+      // The target language
+      const target = 'hin';
+
+      // Translates some text into English
+      translate
+        .translate(text, target)
+        .then(results => {
+          const translation = results[0];
+
+          console.log(`Text: ${text}`);
+          console.log(`Translation: ${translation}`);
+          return res.status(200).json(translation);
+        })
+        .catch(err => {
+          return res.status(200).json(err);
+        });
+    }
+    catch (e) {
+      console.log(e)
+      return res.status(200).json(e);
+    }
+  })
 
   // router.route('/')
   //   .get((req, res) => {
