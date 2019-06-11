@@ -7,6 +7,7 @@ def converttoimage(filepath, name, basename):
     imagenames = []
     for page in pages:
         page.save(name+'_'+str(count)+'.jpg', 'JPEG')
+        print(name)
         imagenames.append(name+'_'+str(count)+'.jpg')
         count = count+1
     return {'imagenames': imagenames, 'basename': basename}
