@@ -2,6 +2,7 @@ from pdf2image import convert_from_path
 
 
 def converttoimage(filepath, name, basename):
+    print('request arrived')
     pages = convert_from_path(filepath, 500)
     count = 0
     imagenames = []
