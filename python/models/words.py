@@ -17,9 +17,9 @@ def fetchwordsfromsentence(sentence, timstamp):
                 next_word = words[i+1]
             result = search(words[i], previous, next_word, timstamp)
 
-            if result['hits']['total'] > 0:
+            if int(result['hits']['total']) > 0:
                 count += 1
-                point += result['hits']['hits'][0]['_source']['doc']['word']['conf']
+                point += int(result['hits']['hits'][0]['_source']['doc']['word']['conf'])
         if count > 0:
             point = point / count
         return point
