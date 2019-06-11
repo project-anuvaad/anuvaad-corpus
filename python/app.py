@@ -1,11 +1,13 @@
 from flask import Flask, jsonify, request
-import os, glob
+import os
+import glob
 import sys
 from datetime import datetime
 import time
 from db.conmgr import getinstance
 from utils.pdftoimage import converttoimage
 from utils.imagetotext import convertimagetotext
+from utils.imagetotext_v2 import convertimagetotextv2
 from utils.process_paragraph import processhindi
 from utils.process_paragraph_eng import processenglish
 from utils.remove_page_number_filter import filtertext
@@ -23,7 +25,6 @@ from models.status import Status
 from models.response import Response
 
 
-
 app = Flask(__name__)
 app.debug = True
 CORS(app)
@@ -31,6 +32,7 @@ CORS(app)
 UPLOAD_FOLDER = 'upload'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 es = getinstance()
+words = []
 
 
 @app.route('/', methods=['GET'])
@@ -52,12 +54,26 @@ def upload_file():
         app.config['UPLOAD_FOLDER'], basename + '_eng.pdf')
     f.save(filepath)
     f_eng.save(filepath_eng)
-    pool.apply_async(converttoimage, args=(
-        filepath, app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin', basename), callback=capturehindi)
-    pool.apply_async(converttoimage, args=(
-        filepath_eng, app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng', basename), callback=captureenglish)
+    hin_result = converttoimage(
+        filepath, app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin', basename)
+    eng_result = converttoimage(
+        filepath_eng, app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng', basename)
+    print(hin_result['imagenames'])
+    for imagename in hin_result['imagenames']:
+        pool.apply_async(convertimagetotextv2, args=(
+            os.getcwd() + '/'+ imagename, os.getcwd() + '/'+app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin.txt', basename), callback=capturewords)
+    for imagename in eng_result['imagenames']:
+        pool.apply_async(convertimagetotextv2, args=(
+            imagename, app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng.txt', basename), callback=capturewords)
     pool.close()
     pool.join()
+    # pool.apply_async(converttoimage, args=(
+    #     filepath, app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin', basename), callback=capturehindi)
+    # pool.apply_async(converttoimage, args=(
+    #     filepath_eng, app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng', basename), callback=captureenglish)
+
+    global words
+    savewords(words)
     filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin.txt',
                app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin_filtered.txt')
     filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_eng.txt',
@@ -91,6 +107,12 @@ def upload_file():
     for f in glob.glob('upload/'+basename+'*'):
         os.remove(f)
     return res.getres()
+
+
+def capturewords(result):
+    print(result)
+    global words
+    words.append(result)
 
 
 def capturehindi(result):
