@@ -14,7 +14,10 @@ def fetchwordsfromsentence(sentence, timstamp):
             if i is not 0:
                 previous = words[i-1]
             if i is not len(words) - 1:
-                next_word = words[i+1]
+                try:
+                    next_word = words[i+1]
+                except Exception as e:
+                    print(e)
             result = search(words[i], previous, next_word, timstamp)
 
             if int(result['hits']['total']['value']) > 0:
