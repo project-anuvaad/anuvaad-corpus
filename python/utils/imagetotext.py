@@ -7,6 +7,7 @@ import os
 def convertimagetotext(imagepaths, outputfilename, basename):
     words=[]
     for imagepath in imagepaths:
+        print(imagepath)
         image = cv2.imread(imagepath)
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
