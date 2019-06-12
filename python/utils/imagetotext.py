@@ -33,7 +33,10 @@ def convertimagetotext(imagepaths, outputfilename, basename):
             if index is not 0:
                 previous_word = conf_data['text'][index-1]
             if index < (len(conf_data['conf']) - 1):
-                next_word = conf_data['text'][index+1]
+                try:
+                    next_word = conf_data['text'][index+1]
+                except Exception as e:
+                    print(e)
             word = {'text': conf_data['text'][index], 'conf': t,
                     'next': next_word, 'previous': previous_word, 'timestamp': basename}
             words.append(word)
