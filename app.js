@@ -28,7 +28,7 @@ const automl = require(`@google-cloud/automl`).v1beta1;
 const { Translate } = require('@google-cloud/translate');
 
 // Create client for prediction service.
-const client = new automl.PredictionServiceClient();
+const clientPred = new automl.PredictionServiceClient();
 
 /**
  * TODO(developer): Uncomment the following line before running the sample.
