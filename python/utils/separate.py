@@ -17,22 +17,22 @@ def detect_language(str):
         else:
             return 'english'
 
-
-with codecs.open(sys.argv[1], encoding='utf-8') as f:
-    input = f.readline()
-    f_hin = open(sys.argv[2]+"_hin.txt", "w+")
-    f_eng = open(sys.argv[2]+"_eng.txt", "w+")
-    for i in f:
-        isEng = detect_language(i)
-        if isEng == "hindi":
-            f_hin.write(i)
-            # Hindi Character
-            # add this to another file
-            # print(i,end="\t")
-        if isEng == "english":
-            f_eng.write(i)
-            # Hindi Character
-            # add this to another file
-            # print(i,end="\t")
-    f_hin.close()
-    f_eng.close()
+def separate(basefilename):
+    with codecs.open(basefilename+'.txt', encoding='utf-8') as f:
+        input = f.readline()
+        f_hin = open(basefilename+"_hin.txt", "w+")
+        f_eng = open(basefilename+"_eng.txt", "w+")
+        for i in f:
+            isEng = detect_language(i)
+            if isEng == "hindi":
+                f_hin.write(i)
+                # Hindi Character
+                # add this to another file
+                # print(i,end="\t")
+            if isEng == "english":
+                f_eng.write(i)
+                # Hindi Character
+                # add this to another file
+                # print(i,end="\t")
+        f_hin.close()
+        f_eng.close()
