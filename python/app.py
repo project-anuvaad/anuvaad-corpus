@@ -5,6 +5,7 @@ import sys
 from datetime import datetime
 import time
 from db.conmgr import getinstance
+from db.conmgr_mongo import connectmongo
 from utils.pdftoimage import converttoimage
 from utils.imagetotext import convertimagetotext
 from utils.imagetotext_v2 import convertimagetotextv2
@@ -15,6 +16,7 @@ from utils.separate import separate
 from utils.translatewithgoogle import translatewithgoogle
 from models.words import savewords
 from models.words import fetchwordsfromsentence
+from models.sentence import Sentence
 from werkzeug.utils import secure_filename
 import subprocess
 import json
@@ -34,7 +36,7 @@ UPLOAD_FOLDER = 'upload'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 es = getinstance()
 words = []
-
+connectmongo()
 
 @app.route('/', methods=['GET'])
 def index():
@@ -98,6 +100,12 @@ def upload_single_file():
     data = {'hindi': hindi_res, 'english': english_res,
             'english_scores': english_points, 'hindi_scores': hindi_points}
     res = Response(Status.SUCCESS.value, data)
+    sentences = []
+    for i in range(0, len(hindi_res)):
+        sentence  = Sentence(alignment_accuracy=english_res[i].split(':::::')[1],basename=str(basename),source=hindi_res[i],target=english_res[i].split(':::::')[0],source_ocr=str(hindi_points[i]),target_ocr=str(english_points[i]))
+        sentences.append(sentence)
+        # sentence.save()
+    Sentence.objects.insert(sentences)
     for f in glob.glob('upload/'+basename+'*'):
         os.remove(f)
     return res.getres()
