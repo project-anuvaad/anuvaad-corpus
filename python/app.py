@@ -33,15 +33,12 @@ app.debug = True
 CORS(app)
 
 UPLOAD_FOLDER = 'upload'
+STATUS_PENDING = 'pending'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 es = getinstance()
 words = []
 connectmongo()
 
-@app.route('/', methods=['GET'])
-def index():
-    results = es.get(index='contents', doc_type='title', id='test')
-    return jsonify(results['_source'])
 
 @app.route('/single', methods=['POST'])
 def upload_single_file():
@@ -62,58 +59,19 @@ def upload_single_file():
     # for imagename in eng_result['imagenames']:
     #     pool.apply_async(convertimagetotextv2, args=(
     #         imagename, app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng.txt', basename), callback=capturewords)
-    
+
     pool.apply_async(converttoimage, args=(
-        filepath, app.config['UPLOAD_FOLDER'] + '/' + basename , basename), callback=capturetext)
+        filepath, app.config['UPLOAD_FOLDER'] + '/' + basename, basename), callback=capturetext)
     pool.close()
     pool.join()
     # global words
     # savewords(words)
     separate(app.config['UPLOAD_FOLDER'] + '/'+basename)
-    filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin.txt',
-               app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin_filtered.txt')
-    filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_eng.txt',
-               app.config['UPLOAD_FOLDER'] + '/'+basename+'_eng_filtered.txt')
-    processhindi(app.config['UPLOAD_FOLDER'] +
-                 '/'+basename+'_hin_filtered.txt')
-    processenglish(app.config['UPLOAD_FOLDER'] +
-                   '/'+basename+'_eng_filtered.txt')
-    translatewithgoogle(app.config['UPLOAD_FOLDER'] +
-                        '/'+basename+'_hin_filtered.txt', app.config['UPLOAD_FOLDER'] +
-                        '/'+basename+'_eng_tran.txt')
-    os.system('./helpers/bleualign.py -s ' + os.getcwd() + '/upload/' + basename + '_hin_filtered' + '.txt' + ' -t ' + os.getcwd() + '/upload/' + basename +
-              '_eng_filtered' + '.txt' + ' --srctotarget ' + os.getcwd() + '/upload/' + basename + '_eng_tran' + '.txt' + ' -o ' + os.getcwd() + '/upload/' + basename + '_output')
-    english_res = []
-    hindi_res = []
-    english_points = []
-    hindi_points = []
-    f_eng = open('upload/' + basename + '_output-t', 'r')
-    for f in f_eng:
-        english_res.append(f)
-        point = fetchwordsfromsentence(f, basename)
-        english_points.append(point)
-    f_hin = open('upload/' + basename + '_output-s', 'r')
-    for f in f_hin:
-        hindi_res.append(f)
-        point = fetchwordsfromsentence(f, basename)
-        hindi_points.append(point)
-    data = {'hindi': hindi_res, 'english': english_res,
-            'english_scores': english_points, 'hindi_scores': hindi_points}
-    res = Response(Status.SUCCESS.value, data)
-    sentences = []
-    for i in range(0, len(hindi_res)):
-        sentence  = Sentence(alignment_accuracy=english_res[i].split(':::::')[1],basename=str(basename),source=hindi_res[i],target=english_res[i].split(':::::')[0],source_ocr=str(hindi_points[i]),target_ocr=str(english_points[i]))
-        sentences.append(sentence)
-        # sentence.save()
-    Sentence.objects.insert(sentences)
-    for f in glob.glob('upload/'+basename+'*'):
-        os.remove(f)
-    return res.getres()
+    return process_files(basename)
 
 
 @app.route('/multiple', methods=['POST'])
 def upload_file():
-    print(mp.cpu_count())
     pool = mp.Pool(mp.cpu_count())
     basename = str(int(time.time()))
     f = request.files['hindi']
@@ -135,7 +93,7 @@ def upload_file():
     # for imagename in eng_result['imagenames']:
     #     pool.apply_async(convertimagetotextv2, args=(
     #         imagename, app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng.txt', basename), callback=capturewords)
-    
+
     pool.apply_async(converttoimage, args=(
         filepath, app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin', basename), callback=capturehindi)
     pool.apply_async(converttoimage, args=(
@@ -144,6 +102,10 @@ def upload_file():
     pool.join()
     # global words
     # savewords(words)
+    return process_files(basename)
+
+
+def process_files(basename):
     filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin.txt',
                app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin_filtered.txt')
     filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_eng.txt',
@@ -161,12 +123,12 @@ def upload_file():
     hindi_res = []
     english_points = []
     hindi_points = []
-    f_eng = open('upload/' + basename + '_output-t', 'r')
+    f_eng = open(app.config['UPLOAD_FOLDER']+'/' + basename + '_output-t', 'r')
     for f in f_eng:
         english_res.append(f)
         point = fetchwordsfromsentence(f, basename)
         english_points.append(point)
-    f_hin = open('upload/' + basename + '_output-s', 'r')
+    f_hin = open(app.config['UPLOAD_FOLDER']+'/' + basename + '_output-s', 'r')
     for f in f_hin:
         hindi_res.append(f)
         point = fetchwordsfromsentence(f, basename)
@@ -174,7 +136,14 @@ def upload_file():
     data = {'hindi': hindi_res, 'english': english_res,
             'english_scores': english_points, 'hindi_scores': hindi_points}
     res = Response(Status.SUCCESS.value, data)
-    for f in glob.glob('upload/'+basename+'*'):
+    sentences = []
+    for i in range(0, len(hindi_res)):
+        sentence = Sentence(status=STATUS_PENDING, alignment_accuracy=english_res[i].split(':::::')[1], basename=str(
+            basename), source=hindi_res[i], target=english_res[i].split(':::::')[0], source_ocr=str(hindi_points[i]), target_ocr=str(english_points[i]))
+        sentences.append(sentence)
+        # sentence.save()
+    Sentence.objects.insert(sentences)
+    for f in glob.glob(app.config['UPLOAD_FOLDER']+'/'+basename+'*'):
         os.remove(f)
     return res.getres()
 
@@ -184,10 +153,12 @@ def capturewords(result):
     global words
     words.append(result)
 
+
 def capturetext(result):
     words = convertimagetotext(result['imagenames'], app.config['UPLOAD_FOLDER'] +
                                '/' + result['basename'] + '.txt', result['basename'])
     savewords(words)
+
 
 def capturehindi(result):
     words = convertimagetotext(result['imagenames'], app.config['UPLOAD_FOLDER'] +
@@ -199,24 +170,6 @@ def captureenglish(result):
     words_eng = convertimagetotext(
         result['imagenames'], app.config['UPLOAD_FOLDER'] + '/' + result['basename'] + '_eng.txt', result['basename'])
     savewords(words_eng)
-
-
-@app.route('/insert_data', methods=['POST'])
-def insert_data():
-    data = request.json
-    slug = data['slug']
-    title = data['title']
-    content = data['content']
-    body = {
-        'slug': slug,
-        'title': title,
-        'content': content,
-        'timestamp': datetime.now()
-    }
-
-    result = es.index(index='contents', doc_type='title', id=slug, body=body)
-
-    return jsonify(result)
 
 
 if __name__ == '__main__':
