@@ -1,5 +1,4 @@
 from mongoengine import *
-connect('preprocessing')
 
 class Sentence(Document):
     basename = StringField(required=True)
@@ -7,4 +6,5 @@ class Sentence(Document):
     target = StringField()
     target_ocr = StringField()
     source_ocr = StringField()
+    status = StringField()
     alignment_accuracy = StringField()
