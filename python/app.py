@@ -17,6 +17,7 @@ from utils.translatewithgoogle import translatewithgoogle
 from models.words import savewords
 from models.words import fetchwordsfromsentence
 from models.sentence import Sentence
+from models.corpus import Corpus
 from werkzeug.utils import secure_filename
 import subprocess
 import json
@@ -34,16 +35,27 @@ CORS(app)
 
 UPLOAD_FOLDER = 'upload'
 STATUS_PENDING = 'pending'
+STATUS_PROCESSING = 'PROCESSING'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 es = getinstance()
 words = []
 connectmongo()
+
+@app.route('/fetch-corpus', methods=['GET'])
+def fetch_corpus():
+    corpus = Corpus.objects.to_json()
+    print(corpus)
+    res = Response(Status.SUCCESS.value, json.loads(corpus))
+    return res.getres()
 
 
 @app.route('/single', methods=['POST'])
 def upload_single_file():
     pool = mp.Pool(mp.cpu_count())
     basename = str(int(time.time()))
+    current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+    corpus = Corpus(status=STATUS_PROCESSING, name=str(basename), domain='',created_on=current_time, last_modified=current_time, author='', comment='',no_of_sentences=0)
+    corpus.save()
     f = request.files['file']
     filepath = os.path.join(
         app.config['UPLOAD_FOLDER'], basename + '.pdf')
@@ -74,6 +86,9 @@ def upload_single_file():
 def upload_file():
     pool = mp.Pool(mp.cpu_count())
     basename = str(int(time.time()))
+    current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+    corpus = Corpus(status=STATUS_PROCESSING, name=str(basename), domain='',created_on=current_time, last_modified=current_time, author='', comment='',no_of_sentences=0)
+    corpus.save()
     f = request.files['hindi']
     f_eng = request.files['english']
     filepath = os.path.join(
@@ -135,7 +150,6 @@ def process_files(basename):
         hindi_points.append(point)
     data = {'hindi': hindi_res, 'english': english_res,
             'english_scores': english_points, 'hindi_scores': hindi_points}
-    res = Response(Status.SUCCESS.value, data)
     sentences = []
     for i in range(0, len(hindi_res)):
         sentence = Sentence(status=STATUS_PENDING, alignment_accuracy=english_res[i].split(':::::')[1], basename=str(
@@ -145,6 +159,7 @@ def process_files(basename):
     Sentence.objects.insert(sentences)
     for f in glob.glob(app.config['UPLOAD_FOLDER']+'/'+basename+'*'):
         os.remove(f)
+    res = Response(Status.SUCCESS.value, data)
     return res.getres()
 
 
