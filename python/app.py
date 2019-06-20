@@ -36,6 +36,7 @@ CORS(app)
 UPLOAD_FOLDER = 'upload'
 STATUS_PENDING = 'pending'
 STATUS_PROCESSING = 'PROCESSING'
+STATUS_PROCESSED = 'PROCESSED'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 es = getinstance()
 words = []
@@ -44,7 +45,6 @@ connectmongo()
 @app.route('/fetch-corpus', methods=['GET'])
 def fetch_corpus():
     corpus = Corpus.objects.to_json()
-    print(corpus)
     res = Response(Status.SUCCESS.value, json.loads(corpus))
     return res.getres()
 
@@ -86,8 +86,12 @@ def upload_single_file():
 def upload_file():
     pool = mp.Pool(mp.cpu_count())
     basename = str(int(time.time()))
+    name = request.form.getlist('name')
+    domain = request.form.getlist('domain')
+    comment = request.form.getlist('comment')
+    print(domain)
     current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-    corpus = Corpus(status=STATUS_PROCESSING, name=str(basename), domain='',created_on=current_time, last_modified=current_time, author='', comment='',no_of_sentences=0)
+    corpus = Corpus(status=STATUS_PROCESSING, name=name[0], domain=domain[0],created_on=current_time, last_modified=current_time, author='', comment=comment[0],no_of_sentences=0,basename=basename)
     corpus.save()
     f = request.files['hindi']
     f_eng = request.files['english']
@@ -160,6 +164,8 @@ def process_files(basename):
     for f in glob.glob(app.config['UPLOAD_FOLDER']+'/'+basename+'*'):
         os.remove(f)
     res = Response(Status.SUCCESS.value, data)
+    corpus = Corpus.objects(basename=basename)
+    corpus.update(set__status=STATUS_PROCESSED, set__no_of_sentences=len(hindi_res))
     return res.getres()
 
 
