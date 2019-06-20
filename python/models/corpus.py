@@ -9,3 +9,4 @@ class Corpus(Document):
     author = StringField()
     no_of_sentences = IntField()
     status = StringField()
+    basename = StringField()
