@@ -61,7 +61,7 @@ def upload_single_file():
     basename = str(int(time.time()))
     current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
     corpus = Corpus(status=STATUS_PROCESSING, name=str(basename), domain='',created_on=current_time, last_modified=current_time, author='', comment='',no_of_sentences=0)
-    corpus.save()
+    # corpus.save()
     f = request.files['file']
     filepath = os.path.join(
         app.config['UPLOAD_FOLDER'], basename + '.pdf')
@@ -103,10 +103,10 @@ def upload_file():
             return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
         
         else:
-            print('t')
+            # print('t')
             current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
             corpus = Corpus(status=STATUS_PROCESSING, name=name[0], domain=domain[0],created_on=current_time, last_modified=current_time, author='', comment=comment[0],no_of_sentences=0,basename=basename)
-            corpus.save()
+            # corpus.save()
             f = request.files['hindi']
             f_eng = request.files['english']
             filepath = os.path.join(
