@@ -98,15 +98,11 @@ def upload_file():
         comment = request.form.getlist('comment')
         if comment is None or len(comment) == 0:
             comment = ['']
-        if name is None or len(name) == 0 or domain is None or len(domain) == 0:
+        if name is None or len(name) == 0 or len(name[0]) == 0 or domain is None or len(domain) == 0 or len(domain[0]) == 0 or request.files is None or request.files['hindi'] is None or request.files['english'] is None:
             res = CustomResponse(Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
             return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
         
         else:
-            print('saving the records')
-            print(name)
-            print(domain)
-            print(comment)
             current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
             corpus = Corpus(status=STATUS_PROCESSING, name=name[0], domain=domain[0],created_on=current_time, last_modified=current_time, author='', comment=comment[0],no_of_sentences=0,basename=basename)
             corpus.save()
