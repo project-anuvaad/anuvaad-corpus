@@ -8,7 +8,7 @@ from db.conmgr import getinstance
 from db.conmgr_mongo import connectmongo
 from utils.pdftoimage import converttoimage
 from utils.imagetotext import convertimagetotext
-from utils.imagetotext_v2 import convertimagetotextv2
+# from utils.imagetotext_v2 import convertimagetotextv2
 from utils.process_paragraph import processhindi
 from utils.process_paragraph_eng import processenglish
 from utils.remove_page_number_filter import filtertext
@@ -26,8 +26,7 @@ import codecs
 from flask_cors import CORS
 from flask import Response
 from models.status import Status
-from models.response import Response
-
+from models.response import CustomResponse
 
 app = Flask(__name__)
 app.debug = True
@@ -45,7 +44,7 @@ connectmongo()
 @app.route('/fetch-corpus', methods=['GET'])
 def fetch_corpus():
     corpus = Corpus.objects.to_json()
-    res = Response(Status.SUCCESS.value, json.loads(corpus))
+    res = CustomResponse(Status.SUCCESS.value, json.loads(corpus))
     return res.getres()
 
 
@@ -89,7 +88,13 @@ def upload_file():
     name = request.form.getlist('name')
     domain = request.form.getlist('domain')
     comment = request.form.getlist('comment')
-    print(domain)
+    if comment is None or len(comment) == 0:
+        comment = ['']
+    if name is None or len(name) == 0 or domain is None or len(domain) == 0:
+        res = CustomResponse(Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
+        return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
+    
+    
     current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
     corpus = Corpus(status=STATUS_PROCESSING, name=name[0], domain=domain[0],created_on=current_time, last_modified=current_time, author='', comment=comment[0],no_of_sentences=0,basename=basename)
     corpus.save()
@@ -101,26 +106,12 @@ def upload_file():
         app.config['UPLOAD_FOLDER'], basename + '_eng.pdf')
     f.save(filepath)
     f_eng.save(filepath_eng)
-    # hin_result = converttoimage(
-    #     filepath, app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin', basename)
-    # eng_result = converttoimage(
-    #     filepath_eng, app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng', basename)
-    # print(hin_result['imagenames'])
-    # for imagename in hin_result['imagenames']:
-    #     pool.apply_async(convertimagetotextv2, args=(
-    #         os.getcwd() + '/'+ imagename, os.getcwd() + '/'+app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin.txt', basename), callback=capturewords)
-    # for imagename in eng_result['imagenames']:
-    #     pool.apply_async(convertimagetotextv2, args=(
-    #         imagename, app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng.txt', basename), callback=capturewords)
-
     pool.apply_async(converttoimage, args=(
         filepath, app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin', basename), callback=capturehindi)
     pool.apply_async(converttoimage, args=(
         filepath_eng, app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng', basename), callback=captureenglish)
     pool.close()
     pool.join()
-    # global words
-    # savewords(words)
     return process_files(basename)
 
 
@@ -163,7 +154,7 @@ def process_files(basename):
     Sentence.objects.insert(sentences)
     for f in glob.glob(app.config['UPLOAD_FOLDER']+'/'+basename+'*'):
         os.remove(f)
-    res = Response(Status.SUCCESS.value, data)
+    res = CustomResponse(Status.SUCCESS.value, data)
     corpus = Corpus.objects(basename=basename)
     corpus.update(set__status=STATUS_PROCESSED, set__no_of_sentences=len(hindi_res))
     return res.getres()
@@ -183,13 +174,13 @@ def capturetext(result):
 
 def capturehindi(result):
     words = convertimagetotext(result['imagenames'], app.config['UPLOAD_FOLDER'] +
-                               '/' + result['basename'] + '_hin.txt', result['basename'])
+                               '/' + result['basename'] + '_hin.txt', result['basename'], 5)
     savewords(words)
 
 
 def captureenglish(result):
     words_eng = convertimagetotext(
-        result['imagenames'], app.config['UPLOAD_FOLDER'] + '/' + result['basename'] + '_eng.txt', result['basename'])
+        result['imagenames'], app.config['UPLOAD_FOLDER'] + '/' + result['basename'] + '_eng.txt', result['basename'], 4)
     savewords(words_eng)
 
 
