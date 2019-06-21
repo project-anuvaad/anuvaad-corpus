@@ -181,13 +181,13 @@ def capturetext(result):
 
 def capturehindi(result):
     words = convertimagetotext(result['imagenames'], app.config['UPLOAD_FOLDER'] +
-                               '/' + result['basename'] + '_hin.txt', result['basename'], 5)
+                               '/' + result['basename'] + '_hin.txt', result['basename'])
     savewords(words)
 
 
 def captureenglish(result):
     words_eng = convertimagetotext(
-        result['imagenames'], app.config['UPLOAD_FOLDER'] + '/' + result['basename'] + '_eng.txt', result['basename'], 4)
+        result['imagenames'], app.config['UPLOAD_FOLDER'] + '/' + result['basename'] + '_eng.txt', result['basename'])
     savewords(words_eng)
 
 

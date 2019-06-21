@@ -6,7 +6,7 @@ import codecs
 
 
 def translatewithgoogle(fname, outputpath):
-    with open(outputpath,'w',encoding='utf-8') as f_eng:
+    with open(outputpath, 'w', encoding='utf-8') as f_eng:
         with codecs.open(fname, encoding='utf-8', errors='ignore') as f:
             flist = f.readlines()
             translate_client = translate.Client()
@@ -32,7 +32,8 @@ def translatebigtext(f_eng, flist, translate_client, index):
         flist[20*index:endCount],
         target_language=target)
     for translation in translationarray:
-            f_eng.write(translation['translatedText'] + '\n')
+        if len(translation['translatedText']) > 0 and translation['translatedText'] != '\n':
+            f_eng.write(translation['translatedText'].replace("\n", "") + '\n')
     if callnext:
-        index+=1
+        index += 1
         translatebigtext(f_eng, flist, translate_client, index)
