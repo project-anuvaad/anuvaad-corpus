@@ -47,6 +47,13 @@ def fetch_corpus():
     res = CustomResponse(Status.SUCCESS.value, json.loads(corpus))
     return res.getres()
 
+@app.route('/fetch-sentences', methods=['GET'])
+def fetch_sentences():
+    basename = request.args.get('basename')
+    sentences = Sentence.objects(basename=basename).to_json()
+    res = CustomResponse(Status.SUCCESS.value, json.loads(sentences))
+    return res.getres()
+
 
 @app.route('/single', methods=['POST'])
 def upload_single_file():
