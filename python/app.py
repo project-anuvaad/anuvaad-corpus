@@ -92,35 +92,39 @@ def upload_single_file():
 def upload_file():
     pool = mp.Pool(mp.cpu_count())
     basename = str(int(time.time()))
-    name = request.form.getlist('name')
-    domain = request.form.getlist('domain')
-    comment = request.form.getlist('comment')
-    if comment is None or len(comment) == 0:
-        comment = ['']
-    if name is None or len(name) == 0 or domain is None or len(domain) == 0:
-        res = CustomResponse(Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
-        return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
-    
-    else:
-        print('t')
-        current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-        corpus = Corpus(status=STATUS_PROCESSING, name=name[0], domain=domain[0],created_on=current_time, last_modified=current_time, author='', comment=comment[0],no_of_sentences=0,basename=basename)
-        corpus.save()
-        f = request.files['hindi']
-        f_eng = request.files['english']
-        filepath = os.path.join(
-            app.config['UPLOAD_FOLDER'], basename + '_hin.pdf')
-        filepath_eng = os.path.join(
-            app.config['UPLOAD_FOLDER'], basename + '_eng.pdf')
-        f.save(filepath)
-        f_eng.save(filepath_eng)
-        pool.apply_async(converttoimage, args=(
-            filepath, app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin', basename), callback=capturehindi)
-        pool.apply_async(converttoimage, args=(
-            filepath_eng, app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng', basename), callback=captureenglish)
-        pool.close()
-        pool.join()
-        return process_files(basename)
+    try:
+        name = request.form.getlist('name')
+        domain = request.form.getlist('domain')
+        comment = request.form.getlist('comment')
+        if comment is None or len(comment) == 0:
+            comment = ['']
+        if name is None or len(name) == 0 or domain is None or len(domain) == 0:
+            res = CustomResponse(Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
+            return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
+        
+        else:
+            print('t')
+            current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+            corpus = Corpus(status=STATUS_PROCESSING, name=name[0], domain=domain[0],created_on=current_time, last_modified=current_time, author='', comment=comment[0],no_of_sentences=0,basename=basename)
+            corpus.save()
+            f = request.files['hindi']
+            f_eng = request.files['english']
+            filepath = os.path.join(
+                app.config['UPLOAD_FOLDER'], basename + '_hin.pdf')
+            filepath_eng = os.path.join(
+                app.config['UPLOAD_FOLDER'], basename + '_eng.pdf')
+            f.save(filepath)
+            f_eng.save(filepath_eng)
+            pool.apply_async(converttoimage, args=(
+                filepath, app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin', basename), callback=capturehindi)
+            pool.apply_async(converttoimage, args=(
+                filepath_eng, app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng', basename), callback=captureenglish)
+            pool.close()
+            pool.join()
+            return process_files(basename)
+    except Exception as e:
+            res = CustomResponse(Status.ERR_GLOBAL_SYSTEM.value, None)
+            return res.getres(), Status.ERR_GLOBAL_SYSTEM.value['http']['status']
 
 
 def process_files(basename):
