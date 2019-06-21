@@ -102,6 +102,7 @@ def upload_file():
         return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
     
     else:
+        print('t')
         current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
         corpus = Corpus(status=STATUS_PROCESSING, name=name[0], domain=domain[0],created_on=current_time, last_modified=current_time, author='', comment=comment[0],no_of_sentences=0,basename=basename)
         corpus.save()
