@@ -1,6 +1,6 @@
 from flask import jsonify
 
-class Response :
+class CustomResponse :
     def __init__(self, statuscode, data):
         self.statuscode = statuscode
         self.statuscode['data'] = data

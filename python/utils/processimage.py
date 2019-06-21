@@ -3,30 +3,13 @@ import pytesseract
 import argparse
 import cv2
 import os
-# import multiprocessing as mp
-from multiprocessing.dummy import Pool as ThreadPool
-import threading
 import random
 import string
 import time
 
 
-global_lock = threading.Lock()
-# from utils.processimage import processimage
-words = []
-image_text = []
-# print(mp.cpu_count())
-# pool = mp.Pool(mp.cpu_count())
-
 def processimage(imagepath,outputfilename, basename):
-    print(imagepath)
-    global global_lock
-    global image_text
-    while global_lock.locked():
-        continue
-
-    global_lock.acquire()
-    word_arr = []
+    words = []
     image = cv2.imread(imagepath)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
@@ -42,7 +25,9 @@ def processimage(imagepath,outputfilename, basename):
         filename), config='-l hin+eng --oem 1', output_type="dict")
     text = pytesseract.image_to_string(
         Image.open(filename), config='-l hin+eng --oem 1')
-    image_text.append(text)
+    f = open(os.getcwd() + '/' + outputfilename, "a+")
+    f.write(text)
+    f.close()
     index = 0
     os.remove(filename)
     for t in conf_data['conf']:
@@ -57,11 +42,9 @@ def processimage(imagepath,outputfilename, basename):
                     print(e)
             word = {'text': conf_data['text'][index], 'conf': t,
                     'next': next_word, 'previous': previous_word, 'timestamp': basename}
-            word_arr.append(word)
+            words.append(word)
             index = index + 1
-    global words
-    words = words + word_arr
-    global_lock.release()
+    return words
 
 
 
@@ -69,31 +52,3 @@ def randomString(stringLength=10):
     """Generate a random string of fixed length """
     letters = string.ascii_lowercase
     return str(int(time.time()))+''.join(random.choice(letters) for i in range(stringLength))
-
-
-def convertimagetotext(imagepaths, outputfilename, basename, threads=2):
-    threads = []
-    # pool = ThreadPool(processes=len(imagepaths))
-    for imagepath in imagepaths:
-        # results = pool.map(processimage, imagepath, outputfilename, basename)
-        # capturewords(results)
-        # pool.apply_async(processimage, args=(
-        #     imagepath, outputfilename, basename), callback=capturewords)
-        t = threading.Thread(target=processimage,args=[imagepath, outputfilename, basename])
-        threads.append(t)
-        t.start()
-    [thread.join() for thread in threads]
-    # pool.close()
-    # pool.join()
-    global words
-    global image_text
-    f = open(os.getcwd() + '/' + outputfilename, "a+")
-    for text in image_text:
-        f.write(text)
-    f.close()
-    return words
-
-
-def capturewords(word):
-    global words
-    words = words+word
