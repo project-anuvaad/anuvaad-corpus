@@ -14,6 +14,7 @@ from utils.process_paragraph_eng import processenglish
 from utils.remove_page_number_filter import filtertext
 from utils.separate import separate
 from utils.translatewithgoogle import translatewithgoogle
+from utils.translatewithanuvada import translatewithanuvada
 from models.words import savewords
 from models.words import fetchwordsfromsentence
 from models.sentence import Sentence
@@ -56,16 +57,23 @@ def fetch_sentences():
 
 @app.route('/translate', methods=['POST'])
 def translate():
-    pool = mp.Pool(mp.cpu_count())
-    basename = str(int(time.time()))
-    f = request.files['file']
-    filepath = os.path.join(
-        app.config['UPLOAD_FOLDER'], basename + '.pdf')
-    f.save(filepath)
-    pool.apply_async(converttoimage, args=(
-                filepath, app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin', basename), callback=capturehindi)
-    filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin.txt',
-               app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin_filtered.txt')
+    # pool = mp.Pool(mp.cpu_count())
+    basename = str(1561358888)
+    # f = request.files['file']
+    # filepath = os.path.join(
+    #     app.config['UPLOAD_FOLDER'], basename + '.pdf')
+    # f.save(filepath)
+    # pool.apply_async(converttoimage, args=(
+    #             filepath, app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin', basename), callback=capturehindi)
+    # pool.close()
+    # pool.join()
+    # filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin.txt',
+    #            app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin_filtered.txt')
+    # processhindi(app.config['UPLOAD_FOLDER'] +
+    #              '/'+basename+'_hin_filtered.txt')
+    translatewithanuvada(app.config['UPLOAD_FOLDER'] +
+                        '/'+basename+'_hin_filtered.txt', app.config['UPLOAD_FOLDER'] +
+                        '/'+basename+'_eng_tran.txt')
 
 
 @app.route('/single', methods=['POST'])

@@ -26,7 +26,6 @@ def translatebigtext(f_eng, flist, translate_client, index):
     if (index+1)*20 > len(flist):
         endCount = 20*index + len(flist) % 20
         callnext = False
-        f_eng.close()
     # The text to translate
     # text = s
     # The target language
@@ -42,3 +41,5 @@ def translatebigtext(f_eng, flist, translate_client, index):
     if callnext:
         index += 1
         translatebigtext(f_eng, flist, translate_client, index)
+    else:
+        f_eng.close()

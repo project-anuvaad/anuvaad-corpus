@@ -20,3 +20,4 @@ def filtertext(filename, filename_filtered):
             if isNumber == "str":
                 f_data.write(i)
         f_data.close()
+        f.close()
