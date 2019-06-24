@@ -4,10 +4,11 @@ import json
 
 
 def fetchwordsfromsentence(sentence, timstamp):
-    if len(sentence) > 0 :
+    if len(sentence) > 0:
         words = sentence.split(' ')
         point = 0
         count = 0
+        values = []
         for i in range(0, len(words)):
             next_word = ''
             previous = ''
@@ -20,13 +21,18 @@ def fetchwordsfromsentence(sentence, timstamp):
                     print(e)
             result = search(words[i], previous, next_word, timstamp)
 
-            if int(result['hits']['total']['value']) > 0:
+            if int(result['hits']['total']) > 0:
                 count += 1
-                point += int(result['hits']['hits'][0]['_source']['doc']['word']['conf'])
+                point += int(result['hits']['hits'][0]
+                             ['_source']['doc']['word']['conf'])
+                values.append(
+                    int(result['hits']['hits'][0]['_source']['doc']['word']['conf']))
+            else:
+                values.append(0)
         if count > 0:
             point = point / count
-        return point
-    return 0
+        return {'avg': point, 'values': values}
+    return {'avg': 0, 'values': []}
 
 
 def search(text, previous, next_word, timestamp):
