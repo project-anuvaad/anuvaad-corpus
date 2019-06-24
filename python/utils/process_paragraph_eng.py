@@ -23,3 +23,4 @@ def processenglish(filepath):
 
     for i in sent_text:
         f_eng.write(i.strip() + '\n')
+    f_eng.close()
