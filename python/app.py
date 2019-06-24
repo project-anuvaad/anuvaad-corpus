@@ -54,6 +54,19 @@ def fetch_sentences():
     res = CustomResponse(Status.SUCCESS.value, json.loads(sentences))
     return res.getres()
 
+@app.route('/translate', methods=['POST'])
+def translate():
+    pool = mp.Pool(mp.cpu_count())
+    basename = str(int(time.time()))
+    f = request.files['file']
+    filepath = os.path.join(
+        app.config['UPLOAD_FOLDER'], basename + '.pdf')
+    f.save(filepath)
+    pool.apply_async(converttoimage, args=(
+                filepath, app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin', basename), callback=capturehindi)
+    filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin.txt',
+               app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin_filtered.txt')
+
 
 @app.route('/single', methods=['POST'])
 def upload_single_file():
@@ -149,11 +162,13 @@ def process_files(basename):
         english_res.append(f)
         point = fetchwordsfromsentence(f, basename)
         english_points.append(point)
+    f_eng.close()
     f_hin = open(app.config['UPLOAD_FOLDER']+'/' + basename + '_output-s', 'r')
     for f in f_hin:
         hindi_res.append(f)
         point = fetchwordsfromsentence(f, basename)
         hindi_points.append(point)
+    f_hin.close()
     data = {'hindi': hindi_res, 'english': english_res,
             'english_scores': english_points, 'hindi_scores': hindi_points}
     sentences = []

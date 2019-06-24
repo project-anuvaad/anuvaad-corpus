@@ -32,5 +32,6 @@ def processhindi(filepath):
                 words = k.strip()
                 if len(words) > 0:
                     f_hin.write(k.strip() + '\n')
+    f_hin.close()
 
 
