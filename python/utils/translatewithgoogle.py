@@ -6,12 +6,15 @@ import codecs
 
 
 def translatewithgoogle(fname, outputpath):
-    with open(outputpath, 'w', encoding='utf-8') as f_eng:
-        with codecs.open(fname, encoding='utf-8', errors='ignore') as f:
-            flist = f.readlines()
-            translate_client = translate.Client()
-            translatebigtext(f_eng, flist, translate_client, 0)
-            f_eng.close()
+    try:
+        with open(outputpath, 'w', encoding='utf-8') as f_eng:
+            with codecs.open(fname, encoding='utf-8', errors='ignore') as f:
+                flist = f.readlines()
+                translate_client = translate.Client()
+                translatebigtext(f_eng, flist, translate_client, 0)
+                f_eng.close()
+    except Exception as e:
+        print(e)
         # print(translation)
         # f_eng.write(translation['translatedText'] + '\n')
         # for s in flist:
