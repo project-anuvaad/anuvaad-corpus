@@ -41,8 +41,8 @@ def translatebigtext(f_eng, flist, index):
         print(dictFromServer['response_body'])
         for translation in dictFromServer['response_body']:
             print(translation)
-            if len(translation['tgt']) > 0 and translation['tgt'] != '\n':
-                f_eng.write(translation['tgt'].replace("\n", "") + '\n')
+            # if len(translation['tgt']) > 0 and translation['tgt'] != '\n':
+            f_eng.write(translation['tgt']+'\n')
     if callnext:
         index += 1
         translatebigtext(f_eng, flist, index)
