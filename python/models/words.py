@@ -41,13 +41,33 @@ def search(text, previous, next_word, timestamp):
     response = es.search(index="words", body={
         "query": {
             "bool": {
-                "must": [
-                    {"term": {"doc.word.text": text}},
-                    {"term": {"doc.word.next": next_word}},
-                    {"term": {"doc.word.timestamp": timestamp}},
-                    {"term": {"doc.word.previous": previous}}
-                ]
-            }
+                         "must": [
+                             {
+                                 "match": {
+                                     "doc.word.text": text
+                                 }
+                             },
+                             {
+                                 "match": {
+                                     "doc.word.timestamp": timestamp
+                                 }
+                             }
+                         ],
+                         "should": [
+                             {
+                                 "match": {
+                                     "doc.word.next": next_word,
+                                 }
+                             },
+                             {
+                                 "match": {
+                                     "doc.word.previous": previous,
+                                 }
+                             }
+                         ]
+                         },
+
+
         }
     })
     # results = json.loads(response)
