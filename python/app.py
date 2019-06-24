@@ -185,6 +185,7 @@ def upload_file():
             pool.join()
             return process_files(basename)
     except Exception as e:
+            print(e)
             res = CustomResponse(Status.ERR_GLOBAL_SYSTEM.value, None)
             return res.getres(), Status.ERR_GLOBAL_SYSTEM.value['http']['status']
 
@@ -206,25 +207,29 @@ def process_files(basename):
     english_res = []
     hindi_res = []
     english_points = []
+    english_points_words = []
     hindi_points = []
+    hindi_points_words = []
     f_eng = open(app.config['UPLOAD_FOLDER']+'/' + basename + '_output-t', 'r')
     for f in f_eng:
         english_res.append(f)
         point = fetchwordsfromsentence(f, basename)
-        english_points.append(point)
+        english_points.append(point['avg'])
+        english_points_words.append(point['values'])
     f_eng.close()
     f_hin = open(app.config['UPLOAD_FOLDER']+'/' + basename + '_output-s', 'r')
     for f in f_hin:
         hindi_res.append(f)
         point = fetchwordsfromsentence(f, basename)
-        hindi_points.append(point)
+        hindi_points.append(point['avg'])
+        hindi_points_words.append(point['values'])
     f_hin.close()
     data = {'hindi': hindi_res, 'english': english_res,
             'english_scores': english_points, 'hindi_scores': hindi_points}
     sentences = []
     for i in range(0, len(hindi_res)):
         sentence = Sentence(status=STATUS_PENDING, alignment_accuracy=english_res[i].split(':::::')[1], basename=str(
-            basename), source=hindi_res[i], target=english_res[i].split(':::::')[0], source_ocr=str(hindi_points[i]), target_ocr=str(english_points[i]))
+            basename), source=hindi_res[i], target=english_res[i].split(':::::')[0], source_ocr_words=hindi_points_words[i],source_ocr=str(hindi_points[i]), target_ocr_words=english_points_words[i],target_ocr=str(english_points[i]))
         sentences.append(sentence)
         # sentence.save()
     Sentence.objects.insert(sentences)
