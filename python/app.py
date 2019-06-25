@@ -1,3 +1,10 @@
+"""
+ * @author ['aroop']
+ * @email ['aroop.ghosh@tarento.com']
+ * @create date 2019-06-25 12:40:01
+ * @modify date 2019-06-25 12:40:01
+ * @desc [description]
+ """
 from flask import Flask, jsonify, request
 import os
 import glob
@@ -44,17 +51,20 @@ es = getinstance()
 words = []
 connectmongo()
 
+
 @app.route('/fetch-corpus', methods=['GET'])
 def fetch_corpus():
     corpus = Corpus.objects.to_json()
     res = CustomResponse(Status.SUCCESS.value, json.loads(corpus))
     return res.getres()
 
+
 @app.route('/fetch-translation-process', methods=['GET'])
 def fetch_translation_process():
     transalationProcess = TranslationProcess.objects.to_json()
     res = CustomResponse(Status.SUCCESS.value, json.loads(transalationProcess))
     return res.getres()
+
 
 @app.route('/fetch-translation', methods=['GET'])
 def fetch_translation():
@@ -63,12 +73,14 @@ def fetch_translation():
     res = CustomResponse(Status.SUCCESS.value, json.loads(sentences))
     return res.getres()
 
+
 @app.route('/fetch-sentences', methods=['GET'])
 def fetch_sentences():
     basename = request.args.get('basename')
     sentences = Sentence.objects(basename=basename).to_json()
     res = CustomResponse(Status.SUCCESS.value, json.loads(sentences))
     return res.getres()
+
 
 @app.route('/translate', methods=['POST'])
 def translate():
@@ -78,11 +90,12 @@ def translate():
     f = request.files['file']
     filepath = os.path.join(
         app.config['UPLOAD_FOLDER'], basename + '.pdf')
-    translationProcess = TranslationProcess(status=STATUS_PROCESSING, name=f.filename,created_on=current_time, basename=basename)
+    translationProcess = TranslationProcess(
+        status=STATUS_PROCESSING, name=f.filename, created_on=current_time, basename=basename)
     translationProcess.save()
     f.save(filepath)
     pool.apply_async(converttoimage, args=(
-                filepath, app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin', basename), callback=capturehindi)
+        filepath, app.config['UPLOAD_FOLDER'], basename, '_hin'), callback=capturetext)
     pool.close()
     pool.join()
     filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin.txt',
@@ -90,15 +103,17 @@ def translate():
     processhindi(app.config['UPLOAD_FOLDER'] +
                  '/'+basename+'_hin_filtered.txt')
     translatewithanuvada(app.config['UPLOAD_FOLDER'] +
-                        '/'+basename+'_hin_filtered.txt', app.config['UPLOAD_FOLDER'] +
-                        '/'+basename+'_eng_tran.txt')
-    f_eng = open(app.config['UPLOAD_FOLDER']+'/' + basename + '_eng_tran.txt', 'r')
+                         '/'+basename+'_hin_filtered.txt', app.config['UPLOAD_FOLDER'] +
+                         '/'+basename+'_eng_tran.txt')
+    f_eng = open(app.config['UPLOAD_FOLDER']+'/' +
+                 basename + '_eng_tran.txt', 'r')
     english_res = []
     hindi_res = []
     for f in f_eng:
         english_res.append(f)
     f_eng.close()
-    f_hin = open(app.config['UPLOAD_FOLDER']+'/' + basename + '_hin_filtered.txt', 'r')
+    f_hin = open(app.config['UPLOAD_FOLDER']+'/' +
+                 basename + '_hin_filtered.txt', 'r')
     for f in f_hin:
         hindi_res.append(f)
     f_hin.close()
@@ -108,10 +123,9 @@ def translate():
         translation = Translation(basename=str(
             basename), source=hindi_res[i], target=english_res[i])
         translations.append(translation)
-        # sentence.save()
     Translation.objects.insert(translations)
-    # for f in glob.glob(app.config['UPLOAD_FOLDER']+'/'+basename+'*'):
-    #     os.remove(f)
+    for f in glob.glob(app.config['UPLOAD_FOLDER']+'/'+basename+'*'):
+        os.remove(f)
     res = CustomResponse(Status.SUCCESS.value, data)
     translationProcess = TranslationProcess.objects(basename=basename)
     translationProcess.update(set__status=STATUS_PROCESSED)
@@ -123,30 +137,17 @@ def upload_single_file():
     pool = mp.Pool(mp.cpu_count())
     basename = str(int(time.time()))
     current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-    corpus = Corpus(status=STATUS_PROCESSING, name=str(basename), domain='',created_on=current_time, last_modified=current_time, author='', comment='',no_of_sentences=0)
-    # corpus.save()
+    corpus = Corpus(status=STATUS_PROCESSING, name=str(basename), domain='', created_on=current_time,
+                    last_modified=current_time, author='', comment='', no_of_sentences=0)
+    corpus.save()
     f = request.files['file']
     filepath = os.path.join(
         app.config['UPLOAD_FOLDER'], basename + '.pdf')
     f.save(filepath)
-    # hin_result = converttoimage(
-    #     filepath, app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin', basename)
-    # eng_result = converttoimage(
-    #     filepath_eng, app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng', basename)
-    # print(hin_result['imagenames'])
-    # for imagename in hin_result['imagenames']:
-    #     pool.apply_async(convertimagetotextv2, args=(
-    #         os.getcwd() + '/'+ imagename, os.getcwd() + '/'+app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin.txt', basename), callback=capturewords)
-    # for imagename in eng_result['imagenames']:
-    #     pool.apply_async(convertimagetotextv2, args=(
-    #         imagename, app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng.txt', basename), callback=capturewords)
-
     pool.apply_async(converttoimage, args=(
-        filepath, app.config['UPLOAD_FOLDER'] + '/' + basename, basename), callback=capturetext)
+        filepath, app.config['UPLOAD_FOLDER'], basename, ''), callback=capturetext)
     pool.close()
     pool.join()
-    # global words
-    # savewords(words)
     separate(app.config['UPLOAD_FOLDER'] + '/'+basename)
     return process_files(basename)
 
@@ -162,12 +163,14 @@ def upload_file():
         if comment is None or len(comment) == 0:
             comment = ['']
         if name is None or len(name) == 0 or len(name[0]) == 0 or domain is None or len(domain) == 0 or len(domain[0]) == 0 or request.files is None or request.files['hindi'] is None or request.files['english'] is None:
-            res = CustomResponse(Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
+            res = CustomResponse(
+                Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
             return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
-        
+
         else:
             current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-            corpus = Corpus(status=STATUS_PROCESSING, name=name[0], domain=domain[0],created_on=current_time, last_modified=current_time, author='', comment=comment[0],no_of_sentences=0,basename=basename)
+            corpus = Corpus(status=STATUS_PROCESSING, name=name[0], domain=domain[0], created_on=current_time,
+                            last_modified=current_time, author='', comment=comment[0], no_of_sentences=0, basename=basename)
             corpus.save()
             f = request.files['hindi']
             f_eng = request.files['english']
@@ -178,16 +181,16 @@ def upload_file():
             f.save(filepath)
             f_eng.save(filepath_eng)
             pool.apply_async(converttoimage, args=(
-                filepath, app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin', basename), callback=capturehindi)
+                filepath, app.config['UPLOAD_FOLDER'], basename, '_hin'), callback=capturetext)
             pool.apply_async(converttoimage, args=(
-                filepath_eng, app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng', basename), callback=captureenglish)
+                filepath_eng, app.config['UPLOAD_FOLDER'], basename, '_eng'), callback=capturetext)
             pool.close()
             pool.join()
             return process_files(basename)
     except Exception as e:
-            print(e)
-            res = CustomResponse(Status.ERR_GLOBAL_SYSTEM.value, None)
-            return res.getres(), Status.ERR_GLOBAL_SYSTEM.value['http']['status']
+        print(e)
+        res = CustomResponse(Status.ERR_GLOBAL_SYSTEM.value, None)
+        return res.getres(), Status.ERR_GLOBAL_SYSTEM.value['http']['status']
 
 
 def process_files(basename):
@@ -229,7 +232,7 @@ def process_files(basename):
     sentences = []
     for i in range(0, len(hindi_res)):
         sentence = Sentence(status=STATUS_PENDING, alignment_accuracy=english_res[i].split(':::::')[1], basename=str(
-            basename), source=hindi_res[i], target=english_res[i].split(':::::')[0], source_ocr_words=hindi_points_words[i],source_ocr=str(hindi_points[i]), target_ocr_words=english_points_words[i],target_ocr=str(english_points[i]))
+            basename), source=hindi_res[i], target=english_res[i].split(':::::')[0], source_ocr_words=hindi_points_words[i], source_ocr=str(hindi_points[i]), target_ocr_words=english_points_words[i], target_ocr=str(english_points[i]))
         sentences.append(sentence)
         # sentence.save()
     Sentence.objects.insert(sentences)
@@ -237,7 +240,8 @@ def process_files(basename):
         os.remove(f)
     res = CustomResponse(Status.SUCCESS.value, data)
     corpus = Corpus.objects(basename=basename)
-    corpus.update(set__status=STATUS_PROCESSED, set__no_of_sentences=len(hindi_res))
+    corpus.update(set__status=STATUS_PROCESSED,
+                  set__no_of_sentences=len(hindi_res))
     return res.getres()
 
 
@@ -249,20 +253,9 @@ def capturewords(result):
 
 def capturetext(result):
     words = convertimagetotext(result['imagenames'], app.config['UPLOAD_FOLDER'] +
-                               '/' + result['basename'] + '.txt', result['basename'])
+                               '/' + result['basename'] + result['suffix'] + '.txt', result['basename'])
     savewords(words)
 
-
-def capturehindi(result):
-    words = convertimagetotext(result['imagenames'], app.config['UPLOAD_FOLDER'] +
-                               '/' + result['basename'] + '_hin.txt', result['basename'])
-    savewords(words)
-
-
-def captureenglish(result):
-    words_eng = convertimagetotext(
-        result['imagenames'], app.config['UPLOAD_FOLDER'] + '/' + result['basename'] + '_eng.txt', result['basename'])
-    savewords(words_eng)
 
 
 if __name__ == '__main__':
