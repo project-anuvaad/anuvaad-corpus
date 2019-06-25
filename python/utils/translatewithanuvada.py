@@ -1,4 +1,10 @@
-# Imports the Google Cloud client library
+"""
+ * @author ['aroop']
+ * @email ['aroop.ghosh@tarento.com']
+ * @create date 2019-06-25 12:40:01
+ * @modify date 2019-06-25 12:40:01
+ * @desc [description]
+ """
 import codecs
 import requests
 
