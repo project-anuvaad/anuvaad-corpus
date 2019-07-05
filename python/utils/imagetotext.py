@@ -36,6 +36,7 @@ def convertimagetotext(imagepaths, outputfilename, basename):
         f.close()
         index = 0
         os.remove(filename)
+        print(conf_data)
         for t in conf_data['conf']:
             next_word = ''
             previous_word = ''
@@ -46,7 +47,7 @@ def convertimagetotext(imagepaths, outputfilename, basename):
                     next_word = conf_data['text'][index+1]
                 except Exception as e:
                     print(e)
-            word = {'text': conf_data['text'][index], 'conf': t,
+            word = {'imagepath':imagepath,'top':conf_data['top'][index],'left':conf_data['left'][index],'height':conf_data['height'][index],'text': conf_data['text'][index], 'conf': t,
                     'next': next_word, 'previous': previous_word, 'timestamp': basename}
             words.append(word)
             index = index + 1
