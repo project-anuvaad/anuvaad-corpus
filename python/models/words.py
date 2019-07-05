@@ -42,6 +42,32 @@ def fetchwordsfromsentence(sentence, timstamp):
         return {'avg': point, 'values': values}
     return {'avg': 0, 'values': []}
 
+def fetchwordhocrfromsentence(sentence, timstamp):
+    if len(sentence) > 0:
+        words = sentence.split(' ')
+        count = 0
+        values = []
+        for i in range(0, len(words)):
+            next_word = ''
+            previous = ''
+            if i is not 0:
+                previous = words[i-1]
+            if i is not len(words) - 1:
+                try:
+                    next_word = words[i+1]
+                except Exception as e:
+                    print(e)
+            result = search(words[i], previous, next_word, timstamp)
+
+            if int(result['hits']['total']['value']) > 0:
+                count += 1
+                values.append(result['hits']['hits'][0]['_source']['doc']['word'])
+            else:
+                values.append({})
+        return {'values': values}
+    return {'values': []}
+
+
 
 def search(text, previous, next_word, timestamp):
     es = getinstance()
