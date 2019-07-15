@@ -147,6 +147,39 @@ function startApp() {
     }
   })
 
+  app.post('/tamil', (req, res) => {
+    let text = req.body.text;
+
+    try {
+      // Instantiates a client
+      const translate = new Translate({
+        projectId: projectId,
+      });
+
+      // The text to translate
+      // The target language
+      const target = 'ta';
+
+      // Translates some text into English
+      translate
+        .translate(text, target)
+        .then(results => {
+          const translation = results[0];
+
+          console.log(`Text: ${text}`);
+          console.log(`Translation: ${translation}`);
+          return res.status(200).json(translation);
+        })
+        .catch(err => {
+          return res.status(200).json(err);
+        });
+    }
+    catch (e) {
+      console.log(e)
+      return res.status(200).json(e);
+    }
+  })
+
   // router.route('/')
   //   .get((req, res) => {
   //     let apistatus = new APIStatus(StatusCode.SUCCESS, "app").getRspStatus()
