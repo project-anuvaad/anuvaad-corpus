@@ -58,7 +58,7 @@ def process_word(thresh, output):
         cv2.rectangle(output, (x-1, y-5), (x+w, y+h), (255, 255, 255), -1)
     return output
 
-filename = '../upload/1562311529_hin_1.jpg'
+filename = '../upload/1562311529_hin_0.jpg'
 img = cv2.imread(filename)
 output3_word = img.copy()
 gray1 = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)

@@ -15,7 +15,11 @@ from db.conmgr import getinstance
 from db.conmgr_mongo import connectmongo
 from utils.pdftoimage import converttoimage
 from utils.imagetotext import convertimagetotext
+from utils.imagetoalto import convertimagetoalto
 from utils.puttext import puttext
+from utils.removetextv2 import removetext
+from utils.imagetopdf import converttopdf
+from utils.translateandupdateimage import translateandupdateimage
 # from utils.imagetotext_v2 import convertimagetotextv2
 from utils.process_paragraph import processhindi
 from utils.process_paragraph_eng import processenglish
@@ -97,74 +101,74 @@ def translateFile():
     translationProcess.save()
     f.save(filepath)
     pool.apply_async(converttoimage, args=(
-        filepath, app.config['UPLOAD_FOLDER'], basename, '_hin'), callback=capturetext)
+        filepath, app.config['UPLOAD_FOLDER'], basename, ''), callback=capturealtotext)
     pool.close()
     pool.join()
-    filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin.txt',
-               app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin_filtered.txt')
-    processenglish(app.config['UPLOAD_FOLDER'] +
-                 '/'+basename+'_hin_filtered.txt')
-    translatewithanuvadaeng(app.config['UPLOAD_FOLDER'] +
-                         '/'+basename+'_hin_filtered.txt', app.config['UPLOAD_FOLDER'] +
-                         '/'+basename+'_eng_tran.txt')
-    f_eng = open(app.config['UPLOAD_FOLDER']+'/' +
-                 basename + '_eng_tran.txt', 'r')
-    english_res = []
-    hindi_res = []
-    for f in f_eng:
-        english_res.append(f)
-    f_eng.close()
-    f_hin = open(app.config['UPLOAD_FOLDER']+'/' +
-                 basename + '_hin_filtered.txt', 'r')
-    index = 0
-    previousY = 0
-    previousX = 0
-    previousH = 0
-    previousP = ''
-    text_y = {}
-    text_x = 0
-    for f in f_hin:
-        hindi_res.append(f)
-        print(f)
-        point = fetchwordhocrfromsentence(f, basename)
-        english = english_res[index]
-        words = english.split(' ')
-        wordIndex = 0
+    # filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin.txt',
+    #            app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin_filtered.txt')
+    # processenglish(app.config['UPLOAD_FOLDER'] +
+    #              '/'+basename+'_hin_filtered.txt')
+    # translatewithanuvadaeng(app.config['UPLOAD_FOLDER'] +
+    #                      '/'+basename+'_hin_filtered.txt', app.config['UPLOAD_FOLDER'] +
+    #                      '/'+basename+'_eng_tran.txt')
+    # f_eng = open(app.config['UPLOAD_FOLDER']+'/' +
+    #              basename + '_eng_tran.txt', 'r')
+    # english_res = []
+    # hindi_res = []
+    # for f in f_eng:
+    #     english_res.append(f)
+    # f_eng.close()
+    # f_hin = open(app.config['UPLOAD_FOLDER']+'/' +
+    #              basename + '_hin_filtered.txt', 'r')
+    # index = 0
+    # previousY = 0
+    # previousX = 0
+    # previousH = 0
+    # previousP = ''
+    # text_y = {}
+    # text_x = 0
+    # for f in f_hin:
+    #     hindi_res.append(f)
+    #     print(f)
+    #     point = fetchwordhocrfromsentence(f, basename)
+    #     english = english_res[index]
+    #     words = english.split(' ')
+    #     wordIndex = 0
         
-        for word in words:
-            try:
-                if point['values'] is not None and point['values'][wordIndex] is not None and point['values'][wordIndex]['height'] is not None:
-                    previousY = point['values'][wordIndex]['left']
-                    previousX = point['values'][wordIndex]['top']
-                    previousH = point['values'][wordIndex]['height']
-                    try:
-                        if text_y[point['values'][wordIndex]['imagepath']] is None:
-                            text_y[point['values'][wordIndex]['imagepath']] = 200
-                    except Exception as e:
-                        text_y[point['values'][wordIndex]['imagepath']] = 200
-                    (text_x, vertical) = puttext(point['values'][wordIndex]['height'],200,text_y[point['values'][wordIndex]['imagepath']],english,point['values'][wordIndex]['imagepath'])
-                    text_y[point['values'][wordIndex]['imagepath']] = vertical
-                    # else:
-                    #     (text_x, text_y) = puttext(point['values'][wordIndex]['height'],point['values'][wordIndex]['left'],point['values'][wordIndex]['top'],english,point['values'][wordIndex]['imagepath'])
-                    previousP = point['values'][wordIndex]['imagepath']
-                    break
-            except Exception as e:
-                previousY = previousY + 200
-                # puttext(previousH,previousY,previousX,word,previousP)
-            wordIndex = wordIndex + 1
-            # puttext(point['values'][wordIndex]['left'],point['values'][wordIndex]['top'],word,point['values'][wordIndex]['imagepath'])
-        index = index + 1
-    f_hin.close()
-    data = {'hindi': hindi_res, 'english': english_res}
-    translations = []
-    for i in range(0, len(hindi_res)):
-        translation = Translation(basename=str(
-            basename), source=hindi_res[i], target=english_res[i])
-        translations.append(translation)
-    Translation.objects.insert(translations)
-    # for f in glob.glob(app.config['UPLOAD_FOLDER']+'/'+basename+'*'):
-    #     os.remove(f)
-    res = CustomResponse(Status.SUCCESS.value, data)
+    #     for word in words:
+    #         try:
+    #             if point['values'] is not None and point['values'][wordIndex] is not None and point['values'][wordIndex]['height'] is not None:
+    #                 previousY = point['values'][wordIndex]['left']
+    #                 previousX = point['values'][wordIndex]['top']
+    #                 previousH = point['values'][wordIndex]['height']
+    #                 try:
+    #                     if text_y[point['values'][wordIndex]['imagepath']] is None:
+    #                         text_y[point['values'][wordIndex]['imagepath']] = 200
+    #                 except Exception as e:
+    #                     text_y[point['values'][wordIndex]['imagepath']] = 200
+    #                 (text_x, vertical) = puttext(point['values'][wordIndex]['height'],200,text_y[point['values'][wordIndex]['imagepath']],english,point['values'][wordIndex]['imagepath'])
+    #                 text_y[point['values'][wordIndex]['imagepath']] = vertical
+    #                 # else:
+    #                 #     (text_x, text_y) = puttext(point['values'][wordIndex]['height'],point['values'][wordIndex]['left'],point['values'][wordIndex]['top'],english,point['values'][wordIndex]['imagepath'])
+    #                 previousP = point['values'][wordIndex]['imagepath']
+    #                 break
+    #         except Exception as e:
+    #             previousY = previousY + 200
+    #             # puttext(previousH,previousY,previousX,word,previousP)
+    #         wordIndex = wordIndex + 1
+    #         # puttext(point['values'][wordIndex]['left'],point['values'][wordIndex]['top'],word,point['values'][wordIndex]['imagepath'])
+    #     index = index + 1
+    # f_hin.close()
+    # data = {'hindi': hindi_res, 'english': english_res}
+    # translations = []
+    # for i in range(0, len(hindi_res)):
+    #     translation = Translation(basename=str(
+    #         basename), source=hindi_res[i], target=english_res[i])
+    #     translations.append(translation)
+    # Translation.objects.insert(translations)
+    # # for f in glob.glob(app.config['UPLOAD_FOLDER']+'/'+basename+'*'):
+    # #     os.remove(f)
+    res = CustomResponse(Status.SUCCESS.value, '')
     translationProcess = TranslationProcess.objects(basename=basename)
     translationProcess.update(set__status=STATUS_PROCESSED)
     return res.getres()
@@ -343,6 +347,15 @@ def capturetext(result):
     words = convertimagetotext(result['imagenames'], app.config['UPLOAD_FOLDER'] +
                                '/' + result['basename'] + result['suffix'] + '.txt', result['basename'])
     savewords(words)
+
+def capturealtotext(result):
+    convertimagetoalto(result['imagenames'], app.config['UPLOAD_FOLDER'] +
+                               '/' + result['basename'] + result['suffix'], result['basename'])
+    removetext(result['imagenames'], app.config['UPLOAD_FOLDER'] +
+                               '/' + result['basename'] + result['suffix'])
+    translateandupdateimage(result['imagenames'], app.config['UPLOAD_FOLDER'] +
+                               '/' + result['basename'] + result['suffix'])
+    converttopdf(result['imagenames'])
 
 
 
