@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<alto xmlns="http://www.loc.gov/standards/alto/ns-v3#" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.loc.gov/standards/alto/ns-v3# http://www.loc.gov/alto/v3/alto-3-0.xsd">
+	<Description>
+		<MeasurementUnit>pixel</MeasurementUnit>
+		<sourceImageInformation>
+			<fileName>			</fileName>
+		</sourceImageInformation>
+		<OCRProcessing ID="OCR_0">
+			<ocrProcessingStep>
+				<processingSoftware>
+					<softwareName>tesseract 5.0.0-alpha-243-g54ab</softwareName>
+				</processingSoftware>
+			</ocrProcessingStep>
+		</OCRProcessing>
+	</Description>
+	<Layout>
+		<Page WIDTH="674" HEIGHT="953" PHYSICAL_IMG_NR="0" ID="page_0">
+			<PrintSpace HPOS="0" VPOS="0" WIDTH="674" HEIGHT="953">
+				<TextBlock ID="block_0" HPOS="324" VPOS="83" WIDTH="107" HEIGHT="13">
+					<TextLine ID="line_0" HPOS="324" VPOS="83" WIDTH="107" HEIGHT="13">
+						<String ID="string_0" HPOS="324" VPOS="83" WIDTH="48" HEIGHT="13" WC="0.95" CONTENT="Report"/><SP WIDTH="4" VPOS="83" HPOS="372"/>
+						<String ID="string_1" HPOS="376" VPOS="83" WIDTH="23" HEIGHT="10" WC="0.96" CONTENT="No."/><SP WIDTH="5" VPOS="83" HPOS="399"/>
+						<String ID="string_2" HPOS="404" VPOS="83" WIDTH="27" HEIGHT="10" WC="0.96" CONTENT="274"/>
+					</TextLine>
+				</TextBlock>
+				<TextBlock ID="block_1" HPOS="220" VPOS="119" WIDTH="314" HEIGHT="37">
+					<TextLine ID="line_1" HPOS="220" VPOS="119" WIDTH="314" HEIGHT="13">
+						<String ID="string_3" HPOS="220" VPOS="119" WIDTH="50" HEIGHT="10" WC="0.96" CONTENT="Review"/><SP WIDTH="-4" VPOS="119" HPOS="270"/>
+						<String ID="string_4" HPOS="266" VPOS="110" WIDTH="23" HEIGHT="29" WC="0.96" CONTENT="of"/><SP WIDTH="-1" VPOS="110" HPOS="289"/>
+						<String ID="string_5" HPOS="288" VPOS="110" WIDTH="30" HEIGHT="29" WC="0.96" CONTENT="the"/><SP WIDTH="3" VPOS="110" HPOS="318"/>
+						<String ID="string_6" HPOS="321" VPOS="119" WIDTH="70" HEIGHT="13" WC="0.96" CONTENT="Contempt"/><SP WIDTH="-4" VPOS="119" HPOS="391"/>
+						<String ID="string_7" HPOS="387" VPOS="110" WIDTH="23" HEIGHT="29" WC="0.96" CONTENT="of"/><SP WIDTH="-1" VPOS="110" HPOS="410"/>
+						<String ID="string_8" HPOS="409" VPOS="119" WIDTH="52" HEIGHT="10" WC="0.97" CONTENT="Courts"/><SP WIDTH="5" VPOS="119" HPOS="461"/>
+						<String ID="string_9" HPOS="466" VPOS="119" WIDTH="28" HEIGHT="12" WC="0.96" CONTENT="Act,"/><SP WIDTH="7" VPOS="119" HPOS="494"/>
+						<String ID="string_10" HPOS="501" VPOS="119" WIDTH="33" HEIGHT="10" WC="0.96" CONTENT="1971"/>
+					</TextLine>
+					<TextLine ID="line_2" HPOS="264" VPOS="143" WIDTH="228" HEIGHT="13">
+						<String ID="string_11" HPOS="264" VPOS="143" WIDTH="58" HEIGHT="13" WC="0.95" CONTENT="(Limited"/><SP WIDTH="4" VPOS="143" HPOS="322"/>
+						<String ID="string_12" HPOS="326" VPOS="144" WIDTH="15" HEIGHT="9" WC="0.96" CONTENT="to"/><SP WIDTH="5" VPOS="144" HPOS="341"/>
+						<String ID="string_13" HPOS="346" VPOS="143" WIDTH="53" HEIGHT="10" WC="0.96" CONTENT="Section"/><SP WIDTH="5" VPOS="143" HPOS="399"/>
+						<String ID="string_14" HPOS="404" VPOS="143" WIDTH="9" HEIGHT="10" WC="0.96" CONTENT="2"/><SP WIDTH="-4" VPOS="143" HPOS="413"/>
+						<String ID="string_15" HPOS="409" VPOS="134" WIDTH="23" HEIGHT="29" WC="0.96" CONTENT="of"/><SP WIDTH="2" VPOS="134" HPOS="432"/>
+						<String ID="string_16" HPOS="434" VPOS="134" WIDTH="25" HEIGHT="29" WC="0.96" CONTENT="the"/><SP WIDTH="5" VPOS="134" HPOS="459"/>
+						<String ID="string_17" HPOS="464" VPOS="143" WIDTH="28" HEIGHT="13" WC="0.95" CONTENT="Act)"/>
+					</TextLine>
+				</TextBlock>
+				<TextBlock ID="block_2" HPOS="115" VPOS="233" WIDTH="525" HEIGHT="3">
+					<TextLine ID="line_3" HPOS="115" VPOS="233" WIDTH="525" HEIGHT="3">
+						<String ID="string_18" HPOS="115" VPOS="233" WIDTH="525" HEIGHT="3" WC="0.95" CONTENT=" "/>
+					</TextLine>
+				</TextBlock>
+				<TextBlock ID="block_3" HPOS="115" VPOS="269" WIDTH="525" HEIGHT="3">
+					<TextLine ID="line_4" HPOS="115" VPOS="269" WIDTH="525" HEIGHT="3">
+						<String ID="string_19" HPOS="115" VPOS="269" WIDTH="525" HEIGHT="3" WC="0.95" CONTENT=" "/>
+					</TextLine>
+				</TextBlock>
+				<TextBlock ID="block_4" HPOS="115" VPOS="351" WIDTH="525" HEIGHT="3">
+					<TextLine ID="line_5" HPOS="115" VPOS="351" WIDTH="525" HEIGHT="3">
+						<String ID="string_20" HPOS="115" VPOS="351" WIDTH="525" HEIGHT="3" WC="0.95" CONTENT=" "/>
+					</TextLine>
+				</TextBlock>
+				<TextBlock ID="block_5" HPOS="115" VPOS="648" WIDTH="525" HEIGHT="3">
+					<TextLine ID="line_6" HPOS="115" VPOS="648" WIDTH="525" HEIGHT="3">
+						<String ID="string_21" HPOS="115" VPOS="648" WIDTH="525" HEIGHT="3" WC="0.95" CONTENT=" "/>
+					</TextLine>
+				</TextBlock>
+				<TextBlock ID="block_6" HPOS="115" VPOS="754" WIDTH="525" HEIGHT="3">
+					<TextLine ID="line_7" HPOS="115" VPOS="754" WIDTH="525" HEIGHT="3">
+						<String ID="string_22" HPOS="115" VPOS="754" WIDTH="525" HEIGHT="3" WC="0.95" CONTENT=" "/>
+					</TextLine>
+				</TextBlock>
+				<TextBlock ID="block_7" HPOS="115" VPOS="789" WIDTH="525" HEIGHT="3">
+					<TextLine ID="line_8" HPOS="115" VPOS="789" WIDTH="525" HEIGHT="3">
+						<String ID="string_23" HPOS="115" VPOS="789" WIDTH="525" HEIGHT="3" WC="0.95" CONTENT=" "/>
+					</TextLine>
+				</TextBlock>
+				<TextBlock ID="block_8" HPOS="114" VPOS="234" WIDTH="3" HEIGHT="639">
+					<TextLine ID="line_9" HPOS="114" VPOS="234" WIDTH="3" HEIGHT="639">
+						<String ID="string_24" HPOS="114" VPOS="234" WIDTH="3" HEIGHT="639" WC="0.95" CONTENT=" "/>
+					</TextLine>
+				</TextBlock>
+				<TextBlock ID="block_9" HPOS="116" VPOS="202" WIDTH="502" HEIGHT="657">
+					<TextLine ID="line_10" HPOS="315" VPOS="202" WIDTH="125" HEIGHT="10">
+						<String ID="string_25" HPOS="315" VPOS="202" WIDTH="38" HEIGHT="10" WC="0.88" CONTENT="Table"/><SP WIDTH="4" VPOS="202" HPOS="353"/>
+						<String ID="string_26" HPOS="357" VPOS="202" WIDTH="16" HEIGHT="10" WC="0.96" CONTENT="of"/><SP WIDTH="3" VPOS="202" HPOS="373"/>
+						<String ID="string_27" HPOS="376" VPOS="202" WIDTH="64" HEIGHT="10" WC="0.90" CONTENT="Contents"/>
+					</TextLine>
+					<TextLine ID="line_11" HPOS="116" VPOS="234" WIDTH="498" HEIGHT="29">
+						<String ID="string_28" HPOS="116" VPOS="234" WIDTH="63" HEIGHT="29" WC="0.89" CONTENT="Chapter"/><SP WIDTH="166" VPOS="234" HPOS="179"/>
+						<String ID="string_29" HPOS="345" VPOS="234" WIDTH="43" HEIGHT="29" WC="0.96" CONTENT="Title"/><SP WIDTH="193" VPOS="234" HPOS="388"/>
+						<String ID="string_30" HPOS="581" VPOS="243" WIDTH="33" HEIGHT="13" WC="0.96" CONTENT="Page"/>
+					</TextLine>
+					<TextLine ID="line_12" HPOS="148" VPOS="278" WIDTH="461" HEIGHT="10">
+						<String ID="string_31" HPOS="148" VPOS="278" WIDTH="5" HEIGHT="10" WC="0.77" CONTENT="1"/><SP WIDTH="20" VPOS="278" HPOS="153"/>
+						<String ID="string_32" HPOS="173" VPOS="269" WIDTH="15" HEIGHT="29" WC="0.25" CONTENT="|"/><SP WIDTH="3" VPOS="269" HPOS="188"/>
+						<String ID="string_33" HPOS="191" VPOS="278" WIDTH="90" HEIGHT="10" WC="0.25" CONTENT="Introduction"/><SP WIDTH="5" VPOS="278" HPOS="281"/>
+						<String ID="string_34" HPOS="286" VPOS="278" WIDTH="26" HEIGHT="10" WC="0.96" CONTENT="and"/><SP WIDTH="4" VPOS="278" HPOS="312"/>
+						<String ID="string_35" HPOS="316" VPOS="278" WIDTH="71" HEIGHT="10" WC="0.96" CONTENT="Reference"/><SP WIDTH="201" VPOS="278" HPOS="387"/>
+						<String ID="string_36" HPOS="588" VPOS="278" WIDTH="21" HEIGHT="10" WC="0.88" CONTENT="17"/>
+					</TextLine>
+					<TextLine ID="line_13" HPOS="212" VPOS="302" WIDTH="397" HEIGHT="13">
+						<String ID="string_37" HPOS="212" VPOS="302" WIDTH="12" HEIGHT="10" WC="0.85" CONTENT="A."/><SP WIDTH="0" VPOS="302" HPOS="224"/>
+						<String ID="string_38" HPOS="224" VPOS="293" WIDTH="55" HEIGHT="29" WC="0.96" CONTENT="History"/><SP WIDTH="5" VPOS="293" HPOS="279"/>
+						<String ID="string_39" HPOS="284" VPOS="302" WIDTH="14" HEIGHT="10" WC="0.96" CONTENT="of"/><SP WIDTH="4" VPOS="302" HPOS="298"/>
+						<String ID="string_40" HPOS="302" VPOS="302" WIDTH="123" HEIGHT="13" WC="0.93" CONTENT="Contempt"/><SP WIDTH="-63" VPOS="302" HPOS="425"/>
+						<String ID="string_41" HPOS="362" VPOS="293" WIDTH="20" HEIGHT="29" WC="0.96" CONTENT="of"/><SP WIDTH="0" VPOS="293" HPOS="382"/>
+						<String ID="string_42" HPOS="382" VPOS="293" WIDTH="39" HEIGHT="29" WC="0.96" CONTENT="Court"/><SP WIDTH="9" VPOS="293" HPOS="421"/>
+						<String ID="string_43" HPOS="430" VPOS="305" WIDTH="12" HEIGHT="7" WC="0.94" CONTENT="in"/><SP WIDTH="6" VPOS="305" HPOS="442"/>
+						<String ID="string_44" HPOS="448" VPOS="302" WIDTH="33" HEIGHT="10" WC="0.94" CONTENT="India"/><SP WIDTH="107" VPOS="302" HPOS="481"/>
+						<String ID="string_45" HPOS="588" VPOS="302" WIDTH="21" HEIGHT="10" WC="0.89" CONTENT="17"/>
+					</TextLine>
+					<TextLine ID="line_14" HPOS="213" VPOS="326" WIDTH="389" HEIGHT="10">
+						<String ID="string_46" HPOS="213" VPOS="326" WIDTH="12" HEIGHT="10" WC="0.39" CONTENT="B."/><SP WIDTH="8" VPOS="326" HPOS="225"/>
+						<String ID="string_47" HPOS="233" VPOS="326" WIDTH="63" HEIGHT="10" WC="0.94" CONTENT="Reference"/><SP WIDTH="6" VPOS="326" HPOS="296"/>
+						<String ID="string_48" HPOS="302" VPOS="327" WIDTH="11" HEIGHT="9" WC="0.93" CONTENT="to"/><SP WIDTH="6" VPOS="327" HPOS="313"/>
+						<String ID="string_49" HPOS="319" VPOS="326" WIDTH="20" HEIGHT="10" WC="0.93" CONTENT="the"/><SP WIDTH="6" VPOS="326" HPOS="339"/>
+						<String ID="string_50" HPOS="345" VPOS="326" WIDTH="81" HEIGHT="10" WC="0.93" CONTENT="Commission"/><SP WIDTH="168" VPOS="326" HPOS="426"/>
+						<String ID="string_51" HPOS="594" VPOS="326" WIDTH="8" HEIGHT="10" WC="0.96" CONTENT="7"/>
+					</TextLine>
+					<TextLine ID="line_15" HPOS="146" VPOS="360" WIDTH="467" HEIGHT="13">
+						<String ID="string_52" HPOS="146" VPOS="360" WIDTH="10" HEIGHT="10" WC="0.10" CONTENT="u__|"/><SP WIDTH="35" VPOS="360" HPOS="156"/>
+						<String ID="string_53" HPOS="191" VPOS="360" WIDTH="59" HEIGHT="13" WC="0.93" CONTENT="Existing"/><SP WIDTH="4" VPOS="360" HPOS="250"/>
+						<String ID="string_54" HPOS="254" VPOS="360" WIDTH="74" HEIGHT="10" WC="0.97" CONTENT="Provisions"/><SP WIDTH="254" VPOS="360" HPOS="328"/>
+						<String ID="string_55" HPOS="582" VPOS="360" WIDTH="31" HEIGHT="10" WC="0.89" CONTENT="8-26"/>
+					</TextLine>
+					<TextLine ID="line_16" HPOS="212" VPOS="384" WIDTH="397" HEIGHT="13">
+						<String ID="string_56" HPOS="212" VPOS="384" WIDTH="12" HEIGHT="10" WC="0.78" CONTENT="‘A."/><SP WIDTH="8" VPOS="384" HPOS="224"/>
+						<String ID="string_57" HPOS="232" VPOS="384" WIDTH="35" HEIGHT="10" WC="0.96" CONTENT="What"/><SP WIDTH="5" VPOS="384" HPOS="267"/>
+						<String ID="string_58" HPOS="272" VPOS="387" WIDTH="10" HEIGHT="7" WC="0.93" CONTENT="is"/><SP WIDTH="5" VPOS="387" HPOS="282"/>
+						<String ID="string_59" HPOS="287" VPOS="384" WIDTH="67" HEIGHT="13" WC="0.93" CONTENT="“contempt"/><SP WIDTH="-1" VPOS="384" HPOS="354"/>
+						<String ID="string_60" HPOS="353" VPOS="375" WIDTH="20" HEIGHT="29" WC="0.91" CONTENT="of"/><SP WIDTH="-1" VPOS="375" HPOS="373"/>
+						<String ID="string_61" HPOS="372" VPOS="384" WIDTH="51" HEIGHT="10" WC="0.84" CONTENT="court”?"/><SP WIDTH="164" VPOS="384" HPOS="423"/>
+						<String ID="string_62" HPOS="587" VPOS="384" WIDTH="22" HEIGHT="10" WC="0.69" CONTENT="89"/>
+					</TextLine>
+					<TextLine ID="line_17" HPOS="213" VPOS="408" WIDTH="400" HEIGHT="10">
+						<String ID="string_63" HPOS="213" VPOS="408" WIDTH="12" HEIGHT="10" WC="0.33" CONTENT="B."/><SP WIDTH="8" VPOS="408" HPOS="225"/>
+						<String ID="string_64" HPOS="233" VPOS="408" WIDTH="94" HEIGHT="10" WC="0.96" CONTENT="Constitutional"/><SP WIDTH="6" VPOS="408" HPOS="327"/>
+						<String ID="string_65" HPOS="333" VPOS="408" WIDTH="66" HEIGHT="10" WC="0.96" CONTENT="Provisions"/><SP WIDTH="182" VPOS="408" HPOS="399"/>
+						<String ID="string_66" HPOS="581" VPOS="408" WIDTH="32" HEIGHT="10" WC="0.85" CONTENT="9-14"/>
+					</TextLine>
+					<TextLine ID="line_18" HPOS="253" VPOS="432" WIDTH="353" HEIGHT="13">
+						<String ID="string_67" HPOS="253" VPOS="432" WIDTH="6" HEIGHT="13" WC="0.85" CONTENT="i)"/><SP WIDTH="15" VPOS="432" HPOS="259"/>
+						<String ID="string_68" HPOS="274" VPOS="432" WIDTH="44" HEIGHT="10" WC="0.90" CONTENT="Courts"/><SP WIDTH="4" VPOS="432" HPOS="318"/>
+						<String ID="string_69" HPOS="322" VPOS="432" WIDTH="14" HEIGHT="10" WC="0.96" CONTENT="of"/><SP WIDTH="4" VPOS="432" HPOS="336"/>
+						<String ID="string_70" HPOS="340" VPOS="432" WIDTH="44" HEIGHT="10" WC="0.96" CONTENT="Record"/><SP WIDTH="5" VPOS="432" HPOS="384"/>
+						<String ID="string_71" HPOS="389" VPOS="432" WIDTH="25" HEIGHT="10" WC="0.96" CONTENT="and"/><SP WIDTH="6" VPOS="432" HPOS="414"/>
+						<String ID="string_72" HPOS="420" VPOS="432" WIDTH="38" HEIGHT="10" WC="0.96" CONTENT="Power"/><SP WIDTH="6" VPOS="432" HPOS="458"/>
+						<String ID="string_73" HPOS="464" VPOS="433" WIDTH="11" HEIGHT="9" WC="0.96" CONTENT="to"/><SP WIDTH="6" VPOS="433" HPOS="475"/>
+						<String ID="string_74" HPOS="481" VPOS="432" WIDTH="46" HEIGHT="10" WC="0.91" CONTENT="Punish"/><SP WIDTH="5" VPOS="432" HPOS="527"/>
+						<String ID="string_75" HPOS="532" VPOS="432" WIDTH="17" HEIGHT="10" WC="0.82" CONTENT="for|"/><SP WIDTH="41" VPOS="432" HPOS="549"/>
+						<String ID="string_76" HPOS="590" VPOS="432" WIDTH="16" HEIGHT="10" WC="0.64" CONTENT="10"/>
+					</TextLine>
+					<TextLine ID="line_19" HPOS="274" VPOS="456" WIDTH="64" HEIGHT="13">
+						<String ID="string_77" HPOS="274" VPOS="456" WIDTH="64" HEIGHT="13" WC="0.95" CONTENT="Contempt"/>
+					</TextLine>
+					<TextLine ID="line_20" HPOS="253" VPOS="480" WIDTH="353" HEIGHT="13">
+						<String ID="string_78" HPOS="253" VPOS="480" WIDTH="11" HEIGHT="13" WC="0.83" CONTENT="ii)"/><SP WIDTH="10" VPOS="480" HPOS="264"/>
+						<String ID="string_79" HPOS="274" VPOS="480" WIDTH="26" HEIGHT="10" WC="0.93" CONTENT="Law"/><SP WIDTH="4" VPOS="480" HPOS="300"/>
+						<String ID="string_80" HPOS="304" VPOS="480" WIDTH="13" HEIGHT="10" WC="0.96" CONTENT="of"/><SP WIDTH="4" VPOS="480" HPOS="317"/>
+						<String ID="string_81" HPOS="321" VPOS="480" WIDTH="64" HEIGHT="13" WC="0.96" CONTENT="Contempt"/><SP WIDTH="5" VPOS="480" HPOS="385"/>
+						<String ID="string_82" HPOS="390" VPOS="480" WIDTH="55" HEIGHT="10" WC="0.84" CONTENT="vis-a-vis"/><SP WIDTH="4" VPOS="480" HPOS="445"/>
+						<String ID="string_83" HPOS="449" VPOS="480" WIDTH="43" HEIGHT="10" WC="0.93" CONTENT="Article"/><SP WIDTH="6" VPOS="480" HPOS="492"/>
+						<String ID="string_84" HPOS="498" VPOS="480" WIDTH="47" HEIGHT="13" WC="0.89" CONTENT="19(1)(a)"/><SP WIDTH="45" VPOS="480" HPOS="545"/>
+						<String ID="string_85" HPOS="590" VPOS="480" WIDTH="16" HEIGHT="10" WC="0.88" CONTENT="12"/>
+					</TextLine>
+					<TextLine ID="line_21" HPOS="253" VPOS="504" WIDTH="353" HEIGHT="13">
+						<String ID="string_86" HPOS="253" VPOS="504" WIDTH="15" HEIGHT="13" WC="0.94" CONTENT="iii)"/><SP WIDTH="6" VPOS="504" HPOS="268"/>
+						<String ID="string_87" HPOS="274" VPOS="504" WIDTH="37" HEIGHT="10" WC="0.96" CONTENT="Other"/><SP WIDTH="5" VPOS="504" HPOS="311"/>
+						<String ID="string_88" HPOS="316" VPOS="504" WIDTH="94" HEIGHT="10" WC="0.96" CONTENT="Constitutional"/><SP WIDTH="6" VPOS="504" HPOS="410"/>
+						<String ID="string_89" HPOS="416" VPOS="504" WIDTH="67" HEIGHT="10" WC="0.95" CONTENT="Provisions"/><SP WIDTH="107" VPOS="504" HPOS="483"/>
+						<String ID="string_90" HPOS="590" VPOS="504" WIDTH="16" HEIGHT="10" WC="0.88" CONTENT="13"/>
+					</TextLine>
+					<TextLine ID="line_22" HPOS="213" VPOS="528" WIDTH="405" HEIGHT="13">
+						<String ID="string_91" HPOS="213" VPOS="528" WIDTH="12" HEIGHT="10" WC="0.84" CONTENT="C."/><SP WIDTH="7" VPOS="528" HPOS="225"/>
+						<String ID="string_92" HPOS="232" VPOS="528" WIDTH="24" HEIGHT="10" WC="0.96" CONTENT="The"/><SP WIDTH="6" VPOS="528" HPOS="256"/>
+						<String ID="string_93" HPOS="262" VPOS="528" WIDTH="64" HEIGHT="13" WC="0.93" CONTENT="Contempt"/><SP WIDTH="4" VPOS="528" HPOS="326"/>
+						<String ID="string_94" HPOS="330" VPOS="528" WIDTH="14" HEIGHT="10" WC="0.96" CONTENT="of"/><SP WIDTH="4" VPOS="528" HPOS="344"/>
+						<String ID="string_95" HPOS="348" VPOS="528" WIDTH="44" HEIGHT="10" WC="0.96" CONTENT="Courts"/><SP WIDTH="4" VPOS="528" HPOS="392"/>
+						<String ID="string_96" HPOS="396" VPOS="528" WIDTH="25" HEIGHT="12" WC="0.96" CONTENT="Act,"/><SP WIDTH="7" VPOS="528" HPOS="421"/>
+						<String ID="string_97" HPOS="428" VPOS="528" WIDTH="31" HEIGHT="10" WC="0.92" CONTENT="1971"/><SP WIDTH="120" VPOS="528" HPOS="459"/>
+						<String ID="string_98" HPOS="579" VPOS="528" WIDTH="39" HEIGHT="10" WC="0.85" CONTENT="15-19"/>
+					</TextLine>
+					<TextLine ID="line_23" HPOS="213" VPOS="552" WIDTH="405" HEIGHT="12">
+						<String ID="string_99" HPOS="213" VPOS="552" WIDTH="12" HEIGHT="10" WC="0.69" CONTENT="D."/><SP WIDTH="7" VPOS="552" HPOS="225"/>
+						<String ID="string_100" HPOS="232" VPOS="552" WIDTH="24" HEIGHT="10" WC="0.96" CONTENT="The"/><SP WIDTH="6" VPOS="552" HPOS="256"/>
+						<String ID="string_101" HPOS="262" VPOS="552" WIDTH="32" HEIGHT="10" WC="0.97" CONTENT="Code"/><SP WIDTH="-1" VPOS="552" HPOS="294"/>
+						<String ID="string_102" HPOS="293" VPOS="543" WIDTH="12" HEIGHT="29" WC="0.96" CONTENT="of"/><SP WIDTH="2" VPOS="543" HPOS="305"/>
+						<String ID="string_103" HPOS="307" VPOS="552" WIDTH="66" HEIGHT="10" WC="0.96" CONTENT="Criminal"/><SP WIDTH="5" VPOS="552" HPOS="373"/>
+						<String ID="string_104" HPOS="378" VPOS="552" WIDTH="69" HEIGHT="12" WC="0.96" CONTENT="Procedure,"/><SP WIDTH="8" VPOS="552" HPOS="447"/>
+						<String ID="string_105" HPOS="455" VPOS="552" WIDTH="31" HEIGHT="10" WC="0.95" CONTENT="1973"/><SP WIDTH="93" VPOS="552" HPOS="486"/>
+						<String ID="string_106" HPOS="579" VPOS="552" WIDTH="39" HEIGHT="10" WC="0.96" CONTENT="19-20"/>
+					</TextLine>
+					<TextLine ID="line_24" HPOS="213" VPOS="576" WIDTH="405" HEIGHT="13">
+						<String ID="string_107" HPOS="213" VPOS="576" WIDTH="11" HEIGHT="10" WC="0.62" CONTENT="E."/><SP WIDTH="9" VPOS="576" HPOS="224"/>
+						<String ID="string_108" HPOS="233" VPOS="576" WIDTH="38" HEIGHT="13" WC="0.95" CONTENT="Scope"/><SP WIDTH="4" VPOS="576" HPOS="271"/>
+						<String ID="string_109" HPOS="275" VPOS="576" WIDTH="14" HEIGHT="10" WC="0.95" CONTENT="of"/><SP WIDTH="4" VPOS="576" HPOS="289"/>
+						<String ID="string_110" HPOS="293" VPOS="576" WIDTH="39" HEIGHT="10" WC="0.96" CONTENT="Power"/><SP WIDTH="245" VPOS="576" HPOS="332"/>
+						<String ID="string_111" HPOS="577" VPOS="576" WIDTH="41" HEIGHT="10" WC="0.80" CONTENT="20-24"/>
+					</TextLine>
+					<TextLine ID="line_25" HPOS="213" VPOS="600" WIDTH="405" HEIGHT="13">
+						<String ID="string_112" HPOS="213" VPOS="600" WIDTH="10" HEIGHT="10" WC="0.46" CONTENT="F."/><SP WIDTH="10" VPOS="600" HPOS="223"/>
+						<String ID="string_113" HPOS="233" VPOS="600" WIDTH="39" HEIGHT="10" WC="0.96" CONTENT="Power"/><SP WIDTH="4" VPOS="600" HPOS="272"/>
+						<String ID="string_114" HPOS="276" VPOS="600" WIDTH="13" HEIGHT="10" WC="0.96" CONTENT="of"/><SP WIDTH="4" VPOS="600" HPOS="289"/>
+						<String ID="string_115" HPOS="293" VPOS="600" WIDTH="72" HEIGHT="10" WC="0.92" CONTENT="Parliament"/><SP WIDTH="5" VPOS="600" HPOS="365"/>
+						<String ID="string_116" HPOS="370" VPOS="601" WIDTH="11" HEIGHT="9" WC="0.92" CONTENT="to"/><SP WIDTH="6" VPOS="601" HPOS="381"/>
+						<String ID="string_117" HPOS="387" VPOS="600" WIDTH="57" HEIGHT="13" WC="0.92" CONTENT="Legislate"/><SP WIDTH="5" VPOS="600" HPOS="444"/>
+						<String ID="string_118" HPOS="449" VPOS="603" WIDTH="16" HEIGHT="7" WC="0.96" CONTENT="on"/><SP WIDTH="5" VPOS="603" HPOS="465"/>
+						<String ID="string_119" HPOS="470" VPOS="600" WIDTH="65" HEIGHT="13" WC="0.85" CONTENT="Contempt"/><SP WIDTH="7" VPOS="600" HPOS="535"/>
+						<String ID="string_120" HPOS="542" VPOS="591" WIDTH="20" HEIGHT="29" WC="0.85" CONTENT="|"/><SP WIDTH="15" VPOS="591" HPOS="562"/>
+						<String ID="string_121" HPOS="577" VPOS="600" WIDTH="41" HEIGHT="10" WC="0.79" CONTENT="25-26"/>
+					</TextLine>
+					<TextLine ID="line_26" HPOS="232" VPOS="624" WIDTH="80" HEIGHT="10">
+						<String ID="string_122" HPOS="232" VPOS="624" WIDTH="80" HEIGHT="10" WC="0.95" CONTENT="Jurisdiction"/>
+					</TextLine>
+					<TextLine ID="line_27" HPOS="143" VPOS="657" WIDTH="475" HEIGHT="10">
+						<String ID="string_123" HPOS="143" VPOS="657" WIDTH="16" HEIGHT="10" WC="0.60" CONTENT="1"/><SP WIDTH="4" VPOS="657" HPOS="159"/>
+						<String ID="string_124" HPOS="163" VPOS="648" WIDTH="10" HEIGHT="29" WC="0.54" CONTENT="_"/><SP WIDTH="2" VPOS="648" HPOS="173"/>
+						<String ID="string_125" HPOS="175" VPOS="648" WIDTH="10" HEIGHT="29" WC="0.66" CONTENT="|"/><SP WIDTH="6" VPOS="648" HPOS="185"/>
+						<String ID="string_126" HPOS="191" VPOS="657" WIDTH="94" HEIGHT="10" WC="0.66" CONTENT="International"/><SP WIDTH="4" VPOS="657" HPOS="285"/>
+						<String ID="string_127" HPOS="289" VPOS="657" WIDTH="61" HEIGHT="10" WC="0.93" CONTENT="Scenario"/><SP WIDTH="227" VPOS="657" HPOS="350"/>
+						<String ID="string_128" HPOS="577" VPOS="657" WIDTH="41" HEIGHT="10" WC="0.91" CONTENT="27-39"/>
+					</TextLine>
+					<TextLine ID="line_28" HPOS="212" VPOS="681" WIDTH="406" HEIGHT="10">
+						<String ID="string_129" HPOS="212" VPOS="681" WIDTH="12" HEIGHT="10" WC="0.88" CONTENT="A."/><SP WIDTH="9" VPOS="681" HPOS="224"/>
+						<String ID="string_130" HPOS="233" VPOS="681" WIDTH="57" HEIGHT="10" WC="0.96" CONTENT="Pakistan"/><SP WIDTH="287" VPOS="681" HPOS="290"/>
+						<String ID="string_131" HPOS="577" VPOS="681" WIDTH="41" HEIGHT="10" WC="0.93" CONTENT="27-28"/>
+					</TextLine>
+					<TextLine ID="line_29" HPOS="213" VPOS="705" WIDTH="405" HEIGHT="13">
+						<String ID="string_132" HPOS="213" VPOS="705" WIDTH="12" HEIGHT="10" WC="0.73" CONTENT="B,"/><SP WIDTH="8" VPOS="705" HPOS="225"/>
+						<String ID="string_133" HPOS="233" VPOS="705" WIDTH="54" HEIGHT="13" WC="0.96" CONTENT="England"/><SP WIDTH="5" VPOS="705" HPOS="287"/>
+						<String ID="string_134" HPOS="292" VPOS="705" WIDTH="25" HEIGHT="10" WC="0.96" CONTENT="and"/><SP WIDTH="4" VPOS="705" HPOS="317"/>
+						<String ID="string_135" HPOS="321" VPOS="705" WIDTH="40" HEIGHT="10" WC="0.96" CONTENT="Wales"/><SP WIDTH="216" VPOS="705" HPOS="361"/>
+						<String ID="string_136" HPOS="577" VPOS="705" WIDTH="41" HEIGHT="10" WC="0.87" CONTENT="29-30"/>
+					</TextLine>
+					<TextLine ID="line_30" HPOS="213" VPOS="729" WIDTH="404" HEIGHT="10">
+						<String ID="string_137" HPOS="213" VPOS="729" WIDTH="12" HEIGHT="10" WC="0.84" CONTENT="C."/><SP WIDTH="8" VPOS="729" HPOS="225"/>
+						<String ID="string_138" HPOS="233" VPOS="729" WIDTH="43" HEIGHT="10" WC="0.96" CONTENT="United"/><SP WIDTH="6" VPOS="729" HPOS="276"/>
+						<String ID="string_139" HPOS="282" VPOS="729" WIDTH="40" HEIGHT="10" WC="0.96" CONTENT="States"/><SP WIDTH="4" VPOS="729" HPOS="322"/>
+						<String ID="string_140" HPOS="326" VPOS="729" WIDTH="14" HEIGHT="10" WC="0.96" CONTENT="of"/><SP WIDTH="1" VPOS="729" HPOS="340"/>
+						<String ID="string_141" HPOS="341" VPOS="729" WIDTH="56" HEIGHT="10" WC="0.96" CONTENT="America"/><SP WIDTH="181" VPOS="729" HPOS="397"/>
+						<String ID="string_142" HPOS="578" VPOS="729" WIDTH="39" HEIGHT="10" WC="0.95" CONTENT="30-31"/>
+					</TextLine>
+					<TextLine ID="line_31" HPOS="143" VPOS="763" WIDTH="475" HEIGHT="13">
+						<String ID="string_143" HPOS="143" VPOS="763" WIDTH="16" HEIGHT="10" WC="0.48" CONTENT="Iv__|"/><SP WIDTH="32" VPOS="763" HPOS="159"/>
+						<String ID="string_144" HPOS="191" VPOS="763" WIDTH="57" HEIGHT="10" WC="0.93" CONTENT="Judicial"/><SP WIDTH="4" VPOS="763" HPOS="248"/>
+						<String ID="string_145" HPOS="252" VPOS="763" WIDTH="67" HEIGHT="13" WC="0.94" CONTENT="Approach"/><SP WIDTH="5" VPOS="763" HPOS="319"/>
+						<String ID="string_146" HPOS="324" VPOS="766" WIDTH="17" HEIGHT="7" WC="0.94" CONTENT="on"/><SP WIDTH="5" VPOS="766" HPOS="341"/>
+						<String ID="string_147" HPOS="346" VPOS="763" WIDTH="70" HEIGHT="13" WC="0.96" CONTENT="Contempt"/><SP WIDTH="162" VPOS="763" HPOS="416"/>
+						<String ID="string_148" HPOS="578" VPOS="763" WIDTH="40" HEIGHT="10" WC="0.93" CONTENT="32-39"/>
+					</TextLine>
+					<TextLine ID="line_32" HPOS="146" VPOS="798" WIDTH="472" HEIGHT="13">
+						<String ID="string_149" HPOS="146" VPOS="798" WIDTH="10" HEIGHT="10" WC="0.21" CONTENT="v_"/><SP WIDTH="22" VPOS="798" HPOS="156"/>
+						<String ID="string_150" HPOS="178" VPOS="789" WIDTH="10" HEIGHT="29" WC="0.9" CONTENT="|"/><SP WIDTH="3" VPOS="789" HPOS="188"/>
+						<String ID="string_151" HPOS="191" VPOS="798" WIDTH="62" HEIGHT="10" WC="0.9" CONTENT="Criminal"/><SP WIDTH="4" VPOS="798" HPOS="253"/>
+						<String ID="string_152" HPOS="257" VPOS="798" WIDTH="70" HEIGHT="13" WC="0.96" CONTENT="Contempt"/><SP WIDTH="250" VPOS="798" HPOS="327"/>
+						<String ID="string_153" HPOS="577" VPOS="798" WIDTH="41" HEIGHT="10" WC="0.89" CONTENT="40-47"/>
+					</TextLine>
+					<TextLine ID="line_33" HPOS="212" VPOS="822" WIDTH="406" HEIGHT="10">
+						<String ID="string_154" HPOS="212" VPOS="822" WIDTH="12" HEIGHT="10" WC="0.86" CONTENT="A."/><SP WIDTH="9" VPOS="822" HPOS="224"/>
+						<String ID="string_155" HPOS="233" VPOS="822" WIDTH="34" HEIGHT="10" WC="0.88" CONTENT="False"/><SP WIDTH="4" VPOS="822" HPOS="267"/>
+						<String ID="string_156" HPOS="271" VPOS="822" WIDTH="55" HEIGHT="10" WC="0.91" CONTENT="Affidavit"/><SP WIDTH="251" VPOS="822" HPOS="326"/>
+						<String ID="string_157" HPOS="577" VPOS="822" WIDTH="41" HEIGHT="10" WC="0.92" CONTENT="42-44"/>
+					</TextLine>
+					<TextLine ID="line_34" HPOS="213" VPOS="846" WIDTH="405" HEIGHT="13">
+						<String ID="string_158" HPOS="213" VPOS="846" WIDTH="12" HEIGHT="10" WC="0.49" CONTENT="B,"/><SP WIDTH="8" VPOS="846" HPOS="225"/>
+						<String ID="string_159" HPOS="233" VPOS="846" WIDTH="17" HEIGHT="10" WC="0.93" CONTENT="Ex"/><SP WIDTH="5" VPOS="846" HPOS="250"/>
+						<String ID="string_160" HPOS="255" VPOS="846" WIDTH="33" HEIGHT="10" WC="0.92" CONTENT="Facie"/><SP WIDTH="6" VPOS="846" HPOS="288"/>
+						<String ID="string_161" HPOS="294" VPOS="846" WIDTH="64" HEIGHT="13" WC="0.96" CONTENT="Contempt"/><SP WIDTH="219" VPOS="846" HPOS="358"/>
+						<String ID="string_162" HPOS="577" VPOS="846" WIDTH="41" HEIGHT="10" WC="0.87" CONTENT="45-46"/>
+					</TextLine>
+				</TextBlock>
+				<TextBlock ID="block_10" HPOS="185" VPOS="234" WIDTH="3" HEIGHT="639">
+					<TextLine ID="line_35" HPOS="185" VPOS="234" WIDTH="3" HEIGHT="639">
+						<String ID="string_163" HPOS="185" VPOS="234" WIDTH="3" HEIGHT="639" WC="0.95" CONTENT=" "/>
+					</TextLine>
+				</TextBlock>
+				<TextBlock ID="block_11" HPOS="554" VPOS="234" WIDTH="3" HEIGHT="639">
+					<TextLine ID="line_36" HPOS="554" VPOS="234" WIDTH="3" HEIGHT="639">
+						<String ID="string_164" HPOS="554" VPOS="234" WIDTH="3" HEIGHT="639" WC="0.95" CONTENT=" "/>
+					</TextLine>
+				</TextBlock>
+				<TextBlock ID="block_12" HPOS="115" VPOS="871" WIDTH="525" HEIGHT="3">
+					<TextLine ID="line_37" HPOS="115" VPOS="871" WIDTH="525" HEIGHT="3">
+						<String ID="string_165" HPOS="115" VPOS="871" WIDTH="525" HEIGHT="3" WC="0.95" CONTENT=" "/>
+					</TextLine>
+				</TextBlock>
+				<TextBlock ID="block_13" HPOS="638" VPOS="234" WIDTH="3" HEIGHT="639">
+					<TextLine ID="line_38" HPOS="638" VPOS="234" WIDTH="3" HEIGHT="639">
+						<String ID="string_166" HPOS="638" VPOS="234" WIDTH="3" HEIGHT="639" WC="0.95" CONTENT=" "/>
+					</TextLine>
+				</TextBlock>
+			</PrintSpace>
+		</Page>
+	</Layout>
+</alto>
