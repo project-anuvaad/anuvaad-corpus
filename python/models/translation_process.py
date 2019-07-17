@@ -13,3 +13,5 @@ class TranslationProcess(Document):
     created_on = StringField()
     status = StringField()
     basename = StringField()
+    sourceLang = StringField()
+    targetLang = StringField()
