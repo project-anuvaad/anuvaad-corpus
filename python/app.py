@@ -234,8 +234,9 @@ def translate():
 @app.route('/download-docx', methods=['GET'])
 def downloadDocx():
     filename = request.args.get('filename')
-    return flask.send_file('upload/'+filename,attachment_filename='filename')
-
+    result = flask.send_file(os.path.join('upload/', filename), as_attachment=True)
+    result.headers["x-suggested-filename"] = filename
+    return result
 
 
 @app.route('/translate-docx', methods=['POST'])
