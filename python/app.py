@@ -41,9 +41,11 @@ import multiprocessing as mp
 import codecs
 from flask_cors import CORS
 from flask import Response
+import flask as flask
 from models.status import Status
 from models.response import CustomResponse
-
+import utils.docx_translate_helper as docx_helper
+import uuid
 app = Flask(__name__)
 app.debug = True
 CORS(app)
@@ -56,6 +58,12 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 es = getinstance()
 words = []
 connectmongo()
+
+
+@app.route('/hello', methods=['GET'])
+def hello_():
+   
+    return "hello"
 
 
 @app.route('/fetch-corpus', methods=['GET'])
@@ -223,6 +231,53 @@ def translate():
     translationProcess.update(set__status=STATUS_PROCESSED)
     return res.getres()
 
+@app.route('/download-docx', methods=['GET'])
+def downloadDocx():
+    filename = request.args.get('filename')
+    return flask.send_file('upload/'+filename,attachment_filename='filename')
+
+
+
+@app.route('/translate-docx', methods=['POST'])
+def translateDocx():
+    pool = mp.Pool(mp.cpu_count())
+    basename = str(int(time.time()))
+    current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+    f = request.files['file']
+    filepath = os.path.join(
+        app.config['UPLOAD_FOLDER'], basename + '.docx')
+    translationProcess = TranslationProcess(
+        status=STATUS_PROCESSING, name=f.filename, created_on=current_time, basename=basename)
+    translationProcess.save()
+    f.save(filepath)
+    filename_to_processed = f.filename
+    filepath_processed = os.path.join(
+        app.config['UPLOAD_FOLDER'], basename +'_t'+'.docx')
+
+    print(filename_to_processed)    
+
+    xml_content = docx_helper.get_document_xml(filepath)
+    xmltree     = docx_helper.get_xml_tree(xml_content)
+
+    nodes = []
+    texts = []
+    for node, text in docx_helper.itertext(xmltree):
+        nodes.append(node)
+        texts.append(text)
+
+    print('number of nodes'+ str(len(nodes)) +'and text are: '+ str(len(texts)))
+
+    docx_helper.add_identification_tag(xmltree, str(uuid.uuid4()))
+    docx_helper.modify_text(xmltree)
+#modify_text_(xmltree_endnote)
+    docx_helper.save_docx(filepath, xmltree, filepath_processed)
+
+
+    
+    res = CustomResponse(Status.SUCCESS.value,basename +'_t'+'.docx')
+    translationProcess = TranslationProcess.objects(basename=basename)
+    translationProcess.update(set__status=STATUS_PROCESSED)
+    return res.getres()
 
 @app.route('/single', methods=['POST'])
 def upload_single_file():
@@ -356,7 +411,6 @@ def capturealtotext(result):
     translateandupdateimage(result['imagenames'], app.config['UPLOAD_FOLDER'] +
                                '/' + result['basename'] + result['suffix'])
     converttopdf(result['imagenames'])
-
 
 
 if __name__ == '__main__':
