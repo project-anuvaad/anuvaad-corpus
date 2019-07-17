@@ -247,8 +247,11 @@ def translateDocx():
     f = request.files['file']
     filepath = os.path.join(
         app.config['UPLOAD_FOLDER'], basename + '.docx')
+
+    sourceLang = request.form.getlist('sourceLang')
+    targetLang = request.form.getlist('targetLang')
     translationProcess = TranslationProcess(
-        status=STATUS_PROCESSING, name=f.filename, created_on=current_time, basename=basename)
+        status=STATUS_PROCESSING, name=f.filename, created_on=current_time, basename=basename,sourceLang=sourceLang,targetLang=targetLang)
     translationProcess.save()
     f.save(filepath)
     filename_to_processed = f.filename
