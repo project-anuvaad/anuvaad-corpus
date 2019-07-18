@@ -20,7 +20,6 @@ from utils.puttext import puttext
 from utils.removetextv2 import removetext
 from utils.imagetopdf import converttopdf
 from utils.translateandupdateimage import translateandupdateimage
-# from utils.imagetotext_v2 import convertimagetotextv2
 from utils.process_paragraph import processhindi
 from utils.process_paragraph_eng import processenglish
 from utils.remove_page_number_filter import filtertext
@@ -46,6 +45,9 @@ from models.status import Status
 from models.response import CustomResponse
 import utils.docx_translate_helper as docx_helper
 import uuid
+import logging
+from logging.handlers import RotatingFileHandler
+
 app = Flask(__name__)
 app.debug = True
 CORS(app)
@@ -62,6 +64,7 @@ connectmongo()
 
 @app.route('/hello', methods=['GET'])
 def hello_():
+    app.logger.info('testing info log')
    
     return "hello"
 
@@ -241,7 +244,8 @@ def downloadDocx():
 
 @app.route('/translate-docx', methods=['POST'])
 def translateDocx():
-    pool = mp.Pool(mp.cpu_count())
+    start_time = int(round(time.time() * 1000))
+    app.logger.info('app:translateDocx: started at '+ str(start_time))
     basename = str(int(time.time()))
     current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
     f = request.files['file']
@@ -251,7 +255,7 @@ def translateDocx():
     sourceLang = request.form.getlist('sourceLang')
     targetLang = request.form.getlist('targetLang')
     translationProcess = TranslationProcess(
-        status=STATUS_PROCESSING, name=f.filename, created_on=current_time, basename=basename,sourceLang=sourceLang,targetLang=targetLang)
+        status=STATUS_PROCESSING, name=f.filename, created_on=current_time, basename=basename,sourceLang=sourceLang[0],targetLang=targetLang[0])
     translationProcess.save()
     f.save(filepath)
     filename_to_processed = f.filename
@@ -261,19 +265,20 @@ def translateDocx():
     print(filename_to_processed)    
 
     xml_content = docx_helper.get_document_xml(filepath)
-    xmltree     = docx_helper.get_xml_tree(xml_content)
+    xmltree = docx_helper.get_xml_tree(xml_content)
 
     nodes = []
     texts = []
+    docx_helper.add_identification_tag(xmltree, str(uuid.uuid4()))
+
     for node, text in docx_helper.itertext(xmltree):
         nodes.append(node)
         texts.append(text)
 
-    print('number of nodes'+ str(len(nodes)) +'and text are: '+ str(len(texts)))
+    app.logger.info('app:translateDocx: number of nodes '+ str(len(nodes)) +' and text are : '+ str(len(texts)))
 
-    docx_helper.add_identification_tag(xmltree, str(uuid.uuid4()))
-    docx_helper.modify_text(xmltree)
-#modify_text_(xmltree_endnote)
+    
+    docx_helper.modify_text(nodes)
     docx_helper.save_docx(filepath, xmltree, filepath_processed)
 
 
@@ -281,6 +286,8 @@ def translateDocx():
     res = CustomResponse(Status.SUCCESS.value,basename +'_t'+'.docx')
     translationProcess = TranslationProcess.objects(basename=basename)
     translationProcess.update(set__status=STATUS_PROCESSED)
+    
+    app.logger.info('app:translateDocx: ended at '+ str(getcurrenttime()) + 'total time elapsed : '+str(getcurrenttime()- start_time))
     return res.getres()
 
 @app.route('/single', methods=['POST'])
@@ -416,6 +423,17 @@ def capturealtotext(result):
                                '/' + result['basename'] + result['suffix'])
     converttopdf(result['imagenames'])
 
+def getcurrenttime():
+    return int(round(time.time() * 1000))
 
 if __name__ == '__main__':
+    logHandler = RotatingFileHandler('info.log', maxBytes=1000, backupCount=1)
+    
+    # set the log handler level
+    logHandler.setLevel(logging.INFO)
+
+    # set the app logger level
+    app.logger.setLevel(logging.INFO)
+
+    app.logger.addHandler(logHandler)  
     app.run(host='0.0.0.0', port=5001)
