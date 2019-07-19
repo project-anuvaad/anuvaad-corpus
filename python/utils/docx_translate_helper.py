@@ -6,6 +6,7 @@ import os
 import shutil
 import codecs
 import requests
+from nltk.tokenize import sent_tokenize
 
 translate_url = 'http://52.40.71.62:3003/translator/translation_en'
 max_calls = 25
@@ -79,7 +80,10 @@ def modify_text(nodes):
     
     """ Iterating Over nodes one by one and making Translate API call in a batch of 25 text """
     for node in nodes:
-        arr.append({'src': node.text, 'id': 1})
+        if not node.text.strip() == '':
+            arr.append({'src': node.text.lower().strip(), 'id': 1})
+        else:
+            arr.append({'src': node.text, 'id': 1})
 
         print('docx_translate_helper:modify_text : node text before translation :' +node.text)
 
