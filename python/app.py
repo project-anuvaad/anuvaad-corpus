@@ -275,7 +275,7 @@ def translateDocx():
     sourceLang = request.form.getlist('sourceLang')[0]
     targetLang = request.form.getlist('targetLang')[0]
     translationProcess = TranslationProcess(
-        status=STATUS_PROCESSING, name=f.filename, created_on=current_time, basename=basename,sourceLang=sourceLang[0],targetLang=targetLang[0])
+        status=STATUS_PROCESSING, name=f.filename, created_on=current_time, basename=basename,sourceLang=sourceLang,targetLang=targetLang)
     translationProcess.save()
     f.save(filepath)
     filename_to_processed = f.filename
