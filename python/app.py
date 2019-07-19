@@ -75,11 +75,17 @@ def fetch_corpus():
     res = CustomResponse(Status.SUCCESS.value, json.loads(corpus))
     return res.getres()
 
-
+""" to get all the process from mongo in order of insertion """
 @app.route('/fetch-translation-process', methods=['GET'])
 def fetch_translation_process():
-    transalationProcess = TranslationProcess.objects.to_json()
-    res = CustomResponse(Status.SUCCESS.value, json.loads(transalationProcess))
+    app.logger.info('app:fetch_translation_process : started at '+ str(getcurrenttime()))
+    try:
+        transalationProcess = TranslationProcess.objects.order_by('-basename').to_json()
+        res = CustomResponse(Status.SUCCESS.value, json.loads(transalationProcess))
+    except:
+            app.logger.info('app:fetch-translation-process : ERROR occured')
+            pass    
+    app.logger.info('app:fetch_translation_process : ended at '+ str(getcurrenttime()))
     return res.getres()
 
 
@@ -241,6 +247,20 @@ def downloadDocx():
     result.headers["x-suggested-filename"] = filename
     return result
 
+@app.route('/remove-process', methods=['POST'])
+def delete_process():
+    app.logger.info('app:delete_process: started at '+ str(getcurrenttime()))
+    try :
+        basename = request.form.getlist('processname')[0]
+        app.logger.info('app:delte_process : requested basename is : '+basename)
+        translationProcess = TranslationProcess.objects(basename=basename).delete()
+        app.logger.info('app:delete_process: ended at '+ str(getcurrenttime()))
+        res = CustomResponse(Status.SUCCESS.value,basename)
+    except:
+             app.logger.info('app:delte_process : ERROR while processing  basename  : '+basename)
+             res = CustomResponse(Status.FAILURE.value,basename)
+    return res.getres()
+    
 
 @app.route('/translate-docx', methods=['POST'])
 def translateDocx():
@@ -280,8 +300,6 @@ def translateDocx():
     
     docx_helper.modify_text(nodes)
     docx_helper.save_docx(filepath, xmltree, filepath_processed)
-
-
     
     res = CustomResponse(Status.SUCCESS.value,basename +'_t'+'.docx')
     translationProcess = TranslationProcess.objects(basename=basename)
