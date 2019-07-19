@@ -16,3 +16,5 @@ class Status(enum.Enum):
         'status': 500}, 'why': "Internal Server Error"}
     ERR_GLOBAL_MISSING_PARAMETERS = {
         'ok': False, 'http': {'status': 400}, 'why': "Data Missing"}
+    FAILURE = {'ok': False,'http':{'status':200},
+                'why':'request failed'}    
