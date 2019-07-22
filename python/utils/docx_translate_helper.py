@@ -136,12 +136,12 @@ def modify_text(nodes):
         print(node.text + '\n')
         i = i + 1
 
-def modify_text_with_tokenization(nodes):
 
+def modify_text_with_tokenization(nodes):
     
     arr = []
     Q = queue.Queue()
-    """ Adding all the nodes into an arrya"""
+    """ Adding all the nodes into an array"""
     node_id = 0
     for node in nodes:
         if not (node.text.strip==''):
@@ -149,6 +149,9 @@ def modify_text_with_tokenization(nodes):
             if not tokens.__len__ == 0:
 
                 for text_ in tokens :
+                    if text_.isupper():
+                        text_ = text_.title()
+                    print('docx_translate_helper:modify_text_with_tokenization  : TEXT SENT ==  '+text_)
                     N_T = Text_Object(text_ , str(node_id))
                     Q.put(N_T)
 
@@ -163,10 +166,8 @@ def modify_text_with_tokenization(nodes):
         N_T = Q.get()
         t_= N_T.text
         s_id = N_T.node_id
-        if not t_.strip() == '':
-            arr.append({'src':t_.lower().strip(), 'id': 1,'s_id':s_id})
-        else:
-            arr.append({'src': t_, 'id': 1,'s_id':s_id})
+        
+        arr.append({'src': t_, 'id': 1,'s_id':s_id})
         
         i = i +1
         del N_T
