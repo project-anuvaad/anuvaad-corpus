@@ -7,6 +7,8 @@ import shutil
 import codecs
 import requests
 from nltk.tokenize import sent_tokenize
+import queue
+from models.Text_Object import Text_Object
 
 translate_url = 'http://52.40.71.62:3003/translator/translation_en'
 max_calls = 25
@@ -130,9 +132,115 @@ def modify_text(nodes):
     print('docx_translate_helper:modify_text : following are the text and its translation')          
     for node in nodes:
         print(node.text + '\n')
-        node.text = results[i]['tgt']   
+        node.text = results[i]['tgt']
         print(node.text + '\n')
         i = i + 1
+
+def modify_text_with_tokenization(nodes):
+
+    
+    arr = []
+    Q = queue.Queue()
+    """ Adding all the nodes into an arrya"""
+    node_id = 0
+    for node in nodes:
+        if not (node.text.strip==''):
+            tokens = sent_tokenize(node.text)
+            if not tokens.__len__ == 0:
+
+                for text_ in tokens :
+                    N_T = Text_Object(text_ , str(node_id))
+                    Q.put(N_T)
+
+        node.attrib['node_id'] = str(node_id)
+        node_id = node_id + 1
+
+    i =0
+    Q_response = queue.Queue()
+
+    while not Q.qsize() == 0:
+
+        N_T = Q.get()
+        t_= N_T.text
+        s_id = N_T.node_id
+        if not t_.strip() == '':
+            arr.append({'src':t_.lower().strip(), 'id': 1,'s_id':s_id})
+        else:
+            arr.append({'src': t_, 'id': 1,'s_id':s_id})
+        
+        i = i +1
+        del N_T
+
+        if i == 25:
+            try :
+                res = requests.post('http://52.40.71.62:3003/translator/translation_en', json=arr)
+                dictFromServer = res.json()
+                if dictFromServer['response_body'] is not None:
+                    print('docx_translate_helper:modify_text_with_tokenization : ') 
+                    print( dictFromServer['response_body'])
+                    for translation in dictFromServer['response_body']:
+                        try :    
+                            
+                            res = Text_Object(translation['tgt'],str(translation['s_id']))
+                            Q_response.put(res)
+                           
+                        except:
+                            print('docx_translate_helper:modify_text_with_tokenization : ERROR OCCURED for '+ translation)    
+                        
+            except: 
+                print('docx_translate_helper:modify_text_with_tokenization : ERROR WHILE MAKING TRANSLATION REQUEST')
+                pass   
+            arr = []
+            i = 0
+    if i > 0:
+        try :    
+                res = requests.post('http://52.40.71.62:3003/translator/translation_en', json=arr)
+                dictFromServer = res.json()
+                if dictFromServer['response_body'] is not None:
+                    print('docx_translate_helper:modify_text_with_tokenization : LAST : ') 
+                    print( dictFromServer['response_body'])
+                    for translation in dictFromServer['response_body']:
+                        try : 
+                            
+                            res = Text_Object(translation['tgt'],str(translation['s_id']))
+                            Q_response.put(res)
+                           
+                        except:
+                           print('docx_translate_helper:modify_text_with_tokenization : ERROR OCCURED for '+ translation)   
+                        
+                
+        except: 
+                print('docx_translate_helper:modify_text_with_tokenization : ERROR WHILE MAKING TRANSLATION REQUEST')
+                pass   
+        arr = []
+        i = 0 
+            
+    node_id_ = ''
+    prev = None
+    for node in nodes:
+        node_id_ =  node.attrib['node_id']
+        print(node_id_)
+        text =''
+        while not Q_response.qsize() == 0:
+            T_S = None
+            if prev == None : 
+                T_S = Q_response.get()
+            else :
+                T_S = prev
+            
+            _id = T_S.node_id
+            if _id == node_id_:
+                text = text + T_S.text+' '
+                prev = None
+            else :
+                prev = T_S
+                print('docx_translate_helper:modify_text_with_tokenization : node text before == '+ node.text)
+                node.text = text 
+                print('docx_translate_helper:modify_text_with_tokenization : node text after = ' +node.text)
+                break
+        if  Q_response.qsize() == 0 and not  text == '' :
+            node.text =  text
+
 
 def save_docx(input_docx_filepath, xmltree, output_docx_filepath):
     tmp_dir = tempfile.mkdtemp()
