@@ -129,6 +129,55 @@ def translateFile():
     return res.getres()
 
 
+@app.route('/get-file-data', methods=['POST'])
+def getfiledata():
+    pool = mp.Pool(mp.cpu_count())
+    basename = str(int(time.time()))
+    current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+    f = request.files['file']
+    filepath = os.path.join(
+        app.config['UPLOAD_FOLDER'], basename + '.pdf')
+    # translationProcess = TranslationProcess(
+    #     status=STATUS_PROCESSING, name=f.filename, created_on=current_time, basename=basename)
+    # translationProcess.save()
+    f.save(filepath)
+    pool.apply_async(converttoimage, args=(
+        filepath, app.config['UPLOAD_FOLDER'], basename, '_eng'), callback=capturetext)
+    pool.close()
+    pool.join()
+    filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_eng.txt',
+               app.config['UPLOAD_FOLDER'] + '/'+basename+'_eng_filtered.txt')
+    processenglish(app.config['UPLOAD_FOLDER'] +
+                 '/'+basename+'_eng_filtered.txt')
+    # translatewithanuvadaeng(app.config['UPLOAD_FOLDER'] +
+    #                      '/'+basename+'_hin_filtered.txt', app.config['UPLOAD_FOLDER'] +
+    #                      '/'+basename+'_eng_tran.txt')
+    # f_eng = open(app.config['UPLOAD_FOLDER']+'/' +
+    #              basename + '_eng_filtered.txt', 'r')
+    english_res = []
+    # hindi_res = []
+    # for f in f_eng:
+    #     english_res.append(f)
+    # f_eng.close()
+    f_eng = open(app.config['UPLOAD_FOLDER']+'/' +
+                 basename + '_eng_filtered.txt', 'r')
+    for f in f_eng:
+        english_res.append(f)
+    f_eng.close()
+    data = {'english': english_res}
+    # translations = []
+    # for i in range(0, len(hindi_res)):
+    #     translation = Translation(basename=str(
+    #         basename), source=hindi_res[i], target=english_res[i])
+    #     translations.append(translation)
+    # Translation.objects.insert(translations)
+    for f in glob.glob(app.config['UPLOAD_FOLDER']+'/'+basename+'*'):
+        os.remove(f)
+    res = CustomResponse(Status.SUCCESS.value, data)
+    # translationProcess = TranslationProcess.objects(basename=basename)
+    # translationProcess.update(set__status=STATUS_PROCESSED)
+    return res.getres()
+
 @app.route('/translate', methods=['POST'])
 def translate():
     pool = mp.Pool(mp.cpu_count())
