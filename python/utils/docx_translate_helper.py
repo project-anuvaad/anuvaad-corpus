@@ -150,7 +150,7 @@ def modify_text_with_tokenization(nodes):
 
                 for text_ in tokens :
                     if text_.isupper():
-                        text_ = text_.title()
+                        text_ = text_.lower()
                     print('docx_translate_helper:modify_text_with_tokenization  : TEXT SENT ==  '+text_)
                     N_T = Text_Object(text_ , str(node_id))
                     Q.put(N_T)
