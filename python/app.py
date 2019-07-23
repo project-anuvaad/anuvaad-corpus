@@ -171,12 +171,14 @@ def getfiledata():
     #         basename), source=hindi_res[i], target=english_res[i])
     #     translations.append(translation)
     # Translation.objects.insert(translations)
-    for f in glob.glob(app.config['UPLOAD_FOLDER']+'/'+basename+'*'):
-        os.remove(f)
+    
     res = CustomResponse(Status.SUCCESS.value, data)
+    result = flask.send_file(os.path.join('upload/',basename + '_eng_filtered.txt' ), as_attachment=True)
+    result.headers["x-suggested-filename"] = basename + '.txt'
+
     # translationProcess = TranslationProcess.objects(basename=basename)
     # translationProcess.update(set__status=STATUS_PROCESSED)
-    return res.getres()
+    return result
 
 @app.route('/translate', methods=['POST'])
 def translate():
