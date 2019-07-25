@@ -248,8 +248,9 @@ def pre_process_text(xmltree):
                             prev_text_node = None
                             print("final text === " + x.text)
                     elif x.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tab':
-                        prev_text_node.text = sentence
-                        sentence = ''
+                        if not prev_text_node == None :
+                            prev_text_node.text = sentence
+                            sentence = ''
                         prev_text_node = None
                         prev_prop_node = None  
                     
