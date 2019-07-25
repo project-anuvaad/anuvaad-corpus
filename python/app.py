@@ -302,7 +302,7 @@ def translateDocx():
     return res.getres()
 
 @app.route('/translate-docx-new', methods=['POST'])
-def translateDocx():
+def translateDocxNew():
     _url = 'http://18.236.30.130:3003/translator/translation_en'
     start_time = int(round(time.time() * 1000))
     app.logger.info('app:translateDocx-new: started at '+ str(start_time))
