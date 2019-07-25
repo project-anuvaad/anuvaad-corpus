@@ -189,26 +189,37 @@ def pre_process_text(xmltree):
                        
                         for cv in x.iter():
                             if cv.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}i':
-                                print(cv.values())
-                                x.attrib['i'] = cv.values()[0]
-                                print(x.attrib['i'])
+                                try :
+
+                                    print(cv.values())
+                                    x.attrib['i'] = cv.values()[0]
+                                    print(x.attrib['i'])
+                                except:
+                                    x.attrib['i'] = "None"
                                 continue
                             elif cv.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}color':
-                                print(cv.values())
-                                x.attrib['color'] = cv.values()[0]
-                                print(x.attrib['color'])
+                                try :
+                                    print(cv.values())
+                                    x.attrib['color'] = cv.values()[0]
+                                    print(x.attrib['color'])
+                                except:
+                                    x.attrib['color'] = "None"
                                 continue
                             elif cv.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}u':
-                                print(cv.values())
-                                x.attrib['u'] = cv.values()[0]
-                                print(x.attrib['u'])
-                                continue
+                                try:
+                                    print(cv.values())
+                                    x.attrib['u'] = cv.values()[0]
+                                    print(x.attrib['u'])
+                                except:
+                                    x.attrib['u'] = "None"
+                                    continue
                             elif cv.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}b':
                                 print(cv.values())
-                                if not cv.values() == None and not cv.values().__len__ == 0 :
-                                    x.attrib['b'] = cv.values()[0]
-                                else :
-                                    x.attrib['b'] = None
+                                try:
+                                    if cv.values() == None and not cv.values().__len__ == 0 :
+                                        x.attrib['b'] = cv.values()[0]
+                                except :
+                                        x.attrib['b'] = "None"
                                 print(x.attrib['b'])
                                 continue
                             
@@ -256,7 +267,10 @@ def pre_process_text(xmltree):
                     
 
 
-def modify_text_with_tokenization(nodes):
+def modify_text_with_tokenization(nodes, url):
+    _url = 'http://52.40.71.62:3003/translator/translation_en'
+    if not  url == None:
+        _url = url 
     
     arr = []
     Q = queue.Queue()
@@ -293,7 +307,7 @@ def modify_text_with_tokenization(nodes):
 
         if i == 25:
             try :
-                res = requests.post('http://52.40.71.62:3003/translator/translation_en', json=arr)
+                res = requests.post(_url, json=arr)
                 dictFromServer = res.json()
                 if dictFromServer['response_body'] is not None:
                     print('docx_translate_helper:modify_text_with_tokenization : ') 
@@ -314,7 +328,7 @@ def modify_text_with_tokenization(nodes):
             i = 0
     if i > 0:
         try :    
-                res = requests.post('http://52.40.71.62:3003/translator/translation_en', json=arr)
+                res = requests.post(_url, json=arr)
                 dictFromServer = res.json()
                 if dictFromServer['response_body'] is not None:
                     print('docx_translate_helper:modify_text_with_tokenization : LAST : ') 
