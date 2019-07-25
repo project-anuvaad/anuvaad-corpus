@@ -205,7 +205,10 @@ def pre_process_text(xmltree):
                                 continue
                             elif cv.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}b':
                                 print(cv.values())
-                                x.attrib['b'] = cv.values()[0]
+                                if not cv.values() == None and not cv.values().__len__ == 0 :
+                                    x.attrib['b'] = cv.values()[0]
+                                else :
+                                    x.attrib['b'] = None
                                 print(x.attrib['b'])
                                 continue
                             
