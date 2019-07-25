@@ -81,7 +81,7 @@ def fetch_corpus():
 def fetch_translation_process():
     app.logger.info('app:fetch_translation_process : started at '+ str(getcurrenttime()))
     try:
-        transalationProcess = TranslationProcess.objects.order_by('-basename').to_json()
+        transalationProcess = TranslationProcess.objects(created_by=request.headers.get('ad-userid')).order_by('-basename').to_json()
         res = CustomResponse(Status.SUCCESS.value, json.loads(transalationProcess))
     except:
             app.logger.info('app:fetch-translation-process : ERROR occured')
