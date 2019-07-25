@@ -136,6 +136,121 @@ def modify_text(nodes):
         print(node.text + '\n')
         i = i + 1
 
+def check_difference(x, prev):
+    if prev == None:
+        print("PREV IS NULL")
+        return False
+    else :
+        if not  prev.attrib['i'] == x.attrib['i']:
+            return False
+        if not  prev.attrib['u'] == x.attrib['u']:
+            return False
+        if not  prev.attrib['color'] == x.attrib['color']:
+            return False
+        if not prev.attrib['b'] == x.attrib['b']:
+            return False
+        print(" SAME ")    
+    return True 
+
+def count_iterable(i):
+    return sum(1 for e in i)  
+
+def pre_process_text(xmltree):
+    num_nodes =0
+    for para in iter_para(xmltree):
+        prev_text_node = None
+        num_nodes = num_nodes+1
+        arr = []
+        print(" NEW PARA == "+ str( num_nodes))
+        
+        elements = 0
+       
+        prev_prop_node = None
+        para_child_count = count_iterable( para.iterchildren())
+        print("Paragraph children == "+ str(para_child_count))
+        contains_text = False
+        sentence = ''
+        for r in para.iterchildren():
+            elements = elements + 1
+            if r.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}r':
+                children = 0
+                print("elements === "+str(elements))
+                is_same = False
+               
+                
+                for x in ((r.iterchildren())):
+                    children = children + 1
+                    if x.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}rPr':
+                        print('TAG is : rPr '+str(children))
+                        x.attrib['i'] = "None"
+                        x.attrib['u'] = "None"
+                        x.attrib['color'] = "None"
+                        x.attrib['b'] = "None"
+                       
+                        for cv in x.iter():
+                            if cv.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}i':
+                                print(cv.values())
+                                x.attrib['i'] = cv.values()[0]
+                                print(x.attrib['i'])
+                                continue
+                            elif cv.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}color':
+                                print(cv.values())
+                                x.attrib['color'] = cv.values()[0]
+                                print(x.attrib['color'])
+                                continue
+                            elif cv.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}u':
+                                print(cv.values())
+                                x.attrib['u'] = cv.values()[0]
+                                print(x.attrib['u'])
+                                continue
+                            elif cv.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}b':
+                                print(cv.values())
+                                x.attrib['b'] = cv.values()[0]
+                                print(x.attrib['b'])
+                                continue
+                            
+                        is_same = check_difference(x , prev_prop_node )
+                        prev_prop_node = x
+
+
+                    elif x.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t':
+                        print('TAG is : text '+ str(children))
+                        
+                        if not (is_same):
+                            print (' TEXT TILL NOW ==== ' +sentence)
+                            if not prev_text_node  == None:
+
+                                print("FOR PREV === "+sentence)
+                                
+                                prev_text_node.text =  sentence
+                                sentence = ''
+                                
+
+                        
+                        print('SENTENCE IS === '+sentence)
+                        if x.text.strip() == '':
+                            prev_text_node = None
+                            prev_prop_node = None
+                            print("x.text is null")
+                        else :
+                            print("x.text is not null, text is == " + x.text)
+                            sentence = sentence + x.text
+                            prev_text_node = x
+                            
+                            x.text = ''
+                        
+                        if para_child_count == elements :
+                            x.text = sentence
+                            sentence = ''
+                            prev_text_node = None
+                            print("final text === " + x.text)
+                    elif x.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tab':
+                        prev_text_node.text = sentence
+                        sentence = ''
+                        prev_text_node = None
+                        prev_prop_node = None  
+                    
+
 
 def modify_text_with_tokenization(nodes):
     
