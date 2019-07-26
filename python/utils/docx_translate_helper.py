@@ -10,7 +10,7 @@ from nltk.tokenize import sent_tokenize
 import queue
 from models.Text_Object import Text_Object
 
-translate_url = 'http://52.40.71.62:3003/translator/translation_en'
+translate_url = 'http://18.236.30.130:3003/translator/translation_en'
 max_calls = 25
 
 def get_xml_tree(xml_string):
@@ -269,7 +269,7 @@ def pre_process_text(xmltree):
 
 
 def modify_text_with_tokenization(nodes, url):
-    _url = 'http://52.40.71.62:3003/translator/translation_en'
+    _url = 'http://18.236.30.130:3003/translator/translation_en'
     if not  url == None:
         _url = url 
     
