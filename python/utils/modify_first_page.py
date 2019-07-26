@@ -8,9 +8,7 @@ def modify_text_on_first_page(nodes):
         
             if  not node.text.strip() =='':
                 index = node.text.rfind(')')
-                index_c_a_n = node.text.lower().find('civil appeal')
-                index_transferred = node.text.lower().find('transferred case (civil)')
-                index_comtempt = node.text.lower().find('contempt petition (civil)')
+                index_c_a_n = node.text.lower().find('civil appeal no')
                 print ('text before lookup '+ node.text.lower())
                 if not index == -1:
                     text = node.text
