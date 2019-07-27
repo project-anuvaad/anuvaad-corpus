@@ -17,9 +17,11 @@ def modify_text_on_first_page(nodes):
                     numeric_text_t = get_numeric_translation(numeric_text)
                     node.text = get_from_lookup(node.text.lower().strip()) + numeric_text_t
                 elif not index_c_a_n == -1:
-                    text = node.text
+                    text = node.text.lower()
+                    index_no = text.find('l no')
+                    
                     index_dot =  text.find('.')
-                    node.text = text[:index_c_a_n + 1]
+                    node.text = text[:index_no + 1]
                     numeric_text =  text[index_dot + 1:]
                     numeric_text_t = get_numeric_translation(numeric_text)
                     node.text = get_from_lookup(node.text.lower().strip()) + numeric_text_t
@@ -36,7 +38,7 @@ def get_numeric_translation(text):
         year = text[index_f+1:]
     index_dot = text.find('.') 
     index_of = text.lower().rfind('of')
-    number = text [index_dot+1:-index_of]
+    number = text [index_dot+1:-(index_of+1)]
     return number + '/' + year
 
 
