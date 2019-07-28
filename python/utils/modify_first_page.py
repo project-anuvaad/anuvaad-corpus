@@ -1,8 +1,18 @@
 from models.lookup import Lookup
 import requests
+import json
+
+lookup_data_string = '{"reportable":  "परिव्यापक","in the supreme court of india civil original jurisdiction" : "भारत के उच्चतम न्यायालय में सिविल अधिकारिताएं","in the supreme court of india criminal/civil original jurisdiction": "भारत के उच्चतम न्यायालय में दांडिक/सिविल अधिकारिताएं","in the supreme court of india criminal original jurisdiction": "भारत के उच्चतम न्यायालय में दांडिक अधिकारिताएं","union of india" : "भारतीय संघ","petitioner" : "याचिकाकर्ता","with": "साथ में","shreya singhal" : "श्रेया सिंघल","versus" : "बनाम","respondent" : "उत्तरदाता","judgment": "निर्णय","... respondent"  : "उत्तरदाता","writ petition (criminal)": "रिट याचिका (आपराधिक) सं.","civil appeal" : "सिविल अपील सं.","writ petition (civil)" : "रिट याचिका (सिविल) सं.","contempt petition(civil)" : "संपर्क याचिका (सिविल) सं.","special leave petition(criminal)": "विशेष अवकाश याचिका (अपराधी) सं.","in": "मे","a.k. sikri,j" : "ए.के. सिकरि, जे","transferred petition (civil)" : "स्थानांतरित याचिका सं.","civil appellate jurisdiction" : "सिविल अपील न्यायिक क्षेत्र"}'  
+
+def update_lookup_data():
+    
+    lookup_data = json.loads(lookup_data_string)
+    return (lookup_data)
+     
 
 def modify_text_on_first_page(nodes):
-   
+   update_lookup_data()
+  
    if not nodes == None:
         for node in nodes:
         
@@ -38,7 +48,10 @@ def get_numeric_translation(text):
         year = text[index_f+1:]
     index_dot = text.find('.') 
     index_of = text.lower().rfind('of')
-    number = text [index_dot+1:-(index_of+1)]
+    number = text [index_dot+1:-(index_of-1)]
+    r_index_of = number.lower().rfind('o')
+    if not r_index_of == -1:
+        number = number[:-1]
     return number + '/' + year
 
 
@@ -65,14 +78,19 @@ def call_translate(text_):
                 print('modify_first_page:call_translate : ERROR : while getting data from translating server for less than 25 batch size ')
 
 def get_from_lookup(text_):
-
+    lookup_data = update_lookup_data()
     
-
-    lookup = Lookup.objects(text = text_.strip().lower())
+    try :
+        print("modify_first_page:get_from_lookup : data is "+ lookup_data[text_.strip().lower()])
+        lookup =  lookup_data[text_.strip().lower()]
+    except :
+        lookup = None
+        pass
+    # lookup = Lookup.objects(text = text_.strip().lower())
     try :
         if not lookup == None :
-            print((lookup[0].value))
-            return lookup[0].value
+            
+            return lookup
         if lookup == None :
             return call_translate(text_)
     except :
