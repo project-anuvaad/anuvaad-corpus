@@ -11,6 +11,7 @@ import pytesseract
 import argparse
 import cv2
 import os
+import uuid
 
 def convertimagetotext(imagepaths, outputfilename, basename):
     words=[]
@@ -25,7 +26,7 @@ def convertimagetotext(imagepaths, outputfilename, basename):
 
         # write the grayscale image to disk as a temporary file so we can
         # apply OCR to it
-        filename = "{}.png".format(os.getpid())
+        filename = "{}.png".format(uuid.uuid1())
         cv2.imwrite(filename, gray)
         conf_data = pytesseract.image_to_data(Image.open(
             filename), config='-l hin+eng --oem 1', output_type="dict")
