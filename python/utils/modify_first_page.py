@@ -1,9 +1,10 @@
 from models.lookup import Lookup
 import requests
 import json
+import logging
 
 lookup_data_string = '{"reportable":  "परिव्यापक","in the supreme court of india civil original jurisdiction" : "भारत के उच्चतम न्यायालय में सिविल अधिकारिताएं","in the supreme court of india criminal/civil original jurisdiction": "भारत के उच्चतम न्यायालय में दांडिक/सिविल अधिकारिताएं","in the supreme court of india criminal original jurisdiction": "भारत के उच्चतम न्यायालय में दांडिक अधिकारिताएं","union of india" : "भारतीय संघ","petitioner" : "याचिकाकर्ता","with": "साथ में","shreya singhal" : "श्रेया सिंघल","versus" : "बनाम","respondent" : "उत्तरदाता","judgment": "निर्णय","... respondent"  : "उत्तरदाता","writ petition (criminal)": "रिट याचिका (आपराधिक) सं.","civil appeal" : "सिविल अपील सं.","writ petition (civil)" : "रिट याचिका (सिविल) सं.","contempt petition(civil)" : "संपर्क याचिका (सिविल) सं.","special leave petition(criminal)": "विशेष अवकाश याचिका (अपराधी) सं.","in": "मे","a.k. sikri,j" : "ए.के. सिकरि, जे","transferred petition (civil)" : "स्थानांतरित याचिका सं.","civil appellate jurisdiction" : "सिविल अपील न्यायिक क्षेत्र"}'  
-
+log = logging.getLogger('file')
 def update_lookup_data():
     
     lookup_data = json.loads(lookup_data_string)
@@ -19,7 +20,7 @@ def modify_text_on_first_page(nodes):
             if  not node.text.strip() =='':
                 index = node.text.rfind(')')
                 index_c_a_n = node.text.lower().find('civil appeal no')
-                print ('text before lookup '+ node.text.lower())
+                log.info ('text before lookup '+ node.text.lower())
                 if not index == -1:
                     text = node.text
                     node.text = text[:index+1]
@@ -38,7 +39,7 @@ def modify_text_on_first_page(nodes):
                     
                 else :
                     node.text = get_from_lookup(node.text)
-                print('text after lookup '+node.text)
+                log.info('text after lookup '+node.text)
 
 
 def get_numeric_translation(text):
@@ -58,30 +59,30 @@ def get_numeric_translation(text):
 def call_translate(text_):
     try :       
                 arr = []
-                print(text_)
+                log.info(text_)
                 arr.append({'src': text_, 'id': 1,'s_id':'1'})
                 res = requests.post('http://18.236.30.130:3003/translator/translation_en', json=arr)
                 dictFromServer = res.json()
                 if dictFromServer['response_body'] is not None:
-                    print('modify_first_page:call_translate : ') 
-                    print( dictFromServer['response_body'])
+                    log.info('call_translate : ') 
+                    log.info( dictFromServer['response_body'])
                     for translation in dictFromServer['response_body']:
                         try : 
-                            # print('docx_translate_helper:modify_text : recieved translating from server : ') 
-                            print(translation)
+                            # log.info('docx_translate_helper:modify_text : recieved translating from server : ') 
+                            log.info(translation)
                             return (translation['tgt'])
                         except:
-                            print("modify_first_page:call_translate : ERROR : while adding to the results list")
+                            log.error("call_translate : ERROR : while adding to the results list")
                             return None    
                 
     except: 
-                print('modify_first_page:call_translate : ERROR : while getting data from translating server for less than 25 batch size ')
+                log.error('call_translate : ERROR : while getting data from translating server for less than 25 batch size ')
 
 def get_from_lookup(text_):
     lookup_data = update_lookup_data()
     
     try :
-        print("modify_first_page:get_from_lookup : data is "+ lookup_data[text_.strip().lower()])
+        log.info("get_from_lookup : data is "+ lookup_data[text_.strip().lower()])
         lookup =  lookup_data[text_.strip().lower()]
     except :
         lookup = None
@@ -106,16 +107,15 @@ def get_first_page_nodes(nodes):
         first_page.append(node)
         if i == False :
             return first_page
-        print("modify_first_page:get_first_page_nodes: text == " + node.text )
+        log.info("get_first_page_nodes: text == " + node.text )
         if not (node.text.strip()) == '':
             if node.text.strip().lower() == 'judgment' or node.text.strip().lower() == 'j u d g m e n t':
-                print()
                 i  = False
     
     return None
 
 def get_nodes_after_f_page(nodes, fpage_len):
-    print("modify_first_page:get_nodes_after_f_page: started")
+    log.info("get_nodes_after_f_page: started")
     node_list = []
     i = 0
     for node in nodes :
