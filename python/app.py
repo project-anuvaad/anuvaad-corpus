@@ -48,9 +48,49 @@ import uuid
 import logging
 from logging.handlers import RotatingFileHandler
 import utils.modify_first_page as modify_first_page
+import utils.translate_footnote as translate_footer
+from logging.config import dictConfig
 
+
+""" Logging Config , for debug logs please set env 'app_debug_logs' to True  """
+dictConfig({
+    'version': 1,
+    'formatters': {'default': {
+        'format': '[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s in %(module)s: %(message)s',
+    }},
+    
+    'handlers': {
+    'info':{
+    'class': 'logging.FileHandler',
+    'level': 'DEBUG',
+    'formatter': 'default',
+    'filename': 'info.log'
+    
+    },
+    'console':{
+    'class': 'logging.StreamHandler',
+    'level': 'DEBUG',
+    'formatter': 'default',
+    'stream': 'ext://sys.stdout',   
+    }
+    },
+    'loggers' :{
+        
+        'file':{
+            'level': 'DEBUG',
+            'handlers': ['info','console'],
+            'propagate': ''
+            }
+    },
+
+    'root': {
+        'level': 'DEBUG',
+        'handlers': ['info','console']
+    }
+})
 
 app = Flask(__name__)
+
 app.debug = True
 CORS(app)
 
@@ -63,11 +103,25 @@ es = getinstance()
 words = []
 connectmongo()
 
+log = logging.getLogger('file')
+try :
+    app_debug_logs =os.environ['app_debug_logs']
+    
+    if app_debug_logs == 'False' :
+        logging.disable(logging.DEBUG)
+        log.info("DEBUG LOGS InACTIVE")
+    else :
+        log.info("DEBUG LOGS ACTIVE")
+except :
+    logging.disable(logging.DEBUG)
+    log.info("DEBUG LOGS InACTIVE")
+
 
 @app.route('/hello', methods=['GET'])
 def hello_():
-    app.logger.info('testing info log')
-   
+    log.info('testing info log')
+    log.debug('testing debug logs')
+    log.error('test error logs')
     return "hello"
 
 
@@ -80,14 +134,14 @@ def fetch_corpus():
 """ to get all the process from mongo in order of insertion """
 @app.route('/fetch-translation-process', methods=['GET'])
 def fetch_translation_process():
-    app.logger.info('app:fetch_translation_process : started at '+ str(getcurrenttime()))
+    log.info('fetch_translation_process : started at '+ str(getcurrenttime()))
     try:
         transalationProcess = TranslationProcess.objects(created_by=request.headers.get('ad-userid')).order_by('-basename').to_json()
         res = CustomResponse(Status.SUCCESS.value, json.loads(transalationProcess))
     except:
-            app.logger.info('app:fetch-translation-process : ERROR occured')
+            log.info('fetch-translation-process : ERROR occured')
             pass    
-    app.logger.info('app:fetch_translation_process : ended at '+ str(getcurrenttime()))
+    log.info('fetch_translation_process : ended at '+ str(getcurrenttime()))
     return res.getres()
 
 
@@ -239,15 +293,15 @@ def downloadDocx():
 
 @app.route('/remove-process', methods=['POST'])
 def delete_process():
-    app.logger.info('app:delete_process: started at '+ str(getcurrenttime()))
+    log.info('delete_process: started at '+ str(getcurrenttime()))
     try :
         basename = request.form.getlist('processname')[0]
-        app.logger.info('app:delte_process : requested basename is : '+basename)
+        log.info('delte_process : requested basename is : '+basename)
         translationProcess = TranslationProcess.objects(basename=basename).delete()
-        app.logger.info('app:delete_process: ended at '+ str(getcurrenttime()))
+        log.info('delete_process: ended at '+ str(getcurrenttime()))
         res = CustomResponse(Status.SUCCESS.value,basename)
     except:
-             app.logger.info('app:delte_process : ERROR while processing  basename  : '+basename)
+             log.info('delte_process : ERROR while processing  basename  : '+basename)
              res = CustomResponse(Status.FAILURE.value,basename)
     return res.getres()
     
@@ -255,7 +309,7 @@ def delete_process():
 @app.route('/translate-docx', methods=['POST'])
 def translateDocx():
     start_time = int(round(time.time() * 1000))
-    app.logger.info('app:translateDocx: started at '+ str(start_time))
+    log.info('translateDocx: started at '+ str(start_time))
     basename = str(int(time.time()))
     current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
     f = request.files['file']
@@ -272,7 +326,7 @@ def translateDocx():
     filepath_processed = os.path.join(
         app.config['UPLOAD_FOLDER'], basename +'_t'+'.docx')
 
-    print(filename_to_processed)    
+    log.info("translate-doxc : "+filename_to_processed)    
 
     xml_content = docx_helper.get_document_xml(filepath)
     xmltree = docx_helper.get_xml_tree(xml_content)
@@ -280,13 +334,13 @@ def translateDocx():
     nodes = []
     texts = []
     docx_helper.add_identification_tag(xmltree, str(uuid.uuid4()))
-    docx_helper.pre_process_text(xmltree)
+    # docx_helper.pre_process_text(xmltree)
 
     for node, text in docx_helper.itertext(xmltree):
         nodes.append(node)
         texts.append(text)
 
-    app.logger.info('app:translateDocx: number of nodes '+ str(len(nodes)) +' and text are : '+ str(len(texts)))
+    log.info('translateDocx: number of nodes '+ str(len(nodes)) +' and text are : '+ str(len(texts)))
 
     """  method which don't use tokenization  """
     #docx_helper.modify_text(nodes)
@@ -299,21 +353,22 @@ def translateDocx():
 
     modify_first_page.modify_text_on_first_page(nodes_first_page)
     docx_helper.modify_text_with_tokenization(node_after_first_page,None)
+    xml_footer_list = translate_footer.translate_footer(filepath)
 
-    docx_helper.save_docx(filepath, xmltree, filepath_processed)
+    docx_helper.save_docx(filepath, xmltree, filepath_processed, xml_footer_list)
     
     res = CustomResponse(Status.SUCCESS.value,basename +'_t'+'.docx')
     translationProcess = TranslationProcess.objects(basename=basename)
     translationProcess.update(set__status=STATUS_PROCESSED)
     
-    app.logger.info('app:translateDocx: ended at '+ str(getcurrenttime()) + 'total time elapsed : '+str(getcurrenttime()- start_time))
+    log.info('translateDocx: ended at '+ str(getcurrenttime()) + 'total time elapsed : '+str(getcurrenttime()- start_time))
     return res.getres()
 
 @app.route('/translate-docx-new', methods=['POST'])
 def translateDocxNew():
     _url = 'http://18.236.30.130:3003/translator/translation_en'
     start_time = int(round(time.time() * 1000))
-    app.logger.info('app:translateDocx-new: started at '+ str(start_time))
+    log.info('translateDocx-new: started at '+ str(start_time))
     basename = str(int(time.time()))
     current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
     f = request.files['file']
@@ -330,8 +385,6 @@ def translateDocxNew():
     filepath_processed = os.path.join(
         app.config['UPLOAD_FOLDER'], basename +'_t'+'.docx')
 
-    print(filename_to_processed)    
-
     xml_content = docx_helper.get_document_xml(filepath)
     xmltree = docx_helper.get_xml_tree(xml_content)
 
@@ -344,7 +397,7 @@ def translateDocxNew():
         nodes.append(node)
         texts.append(text)
 
-    app.logger.info('app:translateDocx-new: number of nodes '+ str(len(nodes)) +' and text are : '+ str(len(texts)))
+    log.info('translateDocx-new: number of nodes '+ str(len(nodes)) +' and text are : '+ str(len(texts)))
 
     """  method which don't use tokenization  """
     #docx_helper.modify_text(nodes)
@@ -357,7 +410,7 @@ def translateDocxNew():
     translationProcess = TranslationProcess.objects(basename=basename)
     translationProcess.update(set__status=STATUS_PROCESSED)
     
-    app.logger.info('app:translateDocx-new: ended at '+ str(getcurrenttime()) + 'total time elapsed : '+str(getcurrenttime()- start_time))
+    log.info('translateDocx-new: ended at '+ str(getcurrenttime()) + 'total time elapsed : '+str(getcurrenttime()- start_time))
     return res.getres()
 
 @app.route('/single', methods=['POST'])
@@ -497,13 +550,5 @@ def getcurrenttime():
     return int(round(time.time() * 1000))
 
 if __name__ == '__main__':
-    logHandler = RotatingFileHandler('info.log', maxBytes=1000, backupCount=1)
-    
-    # set the log handler level
-    logHandler.setLevel(logging.INFO)
-
-    # set the app logger level
-    app.logger.setLevel(logging.INFO)
-
-    app.logger.addHandler(logHandler)  
+     
     app.run(host='0.0.0.0', port=5001)
