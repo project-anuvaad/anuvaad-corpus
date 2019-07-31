@@ -24,6 +24,7 @@ from utils.process_paragraph import processhindi
 from utils.process_paragraph_eng import processenglish
 from utils.remove_page_number_filter import filtertext
 from utils.separate import separate
+from utils.altototext import altototext
 from utils.translatewithgoogle import translatewithgoogle
 from utils.translatewithanuvada import translatewithanuvada
 from utils.translatewithanuvada_eng import translatewithanuvadaeng
@@ -380,6 +381,46 @@ def upload_single_file():
     return process_files(basename)
 
 
+@app.route('/multiple-v2', methods=['POST'])
+def upload_filev2():
+    pool = mp.Pool(mp.cpu_count())
+    basename = str(int(time.time()))
+    try:
+        name = request.form.getlist('name')
+        domain = request.form.getlist('domain')
+        comment = request.form.getlist('comment')
+        if comment is None or len(comment) == 0:
+            comment = ['']
+        if name is None or len(name) == 0 or len(name[0]) == 0 or domain is None or len(domain) == 0 or len(domain[0]) == 0 or request.files is None or request.files['hindi'] is None or request.files['english'] is None:
+            res = CustomResponse(
+                Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
+            return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
+
+        else:
+            current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+            corpus = Corpus(status=STATUS_PROCESSING, name=name[0], domain=domain[0], created_on=current_time,
+                            last_modified=current_time, author='', comment=comment[0], no_of_sentences=0, basename=basename)
+            corpus.save()
+            f = request.files['hindi']
+            f_eng = request.files['english']
+            filepath = os.path.join(
+                app.config['UPLOAD_FOLDER'], basename + '_hin.pdf')
+            filepath_eng = os.path.join(
+                app.config['UPLOAD_FOLDER'], basename + '_eng.pdf')
+            f.save(filepath)
+            f_eng.save(filepath_eng)
+            pool.apply_async(converttoimage, args=(
+                filepath, app.config['UPLOAD_FOLDER'], basename, '_hin'), callback=capturealtotext)
+            pool.apply_async(converttoimage, args=(
+                filepath_eng, app.config['UPLOAD_FOLDER'], basename, '_eng'), callback=capturealtotext)
+            pool.close()
+            pool.join()
+            return process_files(basename)
+    except Exception as e:
+        print(e)
+        res = CustomResponse(Status.ERR_GLOBAL_SYSTEM.value, None)
+        return res.getres(), Status.ERR_GLOBAL_SYSTEM.value['http']['status']
+
 @app.route('/multiple', methods=['POST'])
 def upload_file():
     pool = mp.Pool(mp.cpu_count())
@@ -422,19 +463,19 @@ def upload_file():
 
 
 def process_files(basename):
-    filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin.txt',
-               app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin_filtered.txt')
-    filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_eng.txt',
-               app.config['UPLOAD_FOLDER'] + '/'+basename+'_eng_filtered.txt')
-    processhindi(app.config['UPLOAD_FOLDER'] +
-                 '/'+basename+'_hin_filtered.txt')
-    processenglish(app.config['UPLOAD_FOLDER'] +
-                   '/'+basename+'_eng_filtered.txt')
+    # filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin.txt',
+    #            app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin_filtered.txt')
+    # filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_eng.txt',
+    #            app.config['UPLOAD_FOLDER'] + '/'+basename+'_eng_filtered.txt')
+    # processhindi(app.config['UPLOAD_FOLDER'] +
+    #              '/'+basename+'_hin_filtered.txt')
+    # processenglish(app.config['UPLOAD_FOLDER'] +
+    #                '/'+basename+'_eng_filtered.txt')
     translatewithgoogle(app.config['UPLOAD_FOLDER'] +
-                        '/'+basename+'_hin_filtered.txt', app.config['UPLOAD_FOLDER'] +
+                        '/'+basename+'_hin.txt', app.config['UPLOAD_FOLDER'] +
                         '/'+basename+'_eng_tran.txt')
-    os.system('./helpers/bleualign.py -s ' + os.getcwd() + '/upload/' + basename + '_hin_filtered' + '.txt' + ' -t ' + os.getcwd() + '/upload/' + basename +
-              '_eng_filtered' + '.txt' + ' --srctotarget ' + os.getcwd() + '/upload/' + basename + '_eng_tran' + '.txt' + ' -o ' + os.getcwd() + '/upload/' + basename + '_output')
+    os.system('./helpers/bleualign.py -s ' + os.getcwd() + '/upload/' + basename + '_hin' + '.txt' + ' -t ' + os.getcwd() + '/upload/' + basename +
+              '_eng' + '.txt' + ' --srctotarget ' + os.getcwd() + '/upload/' + basename + '_eng_tran' + '.txt' + ' -o ' + os.getcwd() + '/upload/' + basename + '_output')
     english_res = []
     hindi_res = []
     english_points = []
@@ -485,13 +526,17 @@ def capturetext(result):
     savewords(words)
 
 def capturealtotext(result):
-    convertimagetoalto(result['imagenames'], app.config['UPLOAD_FOLDER'] +
+    words = convertimagetoalto(result['imagenames'], app.config['UPLOAD_FOLDER'] +
                                '/' + result['basename'] + result['suffix'], result['basename'])
-    removetext(result['imagenames'], app.config['UPLOAD_FOLDER'] +
-                               '/' + result['basename'] + result['suffix'])
-    translateandupdateimage(result['imagenames'], app.config['UPLOAD_FOLDER'] +
-                               '/' + result['basename'] + result['suffix'])
-    converttopdf(result['imagenames'])
+    print(words)
+    savewords(words)
+    altototext(result['imagenames'], app.config['UPLOAD_FOLDER'] +
+                               '/' + result['basename'] + result['suffix'], result['suffix'])
+    # removetext(result['imagenames'], app.config['UPLOAD_FOLDER'] +
+    #                            '/' + result['basename'] + result['suffix'])
+    # translateandupdateimage(result['imagenames'], app.config['UPLOAD_FOLDER'] +
+    #                            '/' + result['basename'] + result['suffix'])
+    # converttopdf(result['imagenames'])
 
 def getcurrenttime():
     return int(round(time.time() * 1000))
