@@ -12,12 +12,10 @@ MongoClient.connect(url, function (err, db) {
     if (err) throw err;
     var dbo = db.db("preprocessing");
     var arr = []
-    result['Yojana'].map((res, index) => {
-        if (index !== 0) {
-            if (res['A'] && res['A'].length > 0) {
-                let obj = { source: res['A'], target: res['B'] }
-                arr.push(obj)
-            }
+    result['test_data_100519'].map((res, index) => {
+        if (res['A'] && res['A'].length > 0) {
+            let obj = { source: res['A'], target: res['B'] }
+            arr.push(obj)
         }
     })
     dbo.collection("oldcorpus").insertMany(arr, function (err, res) {
