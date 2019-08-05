@@ -334,7 +334,7 @@ def translateDocx():
     nodes = []
     texts = []
     docx_helper.add_identification_tag(xmltree, str(uuid.uuid4()))
-    # docx_helper.pre_process_text(xmltree)
+    docx_helper.pre_process_text(xmltree)
 
     for node, text in docx_helper.itertext(xmltree):
         nodes.append(node)
