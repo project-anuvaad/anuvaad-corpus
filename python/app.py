@@ -351,7 +351,8 @@ def translateDocx():
     first_page_node_len = modify_first_page.get_size( nodes_first_page)
     node_after_first_page = modify_first_page.get_nodes_after_f_page(nodes, first_page_node_len)
 
-    modify_first_page.modify_text_on_first_page(nodes_first_page)
+    
+    modify_first_page.modify_text_on_first_page_using_model(nodes_first_page)
     docx_helper.modify_text_with_tokenization(node_after_first_page,None)
     xml_footer_list = translate_footer.translate_footer(filepath)
 
