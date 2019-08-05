@@ -12,7 +12,7 @@ MongoClient.connect(url, function (err, db) {
     if (err) throw err;
     var dbo = db.db("preprocessing");
     var arr = []
-    result['result_1305'].map((res, index) => {
+    result['Yojana'].map((res, index) => {
         if (index !== 0) {
             if (res['A'] && res['A'].length > 0) {
                 let obj = { source: res['A'], target: res['B'] }
