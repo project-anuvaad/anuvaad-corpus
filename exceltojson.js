@@ -1,6 +1,6 @@
 'use strict';
 const excelToJson = require('convert-excel-to-json');
- 
+
 const result = excelToJson({
     sourceFile: 'Corpus.xlsx'
 });
@@ -8,19 +8,21 @@ const result = excelToJson({
 var MongoClient = require('mongodb').MongoClient;
 var url = "mongodb://localhost:27017/";
 
-MongoClient.connect(url, function(err, db) {
-  if (err) throw err;
-  var dbo = db.db("preprocessing");
-  var arr = []
-  result['Judiciary Specific'].map((res)=>{
-    let obj = {source: res['A'], target: res['B']}
-    arr.push(obj)
-  })
-  dbo.collection("oldcorpus").insertMany(arr, function(err, res) {
+MongoClient.connect(url, function (err, db) {
     if (err) throw err;
-    console.log("1 document inserted");
-    db.close();
-  });
+    var dbo = db.db("preprocessing");
+    var arr = []
+    result['Books'].map((res, index) => {
+        if (index !== 0) {
+            let obj = { source: res['A'], target: res['B'] }
+            arr.push(obj)
+        }
+    })
+    dbo.collection("oldcorpus").insertMany(arr, function (err, res) {
+        if (err) throw err;
+        console.log("1 document inserted");
+        db.close();
+    });
 });
 
-// console.log(result['Judiciary Specific'][0]['A'])
+// console.log(result['Books'][0]['A'])
