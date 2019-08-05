@@ -2,7 +2,7 @@
 const excelToJson = require('convert-excel-to-json');
 
 const result = excelToJson({
-    sourceFile: 'Corpus.xlsx'
+    sourceFile: 'Corpus2.xlsx'
 });
 
 var MongoClient = require('mongodb').MongoClient;
@@ -12,7 +12,7 @@ MongoClient.connect(url, function (err, db) {
     if (err) throw err;
     var dbo = db.db("preprocessing");
     var arr = []
-    result['test_data_100519'].map((res, index) => {
+    result['Sheet1'].map((res, index) => {
         if (res['A'] && res['A'].length > 0) {
             let obj = { source: res['A'], target: res['B'] }
             arr.push(obj)
