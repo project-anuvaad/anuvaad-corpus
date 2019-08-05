@@ -391,6 +391,47 @@ def upload_filev2():
         comment = request.form.getlist('comment')
         if comment is None or len(comment) == 0:
             comment = ['']
+        if name is None or len(name) == 0 or len(name[0]) == 0 or domain is None or len(domain) == 0 or len(domain[0]) == 0 or request.files is None or request.files['source'] is None or request.files['target'] is None:
+            res = CustomResponse(
+                Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
+            return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
+
+        else:
+            current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+            corpus = Corpus(status=STATUS_PROCESSING, name=name[0], domain=domain[0], created_on=current_time,
+                            last_modified=current_time, author='', comment=comment[0], no_of_sentences=0, basename=basename)
+            corpus.save()
+            f = request.files['source']
+            f_eng = request.files['target']
+            filepath = os.path.join(
+                app.config['UPLOAD_FOLDER'], basename + '_source.pdf')
+            filepath_eng = os.path.join(
+                app.config['UPLOAD_FOLDER'], basename + '_target.pdf')
+            f.save(filepath)
+            f_eng.save(filepath_eng)
+            pool.apply_async(converttoimage, args=(
+                filepath, app.config['UPLOAD_FOLDER'], basename, '_source'), callback=capturealtotext)
+            pool.apply_async(converttoimage, args=(
+                filepath_eng, app.config['UPLOAD_FOLDER'], basename, '_target'), callback=capturealtotext)
+            pool.close()
+            pool.join()
+            return process_files(basename)
+    except Exception as e:
+        print(e)
+        res = CustomResponse(Status.ERR_GLOBAL_SYSTEM.value, None)
+        return res.getres(), Status.ERR_GLOBAL_SYSTEM.value['http']['status']
+
+
+@app.route('/multiple-tamil', methods=['POST'])
+def upload_file_tam():
+    pool = mp.Pool(mp.cpu_count())
+    basename = str(int(time.time()))
+    try:
+        name = request.form.getlist('name')
+        domain = request.form.getlist('domain')
+        comment = request.form.getlist('comment')
+        if comment is None or len(comment) == 0:
+            comment = ['']
         if name is None or len(name) == 0 or len(name[0]) == 0 or domain is None or len(domain) == 0 or len(domain[0]) == 0 or request.files is None or request.files['hindi'] is None or request.files['english'] is None:
             res = CustomResponse(
                 Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
@@ -404,15 +445,15 @@ def upload_filev2():
             f = request.files['hindi']
             f_eng = request.files['english']
             filepath = os.path.join(
-                app.config['UPLOAD_FOLDER'], basename + '_hin.pdf')
+                app.config['UPLOAD_FOLDER'], basename + '_tam.pdf')
             filepath_eng = os.path.join(
                 app.config['UPLOAD_FOLDER'], basename + '_eng.pdf')
             f.save(filepath)
             f_eng.save(filepath_eng)
             pool.apply_async(converttoimage, args=(
-                filepath, app.config['UPLOAD_FOLDER'], basename, '_hin'), callback=capturealtotext)
+                filepath, app.config['UPLOAD_FOLDER'], basename, '_tam'), callback=capturetext)
             pool.apply_async(converttoimage, args=(
-                filepath_eng, app.config['UPLOAD_FOLDER'], basename, '_eng'), callback=capturealtotext)
+                filepath_eng, app.config['UPLOAD_FOLDER'], basename, '_eng'), callback=capturetext)
             pool.close()
             pool.join()
             return process_files(basename)
@@ -420,6 +461,8 @@ def upload_filev2():
         print(e)
         res = CustomResponse(Status.ERR_GLOBAL_SYSTEM.value, None)
         return res.getres(), Status.ERR_GLOBAL_SYSTEM.value['http']['status']
+
+
 
 @app.route('/multiple', methods=['POST'])
 def upload_file():
@@ -462,6 +505,7 @@ def upload_file():
         return res.getres(), Status.ERR_GLOBAL_SYSTEM.value['http']['status']
 
 
+
 def process_files(basename):
     # filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin.txt',
     #            app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin_filtered.txt')
@@ -472,10 +516,10 @@ def process_files(basename):
     # processenglish(app.config['UPLOAD_FOLDER'] +
     #                '/'+basename+'_eng_filtered.txt')
     translatewithgoogle(app.config['UPLOAD_FOLDER'] +
-                        '/'+basename+'_hin.txt', app.config['UPLOAD_FOLDER'] +
-                        '/'+basename+'_eng_tran.txt')
-    os.system('./helpers/bleualign.py -s ' + os.getcwd() + '/upload/' + basename + '_hin' + '.txt' + ' -t ' + os.getcwd() + '/upload/' + basename +
-              '_eng' + '.txt' + ' --srctotarget ' + os.getcwd() + '/upload/' + basename + '_eng_tran' + '.txt' + ' -o ' + os.getcwd() + '/upload/' + basename + '_output')
+                        '/'+basename+'_source.txt', app.config['UPLOAD_FOLDER'] +
+                        '/'+basename+'_target_tran.txt')
+    os.system('./helpers/bleualign.py -s ' + os.getcwd() + '/upload/' + basename + '_source' + '.txt' + ' -t ' + os.getcwd() + '/upload/' + basename +
+              '_target' + '.txt' + ' --srctotarget ' + os.getcwd() + '/upload/' + basename + '_target_tran' + '.txt' + ' -o ' + os.getcwd() + '/upload/' + basename + '_output')
     english_res = []
     hindi_res = []
     english_points = []
@@ -505,8 +549,8 @@ def process_files(basename):
         sentences.append(sentence)
         # sentence.save()
     Sentence.objects.insert(sentences)
-    for f in glob.glob(app.config['UPLOAD_FOLDER']+'/'+basename+'*'):
-        os.remove(f)
+    # for f in glob.glob(app.config['UPLOAD_FOLDER']+'/'+basename+'*'):
+    #     os.remove(f)
     res = CustomResponse(Status.SUCCESS.value, data)
     corpus = Corpus.objects(basename=basename)
     corpus.update(set__status=STATUS_PROCESSED,
@@ -528,7 +572,6 @@ def capturetext(result):
 def capturealtotext(result):
     words = convertimagetoalto(result['imagenames'], app.config['UPLOAD_FOLDER'] +
                                '/' + result['basename'] + result['suffix'], result['basename'])
-    print(words)
     savewords(words)
     altototext(result['imagenames'], app.config['UPLOAD_FOLDER'] +
                                '/' + result['basename'] + result['suffix'], result['suffix'])

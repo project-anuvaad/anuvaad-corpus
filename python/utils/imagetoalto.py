@@ -28,9 +28,9 @@ def convertimagetoalto(imagepaths, outputfilename, basename):
         filename = "{}.png".format(uuid.uuid1())
         cv2.imwrite(filename, gray)
         pytesseract.run_tesseract(
-            filename,output_filename_base=outputfilename+'_'+str(file_index),lang='eng+hin',extension='xml', config='alto --oem 1')
+            filename,output_filename_base=outputfilename+'_'+str(file_index),lang='eng+hin+tam',extension='xml', config='alto --oem 1')
         conf_data = pytesseract.image_to_data(Image.open(
-            filename), config='-l hin+eng --oem 1', output_type="dict")
+            filename), config='-l hin+eng+tam --oem 1', output_type="dict")
         index = 0
         file_index += 1
         os.remove(filename)

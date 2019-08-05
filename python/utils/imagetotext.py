@@ -29,9 +29,9 @@ def convertimagetotext(imagepaths, outputfilename, basename):
         filename = "{}.png".format(uuid.uuid1())
         cv2.imwrite(filename, gray)
         conf_data = pytesseract.image_to_data(Image.open(
-            filename), config='-l hin+eng --oem 1', output_type="dict")
+            filename), config='-l hin+eng+tam --oem 1', output_type="dict")
         text = pytesseract.image_to_string(
-            Image.open(filename), config='-l hin+eng --oem 1')
+            Image.open(filename), config='-l hin+eng+tam --oem 1')
         f = open(outputfilename, "a+")
         f.write(text)
         f.close()
