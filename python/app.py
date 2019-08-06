@@ -172,6 +172,18 @@ def fetch_sentences():
     res = CustomResponse(Status.SUCCESS.value, json.loads(sentences), totalcount)
     return res.getres()
 
+@app.route('/update-sentences', methods=['POST'])
+def update_sentences():
+    if(basename['sentences'] is None or not isinstance(basename['sentences'], list)):
+        res = CustomResponse(
+                Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
+        return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
+    for sentence in basename['sentences']:
+        corpus = Oldcorpus.objects(_id=sentence['_id']['$oid'])
+        corpus.update(set__source=sentence['source'],set__target=sentence['target'])
+    res = CustomResponse(Status.SUCCESS.value, None)
+    return res.getres()
+
 
 @app.route('/translate-file', methods=['POST'])
 def translateFile():
