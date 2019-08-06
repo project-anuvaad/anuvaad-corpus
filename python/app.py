@@ -165,8 +165,8 @@ def fetch_sentences():
     if basename == 'OLD_CORPUS':
         (sentencesobj, totalcount) = Oldcorpus.limit(request.args.get('pagesize'),request.args.get('pageno'))
         sentences = sentencesobj.to_json()
-        for sentence in sentencesobj:
-            sentence.update(set__status=STATUS_PROCESSING, set__locked=True, set__locked_time=datetime.now())
+        # for sentence in sentencesobj:
+        #     sentence.update(set__status=STATUS_PROCESSING, set__locked=True, set__locked_time=datetime.now())
     else:
         sentences = Sentence.objects(basename=basename).to_json()
     res = CustomResponse(Status.SUCCESS.value, json.loads(sentences), totalcount)
