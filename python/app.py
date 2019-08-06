@@ -33,6 +33,7 @@ from models.translation_process import TranslationProcess
 from models.words import fetchwordsfromsentence, fetchwordhocrfromsentence
 from models.sentence import Sentence
 from models.corpus import Corpus
+from models.old_corpus import Oldcorpus
 from werkzeug.utils import secure_filename
 import subprocess
 import json
@@ -124,9 +125,13 @@ def hello_():
     log.error('test error logs')
     return "hello"
 
-
+""" to get list of corpus available """
 @app.route('/fetch-corpus', methods=['GET'])
 def fetch_corpus():
+    if request.headers.get('ad-userid') is not None:
+        log.info('fetch-corpus initiated by '+request.headers.get('ad-userid'))
+    else:
+        log.info('fetch-corpus initiated by anonymous user')
     corpus = Corpus.objects.to_json()
     res = CustomResponse(Status.SUCCESS.value, json.loads(corpus))
     return res.getres()
@@ -156,8 +161,15 @@ def fetch_translation():
 @app.route('/fetch-sentences', methods=['GET'])
 def fetch_sentences():
     basename = request.args.get('basename')
-    sentences = Sentence.objects(basename=basename).to_json()
-    res = CustomResponse(Status.SUCCESS.value, json.loads(sentences))
+    totalcount = 0
+    if basename == 'OLD_CORPUS':
+        (sentencesobj, totalcount) = Oldcorpus.limit(request.args.get('pagesize'),request.args.get('pageno'))
+        sentences = sentencesobj.to_json()
+        for sentence in sentencesobj:
+            sentence.update(set__status=STATUS_PROCESSING, set__locked=True, set__locked_time=datetime.now())
+    else:
+        sentences = Sentence.objects(basename=basename).to_json()
+    res = CustomResponse(Status.SUCCESS.value, json.loads(sentences), totalcount)
     return res.getres()
 
 
