@@ -11,6 +11,7 @@ import json
 
 
 class Oldcorpus(Document):
+    _id = ObjectIdField()
     corpusid = UUIDField()
     source = StringField()
     target = StringField()
@@ -28,7 +29,7 @@ class Oldcorpus(Document):
         elif pagenumber is None:
             cursor = Oldcorpus.objects.filter(Q(locked=None) or Q(locked=False)).limit(page_size)
         else:
-            cursor = Oldcorpus.objects.filter(Q(locked=None) or Q(locked=False)).skip( (int(pagenumber)-1)*page_size ).limit(page_size)
+            cursor = Oldcorpus.objects.filter(Q(locked=None) or Q(locked=False)).skip( (int(pagenumber)-1)*int(page_size) ).limit(int(page_size))
 
         # Get the data
         data = [x for x in cursor]
