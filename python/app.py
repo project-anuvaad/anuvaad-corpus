@@ -162,24 +162,22 @@ def fetch_translation():
 def fetch_sentences():
     basename = request.args.get('basename')
     totalcount = 0
-    if basename == 'OLD_CORPUS':
-        (sentencesobj, totalcount) = Oldcorpus.limit(request.args.get('pagesize'),request.args.get('pageno'))
-        sentences = sentencesobj.to_json()
-        # for sentence in sentencesobj:
-        #     sentence.update(set__status=STATUS_PROCESSING, set__locked=True, set__locked_time=datetime.now())
-    else:
-        sentences = Sentence.objects(basename=basename).to_json()
+    (sentencesobj, totalcount) = Sentence.limit(request.args.get('pagesize'),basename,request.args.get('pageno'))
+    sentences = sentencesobj.to_json()
+    # for sentence in sentencesobj:
+    #     sentence.update(set__status=STATUS_PROCESSING, set__locked=True, set__locked_time=datetime.now())
     res = CustomResponse(Status.SUCCESS.value, json.loads(sentences), totalcount)
     return res.getres()
 
 @app.route('/update-sentences', methods=['POST'])
 def update_sentences():
-    if(basename['sentences'] is None or not isinstance(basename['sentences'], list)):
+    body = request.get_json()
+    if(body['sentences'] is None or not isinstance(body['sentences'], list)):
         res = CustomResponse(
                 Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
         return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
-    for sentence in basename['sentences']:
-        corpus = Oldcorpus.objects(_id=sentence['_id']['$oid'])
+    for sentence in body['sentences']:
+        corpus = Sentence.objects(_id=sentence['_id']['$oid'])
         corpus.update(set__source=sentence['source'],set__target=sentence['target'])
     res = CustomResponse(Status.SUCCESS.value, None)
     return res.getres()
