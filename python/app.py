@@ -158,7 +158,7 @@ def fetch_translation():
     return res.getres()
 
 
-""" to get list of sentences for given corpus"""
+""" to get list of sentences for given corpus """
 @app.route('/fetch-sentences', methods=['GET'])
 def fetch_sentences():
     basename = request.args.get('basename')
@@ -183,6 +183,7 @@ def fetch_sentences():
     res = CustomResponse(Status.SUCCESS.value, sentences_list, totalcount)
     return res.getres()
 
+""" to update sentences present in corpus """
 @app.route('/update-sentences', methods=['POST'])
 def update_sentences():
     body = request.get_json()
@@ -193,6 +194,20 @@ def update_sentences():
     for sentence in body['sentences']:
         corpus = Sentence.objects(_id=sentence['_id']['$oid'])
         corpus.update(set__source=sentence['source'],set__target=sentence['target'])
+    res = CustomResponse(Status.SUCCESS.value, None)
+    return res.getres()
+
+""" to update sentences status present in corpus """
+@app.route('/update-sentences-status', methods=['POST'])
+def update_sentences_status():
+    body = request.get_json()
+    if(body['sentences'] is None or not isinstance(body['sentences'], list)):
+        res = CustomResponse(
+                Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
+        return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
+    for sentence in body['sentences']:
+        corpus = Sentence.objects(_id=sentence['_id']['$oid'])
+        corpus.update(set__status=sentence['status'])
     res = CustomResponse(Status.SUCCESS.value, None)
     return res.getres()
 
