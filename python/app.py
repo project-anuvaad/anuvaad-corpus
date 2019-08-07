@@ -24,7 +24,7 @@ from utils.process_paragraph import processhindi
 from utils.process_paragraph_eng import processenglish
 from utils.remove_page_number_filter import filtertext
 from utils.separate import separate
-from utils.translatewithgoogle import translatewithgoogle
+from utils.translatewithgoogle import translatewithgoogle, translatesinglesentence
 from utils.translatewithanuvada import translatewithanuvada
 from utils.translatewithanuvada_eng import translatewithanuvadaeng
 from models.words import savewords
@@ -158,15 +158,29 @@ def fetch_translation():
     return res.getres()
 
 
+""" to get list of sentences for given corpus"""
 @app.route('/fetch-sentences', methods=['GET'])
 def fetch_sentences():
     basename = request.args.get('basename')
     totalcount = 0
     (sentencesobj, totalcount) = Sentence.limit(request.args.get('pagesize'),basename,request.args.get('pageno'))
-    sentences = sentencesobj.to_json()
+    sentences_list = []
+    sources = []
+    # sentencesdict = sentencesobj.to_mongo()
+    for sent in sentencesobj:
+        sent_dict = json.loads(sent.to_json())
+        sources.append(sent_dict['source'])
+    translation_list = translatesinglesentence(sources)
+    index = 0
+    for sent in sentencesobj:
+        sent_dict = json.loads(sent.to_json())
+        sent_dict['translation'] = translation_list[index]
+        sentences_list.append(sent_dict)
+        index += 1
+        # print() 
     # for sentence in sentencesobj:
     #     sentence.update(set__status=STATUS_PROCESSING, set__locked=True, set__locked_time=datetime.now())
-    res = CustomResponse(Status.SUCCESS.value, json.loads(sentences), totalcount)
+    res = CustomResponse(Status.SUCCESS.value, sentences_list, totalcount)
     return res.getres()
 
 @app.route('/update-sentences', methods=['POST'])
