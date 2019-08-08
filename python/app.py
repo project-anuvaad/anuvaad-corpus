@@ -99,6 +99,7 @@ UPLOAD_FOLDER = 'upload'
 STATUS_PENDING = 'pending'
 STATUS_PROCESSING = 'PROCESSING'
 STATUS_PROCESSED = 'COMPLETED'
+STATUS_EDITED = 'EDITED'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 es = getinstance()
 words = []
@@ -193,7 +194,7 @@ def update_sentences():
         return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
     for sentence in body['sentences']:
         corpus = Sentence.objects(_id=sentence['_id']['$oid'])
-        corpus.update(set__source=sentence['source'],set__target=sentence['target'])
+        corpus.update(set__source=sentence['source'],set__target=sentence['target'], set__status=STATUS_EDITED)
     res = CustomResponse(Status.SUCCESS.value, None)
     return res.getres()
 
