@@ -26,14 +26,26 @@ class Sentence(Document):
     updated_on = DateTimeField()
     updated_by = StringField()
 
-    def limit(page_size, basename, pagenumber=None):
-        totalcount = Sentence.objects.filter(Q(basename=basename) and (Q(locked=None) or Q(locked=False))).count()
-        if page_size is None:
-            cursor = Sentence.objects.filter(Q(basename=basename) and (Q(locked=None) or Q(locked=False))).limit(5)
-        elif pagenumber is None:
-            cursor = Sentence.objects.filter(Q(basename=basename) and (Q(locked=None) or Q(locked=False))).limit(page_size)
+    def limit(page_size, basename, status=None,pagenumber=None):
+        if status is not None:
+            totalcount = Sentence.objects.filter(Q(basename=basename) and Q(status=status)).count()
         else:
-            cursor = Sentence.objects.filter(Q(basename=basename) and (Q(locked=None) or Q(locked=False))).skip( (int(pagenumber)-1)*int(page_size) ).limit(int(page_size))
+            totalcount = Sentence.objects.filter(Q(basename=basename)).count()
+        if page_size is None:
+            if status is not None:
+                cursor = Sentence.objects.filter(Q(basename=basename) and Q(status=status)).limit(5)    
+            else:
+                cursor = Sentence.objects.filter(Q(basename=basename)).limit(5)
+        elif pagenumber is None:
+            if status is not None:
+                cursor = Sentence.objects.filter(Q(basename=basename) and Q(status=status)).limit(page_size)
+            else:
+                cursor = Sentence.objects.filter(Q(basename=basename)).limit(page_size)
+        else:
+            if status is not None:
+                cursor = Sentence.objects.filter(Q(basename=basename) and Q(status=status)).skip( (int(pagenumber)-1)*int(page_size) ).limit(int(page_size))
+            else:
+                cursor = Sentence.objects.filter(Q(basename=basename)).skip( (int(pagenumber)-1)*int(page_size) ).limit(int(page_size))
 
         # Get the data
         data = [x for x in cursor]

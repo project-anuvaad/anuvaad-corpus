@@ -164,23 +164,26 @@ def fetch_translation():
 def fetch_sentences():
     basename = request.args.get('basename')
     totalcount = 0
-    (sentencesobj, totalcount) = Sentence.limit(request.args.get('pagesize'),basename,request.args.get('pageno'))
+    (sentencesobj, totalcount) = Sentence.limit(request.args.get('pagesize'),basename,request.args.get('status'),request.args.get('pageno'))
     sentences_list = []
     sources = []
-    # sentencesdict = sentencesobj.to_mongo()
-    for sent in sentencesobj:
-        sent_dict = json.loads(sent.to_json())
-        sources.append(sent_dict['source'])
-    translation_list = translatesinglesentence(sources)
-    index = 0
-    for sent in sentencesobj:
-        sent_dict = json.loads(sent.to_json())
-        sent_dict['translation'] = translation_list[index]
-        sentences_list.append(sent_dict)
-        index += 1
-        # print() 
-    # for sentence in sentencesobj:
-    #     sentence.update(set__status=STATUS_PROCESSING, set__locked=True, set__locked_time=datetime.now())
+    if sentencesobj is not None:
+        for sent in sentencesobj:
+            sent_dict = json.loads(sent.to_json())
+            corpus = Sentence.objects(_id=sent_dict['_id']['$oid'])
+            corpus.update(set__status=STATUS_PROCESSING)
+            sources.append(sent_dict['source'])
+        translation_list = translatesinglesentence(sources)
+        index = 0
+        for sent in sentencesobj:
+            sent_dict = json.loads(sent.to_json())
+            sent_dict['translation'] = translation_list[index]
+            sentences_list.append(sent_dict)
+            index += 1
+            # print() 
+        # for sentence in sentencesobj:
+        #     # sentence.update(set__status=STATUS_PROCESSING, set__locked=True, set__locked_time=datetime.now())
+        #     sentence.update(set__status=STATUS_PROCESSING)
     res = CustomResponse(Status.SUCCESS.value, sentences_list, totalcount)
     return res.getres()
 
