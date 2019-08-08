@@ -171,7 +171,8 @@ def fetch_sentences():
         for sent in sentencesobj:
             sent_dict = json.loads(sent.to_json())
             corpus = Sentence.objects(_id=sent_dict['_id']['$oid'])
-            corpus.update(set__status=STATUS_PROCESSING)
+            if corpus.status == STATUS_PENDING:
+                corpus.update(set__status=STATUS_PROCESSING)
             sources.append(sent_dict['source'])
         translation_list = translatesinglesentence(sources)
         index = 0
