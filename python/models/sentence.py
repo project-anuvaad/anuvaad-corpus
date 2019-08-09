@@ -25,6 +25,7 @@ class Sentence(Document):
     locked_time = DateTimeField()
     updated_on = DateTimeField()
     updated_by = StringField()
+    rating = FloatField()
 
     def limit(page_size, basename, status=None,pagenumber=None):
         if status is not None:

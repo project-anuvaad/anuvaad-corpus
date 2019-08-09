@@ -202,6 +202,21 @@ def update_sentences():
     res = CustomResponse(Status.SUCCESS.value, None)
     return res.getres()
 
+
+""" to update sentences grade in corpus """
+@app.route('/update-sentences-grade', methods=['POST'])
+def update_sentences_grade():
+    body = request.get_json()
+    if(body['sentences'] is None or not isinstance(body['sentences'], list)):
+        res = CustomResponse(
+                Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
+        return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
+    for sentence in body['sentences']:
+        corpus = Sentence.objects(_id=sentence['_id']['$oid'])
+        corpus.update(set__rating=sentence['rating'])
+    res = CustomResponse(Status.SUCCESS.value, None)
+    return res.getres()
+
 """ to update sentences status present in corpus """
 @app.route('/update-sentences-status', methods=['POST'])
 def update_sentences_status():
