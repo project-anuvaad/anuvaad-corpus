@@ -134,10 +134,10 @@ def get_user_profile():
     log.info('get_user_profile : started at '+str(getcurrenttime()))
     if request.headers.get('ad-userid') is not None:
         log.info('get_user_profile : userid = '+request.headers.get('ad-userid'))
-        profile = requests.get(PROFILE_REQ_URL+request.headers.get('ad-userid')).content
-        if profile is not None:
+        try :
+            profile = requests.get(PROFILE_REQ_URL+request.headers.get('ad-userid')).content
             res = CustomResponse(Status.SUCCESS.value, json.loads(profile))
-        else:
+        except:
             res = CustomResponse(Status.FAILURE.value,'user does not exists with user-id :'+request.heasders.get('ad-userid'))
         log.info('get_user_profile : ended at '+str(getcurrenttime()))
         return res.getres()
