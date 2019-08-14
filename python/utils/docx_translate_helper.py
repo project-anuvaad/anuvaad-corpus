@@ -74,7 +74,7 @@ def add_identification_tag(xmltree, identifier):
     """ adding translation id for each node """
     for node, text in itertext(xmltree):
         node.attrib['id'] = identifier
-       
+    
       
 def modify_text(nodes):
     
@@ -375,6 +375,12 @@ def modify_text_with_tokenization(nodes, url):
                 break
         if  Q_response.qsize() == 0 and not  text == '':
             node.text =  text
+
+def warp_original_with_identification_tags(input_docx_file_path, xml_tree, output_docx_filepath):
+    log.info('warp_original_with_identification_tags : started')
+    none =[]
+    save_docx(input_docx_file_path, xml_tree, output_docx_filepath, none)
+
 
 
 def save_docx(input_docx_filepath, xmltree, output_docx_filepath, xml_tree_footer_list):
