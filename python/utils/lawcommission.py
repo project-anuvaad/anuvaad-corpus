@@ -2,7 +2,7 @@ import os.path
 import requests
 
 
-for i in range(274,0):
+for i in range(274,0, -1):
     if os.path.isfile('../../lawcommission/H'+str(i)+'.pdf') and os.path.isfile('../../lawcommission/Report'+str(i)+'.pdf'):
         try:
             file1 = open('../../lawcommission/H'+str(i)+'.pdf', 'rb')
