@@ -53,7 +53,7 @@ import utils.translate_footnote as translate_footer
 from logging.config import dictConfig
 
 
-""" Logging Config , for debug logs please set env 'app_debug_logs' to True  """
+""" Logging Config, for debug logs please set env 'app_debug_logs' to True  """
 dictConfig({
     'version': 1,
     'formatters': {'default': {
