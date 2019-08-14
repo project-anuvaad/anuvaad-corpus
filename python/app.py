@@ -56,7 +56,7 @@ from logging.config import dictConfig
 dictConfig({
     'version': 1,
     'formatters': {'default': {
-        'format': '[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s in %(module)s: %(message)s',
+        'format': '[%(asctime)s] {%(filename)s:%(lineno)d} %(threadName)s %(levelname)s in %(module)s: %(message)s',
     }},
     
     'handlers': {
@@ -325,6 +325,8 @@ def translateDocx():
     filename_to_processed = f.filename
     filepath_processed = os.path.join(
         app.config['UPLOAD_FOLDER'], basename +'_t'+'.docx')
+    filepath_processed_src_with_ids = os.path.join(
+        app.config['UPLOAD_FOLDER'], basename +'_s'+'.docx')
 
     log.info("translate-doxc : "+filename_to_processed)    
 
@@ -333,7 +335,8 @@ def translateDocx():
 
     nodes = []
     texts = []
-    docx_helper.add_identification_tag(xmltree, str(uuid.uuid4()))
+    docx_helper.add_identification_tag(xmltree, basename +'-'+str(uuid.uuid4()))
+    docx_helper.warp_original_with_identification_tags(filepath,xmltree,filepath_processed_src_with_ids)
     docx_helper.pre_process_text(xmltree)
 
     for node, text in docx_helper.itertext(xmltree):
