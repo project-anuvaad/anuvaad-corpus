@@ -4,6 +4,7 @@
 /node_modules
 /python/env
 /python/upload/*
+!/python/upload/.gitkeep
 **__pycache__
 **.vscode
 
