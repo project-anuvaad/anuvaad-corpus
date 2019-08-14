@@ -504,6 +504,85 @@ def upload_single_file():
     separate(app.config['UPLOAD_FOLDER'] + '/'+basename)
     return process_files(basename)
 
+@app.route('/multiple-law', methods=['POST'])
+def upload_file_law():
+    pool = mp.Pool(mp.cpu_count())
+    basename = str(int(time.time()))
+    try:
+        current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+        f = request.files['hindi']
+        f_eng = request.files['english']
+        filepath = os.path.join(
+            app.config['UPLOAD_FOLDER'], basename + '_hin.pdf')
+        filepath_eng = os.path.join(
+            app.config['UPLOAD_FOLDER'], basename + '_eng.pdf')
+        f.save(filepath)
+        f_eng.save(filepath_eng)
+        pool.apply_async(converttoimage, args=(
+            filepath, app.config['UPLOAD_FOLDER'], basename, '_hin'), callback=capturetext)
+        pool.apply_async(converttoimage, args=(
+            filepath_eng, app.config['UPLOAD_FOLDER'], basename, '_eng'), callback=capturetext)
+        pool.close()
+        pool.join()
+        return process_files_law(basename, 'OLD_LAW_CORPUS')
+    except Exception as e:
+        print(e)
+        res = CustomResponse(Status.ERR_GLOBAL_SYSTEM.value, None)
+        return res.getres(), Status.ERR_GLOBAL_SYSTEM.value['http']['status']
+
+
+def process_files_law(basename, name):
+    filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin.txt',
+               app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin_filtered.txt')
+    filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_eng.txt',
+               app.config['UPLOAD_FOLDER'] + '/'+basename+'_eng_filtered.txt')
+    processhindi(app.config['UPLOAD_FOLDER'] +
+                 '/'+basename+'_hin_filtered.txt')
+    processenglish(app.config['UPLOAD_FOLDER'] +
+                   '/'+basename+'_eng_filtered.txt')
+    translatewithgoogle(app.config['UPLOAD_FOLDER'] +
+                        '/'+basename+'_hin_filtered.txt', app.config['UPLOAD_FOLDER'] +
+                        '/'+basename+'_eng_tran.txt')
+    os.system('./helpers/bleualign.py -s ' + os.getcwd() + '/upload/' + basename + '_hin_filtered' + '.txt' + ' -t ' + os.getcwd() + '/upload/' + basename +
+              '_eng_filtered' + '.txt' + ' --srctotarget ' + os.getcwd() + '/upload/' + basename + '_eng_tran' + '.txt' + ' -o ' + os.getcwd() + '/upload/' + basename + '_output')
+    english_res = []
+    hindi_res = []
+    english_points = []
+    english_points_words = []
+    hindi_points = []
+    hindi_points_words = []
+    f_eng = open(app.config['UPLOAD_FOLDER'] +
+                 '/' + basename + '_output-t', 'r')
+    for f in f_eng:
+        english_res.append(f)
+        point = fetchwordsfromsentence(f, basename)
+        english_points.append(point['avg'])
+        english_points_words.append(point['values'])
+    f_eng.close()
+    f_hin = open(app.config['UPLOAD_FOLDER'] +
+                 '/' + basename + '_output-s', 'r')
+    for f in f_hin:
+        hindi_res.append(f)
+        point = fetchwordsfromsentence(f, basename)
+        hindi_points.append(point['avg'])
+        hindi_points_words.append(point['values'])
+    f_hin.close()
+    data = {'hindi': hindi_res, 'english': english_res,
+            'english_scores': english_points, 'hindi_scores': hindi_points}
+    sentences = []
+    for i in range(0, len(hindi_res)):
+        sentence = Sentence(status=STATUS_PENDING, alignment_accuracy=english_res[i].split(':::::')[1], basename=name, source=hindi_res[i], target=english_res[i].split(':::::')[0], source_ocr_words=hindi_points_words[i], source_ocr=str(hindi_points[i]), target_ocr_words=english_points_words[i], target_ocr=str(english_points[i]))
+        sentences.append(sentence)
+        # sentence.save()
+    Sentence.objects.insert(sentences)
+    for f in glob.glob(app.config['UPLOAD_FOLDER']+'/'+basename+'*'):
+        os.remove(f)
+    res = CustomResponse(Status.SUCCESS.value, data)
+    # corpus = Corpus.objects(basename=basename)
+    # corpus.update(set__status=STATUS_PROCESSED,
+    #               set__no_of_sentences=len(hindi_res))
+    return res.getres()
+
 
 @app.route('/multiple', methods=['POST'])
 def upload_file():
