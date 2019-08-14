@@ -26,6 +26,18 @@ def translatewithgoogle(fname, outputpath):
         # f_eng.write(translation['translatedText'] + '\n')
         # for s in flist:
 
+def translatesinglesentence(sentence):
+    target = 'en'
+    translate_client = translate.Client()
+    translation_list = []
+    # Translates some text into English
+    translationarray = translate_client.translate(
+        sentence,
+        target_language=target)
+    for translation in translationarray:
+        translation_list.append(translation['translatedText'])
+    return translation_list
+
 
 def translatebigtext(f_eng, flist, translate_client, index):
     endCount = 20*index + 20
