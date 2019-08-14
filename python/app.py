@@ -51,9 +51,10 @@ from logging.handlers import RotatingFileHandler
 import utils.modify_first_page as modify_first_page
 import utils.translate_footnote as translate_footer
 from logging.config import dictConfig
+import requests
 
 
-""" Logging Config , for debug logs please set env 'app_debug_logs' to True  """
+""" Logging Config, for debug logs please set env 'app_debug_logs' to True  """
 dictConfig({
     'version': 1,
     'formatters': {'default': {
@@ -100,6 +101,7 @@ STATUS_PENDING = 'PENDING'
 STATUS_PROCESSING = 'PROCESSING'
 STATUS_PROCESSED = 'COMPLETED'
 STATUS_EDITED = 'EDITED'
+PROFILE_REQ_URL = 'http://localhost:9876/users/'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 es = getinstance()
 words = []
@@ -119,6 +121,7 @@ except :
     log.info("DEBUG LOGS InACTIVE")
 
 
+
 @app.route('/hello', methods=['GET'])
 def hello_():
     log.info('testing info log')
@@ -126,13 +129,29 @@ def hello_():
     log.error('test error logs')
     return "hello"
 
+@app.route('/get-profile',methods =['GET'])
+def get_user_profile():
+    log.info('get_user_profile : started at '+getcurrenttime())
+    if request.headers.get('ad-userid') is not None:
+        log.info('get_user_profile : userid = '+request.headers.get('ad-userid'))
+        profile = requests.get(PROFILE_REQ_URL+request.headers.get('ad-userid')).content
+        if profile is not None:
+            res = CustomResponse(Status.SUCCESS.value, json.loads(profile))
+        else:
+            res = CustomResponse(Status.FAILURE.value,'user does not exists with user-id :'+request.heasders.get('ad-userid'))
+        log.info('get_user_profile : ended at '+getcurrenttime())
+        return res.getres()
+    log.error('get_user_profile : Error : userid not provided')
+    res = CustomResponse(Status.FAILURE.value,'please provide valid userid ')
+    return res
+
 """ to get list of corpus available """
 @app.route('/fetch-corpus', methods=['GET'])
 def fetch_corpus():
     if request.headers.get('ad-userid') is not None:
-        log.info('fetch-corpus initiated by '+request.headers.get('ad-userid'))
+        log.info('fetch_corpus: initiated by '+request.headers.get('ad-userid'))
     else:
-        log.info('fetch-corpus initiated by anonymous user')
+        log.info('fetch_corpus: initiated by anonymous user')
     corpus = Corpus.objects.to_json()
     res = CustomResponse(Status.SUCCESS.value, json.loads(corpus))
     return res.getres()
