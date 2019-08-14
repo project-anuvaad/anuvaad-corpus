@@ -138,7 +138,7 @@ def get_user_profile():
             profile = requests.get(PROFILE_REQ_URL+request.headers.get('ad-userid')).content
             res = CustomResponse(Status.SUCCESS.value, json.loads(profile))
         except:
-            res = CustomResponse(Status.FAILURE.value,'user does not exists with user-id :'+request.heasders.get('ad-userid'))
+            res = CustomResponse(Status.FAILURE.value,'user does not exists with user-id :'+request.headers.get('ad-userid'))
         log.info('get_user_profile : ended at '+str(getcurrenttime()))
         return res.getres()
     log.error('get_user_profile : Error : userid not provided')
