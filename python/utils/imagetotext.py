@@ -17,7 +17,7 @@ def convertimagetotext(imagepaths, outputfilename, basename):
     words=[]
     pageindex = 0
     for imagepath in imagepaths:
-        if pageindex>1:
+        if pageindex>3:
             print(imagepath)
             image = cv2.imread(imagepath)
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
