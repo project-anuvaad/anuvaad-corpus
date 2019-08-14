@@ -134,16 +134,18 @@ def get_user_profile():
     log.info('get_user_profile : started at '+str(getcurrenttime()))
     if request.headers.get('ad-userid') is not None:
         log.info('get_user_profile : userid = '+request.headers.get('ad-userid'))
+        res = None
         try :
             profile = requests.get(PROFILE_REQ_URL+request.headers.get('ad-userid')).content
             res = CustomResponse(Status.SUCCESS.value, json.loads(profile))
+            
         except:
             res = CustomResponse(Status.FAILURE.value,'user does not exists with user-id :'+request.headers.get('ad-userid'))
         log.info('get_user_profile : ended at '+str(getcurrenttime()))
         return res.getres()
     log.error('get_user_profile : Error : userid not provided')
     res = CustomResponse(Status.FAILURE.value,'please provide valid userid ')
-    return res
+    return res.getres()
 
 """ to get list of corpus available """
 @app.route('/fetch-corpus', methods=['GET'])
