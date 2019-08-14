@@ -131,7 +131,7 @@ def hello_():
 
 @app.route('/get-profile',methods =['GET'])
 def get_user_profile():
-    log.info('get_user_profile : started at '+getcurrenttime())
+    log.info('get_user_profile : started at '+str(getcurrenttime()))
     if request.headers.get('ad-userid') is not None:
         log.info('get_user_profile : userid = '+request.headers.get('ad-userid'))
         profile = requests.get(PROFILE_REQ_URL+request.headers.get('ad-userid')).content
@@ -139,7 +139,7 @@ def get_user_profile():
             res = CustomResponse(Status.SUCCESS.value, json.loads(profile))
         else:
             res = CustomResponse(Status.FAILURE.value,'user does not exists with user-id :'+request.heasders.get('ad-userid'))
-        log.info('get_user_profile : ended at '+getcurrenttime())
+        log.info('get_user_profile : ended at '+str(getcurrenttime()))
         return res.getres()
     log.error('get_user_profile : Error : userid not provided')
     res = CustomResponse(Status.FAILURE.value,'please provide valid userid ')
