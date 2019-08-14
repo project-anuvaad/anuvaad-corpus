@@ -24,7 +24,7 @@ from utils.process_paragraph import processhindi
 from utils.process_paragraph_eng import processenglish
 from utils.remove_page_number_filter import filtertext
 from utils.separate import separate
-from utils.translatewithgoogle import translatewithgoogle
+from utils.translatewithgoogle import translatewithgoogle, translatesinglesentence
 from utils.translatewithanuvada import translatewithanuvada
 from utils.translatewithanuvada_eng import translatewithanuvadaeng
 from models.words import savewords
@@ -33,6 +33,7 @@ from models.translation_process import TranslationProcess
 from models.words import fetchwordsfromsentence, fetchwordhocrfromsentence
 from models.sentence import Sentence
 from models.corpus import Corpus
+from models.old_corpus import Oldcorpus
 from werkzeug.utils import secure_filename
 import subprocess
 import json
@@ -95,9 +96,10 @@ app.debug = True
 CORS(app)
 
 UPLOAD_FOLDER = 'upload'
-STATUS_PENDING = 'pending'
+STATUS_PENDING = 'PENDING'
 STATUS_PROCESSING = 'PROCESSING'
 STATUS_PROCESSED = 'COMPLETED'
+STATUS_EDITED = 'EDITED'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 es = getinstance()
 words = []
@@ -124,9 +126,13 @@ def hello_():
     log.error('test error logs')
     return "hello"
 
-
+""" to get list of corpus available """
 @app.route('/fetch-corpus', methods=['GET'])
 def fetch_corpus():
+    if request.headers.get('ad-userid') is not None:
+        log.info('fetch-corpus initiated by '+request.headers.get('ad-userid'))
+    else:
+        log.info('fetch-corpus initiated by anonymous user')
     corpus = Corpus.objects.to_json()
     res = CustomResponse(Status.SUCCESS.value, json.loads(corpus))
     return res.getres()
@@ -152,12 +158,91 @@ def fetch_translation():
     res = CustomResponse(Status.SUCCESS.value, json.loads(sentences))
     return res.getres()
 
+""" for translating source """
+@app.route('/translate-source', methods=['GET'])
+def translate_source():
+    sources = []
+    source = request.args.get('source')
+    if source is None:
+        res = CustomResponse(
+            Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
+        return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
+    sources.append(source)
+    translation_list = translatesinglesentence(sources)
+    res = CustomResponse(Status.SUCCESS.value, translation_list)
+    return res.getres()
 
+
+""" to get list of sentences for given corpus """
 @app.route('/fetch-sentences', methods=['GET'])
 def fetch_sentences():
     basename = request.args.get('basename')
-    sentences = Sentence.objects(basename=basename).to_json()
-    res = CustomResponse(Status.SUCCESS.value, json.loads(sentences))
+    totalcount = 0
+    (sentencesobj, totalcount) = Sentence.limit(request.args.get('pagesize'),basename,request.args.get('status'),request.args.get('pageno'))
+    sentences_list = []
+    sources = []
+    if sentencesobj is not None:
+        for sent in sentencesobj:
+            sent_dict = json.loads(sent.to_json())
+            corpus = Sentence.objects(_id=sent_dict['_id']['$oid'])
+            if sent_dict['status'] == STATUS_PENDING:
+                corpus.update(set__status=STATUS_PROCESSING)
+            sources.append(sent_dict['source'])
+        translation_list = translatesinglesentence(sources)
+        index = 0
+        for sent in sentencesobj:
+            sent_dict = json.loads(sent.to_json())
+            sent_dict['translation'] = translation_list[index]
+            sentences_list.append(sent_dict)
+            index += 1
+            # print() 
+        # for sentence in sentencesobj:
+        #     # sentence.update(set__status=STATUS_PROCESSING, set__locked=True, set__locked_time=datetime.now())
+        #     sentence.update(set__status=STATUS_PROCESSING)
+    res = CustomResponse(Status.SUCCESS.value, sentences_list, totalcount)
+    return res.getres()
+
+""" to update sentences present in corpus """
+@app.route('/update-sentences', methods=['POST'])
+def update_sentences():
+    body = request.get_json()
+    if(body['sentences'] is None or not isinstance(body['sentences'], list)):
+        res = CustomResponse(
+                Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
+        return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
+    for sentence in body['sentences']:
+        corpus = Sentence.objects(_id=sentence['_id']['$oid'])
+        corpus.update(set__source=sentence['source'],set__target=sentence['target'], set__status=STATUS_EDITED)
+    res = CustomResponse(Status.SUCCESS.value, None)
+    return res.getres()
+
+
+""" to update sentences grade in corpus """
+@app.route('/update-sentences-grade', methods=['POST'])
+def update_sentences_grade():
+    body = request.get_json()
+    if(body['sentences'] is None or not isinstance(body['sentences'], list)):
+        res = CustomResponse(
+                Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
+        return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
+    for sentence in body['sentences']:
+        corpus = Sentence.objects(_id=sentence['_id']['$oid'])
+        corpus.update(set__rating=sentence['rating'])
+    res = CustomResponse(Status.SUCCESS.value, None)
+    return res.getres()
+
+""" to update sentences status present in corpus """
+@app.route('/update-sentences-status', methods=['POST'])
+def update_sentences_status():
+    body = request.get_json()
+    if(body['sentences'] is None or not isinstance(body['sentences'], list)):
+        res = CustomResponse(
+                Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
+        return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
+    for sentence in body['sentences']:
+        corpus = Sentence.objects(_id=sentence['_id']['$oid'])
+        corpus.update(set__status=sentence['status'])
+    res = CustomResponse(Status.SUCCESS.value, None)
     return res.getres()
 
 
@@ -435,6 +520,85 @@ def upload_single_file():
     pool.join()
     separate(app.config['UPLOAD_FOLDER'] + '/'+basename)
     return process_files(basename)
+
+@app.route('/multiple-law', methods=['POST'])
+def upload_file_law():
+    pool = mp.Pool(mp.cpu_count())
+    basename = str(int(time.time()))
+    try:
+        current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+        f = request.files['hindi']
+        f_eng = request.files['english']
+        filepath = os.path.join(
+            app.config['UPLOAD_FOLDER'], basename + '_hin.pdf')
+        filepath_eng = os.path.join(
+            app.config['UPLOAD_FOLDER'], basename + '_eng.pdf')
+        f.save(filepath)
+        f_eng.save(filepath_eng)
+        pool.apply_async(converttoimage, args=(
+            filepath, app.config['UPLOAD_FOLDER'], basename, '_hin'), callback=capturetext)
+        pool.apply_async(converttoimage, args=(
+            filepath_eng, app.config['UPLOAD_FOLDER'], basename, '_eng'), callback=capturetext)
+        pool.close()
+        pool.join()
+        return process_files_law(basename, 'OLD_LAW_CORPUS')
+    except Exception as e:
+        print(e)
+        res = CustomResponse(Status.ERR_GLOBAL_SYSTEM.value, None)
+        return res.getres(), Status.ERR_GLOBAL_SYSTEM.value['http']['status']
+
+
+def process_files_law(basename, name):
+    filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin.txt',
+               app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin_filtered.txt')
+    filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_eng.txt',
+               app.config['UPLOAD_FOLDER'] + '/'+basename+'_eng_filtered.txt')
+    processhindi(app.config['UPLOAD_FOLDER'] +
+                 '/'+basename+'_hin_filtered.txt')
+    processenglish(app.config['UPLOAD_FOLDER'] +
+                   '/'+basename+'_eng_filtered.txt')
+    translatewithgoogle(app.config['UPLOAD_FOLDER'] +
+                        '/'+basename+'_hin_filtered.txt', app.config['UPLOAD_FOLDER'] +
+                        '/'+basename+'_eng_tran.txt')
+    os.system('./helpers/bleualign.py -s ' + os.getcwd() + '/upload/' + basename + '_hin_filtered' + '.txt' + ' -t ' + os.getcwd() + '/upload/' + basename +
+              '_eng_filtered' + '.txt' + ' --srctotarget ' + os.getcwd() + '/upload/' + basename + '_eng_tran' + '.txt' + ' -o ' + os.getcwd() + '/upload/' + basename + '_output')
+    english_res = []
+    hindi_res = []
+    english_points = []
+    english_points_words = []
+    hindi_points = []
+    hindi_points_words = []
+    f_eng = open(app.config['UPLOAD_FOLDER'] +
+                 '/' + basename + '_output-t', 'r')
+    for f in f_eng:
+        english_res.append(f)
+        point = fetchwordsfromsentence(f, basename)
+        english_points.append(point['avg'])
+        english_points_words.append(point['values'])
+    f_eng.close()
+    f_hin = open(app.config['UPLOAD_FOLDER'] +
+                 '/' + basename + '_output-s', 'r')
+    for f in f_hin:
+        hindi_res.append(f)
+        point = fetchwordsfromsentence(f, basename)
+        hindi_points.append(point['avg'])
+        hindi_points_words.append(point['values'])
+    f_hin.close()
+    data = {'hindi': hindi_res, 'english': english_res,
+            'english_scores': english_points, 'hindi_scores': hindi_points}
+    sentences = []
+    for i in range(0, len(hindi_res)):
+        sentence = Sentence(status=STATUS_PENDING, alignment_accuracy=english_res[i].split(':::::')[1], basename=name, source=hindi_res[i], target=english_res[i].split(':::::')[0], source_ocr_words=hindi_points_words[i], source_ocr=str(hindi_points[i]), target_ocr_words=english_points_words[i], target_ocr=str(english_points[i]))
+        sentences.append(sentence)
+        # sentence.save()
+    Sentence.objects.insert(sentences)
+    for f in glob.glob(app.config['UPLOAD_FOLDER']+'/'+basename+'*'):
+        os.remove(f)
+    res = CustomResponse(Status.SUCCESS.value, data)
+    # corpus = Corpus.objects(basename=basename)
+    # corpus.update(set__status=STATUS_PROCESSED,
+    #               set__no_of_sentences=len(hindi_res))
+    return res.getres()
 
 
 @app.route('/multiple', methods=['POST'])
