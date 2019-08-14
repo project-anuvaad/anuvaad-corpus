@@ -158,6 +158,20 @@ def fetch_translation():
     res = CustomResponse(Status.SUCCESS.value, json.loads(sentences))
     return res.getres()
 
+""" for translating source """
+@app.route('/translate-source', methods=['GET'])
+def translate_source():
+    sources = []
+    source = request.args.get('source')
+    if source is None:
+        res = CustomResponse(
+            Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
+        return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
+    sources.append(source)
+    translation_list = translatesinglesentence(sources)
+    res = CustomResponse(Status.SUCCESS.value, translation_list)
+    return res.getres()
+
 
 """ to get list of sentences for given corpus """
 @app.route('/fetch-sentences', methods=['GET'])
