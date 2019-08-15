@@ -13,6 +13,7 @@ for i in range(274,0, -1):
                 ('english',('english',file2,  'application/pdf'))
             ))
             print('Got response for '+str(i))
+            os.rename('../../lawcommission/H'+str(i)+'.pdf','../../lawcommission/OH'+str(i)+'.pdf') 
             print(response)
         except Exception as e:
             print(e)
@@ -27,6 +28,7 @@ for i in range(274,0, -1):
                 ('english',('english',file2,  'application/pdf'))
             ))
             print('Got response for '+str(i))
+            os.rename('../../lawcommission/H'+str(i)+'.pdf','../../lawcommission/OH'+str(i)+'.pdf') 
             print(response)
         except Exception as e:
             print(e)
