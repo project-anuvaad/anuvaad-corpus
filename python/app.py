@@ -649,26 +649,26 @@ def upload_indian_kannon_file():
             translatewithanuvadaeng(app.config['UPLOAD_FOLDER'] +
                         '/'+basename+'_eng_filtered.txt', app.config['UPLOAD_FOLDER'] +
                         '/'+basename+'_hin_filtered.txt')
-            translatewithgoogle(app.config['UPLOAD_FOLDER'] +
-                        '/'+basename+'_hin_filtered.txt', app.config['UPLOAD_FOLDER'] +
-                        '/'+basename+'_eng_tran.txt')
-            os.system('./helpers/bleualign.py -s ' + os.getcwd() + '/upload/' + basename + '_hin_filtered' + '.txt' + ' -t ' + os.getcwd() + '/upload/' + basename +
-                    '_eng_filtered' + '.txt' + ' --srctotarget ' + os.getcwd() + '/upload/' + basename + '_eng_tran' + '.txt' + ' -o ' + os.getcwd() + '/upload/' + basename + '_output')
+            # translatewithgoogle(app.config['UPLOAD_FOLDER'] +
+            #             '/'+basename+'_hin_filtered.txt', app.config['UPLOAD_FOLDER'] +
+            #             '/'+basename+'_eng_tran.txt')
+            # os.system('./helpers/bleualign.py -s ' + os.getcwd() + '/upload/' + basename + '_hin_filtered' + '.txt' + ' -t ' + os.getcwd() + '/upload/' + basename +
+            #         '_eng_filtered' + '.txt' + ' --srctotarget ' + os.getcwd() + '/upload/' + basename + '_eng_tran' + '.txt' + ' -o ' + os.getcwd() + '/upload/' + basename + '_output')
             english_res = []
             hindi_res = []
-            f_eng = open(app.config['UPLOAD_FOLDER']+'/' + basename + '_output-t', 'r')
+            f_eng = open(app.config['UPLOAD_FOLDER']+'/' + basename + '_eng_filtered.txt', 'r')
             for f in f_eng:
                 english_res.append(f)
             f_eng.close()
-            f_hin = open(app.config['UPLOAD_FOLDER']+'/' + basename + '_output-s', 'r')
+            f_hin = open(app.config['UPLOAD_FOLDER']+'/' + basename + '_hin_filtered.txt', 'r')
             for f in f_hin:
                 hindi_res.append(f)
             f_hin.close()
             data = {'hindi': hindi_res, 'english': english_res}
             sentences = []
             for i in range(0, len(hindi_res)):
-                sentence = Sentence(status=STATUS_PENDING, alignment_accuracy=english_res[i].split(':::::')[1], basename=str(
-            basename), source=hindi_res[i], target=english_res[i].split(':::::')[0],)
+                sentence = Sentence(status=STATUS_PENDING, basename=str(
+            basename), source=hindi_res[i], target=english_res[i])
                 sentences.append(sentence)
                 # sentence.save()
             Sentence.objects.insert(sentences)
