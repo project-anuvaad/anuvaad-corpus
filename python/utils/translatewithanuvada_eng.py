@@ -28,6 +28,7 @@ def translatewithanuvadaeng(fname, outputpath):
 def translatebigtext(f_eng, flist, index):
     endCount = 20*index + 20
     callnext = True
+    print(len(flist))
     if (index+1)*20 > len(flist):
         endCount = 20*index + len(flist) % 20
         callnext = False
@@ -35,12 +36,13 @@ def translatebigtext(f_eng, flist, index):
     # text = s
     # The target language
     # Translates some text into English
+    print(endCount)
     englist = flist[20*index:endCount]
     engarr = []
     for eng in englist:
         engarr.append({'src': eng, 'id': 1})
     # print(hindiarr)
-    res = requests.post('http://52.40.71.62:3003/translator/translation_en', json=engarr)
+    res = requests.post('http://18.236.30.130:3003/translator/translation_en', json=engarr)
     dictFromServer = res.json()
     print(dictFromServer['response_body'])
     if dictFromServer['response_body'] is not None:
