@@ -52,6 +52,7 @@ import utils.modify_first_page as modify_first_page
 import utils.translate_footnote as translate_footer
 from logging.config import dictConfig
 import requests
+from db.redis_client import redis_cli
 
 
 """ Logging Config, for debug logs please set env 'app_debug_logs' to True  """
@@ -101,7 +102,8 @@ STATUS_PENDING = 'PENDING'
 STATUS_PROCESSING = 'PROCESSING'
 STATUS_PROCESSED = 'COMPLETED'
 STATUS_EDITED = 'EDITED'
-PROFILE_REQ_URL = 'http://localhost:9876/users/'
+ES_SERVER_URL = 'http://localhost:9876/'
+PROFILE_REQ_URL = ES_SERVER_URL+'users/'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 es = getinstance()
 words = []
@@ -129,14 +131,43 @@ def hello_():
     log.error('test error logs')
     return "hello"
 
+""" to create scope/roles """
+@app.route('/roles', methods=['POST'])
+def roles():
+    body = request.get_json()
+    res = None
+    if(body['operation'] is not None and body['role-type'] is not None):
+        if body['operation'] == "create":
+            if not body ['role-type'] == '':
+               
+                try :
+                    response = requests.post(ES_SERVER_URL+'scopes')
+                    res = CustomResponse(Status.SUCCESS.value,json.loads(response))
+                   
+                except :
+                    res = CustomResponse(Status.FAILURE.value,None)
+        
+            else :
+                res = CustomResponse(Status.ERR_GLOBAL_MISSING_PARAMETERS.value,' role-type not provided ')
+        else:
+            res = CustomResponse(Status.OPERATION_NOT_PERMITTED.value, 'supported opertion type are : [create] ')
+    else :
+        res = CustomResponse(Status.ERR_GLOBAL_MISSING_PARAMETERS.value, ' please provide operation and role-type ')
+        
+    return res.getres()
+    
+
 @app.route('/get-profile',methods =['GET'])
 def get_user_profile():
     log.info('get_user_profile : started at '+str(getcurrenttime()))
     if request.headers.get('ad-userid') is not None:
-        log.info('get_user_profile : userid = '+request.headers.get('ad-userid'))
+        user_id = request.headers.get('ad-userid')
+        log.info('get_user_profile : userid = ' + user_id)
         res = None
         try :
             profile = requests.get(PROFILE_REQ_URL+request.headers.get('ad-userid')).content
+            roles = redis_cli.get_user_roles_basic_auth(user_id)
+            profile['roles'] = roles
             res = CustomResponse(Status.SUCCESS.value, json.loads(profile))
             
         except:
