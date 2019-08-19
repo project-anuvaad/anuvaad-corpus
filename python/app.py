@@ -28,6 +28,7 @@ from utils.translatewithgoogle import translatewithgoogle, translatesinglesenten
 from utils.translatewithanuvada import translatewithanuvada
 from utils.translatewithanuvada_eng import translatewithanuvadaeng
 from models.words import savewords
+from models.sentence_log import Sentencelog
 from models.translation import Translation
 from models.translation_process import TranslationProcess
 from models.words import fetchwordsfromsentence, fetchwordhocrfromsentence
@@ -233,6 +234,11 @@ def update_sentences():
         return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
     for sentence in body['sentences']:
         corpus = Sentence.objects(_id=sentence['_id']['$oid'])
+        corpus_dict = json.loads(corpus.to_json())
+        sentence_log = Sentencelog(source_words=corpus_dict[0]['source'].split(" "),target_words=corpus_dict[0]['target'].split(" "),source_edited_words=sentence['source'].split(" "),
+        parent_id=sentence['_id']['$oid'],target_edited_words=sentence['target'].split(" "),
+        basename=corpus_dict[0]['basename'], source=corpus_dict[0]['source'], target=corpus_dict[0]['target'], source_edited = sentence['source'],target_edited=sentence['target'])
+        sentence_log.save()
         corpus.update(set__source=sentence['source'],set__target=sentence['target'], set__status=STATUS_EDITED)
     res = CustomResponse(Status.SUCCESS.value, None)
     return res.getres()
