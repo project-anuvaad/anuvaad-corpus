@@ -52,6 +52,7 @@ import utils.modify_first_page as modify_first_page
 import utils.translate_footnote as translate_footer
 from logging.config import dictConfig
 import requests
+from db.redis_client import redis_cli
 
 
 """ Logging Config, for debug logs please set env 'app_debug_logs' to True  """
@@ -160,10 +161,13 @@ def roles():
 def get_user_profile():
     log.info('get_user_profile : started at '+str(getcurrenttime()))
     if request.headers.get('ad-userid') is not None:
-        log.info('get_user_profile : userid = '+request.headers.get('ad-userid'))
+        user_id = request.headers.get('ad-userid')
+        log.info('get_user_profile : userid = ' + user_id)
         res = None
         try :
             profile = requests.get(PROFILE_REQ_URL+request.headers.get('ad-userid')).content
+            roles = redis_cli.get_user_roles_basic_auth(user_id)
+            profile.__add__(roles)
             res = CustomResponse(Status.SUCCESS.value, json.loads(profile))
             
         except:
