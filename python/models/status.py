@@ -17,4 +17,8 @@ class Status(enum.Enum):
     ERR_GLOBAL_MISSING_PARAMETERS = {
         'ok': False, 'http': {'status': 400}, 'why': "Data Missing"}
     FAILURE = {'ok': False,'http':{'status':200},
-                'why':'request failed'}    
+                'why':'request failed'}
+    OPERATION_NOT_PERMITTED = {'ok': False,'http':{'status':400},
+                'why':'operation not permitted'}
+    
+     
