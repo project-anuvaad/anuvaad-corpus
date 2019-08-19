@@ -12,6 +12,8 @@ def get_user_roles_basic_auth(userId):
     key = BASIC_AUTH_PREFIX +  userId
     value = redis_cli.hgetall(key)
     roles = value.get(SCOPES)
+    if roles == None :
+        return None
     return json.loads(roles) 
     
 
