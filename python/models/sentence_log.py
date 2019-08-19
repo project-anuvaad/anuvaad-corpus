@@ -14,6 +14,7 @@ class Sentencelog(Document):
     target = StringField()
     source_edited = StringField()
     parent_id = StringField()
+    updated_on = DateTimeField()
     target_edited = StringField()
     edited_by = StringField()
     source_words = ListField(StringField())

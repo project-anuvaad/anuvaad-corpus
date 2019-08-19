@@ -268,7 +268,7 @@ def update_sentences():
         corpus = Sentence.objects(_id=sentence['_id']['$oid'])
         corpus_dict = json.loads(corpus.to_json())
         sentence_log = Sentencelog(source_words=corpus_dict[0]['source'].split(" "),target_words=corpus_dict[0]['target'].split(" "),source_edited_words=sentence['source'].split(" "),
-        parent_id=sentence['_id']['$oid'],target_edited_words=sentence['target'].split(" "),
+        updated_on=datetime.now(),edited_by=request.headers.get('ad-userid'),parent_id=sentence['_id']['$oid'],target_edited_words=sentence['target'].split(" "),
         basename=corpus_dict[0]['basename'], source=corpus_dict[0]['source'], target=corpus_dict[0]['target'], source_edited = sentence['source'],target_edited=sentence['target'])
         sentence_log.save()
         corpus.update(set__source=sentence['source'],set__target=sentence['target'], set__status=STATUS_EDITED)
