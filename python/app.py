@@ -171,7 +171,7 @@ def get_user_profile():
             res = CustomResponse(Status.SUCCESS.value, json.loads(profile))
             
         except Exception as e:
-            print(e)
+            log.error(e)
             res = CustomResponse(Status.FAILURE.value,'user does not exists with user-id :'+request.headers.get('ad-userid'))
         log.info('get_user_profile : ended at '+str(getcurrenttime()))
         return res.getres()
