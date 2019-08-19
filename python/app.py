@@ -641,7 +641,7 @@ def upload_indian_kannon_file():
 
         else:
             current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-            corpus = Corpus(source_lang=source_lang,target_lang=target_lang,status=STATUS_PROCESSING, name=name[0], domain=domain[0], created_on=current_time,
+            corpus = Corpus(source_lang=source_lang[0],target_lang=target_lang[0],status=STATUS_PROCESSING, name=name[0], domain=domain[0], created_on=current_time,
                             last_modified=current_time, author='', comment=comment[0], no_of_sentences=0, basename=basename)
             corpus.save()
             f_eng = request.files['english']
