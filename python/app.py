@@ -52,7 +52,7 @@ import utils.modify_first_page as modify_first_page
 import utils.translate_footnote as translate_footer
 from logging.config import dictConfig
 import requests
-from db.redis_client import redis_cli
+import db.redis_client as redis_cli
 
 
 """ Logging Config, for debug logs please set env 'app_debug_logs' to True  """
