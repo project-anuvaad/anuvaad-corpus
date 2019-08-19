@@ -629,17 +629,19 @@ def upload_indian_kannon_file():
     try:
         name = request.form.getlist('name')
         domain = request.form.getlist('domain')
+        source_lang = request.form.getlist('source_lang')
+        target_lang = request.form.getlist('target_lang')
         comment = request.form.getlist('comment')
         if comment is None or len(comment) == 0:
             comment = ['']
-        if name is None or len(name) == 0 or len(name[0]) == 0 or domain is None or len(domain) == 0 or len(domain[0]) == 0 or request.files is None or request.files['english'] is None:
+        if target_lang is None or len(target_lang) == 0 or len(target_lang[0]) == 0 or source_lang is None or len(source_lang) == 0 or len(source_lang[0]) == 0 or name is None or len(name) == 0 or len(name[0]) == 0 or domain is None or len(domain) == 0 or len(domain[0]) == 0 or request.files is None or request.files['english'] is None:
             res = CustomResponse(
                 Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
             return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
 
         else:
             current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-            corpus = Corpus(status=STATUS_PROCESSING, name=name[0], domain=domain[0], created_on=current_time,
+            corpus = Corpus(source_lang=source_lang,target_lang=target_lang,status=STATUS_PROCESSING, name=name[0], domain=domain[0], created_on=current_time,
                             last_modified=current_time, author='', comment=comment[0], no_of_sentences=0, basename=basename)
             corpus.save()
             f_eng = request.files['english']
@@ -668,7 +670,7 @@ def upload_indian_kannon_file():
             sentences = []
             for i in range(0, len(hindi_res)):
                 sentence = Sentence(status=STATUS_PENDING, basename=str(
-            basename), source=hindi_res[i], target=english_res[i])
+            basename), source=english_res[i], target=hindi_res[i])
                 sentences.append(sentence)
                 # sentence.save()
             Sentence.objects.insert(sentences)

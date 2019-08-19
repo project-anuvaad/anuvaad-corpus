@@ -11,6 +11,8 @@ from mongoengine import *
 class Corpus(Document):
     name = StringField(required=True)
     domain = StringField()
+    source_lang = StringField()
+    target_lang = StringField()
     created_on = StringField()
     last_modified = StringField()
     comment = StringField()
