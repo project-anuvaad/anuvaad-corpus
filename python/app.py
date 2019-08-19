@@ -169,8 +169,7 @@ def get_user_profile():
             profile = requests.get(PROFILE_REQ_URL+request.headers.get('ad-userid')).content
             profile = json.loads(profile)
             roles = redis_cli.get_user_roles_basic_auth(user_id)
-            profile.append({'roles':roles})
-            
+            profile['roles'] = roles
             res = CustomResponse(Status.SUCCESS.value, profile)
             
         except Exception as e:
