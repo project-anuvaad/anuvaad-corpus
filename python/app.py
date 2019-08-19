@@ -170,7 +170,8 @@ def get_user_profile():
             profile['roles'] = roles
             res = CustomResponse(Status.SUCCESS.value, json.loads(profile))
             
-        except:
+        except Exception as e:
+            print(e)
             res = CustomResponse(Status.FAILURE.value,'user does not exists with user-id :'+request.headers.get('ad-userid'))
         log.info('get_user_profile : ended at '+str(getcurrenttime()))
         return res.getres()
