@@ -254,7 +254,7 @@ def fetch_sentences():
         target_lang = 'en'
         print(corpus_dict[0]['basename'])
         if 'target_lang' in corpus_dict[0] and corpus_dict[0]['target_lang'] is not None:
-            target_lang = LANGUAGES[corpus_dict['target_lang']]
+            target_lang = LANGUAGES[corpus_dict[0]['target_lang']]
         translation_list = translatesinglesentence(sources, target_lang)
         index = 0
         for sent in sentencesobj:
