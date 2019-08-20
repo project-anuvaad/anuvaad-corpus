@@ -12,13 +12,13 @@ import codecs
 # Instantiates a client
 
 
-def translatewithgoogle(fname, outputpath):
+def translatewithgoogle(fname, outputpath, target='en'):
     try:
         with open(outputpath, 'w', encoding='utf-8') as f_eng:
             with codecs.open(fname, encoding='utf-8', errors='ignore') as f:
                 flist = f.readlines()
                 translate_client = translate.Client()
-                translatebigtext(f_eng, flist, translate_client, 0)
+                translatebigtext(f_eng, flist, translate_client, 0, target)
                 f_eng.close()
     except Exception as e:
         print(e)
@@ -39,7 +39,7 @@ def translatesinglesentence(sentence, target='en'):
     return translation_list
 
 
-def translatebigtext(f_eng, flist, translate_client, index):
+def translatebigtext(f_eng, flist, translate_client, index, target):
     endCount = 20*index + 20
     callnext = True
     if (index+1)*20 > len(flist):
@@ -48,7 +48,7 @@ def translatebigtext(f_eng, flist, translate_client, index):
     # The text to translate
     # text = s
     # The target language
-    target = 'en'
+    # target = 'en'
 
     # Translates some text into English
     translationarray = translate_client.translate(
@@ -59,6 +59,6 @@ def translatebigtext(f_eng, flist, translate_client, index):
             f_eng.write(translation['translatedText'].replace("\n", "") + '\n')
     if callnext:
         index += 1
-        translatebigtext(f_eng, flist, translate_client, index)
+        translatebigtext(f_eng, flist, translate_client, index, target)
     else:
         f_eng.close()

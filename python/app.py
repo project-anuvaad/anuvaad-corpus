@@ -95,7 +95,8 @@ dictConfig({
 
 LANGUAGES = {
     'Hindi':'hi',
-    'English':'en'
+    'English':'en',
+    'Tamil':'ta'
 }
 
 app = Flask(__name__)
@@ -704,16 +705,17 @@ def upload_indian_kannon_file():
             filepath_eng = os.path.join(
                 app.config['UPLOAD_FOLDER'], basename + '_eng_filtered.txt')
             f_eng.save(filepath_eng)
-            f = request.files['hindi']
-            filepath = os.path.join(
-                app.config['UPLOAD_FOLDER'], basename + '_hin_filtered.txt')
-            f.save(filepath)
+            # f = request.files['hindi']
+            # filepath = os.path.join(
+            #     app.config['UPLOAD_FOLDER'], basename + '_hin_filtered.txt')
+            # f.save(filepath)
             # translatewithanuvadaeng(app.config['UPLOAD_FOLDER'] +
             #             '/'+basename+'_eng_filtered.txt', app.config['UPLOAD_FOLDER'] +
             #             '/'+basename+'_hin_filtered.txt')
-            # translatewithgoogle(app.config['UPLOAD_FOLDER'] +
-            #             '/'+basename+'_hin_filtered.txt', app.config['UPLOAD_FOLDER'] +
-            #             '/'+basename+'_eng_tran.txt')
+            target_lang = LANGUAGES[target_lang[0]]
+            translatewithgoogle(app.config['UPLOAD_FOLDER'] +
+                        '/'+basename+'_eng_filtered.txt', app.config['UPLOAD_FOLDER'] +
+                        '/'+basename+'_hin_filtered.txt', target_lang)
             # os.system('./helpers/bleualign.py -s ' + os.getcwd() + '/upload/' + basename + '_hin_filtered' + '.txt' + ' -t ' + os.getcwd() + '/upload/' + basename +
             #         '_eng_filtered' + '.txt' + ' --srctotarget ' + os.getcwd() + '/upload/' + basename + '_eng_tran' + '.txt' + ' -o ' + os.getcwd() + '/upload/' + basename + '_output')
             english_res = []
