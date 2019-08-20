@@ -26,8 +26,8 @@ def translatewithgoogle(fname, outputpath):
         # f_eng.write(translation['translatedText'] + '\n')
         # for s in flist:
 
-def translatesinglesentence(sentence):
-    target = 'en'
+def translatesinglesentence(sentence, target='en'):
+    # target = 'en'
     translate_client = translate.Client()
     translation_list = []
     # Translates some text into English
