@@ -687,9 +687,13 @@ def upload_indian_kannon_file():
             filepath_eng = os.path.join(
                 app.config['UPLOAD_FOLDER'], basename + '_eng_filtered.txt')
             f_eng.save(filepath_eng)
-            translatewithanuvadaeng(app.config['UPLOAD_FOLDER'] +
-                        '/'+basename+'_eng_filtered.txt', app.config['UPLOAD_FOLDER'] +
-                        '/'+basename+'_hin_filtered.txt')
+            f = request.files['hindi']
+            filepath = os.path.join(
+                app.config['UPLOAD_FOLDER'], basename + '_hin_filtered.txt')
+            f.save(filepath)
+            # translatewithanuvadaeng(app.config['UPLOAD_FOLDER'] +
+            #             '/'+basename+'_eng_filtered.txt', app.config['UPLOAD_FOLDER'] +
+            #             '/'+basename+'_hin_filtered.txt')
             # translatewithgoogle(app.config['UPLOAD_FOLDER'] +
             #             '/'+basename+'_hin_filtered.txt', app.config['UPLOAD_FOLDER'] +
             #             '/'+basename+'_eng_tran.txt')
@@ -713,8 +717,8 @@ def upload_indian_kannon_file():
                 sentences.append(sentence)
                 # sentence.save()
             Sentence.objects.insert(sentences)
-            # for f in glob.glob(app.config['UPLOAD_FOLDER']+'/'+basename+'*'):
-            #     os.remove(f)
+            for f in glob.glob(app.config['UPLOAD_FOLDER']+'/'+basename+'*'):
+                os.remove(f)
             res = CustomResponse(Status.SUCCESS.value, data)
             corpus = Corpus.objects(basename=basename)
             corpus.update(set__status=STATUS_PROCESSED,
