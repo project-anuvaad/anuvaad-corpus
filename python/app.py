@@ -223,12 +223,18 @@ def fetch_translation():
 def translate_source():
     sources = []
     source = request.args.get('source')
-    if source is None:
+    basename = request.args.get('basename')
+    if source is None or basename is None:
         res = CustomResponse(
             Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
         return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
     sources.append(source)
-    translation_list = translatesinglesentence(sources)
+    corpus_obj = Corpus.objects(basename=basename)
+    corpus_dict = json.loads(corpus_obj.to_json())
+    target_lang = 'en'
+    if 'target_lang' in corpus_dict[0] and corpus_dict[0]['target_lang'] is not None:
+        target_lang = LANGUAGES[corpus_dict[0]['target_lang']]
+    translation_list = translatesinglesentence(sources, target_lang)
     res = CustomResponse(Status.SUCCESS.value, translation_list)
     return res.getres()
 
@@ -252,7 +258,6 @@ def fetch_sentences():
                 corpus.update(set__status=STATUS_PROCESSING)
             sources.append(sent_dict['source'])
         target_lang = 'en'
-        print(corpus_dict[0]['basename'])
         if 'target_lang' in corpus_dict[0] and corpus_dict[0]['target_lang'] is not None:
             target_lang = LANGUAGES[corpus_dict[0]['target_lang']]
         translation_list = translatesinglesentence(sources, target_lang)
