@@ -93,6 +93,11 @@ dictConfig({
     }
 })
 
+LANGUAGES = {
+    'Hindi':'hi',
+    'English':'en'
+}
+
 app = Flask(__name__)
 
 app.debug = True
@@ -231,9 +236,12 @@ def translate_source():
 """ to get list of sentences for given corpus """
 @app.route('/fetch-sentences', methods=['GET'])
 def fetch_sentences():
+    global LANGUAGES
     basename = request.args.get('basename')
     totalcount = 0
     (sentencesobj, totalcount) = Sentence.limit(request.args.get('pagesize'),basename,request.args.get('status'),request.args.get('pageno'))
+    corpus = Corpus.objects(basename=basename)
+    corpus_dict = json.loads(corpus.to_json())
     sentences_list = []
     sources = []
     if sentencesobj is not None:
@@ -243,7 +251,10 @@ def fetch_sentences():
             if sent_dict['status'] == STATUS_PENDING:
                 corpus.update(set__status=STATUS_PROCESSING)
             sources.append(sent_dict['source'])
-        translation_list = translatesinglesentence(sources)
+        target_lang = 'en'
+        if 'target_lang' in corpus_dict and corpus_dict['target_lang'] is not None:
+            target_lang = LANGUAGES[corpus_dict['target_lang']]
+        translation_list = translatesinglesentence(sources, target_lang)
         index = 0
         for sent in sentencesobj:
             sent_dict = json.loads(sent.to_json())
