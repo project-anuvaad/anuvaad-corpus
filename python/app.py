@@ -240,8 +240,8 @@ def fetch_sentences():
     basename = request.args.get('basename')
     totalcount = 0
     (sentencesobj, totalcount) = Sentence.limit(request.args.get('pagesize'),basename,request.args.get('status'),request.args.get('pageno'))
-    corpus = Corpus.objects(basename=basename)
-    corpus_dict = json.loads(corpus.to_json())
+    corpus_obj = Corpus.objects(basename=basename)
+    corpus_dict = json.loads(corpus_obj.to_json())
     sentences_list = []
     sources = []
     if sentencesobj is not None:
@@ -252,7 +252,7 @@ def fetch_sentences():
                 corpus.update(set__status=STATUS_PROCESSING)
             sources.append(sent_dict['source'])
         target_lang = 'en'
-        print(corpus_dict['target_lang'])
+        print(corpus_obj)
         if 'target_lang' in corpus_dict and corpus_dict['target_lang'] is not None:
             target_lang = LANGUAGES[corpus_dict['target_lang']]
         translation_list = translatesinglesentence(sources, target_lang)
