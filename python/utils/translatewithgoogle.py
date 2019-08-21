@@ -8,9 +8,13 @@
 # Imports the Google Cloud client library
 from google.cloud import translate
 import codecs
+import sys
 
 # Instantiates a client
 
+BATCH_SIZE = 100
+RECURSION_LIMIT = 10000
+sys.setrecursionlimit(RECURSION_LIMIT)
 
 def translatewithgoogle(fname, outputpath, target='en'):
     try:
@@ -40,10 +44,11 @@ def translatesinglesentence(sentence, target='en'):
 
 
 def translatebigtext(f_eng, flist, translate_client, index, target):
-    endCount = 20*index + 20
+    global BATCH_SIZE
+    endCount = BATCH_SIZE*index + BATCH_SIZE
     callnext = True
-    if (index+1)*20 > len(flist):
-        endCount = 20*index + len(flist) % 20
+    if (index+1)*BATCH_SIZE > len(flist):
+        endCount = BATCH_SIZE*index + len(flist) % BATCH_SIZE
         callnext = False
     # The text to translate
     # text = s
@@ -52,11 +57,13 @@ def translatebigtext(f_eng, flist, translate_client, index, target):
 
     # Translates some text into English
     translationarray = translate_client.translate(
-        flist[20*index:endCount],
+        flist[BATCH_SIZE*index:endCount],
         target_language=target)
     for translation in translationarray:
-        if len(translation['translatedText']) > 0 and translation['translatedText'] != '\n':
+        if len(translation['translatedText']) > 0:
             f_eng.write(translation['translatedText'].replace("\n", "") + '\n')
+        else:
+            f_eng.write('' + '\n')
     if callnext:
         index += 1
         translatebigtext(f_eng, flist, translate_client, index, target)
