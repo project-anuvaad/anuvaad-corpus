@@ -678,6 +678,19 @@ def process_files_law(basename, name):
     #               set__no_of_sentences=len(hindi_res))
     return res.getres()
 
+@app.route('/remove-junk', methods=['POST'])
+def remove_junk():
+    basename = str(int(time.time()))
+    f = request.files['file']
+    filepath_eng = os.path.join(
+                app.config['UPLOAD_FOLDER'], basename + '_junk.txt')
+    f.save(filepath_eng)
+    f_eng = open(app.config['UPLOAD_FOLDER']+'/' + basename + '_junk.txt', 'r')
+    for t in f_eng:
+        Sentence.objects(source=t).delete()
+    res = CustomResponse(Status.SUCCESS.value, None)
+    return res.getres()
+
 
 @app.route('/indian-kanoon', methods=['POST'])
 def upload_indian_kannon_file():
