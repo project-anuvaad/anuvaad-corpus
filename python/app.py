@@ -29,12 +29,14 @@ from utils.translatewithanuvada import translatewithanuvada
 from utils.translatewithanuvada_eng import translatewithanuvadaeng
 from models.words import savewords
 from models.sentence_log import Sentencelog
+from models.single_corpus import Corpussentence, Singlecorpus
 from models.translation import Translation
 from models.translation_process import TranslationProcess
 from models.words import fetchwordsfromsentence, fetchwordhocrfromsentence
 from models.sentence import Sentence
 from models.corpus import Corpus
 from models.old_corpus import Oldcorpus
+from controllers.corpus import corpus_api
 from werkzeug.utils import secure_filename
 import subprocess
 import json
@@ -103,6 +105,8 @@ app = Flask(__name__)
 
 app.debug = True
 CORS(app)
+
+app.register_blueprint(corpus_api)
 
 UPLOAD_FOLDER = 'upload'
 STATUS_PENDING = 'PENDING'
@@ -690,6 +694,7 @@ def remove_junk():
         Sentence.objects(source=t).delete()
     res = CustomResponse(Status.SUCCESS.value, None)
     return res.getres()
+
 
 
 @app.route('/indian-kanoon', methods=['POST'])
