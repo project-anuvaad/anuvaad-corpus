@@ -10,6 +10,7 @@ import requests
 
 # Instantiates a client
 
+BATCH_SIZE = 20
 
 def translatewithanuvadaeng(fname, outputpath):
     try:
@@ -26,29 +27,37 @@ def translatewithanuvadaeng(fname, outputpath):
 
 
 def translatebigtext(f_eng, flist, index):
-    endCount = 20*index + 20
+    global BATCH_SIZE
+    endCount = BATCH_SIZE*index + BATCH_SIZE
     callnext = True
-    if (index+1)*20 > len(flist):
-        endCount = 20*index + len(flist) % 20
+    print(len(flist))
+    if (index+1)*BATCH_SIZE > len(flist):
+        endCount = BATCH_SIZE*index + len(flist) % BATCH_SIZE
         callnext = False
     # The text to translate
     # text = s
     # The target language
     # Translates some text into English
-    englist = flist[20*index:endCount]
+    print(endCount)
+    englist = flist[BATCH_SIZE*index:endCount]
     engarr = []
     for eng in englist:
         engarr.append({'src': eng, 'id': 1})
     # print(hindiarr)
-    res = requests.post('http://52.40.71.62:3003/translator/translation_en', json=engarr)
+    res = requests.post('http://18.236.30.130:3003/translator/translation_en', json=engarr)
     dictFromServer = res.json()
-    print(dictFromServer['response_body'])
-    if dictFromServer['response_body'] is not None:
+    print(dictFromServer)
+    if dictFromServer and 'response_body' in dictFromServer and dictFromServer['response_body'] is not None:
         print(dictFromServer['response_body'])
         for translation in dictFromServer['response_body']:
             print(translation)
-            # if len(translation['tgt']) > 0 and translation['tgt'] != '\n':
-            f_eng.write(translation['tgt']+'\n')
+            if len(translation['tgt']) > 0:
+                f_eng.write(translation['tgt'].replace("\n","")+'\n')
+            else:
+                f_eng.write(translation['tgt']+'\n')
+    else:
+        for i in range(0,endCount):
+            f_eng.write('\n')
     if callnext:
         index += 1
         translatebigtext(f_eng, flist, index)

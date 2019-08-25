@@ -28,12 +28,15 @@ from utils.translatewithgoogle import translatewithgoogle, translatesinglesenten
 from utils.translatewithanuvada import translatewithanuvada
 from utils.translatewithanuvada_eng import translatewithanuvadaeng
 from models.words import savewords
+from models.sentence_log import Sentencelog
+from models.single_corpus import Corpussentence, Singlecorpus
 from models.translation import Translation
 from models.translation_process import TranslationProcess
 from models.words import fetchwordsfromsentence, fetchwordhocrfromsentence
 from models.sentence import Sentence
 from models.corpus import Corpus
 from models.old_corpus import Oldcorpus
+from controllers.corpus import corpus_api
 from werkzeug.utils import secure_filename
 import subprocess
 import json
@@ -92,10 +95,18 @@ dictConfig({
     }
 })
 
+LANGUAGES = {
+    'Hindi':'hi',
+    'English':'en',
+    'Tamil':'ta'
+}
+
 app = Flask(__name__)
 
 app.debug = True
 CORS(app)
+
+app.register_blueprint(corpus_api)
 
 UPLOAD_FOLDER = 'upload'
 STATUS_PENDING = 'PENDING'
@@ -217,12 +228,18 @@ def fetch_translation():
 def translate_source():
     sources = []
     source = request.args.get('source')
-    if source is None:
+    basename = request.args.get('basename')
+    if source is None or basename is None:
         res = CustomResponse(
             Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
         return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
     sources.append(source)
-    translation_list = translatesinglesentence(sources)
+    corpus_obj = Corpus.objects(basename=basename)
+    corpus_dict = json.loads(corpus_obj.to_json())
+    target_lang = 'en'
+    if 'target_lang' in corpus_dict[0] and corpus_dict[0]['target_lang'] is not None:
+        target_lang = LANGUAGES[corpus_dict[0]['target_lang']]
+    translation_list = translatesinglesentence(sources, target_lang)
     res = CustomResponse(Status.SUCCESS.value, translation_list)
     return res.getres()
 
@@ -230,9 +247,12 @@ def translate_source():
 """ to get list of sentences for given corpus """
 @app.route('/fetch-sentences', methods=['GET'])
 def fetch_sentences():
+    global LANGUAGES
     basename = request.args.get('basename')
     totalcount = 0
     (sentencesobj, totalcount) = Sentence.limit(request.args.get('pagesize'),basename,request.args.get('status'),request.args.get('pageno'))
+    corpus_obj = Corpus.objects(basename=basename)
+    corpus_dict = json.loads(corpus_obj.to_json())
     sentences_list = []
     sources = []
     if sentencesobj is not None:
@@ -242,7 +262,10 @@ def fetch_sentences():
             if sent_dict['status'] == STATUS_PENDING:
                 corpus.update(set__status=STATUS_PROCESSING)
             sources.append(sent_dict['source'])
-        translation_list = translatesinglesentence(sources)
+        target_lang = 'en'
+        if 'target_lang' in corpus_dict[0] and corpus_dict[0]['target_lang'] is not None:
+            target_lang = LANGUAGES[corpus_dict[0]['target_lang']]
+        translation_list = translatesinglesentence(sources, target_lang)
         index = 0
         for sent in sentencesobj:
             sent_dict = json.loads(sent.to_json())
@@ -266,6 +289,11 @@ def update_sentences():
         return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
     for sentence in body['sentences']:
         corpus = Sentence.objects(_id=sentence['_id']['$oid'])
+        corpus_dict = json.loads(corpus.to_json())
+        sentence_log = Sentencelog(source_words=corpus_dict[0]['source'].split(" "),target_words=corpus_dict[0]['target'].split(" "),source_edited_words=sentence['source'].split(" "),
+        updated_on=datetime.now(),edited_by=request.headers.get('ad-userid'),parent_id=sentence['_id']['$oid'],target_edited_words=sentence['target'].split(" "),
+        basename=corpus_dict[0]['basename'], source=corpus_dict[0]['source'], target=corpus_dict[0]['target'], source_edited = sentence['source'],target_edited=sentence['target'])
+        sentence_log.save()
         corpus.update(set__source=sentence['source'],set__target=sentence['target'], set__status=STATUS_EDITED)
     res = CustomResponse(Status.SUCCESS.value, None)
     return res.getres()
@@ -653,6 +681,90 @@ def process_files_law(basename, name):
     # corpus.update(set__status=STATUS_PROCESSED,
     #               set__no_of_sentences=len(hindi_res))
     return res.getres()
+
+@app.route('/remove-junk', methods=['POST'])
+def remove_junk():
+    basename = str(int(time.time()))
+    f = request.files['file']
+    filepath_eng = os.path.join(
+                app.config['UPLOAD_FOLDER'], basename + '_junk.txt')
+    f.save(filepath_eng)
+    f_eng = open(app.config['UPLOAD_FOLDER']+'/' + basename + '_junk.txt', 'r')
+    for t in f_eng:
+        Sentence.objects(source=t).delete()
+    res = CustomResponse(Status.SUCCESS.value, None)
+    return res.getres()
+
+
+
+@app.route('/indian-kanoon', methods=['POST'])
+def upload_indian_kannon_file():
+    pool = mp.Pool(mp.cpu_count())
+    basename = str(int(time.time()))
+    try:
+        name = request.form.getlist('name')
+        domain = request.form.getlist('domain')
+        source_lang = request.form.getlist('source_lang')
+        target_lang = request.form.getlist('target_lang')
+        comment = request.form.getlist('comment')
+        if comment is None or len(comment) == 0:
+            comment = ['']
+        if target_lang is None or len(target_lang) == 0 or len(target_lang[0]) == 0 or source_lang is None or len(source_lang) == 0 or len(source_lang[0]) == 0 or name is None or len(name) == 0 or len(name[0]) == 0 or domain is None or len(domain) == 0 or len(domain[0]) == 0 or request.files is None or request.files['english'] is None:
+            res = CustomResponse(
+                Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
+            return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
+
+        else:
+            current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+            corpus = Corpus(source_lang=source_lang[0],target_lang=target_lang[0],status=STATUS_PROCESSING, name=name[0], domain=domain[0], created_on=current_time,
+                            last_modified=current_time, author='', comment=comment[0], no_of_sentences=0, basename=basename)
+            corpus.save()
+            f_eng = request.files['english']
+            filepath_eng = os.path.join(
+                app.config['UPLOAD_FOLDER'], basename + '_eng_filtered.txt')
+            f_eng.save(filepath_eng)
+            f = request.files['hindi']
+            filepath = os.path.join(
+                app.config['UPLOAD_FOLDER'], basename + '_hin_filtered.txt')
+            f.save(filepath)
+            # translatewithanuvadaeng(app.config['UPLOAD_FOLDER'] +
+            #             '/'+basename+'_eng_filtered.txt', app.config['UPLOAD_FOLDER'] +
+            #             '/'+basename+'_hin_filtered.txt')
+            # target_lang = LANGUAGES[target_lang[0]]
+            # translatewithgoogle(app.config['UPLOAD_FOLDER'] +
+            #             '/'+basename+'_eng_filtered.txt', app.config['UPLOAD_FOLDER'] +
+            #             '/'+basename+'_hin_filtered.txt', target_lang)
+            # os.system('./helpers/bleualign.py -s ' + os.getcwd() + '/upload/' + basename + '_hin_filtered' + '.txt' + ' -t ' + os.getcwd() + '/upload/' + basename +
+            #         '_eng_filtered' + '.txt' + ' --srctotarget ' + os.getcwd() + '/upload/' + basename + '_eng_tran' + '.txt' + ' -o ' + os.getcwd() + '/upload/' + basename + '_output')
+            english_res = []
+            hindi_res = []
+            f_eng = open(app.config['UPLOAD_FOLDER']+'/' + basename + '_eng_filtered.txt', 'r')
+            for f in f_eng:
+                english_res.append(f)
+            f_eng.close()
+            f_hin = open(app.config['UPLOAD_FOLDER']+'/' + basename + '_hin_filtered.txt', 'r')
+            for f in f_hin:
+                hindi_res.append(f)
+            f_hin.close()
+            data = {'hindi': hindi_res, 'english': english_res}
+            sentences = []
+            for i in range(0, len(hindi_res)):
+                sentence = Sentence(status=STATUS_PENDING, basename=str(
+            basename), source=english_res[i], target=hindi_res[i])
+                sentences.append(sentence)
+                # sentence.save()
+            Sentence.objects.insert(sentences)
+            for f in glob.glob(app.config['UPLOAD_FOLDER']+'/'+basename+'*'):
+                os.remove(f)
+            res = CustomResponse(Status.SUCCESS.value, data)
+            corpus = Corpus.objects(basename=basename)
+            corpus.update(set__status=STATUS_PROCESSED,
+                        set__no_of_sentences=len(hindi_res))
+            return res.getres()
+    except Exception as e:
+        print(e)
+        res = CustomResponse(Status.ERR_GLOBAL_SYSTEM.value, None)
+        return res.getres(), Status.ERR_GLOBAL_SYSTEM.value['http']['status']
 
 
 @app.route('/multiple', methods=['POST'])
