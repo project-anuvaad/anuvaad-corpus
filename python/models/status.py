@@ -16,9 +16,9 @@ class Status(enum.Enum):
         'status': 500}, 'why': "Internal Server Error"}
     ERR_GLOBAL_MISSING_PARAMETERS = {
         'ok': False, 'http': {'status': 400}, 'why': "Data Missing"}
-    FAILURE = {'ok': False,'http':{'status':200},
-                'why':'request failed'}
-    OPERATION_NOT_PERMITTED = {'ok': False,'http':{'status':400},
-                'why':'operation not permitted'}
-    
-     
+    FAILURE = {'ok': False, 'http': {'status': 200},
+               'why': 'request failed'}
+    OPERATION_NOT_PERMITTED = {'ok': False, 'http': {'status': 400},
+                               'why': 'operation not permitted'}
+    ERROR_WEAK_PASSWORD = {'ok': False, 'http': {'status': 400}, 'why': 'weak password, at least provide 6 characters '}
+    ERROR_GATEWAY = {'ok': False, 'http': {'status': 400}, 'why': 'gateway error'}
