@@ -18,6 +18,8 @@ class Status(enum.Enum):
         'ok': False, 'http': {'status': 400}, 'why': "Data Missing"}
     FAILURE = {'ok': False,'http':{'status':200},
                 'why':'request failed'}
+    DATA_NOT_FOUND = {'ok': False,'http':{'status':404},
+                'why':'data not found'}
     OPERATION_NOT_PERMITTED = {'ok': False,'http':{'status':400},
                 'why':'operation not permitted'}
     
