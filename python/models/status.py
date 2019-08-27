@@ -20,7 +20,7 @@ class Status(enum.Enum):
                 'why':'request failed'}
     DATA_NOT_FOUND = {'ok': False,'http':{'status':404},
                 'why':'data not found'}
-    OPERATION_NOT_PERMITTED = {'ok': False,'http':{'status':400},
-                'why':'operation not permitted'}
-    
-     
+    OPERATION_NOT_PERMITTED = {'ok': False, 'http': {'status': 400},
+                               'why': 'operation not permitted'}
+    ERROR_WEAK_PASSWORD = {'ok': False, 'http': {'status': 400}, 'why': 'weak password, at least provide 6 characters '}
+    ERROR_GATEWAY = {'ok': False, 'http': {'status': 400}, 'why': 'gateway error'}
