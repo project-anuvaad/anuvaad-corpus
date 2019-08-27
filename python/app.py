@@ -29,7 +29,6 @@ from utils.translatewithanuvada import translatewithanuvada
 from utils.translatewithanuvada_eng import translatewithanuvadaeng
 from models.words import savewords
 from models.sentence_log import Sentencelog
-from models.single_corpus import Corpussentence, Singlecorpus
 from models.translation import Translation
 from models.translation_process import TranslationProcess
 from models.words import fetchwordsfromsentence, fetchwordhocrfromsentence
