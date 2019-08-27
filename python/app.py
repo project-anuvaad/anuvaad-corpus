@@ -56,7 +56,7 @@ import utils.translate_footnote as translate_footer
 from logging.config import dictConfig
 import requests
 import db.redis_client as redis_cli
-
+from controllers.admin_api import admin_api
 
 """ Logging Config, for debug logs please set env 'app_debug_logs' to True  """
 dictConfig({
@@ -64,41 +64,41 @@ dictConfig({
     'formatters': {'default': {
         'format': '[%(asctime)s] {%(filename)s:%(lineno)d} %(threadName)s %(levelname)s in %(module)s: %(message)s',
     }},
-    
+
     'handlers': {
-    'info':{
-    'class': 'logging.FileHandler',
-    'level': 'DEBUG',
-    'formatter': 'default',
-    'filename': 'info.log'
-    
-    },
-    'console':{
-    'class': 'logging.StreamHandler',
-    'level': 'DEBUG',
-    'formatter': 'default',
-    'stream': 'ext://sys.stdout',   
-    }
-    },
-    'loggers' :{
-        
-        'file':{
+        'info': {
+            'class': 'logging.FileHandler',
             'level': 'DEBUG',
-            'handlers': ['info','console'],
+            'formatter': 'default',
+            'filename': 'info.log'
+
+        },
+        'console': {
+            'class': 'logging.StreamHandler',
+            'level': 'DEBUG',
+            'formatter': 'default',
+            'stream': 'ext://sys.stdout',
+        }
+    },
+    'loggers': {
+
+        'file': {
+            'level': 'DEBUG',
+            'handlers': ['info', 'console'],
             'propagate': ''
-            }
+        }
     },
 
     'root': {
         'level': 'DEBUG',
-        'handlers': ['info','console']
+        'handlers': ['info', 'console']
     }
 })
 
 LANGUAGES = {
-    'Hindi':'hi',
-    'English':'en',
-    'Tamil':'ta'
+    'Hindi': 'hi',
+    'English': 'en',
+    'Tamil': 'ta'
 }
 
 app = Flask(__name__)
@@ -107,6 +107,7 @@ app.debug = True
 CORS(app)
 
 app.register_blueprint(corpus_api)
+app.register_blueprint(admin_api)
 
 UPLOAD_FOLDER = 'upload'
 STATUS_PENDING = 'PENDING'
@@ -114,25 +115,24 @@ STATUS_PROCESSING = 'PROCESSING'
 STATUS_PROCESSED = 'COMPLETED'
 STATUS_EDITED = 'EDITED'
 ES_SERVER_URL = 'http://localhost:9876/'
-PROFILE_REQ_URL = ES_SERVER_URL+'users/'
+PROFILE_REQ_URL = ES_SERVER_URL + 'users/'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 es = getinstance()
 words = []
 connectmongo()
 
 log = logging.getLogger('file')
-try :
-    app_debug_logs =os.environ['app_debug_logs']
-    
-    if app_debug_logs == 'False' :
+try:
+    app_debug_logs = os.environ['app_debug_logs']
+
+    if app_debug_logs == 'False':
         logging.disable(logging.DEBUG)
         log.info("DEBUG LOGS InACTIVE")
-    else :
+    else:
         log.info("DEBUG LOGS ACTIVE")
-except :
+except:
     logging.disable(logging.DEBUG)
     log.info("DEBUG LOGS InACTIVE")
-
 
 
 @app.route('/hello', methods=['GET'])
@@ -142,77 +142,35 @@ def hello_():
     log.error('test error logs')
     return "hello"
 
-""" to create scope/roles """
-@app.route('/roles', methods=['POST'])
-def roles():
-    body = request.get_json()
-    res = None
-    if(body['operation'] is not None and body['role-type'] is not None):
-        if body['operation'] == "create":
-            if not body ['role-type'] == '':
-               
-                try :
-                    response = requests.post(ES_SERVER_URL+'scopes')
-                    res = CustomResponse(Status.SUCCESS.value,json.loads(response))
-                   
-                except :
-                    res = CustomResponse(Status.FAILURE.value,None)
-        
-            else :
-                res = CustomResponse(Status.ERR_GLOBAL_MISSING_PARAMETERS.value,' role-type not provided ')
-        else:
-            res = CustomResponse(Status.OPERATION_NOT_PERMITTED.value, 'supported opertion type are : [create] ')
-    else :
-        res = CustomResponse(Status.ERR_GLOBAL_MISSING_PARAMETERS.value, ' please provide operation and role-type ')
-        
-    return res.getres()
-    
-
-@app.route('/get-profile',methods =['GET'])
-def get_user_profile():
-    log.info('get_user_profile : started at '+str(getcurrenttime()))
-    if request.headers.get('ad-userid') is not None:
-        user_id = request.headers.get('ad-userid')
-        log.info('get_user_profile : userid = ' + user_id)
-        res = None
-        try :
-            profile = requests.get(PROFILE_REQ_URL+request.headers.get('ad-userid')).content
-            profile = json.loads(profile)
-            roles = redis_cli.get_user_roles_basic_auth(user_id)
-            profile['roles'] = roles
-            res = CustomResponse(Status.SUCCESS.value, profile)
-            
-        except Exception as e:
-            log.error(e)
-            res = CustomResponse(Status.FAILURE.value,'user does not exists with user-id :'+request.headers.get('ad-userid'))
-        log.info('get_user_profile : ended at '+str(getcurrenttime()))
-        return res.getres()
-    log.error('get_user_profile : Error : userid not provided')
-    res = CustomResponse(Status.FAILURE.value,'please provide valid userid ')
-    return res.getres()
 
 """ to get list of corpus available """
+
+
 @app.route('/fetch-corpus', methods=['GET'])
 def fetch_corpus():
     if request.headers.get('ad-userid') is not None:
-        log.info('fetch_corpus: initiated by '+request.headers.get('ad-userid'))
+        log.info('fetch_corpus: initiated by ' + request.headers.get('ad-userid'))
     else:
         log.info('fetch_corpus: initiated by anonymous user')
     corpus = Corpus.objects.to_json()
     res = CustomResponse(Status.SUCCESS.value, json.loads(corpus))
     return res.getres()
 
+
 """ to get all the process from mongo in order of insertion """
+
+
 @app.route('/fetch-translation-process', methods=['GET'])
 def fetch_translation_process():
-    log.info('fetch_translation_process : started at '+ str(getcurrenttime()))
+    log.info('fetch_translation_process : started at ' + str(getcurrenttime()))
     try:
-        transalationProcess = TranslationProcess.objects(created_by=request.headers.get('ad-userid')).order_by('-basename').to_json()
+        transalationProcess = TranslationProcess.objects(created_by=request.headers.get('ad-userid')).order_by(
+            '-basename').to_json()
         res = CustomResponse(Status.SUCCESS.value, json.loads(transalationProcess))
     except:
-            log.info('fetch-translation-process : ERROR occured')
-            pass    
-    log.info('fetch_translation_process : ended at '+ str(getcurrenttime()))
+        log.info('fetch-translation-process : ERROR occured')
+        pass
+    log.info('fetch_translation_process : ended at ' + str(getcurrenttime()))
     return res.getres()
 
 
@@ -223,7 +181,10 @@ def fetch_translation():
     res = CustomResponse(Status.SUCCESS.value, json.loads(sentences))
     return res.getres()
 
+
 """ for translating source """
+
+
 @app.route('/translate-source', methods=['GET'])
 def translate_source():
     sources = []
@@ -245,12 +206,15 @@ def translate_source():
 
 
 """ to get list of sentences for given corpus """
+
+
 @app.route('/fetch-sentences', methods=['GET'])
 def fetch_sentences():
     global LANGUAGES
     basename = request.args.get('basename')
     totalcount = 0
-    (sentencesobj, totalcount) = Sentence.limit(request.args.get('pagesize'),basename,request.args.get('status'),request.args.get('pageno'))
+    (sentencesobj, totalcount) = Sentence.limit(request.args.get('pagesize'), basename, request.args.get('status'),
+                                                request.args.get('pageno'))
     corpus_obj = Corpus.objects(basename=basename)
     corpus_dict = json.loads(corpus_obj.to_json())
     sentences_list = []
@@ -279,33 +243,43 @@ def fetch_sentences():
     res = CustomResponse(Status.SUCCESS.value, sentences_list, totalcount)
     return res.getres()
 
+
 """ to update sentences present in corpus """
+
+
 @app.route('/update-sentences', methods=['POST'])
 def update_sentences():
     body = request.get_json()
-    if(body['sentences'] is None or not isinstance(body['sentences'], list)):
+    if (body['sentences'] is None or not isinstance(body['sentences'], list)):
         res = CustomResponse(
-                Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
+            Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
         return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
     for sentence in body['sentences']:
         corpus = Sentence.objects(_id=sentence['_id']['$oid'])
         corpus_dict = json.loads(corpus.to_json())
-        sentence_log = Sentencelog(source_words=corpus_dict[0]['source'].split(" "),target_words=corpus_dict[0]['target'].split(" "),source_edited_words=sentence['source'].split(" "),
-        updated_on=datetime.now(),edited_by=request.headers.get('ad-userid'),parent_id=sentence['_id']['$oid'],target_edited_words=sentence['target'].split(" "),
-        basename=corpus_dict[0]['basename'], source=corpus_dict[0]['source'], target=corpus_dict[0]['target'], source_edited = sentence['source'],target_edited=sentence['target'])
+        sentence_log = Sentencelog(source_words=corpus_dict[0]['source'].split(" "),
+                                   target_words=corpus_dict[0]['target'].split(" "),
+                                   source_edited_words=sentence['source'].split(" "),
+                                   updated_on=datetime.now(), edited_by=request.headers.get('ad-userid'),
+                                   parent_id=sentence['_id']['$oid'], target_edited_words=sentence['target'].split(" "),
+                                   basename=corpus_dict[0]['basename'], source=corpus_dict[0]['source'],
+                                   target=corpus_dict[0]['target'], source_edited=sentence['source'],
+                                   target_edited=sentence['target'])
         sentence_log.save()
-        corpus.update(set__source=sentence['source'],set__target=sentence['target'], set__status=STATUS_EDITED)
+        corpus.update(set__source=sentence['source'], set__target=sentence['target'], set__status=STATUS_EDITED)
     res = CustomResponse(Status.SUCCESS.value, None)
     return res.getres()
 
 
 """ to update sentences grade in corpus """
+
+
 @app.route('/update-sentences-grade', methods=['POST'])
 def update_sentences_grade():
     body = request.get_json()
-    if(body['sentences'] is None or not isinstance(body['sentences'], list)):
+    if (body['sentences'] is None or not isinstance(body['sentences'], list)):
         res = CustomResponse(
-                Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
+            Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
         return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
     for sentence in body['sentences']:
         corpus = Sentence.objects(_id=sentence['_id']['$oid'])
@@ -313,13 +287,16 @@ def update_sentences_grade():
     res = CustomResponse(Status.SUCCESS.value, None)
     return res.getres()
 
+
 """ to update sentences status present in corpus """
+
+
 @app.route('/update-sentences-status', methods=['POST'])
 def update_sentences_status():
     body = request.get_json()
-    if(body['sentences'] is None or not isinstance(body['sentences'], list)):
+    if (body['sentences'] is None or not isinstance(body['sentences'], list)):
         res = CustomResponse(
-                Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
+            Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
         return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
     for sentence in body['sentences']:
         corpus = Sentence.objects(_id=sentence['_id']['$oid'])
@@ -344,7 +321,7 @@ def translateFile():
         filepath, app.config['UPLOAD_FOLDER'], basename, ''), callback=capturealtotext)
     pool.close()
     pool.join()
-    
+
     res = CustomResponse(Status.SUCCESS.value, '')
     translationProcess = TranslationProcess.objects(basename=basename)
     translationProcess.update(set__status=STATUS_PROCESSED)
@@ -367,10 +344,10 @@ def getfiledata():
         filepath, app.config['UPLOAD_FOLDER'], basename, '_eng'), callback=capturetext)
     pool.close()
     pool.join()
-    filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_eng.txt',
-               app.config['UPLOAD_FOLDER'] + '/'+basename+'_eng_filtered.txt')
+    filtertext(app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng.txt',
+               app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng_filtered.txt')
     processenglish(app.config['UPLOAD_FOLDER'] +
-                 '/'+basename+'_eng_filtered.txt')
+                   '/' + basename + '_eng_filtered.txt')
     # translatewithanuvadaeng(app.config['UPLOAD_FOLDER'] +
     #                      '/'+basename+'_hin_filtered.txt', app.config['UPLOAD_FOLDER'] +
     #                      '/'+basename+'_eng_tran.txt')
@@ -381,7 +358,7 @@ def getfiledata():
     # for f in f_eng:
     #     english_res.append(f)
     # f_eng.close()
-    f_eng = open(app.config['UPLOAD_FOLDER']+'/' +
+    f_eng = open(app.config['UPLOAD_FOLDER'] + '/' +
                  basename + '_eng_filtered.txt', 'r')
     for f in f_eng:
         english_res.append(f)
@@ -393,14 +370,15 @@ def getfiledata():
     #         basename), source=hindi_res[i], target=english_res[i])
     #     translations.append(translation)
     # Translation.objects.insert(translations)
-    
+
     res = CustomResponse(Status.SUCCESS.value, data)
-    result = flask.send_file(os.path.join('upload/',basename + '_eng_filtered.txt' ), as_attachment=True)
+    result = flask.send_file(os.path.join('upload/', basename + '_eng_filtered.txt'), as_attachment=True)
     result.headers["x-suggested-filename"] = basename + '.txt'
 
     # translationProcess = TranslationProcess.objects(basename=basename)
     # translationProcess.update(set__status=STATUS_PROCESSED)
     return result
+
 
 @app.route('/translate', methods=['POST'])
 def translate():
@@ -418,21 +396,21 @@ def translate():
         filepath, app.config['UPLOAD_FOLDER'], basename, '_hin'), callback=capturetext)
     pool.close()
     pool.join()
-    filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin.txt',
-               app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin_filtered.txt')
+    filtertext(app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin.txt',
+               app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin_filtered.txt')
     processenglish(app.config['UPLOAD_FOLDER'] +
-                 '/'+basename+'_hin_filtered.txt')
+                   '/' + basename + '_hin_filtered.txt')
     translatewithanuvadaeng(app.config['UPLOAD_FOLDER'] +
-                         '/'+basename+'_hin_filtered.txt', app.config['UPLOAD_FOLDER'] +
-                         '/'+basename+'_eng_tran.txt')
-    f_eng = open(app.config['UPLOAD_FOLDER']+'/' +
+                            '/' + basename + '_hin_filtered.txt', app.config['UPLOAD_FOLDER'] +
+                            '/' + basename + '_eng_tran.txt')
+    f_eng = open(app.config['UPLOAD_FOLDER'] + '/' +
                  basename + '_eng_tran.txt', 'r')
     english_res = []
     hindi_res = []
     for f in f_eng:
         english_res.append(f)
     f_eng.close()
-    f_hin = open(app.config['UPLOAD_FOLDER']+'/' +
+    f_hin = open(app.config['UPLOAD_FOLDER'] + '/' +
                  basename + '_hin_filtered.txt', 'r')
     for f in f_hin:
         hindi_res.append(f)
@@ -444,12 +422,13 @@ def translate():
             basename), source=hindi_res[i], target=english_res[i])
         translations.append(translation)
     Translation.objects.insert(translations)
-    for f in glob.glob(app.config['UPLOAD_FOLDER']+'/'+basename+'*'):
+    for f in glob.glob(app.config['UPLOAD_FOLDER'] + '/' + basename + '*'):
         os.remove(f)
     res = CustomResponse(Status.SUCCESS.value, data)
     translationProcess = TranslationProcess.objects(basename=basename)
     translationProcess.update(set__status=STATUS_PROCESSED)
     return res.getres()
+
 
 @app.route('/download-docx', methods=['GET'])
 def downloadDocx():
@@ -458,25 +437,26 @@ def downloadDocx():
     result.headers["x-suggested-filename"] = filename
     return result
 
+
 @app.route('/remove-process', methods=['POST'])
 def delete_process():
-    log.info('delete_process: started at '+ str(getcurrenttime()))
-    try :
+    log.info('delete_process: started at ' + str(getcurrenttime()))
+    try:
         basename = request.form.getlist('processname')[0]
-        log.info('delte_process : requested basename is : '+basename)
+        log.info('delte_process : requested basename is : ' + basename)
         translationProcess = TranslationProcess.objects(basename=basename).delete()
-        log.info('delete_process: ended at '+ str(getcurrenttime()))
-        res = CustomResponse(Status.SUCCESS.value,basename)
+        log.info('delete_process: ended at ' + str(getcurrenttime()))
+        res = CustomResponse(Status.SUCCESS.value, basename)
     except:
-             log.info('delte_process : ERROR while processing  basename  : '+basename)
-             res = CustomResponse(Status.FAILURE.value,basename)
+        log.info('delte_process : ERROR while processing  basename  : ' + basename)
+        res = CustomResponse(Status.FAILURE.value, basename)
     return res.getres()
-    
+
 
 @app.route('/translate-docx', methods=['POST'])
 def translateDocx():
     start_time = int(round(time.time() * 1000))
-    log.info('translateDocx: started at '+ str(start_time))
+    log.info('translateDocx: started at ' + str(start_time))
     basename = str(int(time.time()))
     current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
     f = request.files['file']
@@ -486,60 +466,61 @@ def translateDocx():
     sourceLang = request.form.getlist('sourceLang')[0]
     targetLang = request.form.getlist('targetLang')[0]
     translationProcess = TranslationProcess(created_by=request.headers.get('ad-userid'),
-        status=STATUS_PROCESSING, name=f.filename, created_on=current_time, basename=basename,sourceLang=sourceLang,targetLang=targetLang)
+                                            status=STATUS_PROCESSING, name=f.filename, created_on=current_time,
+                                            basename=basename, sourceLang=sourceLang, targetLang=targetLang)
     translationProcess.save()
     f.save(filepath)
     filename_to_processed = f.filename
     filepath_processed = os.path.join(
-        app.config['UPLOAD_FOLDER'], basename +'_t'+'.docx')
+        app.config['UPLOAD_FOLDER'], basename + '_t' + '.docx')
     filepath_processed_src_with_ids = os.path.join(
-        app.config['UPLOAD_FOLDER'], basename +'_s'+'.docx')
+        app.config['UPLOAD_FOLDER'], basename + '_s' + '.docx')
 
-    log.info("translate-doxc : "+filename_to_processed)    
+    log.info("translate-doxc : " + filename_to_processed)
 
     xml_content = docx_helper.get_document_xml(filepath)
     xmltree = docx_helper.get_xml_tree(xml_content)
 
     nodes = []
     texts = []
-    docx_helper.add_identification_tag(xmltree, basename +'-'+str(uuid.uuid4()))
-    docx_helper.warp_original_with_identification_tags(filepath,xmltree,filepath_processed_src_with_ids)
+    docx_helper.add_identification_tag(xmltree, basename + '-' + str(uuid.uuid4()))
+    docx_helper.warp_original_with_identification_tags(filepath, xmltree, filepath_processed_src_with_ids)
     docx_helper.pre_process_text(xmltree)
 
     for node, text in docx_helper.itertext(xmltree):
         nodes.append(node)
         texts.append(text)
 
-    log.info('translateDocx: number of nodes '+ str(len(nodes)) +' and text are : '+ str(len(texts)))
+    log.info('translateDocx: number of nodes ' + str(len(nodes)) + ' and text are : ' + str(len(texts)))
 
     """  method which don't use tokenization  """
-    #docx_helper.modify_text(nodes)
-
+    # docx_helper.modify_text(nodes)
 
     nodes_first_page = []
     nodes_first_page = modify_first_page.get_first_page_nodes(nodes)
-    first_page_node_len = modify_first_page.get_size( nodes_first_page)
+    first_page_node_len = modify_first_page.get_size(nodes_first_page)
     node_after_first_page = modify_first_page.get_nodes_after_f_page(nodes, first_page_node_len)
 
-    
     modify_first_page.modify_text_on_first_page_using_model(nodes_first_page)
-    docx_helper.modify_text_with_tokenization(node_after_first_page,None)
+    docx_helper.modify_text_with_tokenization(node_after_first_page, None)
     xml_footer_list = translate_footer.translate_footer(filepath)
 
     docx_helper.save_docx(filepath, xmltree, filepath_processed, xml_footer_list)
-    
-    res = CustomResponse(Status.SUCCESS.value,basename +'_t'+'.docx')
+
+    res = CustomResponse(Status.SUCCESS.value, basename + '_t' + '.docx')
     translationProcess = TranslationProcess.objects(basename=basename)
     translationProcess.update(set__status=STATUS_PROCESSED)
-    
-    log.info('translateDocx: ended at '+ str(getcurrenttime()) + 'total time elapsed : '+str(getcurrenttime()- start_time))
+
+    log.info('translateDocx: ended at ' + str(getcurrenttime()) + 'total time elapsed : ' + str(
+        getcurrenttime() - start_time))
     return res.getres()
+
 
 @app.route('/translate-docx-new', methods=['POST'])
 def translateDocxNew():
     _url = 'http://18.236.30.130:3003/translator/translation_en'
     start_time = int(round(time.time() * 1000))
-    log.info('translateDocx-new: started at '+ str(start_time))
+    log.info('translateDocx-new: started at ' + str(start_time))
     basename = str(int(time.time()))
     current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
     f = request.files['file']
@@ -549,12 +530,13 @@ def translateDocxNew():
     sourceLang = request.form.getlist('sourceLang')[0]
     targetLang = request.form.getlist('targetLang')[0]
     translationProcess = TranslationProcess(created_by=request.headers.get('ad-userid'),
-        status=STATUS_PROCESSING, name=f.filename, created_on=current_time, basename=basename,sourceLang=sourceLang,targetLang=targetLang)
+                                            status=STATUS_PROCESSING, name=f.filename, created_on=current_time,
+                                            basename=basename, sourceLang=sourceLang, targetLang=targetLang)
     translationProcess.save()
     f.save(filepath)
     filename_to_processed = f.filename
     filepath_processed = os.path.join(
-        app.config['UPLOAD_FOLDER'], basename +'_t'+'.docx')
+        app.config['UPLOAD_FOLDER'], basename + '_t' + '.docx')
 
     xml_content = docx_helper.get_document_xml(filepath)
     xmltree = docx_helper.get_xml_tree(xml_content)
@@ -568,21 +550,23 @@ def translateDocxNew():
         nodes.append(node)
         texts.append(text)
 
-    log.info('translateDocx-new: number of nodes '+ str(len(nodes)) +' and text are : '+ str(len(texts)))
+    log.info('translateDocx-new: number of nodes ' + str(len(nodes)) + ' and text are : ' + str(len(texts)))
 
     """  method which don't use tokenization  """
-    #docx_helper.modify_text(nodes)
+    # docx_helper.modify_text(nodes)
 
     docx_helper.modify_text_with_tokenization(nodes, _url)
 
     docx_helper.save_docx(filepath, xmltree, filepath_processed)
-    
-    res = CustomResponse(Status.SUCCESS.value,basename +'_t'+'.docx')
+
+    res = CustomResponse(Status.SUCCESS.value, basename + '_t' + '.docx')
     translationProcess = TranslationProcess.objects(basename=basename)
     translationProcess.update(set__status=STATUS_PROCESSED)
-    
-    log.info('translateDocx-new: ended at '+ str(getcurrenttime()) + 'total time elapsed : '+str(getcurrenttime()- start_time))
+
+    log.info('translateDocx-new: ended at ' + str(getcurrenttime()) + 'total time elapsed : ' + str(
+        getcurrenttime() - start_time))
     return res.getres()
+
 
 @app.route('/single', methods=['POST'])
 def upload_single_file():
@@ -600,8 +584,9 @@ def upload_single_file():
         filepath, app.config['UPLOAD_FOLDER'], basename, ''), callback=capturetext)
     pool.close()
     pool.join()
-    separate(app.config['UPLOAD_FOLDER'] + '/'+basename)
+    separate(app.config['UPLOAD_FOLDER'] + '/' + basename)
     return process_files(basename)
+
 
 @app.route('/multiple-law', methods=['POST'])
 def upload_file_law():
@@ -631,19 +616,20 @@ def upload_file_law():
 
 
 def process_files_law(basename, name):
-    filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin.txt',
-               app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin_filtered.txt')
-    filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_eng.txt',
-               app.config['UPLOAD_FOLDER'] + '/'+basename+'_eng_filtered.txt')
+    filtertext(app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin.txt',
+               app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin_filtered.txt')
+    filtertext(app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng.txt',
+               app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng_filtered.txt')
     processhindi(app.config['UPLOAD_FOLDER'] +
-                 '/'+basename+'_hin_filtered.txt')
+                 '/' + basename + '_hin_filtered.txt')
     processenglish(app.config['UPLOAD_FOLDER'] +
-                   '/'+basename+'_eng_filtered.txt')
+                   '/' + basename + '_eng_filtered.txt')
     translatewithgoogle(app.config['UPLOAD_FOLDER'] +
-                        '/'+basename+'_hin_filtered.txt', app.config['UPLOAD_FOLDER'] +
-                        '/'+basename+'_eng_tran.txt')
-    os.system('./helpers/bleualign.py -s ' + os.getcwd() + '/upload/' + basename + '_hin_filtered' + '.txt' + ' -t ' + os.getcwd() + '/upload/' + basename +
-              '_eng_filtered' + '.txt' + ' --srctotarget ' + os.getcwd() + '/upload/' + basename + '_eng_tran' + '.txt' + ' -o ' + os.getcwd() + '/upload/' + basename + '_output')
+                        '/' + basename + '_hin_filtered.txt', app.config['UPLOAD_FOLDER'] +
+                        '/' + basename + '_eng_tran.txt')
+    os.system(
+        './helpers/bleualign.py -s ' + os.getcwd() + '/upload/' + basename + '_hin_filtered' + '.txt' + ' -t ' + os.getcwd() + '/upload/' + basename +
+        '_eng_filtered' + '.txt' + ' --srctotarget ' + os.getcwd() + '/upload/' + basename + '_eng_tran' + '.txt' + ' -o ' + os.getcwd() + '/upload/' + basename + '_output')
     english_res = []
     hindi_res = []
     english_points = []
@@ -670,11 +656,14 @@ def process_files_law(basename, name):
             'english_scores': english_points, 'hindi_scores': hindi_points}
     sentences = []
     for i in range(0, len(hindi_res)):
-        sentence = Sentence(status=STATUS_PENDING, alignment_accuracy=english_res[i].split(':::::')[1], basename=name, source=hindi_res[i], target=english_res[i].split(':::::')[0], source_ocr_words=hindi_points_words[i], source_ocr=str(hindi_points[i]), target_ocr_words=english_points_words[i], target_ocr=str(english_points[i]))
+        sentence = Sentence(status=STATUS_PENDING, alignment_accuracy=english_res[i].split(':::::')[1], basename=name,
+                            source=hindi_res[i], target=english_res[i].split(':::::')[0],
+                            source_ocr_words=hindi_points_words[i], source_ocr=str(hindi_points[i]),
+                            target_ocr_words=english_points_words[i], target_ocr=str(english_points[i]))
         sentences.append(sentence)
         # sentence.save()
     Sentence.objects.insert(sentences)
-    for f in glob.glob(app.config['UPLOAD_FOLDER']+'/'+basename+'*'):
+    for f in glob.glob(app.config['UPLOAD_FOLDER'] + '/' + basename + '*'):
         os.remove(f)
     res = CustomResponse(Status.SUCCESS.value, data)
     # corpus = Corpus.objects(basename=basename)
@@ -682,19 +671,19 @@ def process_files_law(basename, name):
     #               set__no_of_sentences=len(hindi_res))
     return res.getres()
 
+
 @app.route('/remove-junk', methods=['POST'])
 def remove_junk():
     basename = str(int(time.time()))
     f = request.files['file']
     filepath_eng = os.path.join(
-                app.config['UPLOAD_FOLDER'], basename + '_junk.txt')
+        app.config['UPLOAD_FOLDER'], basename + '_junk.txt')
     f.save(filepath_eng)
-    f_eng = open(app.config['UPLOAD_FOLDER']+'/' + basename + '_junk.txt', 'r')
+    f_eng = open(app.config['UPLOAD_FOLDER'] + '/' + basename + '_junk.txt', 'r')
     for t in f_eng:
         Sentence.objects(source=t).delete()
     res = CustomResponse(Status.SUCCESS.value, None)
     return res.getres()
-
 
 
 @app.route('/indian-kanoon', methods=['POST'])
@@ -709,15 +698,20 @@ def upload_indian_kannon_file():
         comment = request.form.getlist('comment')
         if comment is None or len(comment) == 0:
             comment = ['']
-        if target_lang is None or len(target_lang) == 0 or len(target_lang[0]) == 0 or source_lang is None or len(source_lang) == 0 or len(source_lang[0]) == 0 or name is None or len(name) == 0 or len(name[0]) == 0 or domain is None or len(domain) == 0 or len(domain[0]) == 0 or request.files is None or request.files['english'] is None:
+        if target_lang is None or len(target_lang) == 0 or len(target_lang[0]) == 0 or source_lang is None or len(
+                source_lang) == 0 or len(source_lang[0]) == 0 or name is None or len(name) == 0 or len(
+                name[0]) == 0 or domain is None or len(domain) == 0 or len(domain[0]) == 0 or request.files is None or \
+                request.files['english'] is None:
             res = CustomResponse(
                 Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
             return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
 
         else:
             current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-            corpus = Corpus(source_lang=source_lang[0],target_lang=target_lang[0],status=STATUS_PROCESSING, name=name[0], domain=domain[0], created_on=current_time,
-                            last_modified=current_time, author='', comment=comment[0], no_of_sentences=0, basename=basename)
+            corpus = Corpus(source_lang=source_lang[0], target_lang=target_lang[0], status=STATUS_PROCESSING,
+                            name=name[0], domain=domain[0], created_on=current_time,
+                            last_modified=current_time, author='', comment=comment[0], no_of_sentences=0,
+                            basename=basename)
             corpus.save()
             f_eng = request.files['english']
             filepath_eng = os.path.join(
@@ -738,11 +732,11 @@ def upload_indian_kannon_file():
             #         '_eng_filtered' + '.txt' + ' --srctotarget ' + os.getcwd() + '/upload/' + basename + '_eng_tran' + '.txt' + ' -o ' + os.getcwd() + '/upload/' + basename + '_output')
             english_res = []
             hindi_res = []
-            f_eng = open(app.config['UPLOAD_FOLDER']+'/' + basename + '_eng_filtered.txt', 'r')
+            f_eng = open(app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng_filtered.txt', 'r')
             for f in f_eng:
                 english_res.append(f)
             f_eng.close()
-            f_hin = open(app.config['UPLOAD_FOLDER']+'/' + basename + '_hin_filtered.txt', 'r')
+            f_hin = open(app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin_filtered.txt', 'r')
             for f in f_hin:
                 hindi_res.append(f)
             f_hin.close()
@@ -750,16 +744,16 @@ def upload_indian_kannon_file():
             sentences = []
             for i in range(0, len(hindi_res)):
                 sentence = Sentence(status=STATUS_PENDING, basename=str(
-            basename), source=english_res[i], target=hindi_res[i])
+                    basename), source=english_res[i], target=hindi_res[i])
                 sentences.append(sentence)
                 # sentence.save()
             Sentence.objects.insert(sentences)
-            for f in glob.glob(app.config['UPLOAD_FOLDER']+'/'+basename+'*'):
+            for f in glob.glob(app.config['UPLOAD_FOLDER'] + '/' + basename + '*'):
                 os.remove(f)
             res = CustomResponse(Status.SUCCESS.value, data)
             corpus = Corpus.objects(basename=basename)
             corpus.update(set__status=STATUS_PROCESSED,
-                        set__no_of_sentences=len(hindi_res))
+                          set__no_of_sentences=len(hindi_res))
             return res.getres()
     except Exception as e:
         print(e)
@@ -777,7 +771,9 @@ def upload_file():
         comment = request.form.getlist('comment')
         if comment is None or len(comment) == 0:
             comment = ['']
-        if name is None or len(name) == 0 or len(name[0]) == 0 or domain is None or len(domain) == 0 or len(domain[0]) == 0 or request.files is None or request.files['hindi'] is None or request.files['english'] is None:
+        if name is None or len(name) == 0 or len(name[0]) == 0 or domain is None or len(domain) == 0 or len(
+                domain[0]) == 0 or request.files is None or request.files['hindi'] is None or request.files[
+            'english'] is None:
             res = CustomResponse(
                 Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
             return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
@@ -785,7 +781,8 @@ def upload_file():
         else:
             current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
             corpus = Corpus(status=STATUS_PROCESSING, name=name[0], domain=domain[0], created_on=current_time,
-                            last_modified=current_time, author='', comment=comment[0], no_of_sentences=0, basename=basename)
+                            last_modified=current_time, author='', comment=comment[0], no_of_sentences=0,
+                            basename=basename)
             corpus.save()
             f = request.files['hindi']
             f_eng = request.files['english']
@@ -809,33 +806,34 @@ def upload_file():
 
 
 def process_files(basename):
-    filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin.txt',
-               app.config['UPLOAD_FOLDER'] + '/'+basename+'_hin_filtered.txt')
-    filtertext(app.config['UPLOAD_FOLDER'] + '/'+basename+'_eng.txt',
-               app.config['UPLOAD_FOLDER'] + '/'+basename+'_eng_filtered.txt')
+    filtertext(app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin.txt',
+               app.config['UPLOAD_FOLDER'] + '/' + basename + '_hin_filtered.txt')
+    filtertext(app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng.txt',
+               app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng_filtered.txt')
     processhindi(app.config['UPLOAD_FOLDER'] +
-                 '/'+basename+'_hin_filtered.txt')
+                 '/' + basename + '_hin_filtered.txt')
     processenglish(app.config['UPLOAD_FOLDER'] +
-                   '/'+basename+'_eng_filtered.txt')
+                   '/' + basename + '_eng_filtered.txt')
     translatewithgoogle(app.config['UPLOAD_FOLDER'] +
-                        '/'+basename+'_hin_filtered.txt', app.config['UPLOAD_FOLDER'] +
-                        '/'+basename+'_eng_tran.txt')
-    os.system('./helpers/bleualign.py -s ' + os.getcwd() + '/upload/' + basename + '_hin_filtered' + '.txt' + ' -t ' + os.getcwd() + '/upload/' + basename +
-              '_eng_filtered' + '.txt' + ' --srctotarget ' + os.getcwd() + '/upload/' + basename + '_eng_tran' + '.txt' + ' -o ' + os.getcwd() + '/upload/' + basename + '_output')
+                        '/' + basename + '_hin_filtered.txt', app.config['UPLOAD_FOLDER'] +
+                        '/' + basename + '_eng_tran.txt')
+    os.system(
+        './helpers/bleualign.py -s ' + os.getcwd() + '/upload/' + basename + '_hin_filtered' + '.txt' + ' -t ' + os.getcwd() + '/upload/' + basename +
+        '_eng_filtered' + '.txt' + ' --srctotarget ' + os.getcwd() + '/upload/' + basename + '_eng_tran' + '.txt' + ' -o ' + os.getcwd() + '/upload/' + basename + '_output')
     english_res = []
     hindi_res = []
     english_points = []
     english_points_words = []
     hindi_points = []
     hindi_points_words = []
-    f_eng = open(app.config['UPLOAD_FOLDER']+'/' + basename + '_output-t', 'r')
+    f_eng = open(app.config['UPLOAD_FOLDER'] + '/' + basename + '_output-t', 'r')
     for f in f_eng:
         english_res.append(f)
         point = fetchwordsfromsentence(f, basename)
         english_points.append(point['avg'])
         english_points_words.append(point['values'])
     f_eng.close()
-    f_hin = open(app.config['UPLOAD_FOLDER']+'/' + basename + '_output-s', 'r')
+    f_hin = open(app.config['UPLOAD_FOLDER'] + '/' + basename + '_output-s', 'r')
     for f in f_hin:
         hindi_res.append(f)
         point = fetchwordsfromsentence(f, basename)
@@ -847,11 +845,13 @@ def process_files(basename):
     sentences = []
     for i in range(0, len(hindi_res)):
         sentence = Sentence(status=STATUS_PENDING, alignment_accuracy=english_res[i].split(':::::')[1], basename=str(
-            basename), source=hindi_res[i], target=english_res[i].split(':::::')[0], source_ocr_words=hindi_points_words[i], source_ocr=str(hindi_points[i]), target_ocr_words=english_points_words[i], target_ocr=str(english_points[i]))
+            basename), source=hindi_res[i], target=english_res[i].split(':::::')[0],
+                            source_ocr_words=hindi_points_words[i], source_ocr=str(hindi_points[i]),
+                            target_ocr_words=english_points_words[i], target_ocr=str(english_points[i]))
         sentences.append(sentence)
         # sentence.save()
     Sentence.objects.insert(sentences)
-    for f in glob.glob(app.config['UPLOAD_FOLDER']+'/'+basename+'*'):
+    for f in glob.glob(app.config['UPLOAD_FOLDER'] + '/' + basename + '*'):
         os.remove(f)
     res = CustomResponse(Status.SUCCESS.value, data)
     corpus = Corpus.objects(basename=basename)
@@ -871,18 +871,20 @@ def capturetext(result):
                                '/' + result['basename'] + result['suffix'] + '.txt', result['basename'])
     savewords(words)
 
+
 def capturealtotext(result):
     convertimagetoalto(result['imagenames'], app.config['UPLOAD_FOLDER'] +
-                               '/' + result['basename'] + result['suffix'], result['basename'])
+                       '/' + result['basename'] + result['suffix'], result['basename'])
     removetext(result['imagenames'], app.config['UPLOAD_FOLDER'] +
-                               '/' + result['basename'] + result['suffix'])
+               '/' + result['basename'] + result['suffix'])
     translateandupdateimage(result['imagenames'], app.config['UPLOAD_FOLDER'] +
-                               '/' + result['basename'] + result['suffix'])
+                            '/' + result['basename'] + result['suffix'])
     converttopdf(result['imagenames'])
+
 
 def getcurrenttime():
     return int(round(time.time() * 1000))
 
+
 if __name__ == '__main__':
-     
     app.run(host='0.0.0.0', port=5001)
