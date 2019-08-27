@@ -3,7 +3,7 @@ import logging
 import requests
 from models.status import Status
 from models.response import CustomResponse
-from db.redis_client import redis_cli
+from db.redis_client import get_user_roles_basic_auth
 import json
 import time
 import utils.run_on_shell as shell
@@ -81,7 +81,7 @@ def get_user_profile():
         try:
             profile = requests.get(PROFILE_REQ_URL + request.headers.get('ad-userid')).content
             profile = json.loads(profile)
-            roles_ = redis_cli.get_user_roles_basic_auth(user_id)
+            roles_ = get_user_roles_basic_auth(user_id)
             profile['roles'] = roles_
             res = CustomResponse(Status.SUCCESS.value, profile)
 
