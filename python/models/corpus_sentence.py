@@ -9,5 +9,6 @@
 from mongoengine import *
 
 class Corpussentence(DynamicDocument):
+    _id = ObjectIdField()
     sentence = StringField()
     index = IntField()
