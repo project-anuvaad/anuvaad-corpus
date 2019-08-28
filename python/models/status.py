@@ -24,3 +24,4 @@ class Status(enum.Enum):
                                'why': 'operation not permitted'}
     ERROR_WEAK_PASSWORD = {'ok': False, 'http': {'status': 400}, 'why': 'weak password, at least provide 6 characters '}
     ERROR_GATEWAY = {'ok': False, 'http': {'status': 400}, 'why': 'gateway error'}
+    ERROR_WRONG_PASSWORD = {'ok': False, 'http': {'status': 400}, 'why': 'wrong password '}
