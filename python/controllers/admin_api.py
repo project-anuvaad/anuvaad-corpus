@@ -3,10 +3,11 @@ import logging
 import requests
 from models.status import Status
 from models.response import CustomResponse
-from db.redis_client import redis_cli
+from db.redis_client import get_user_roles_basic_auth
 import json
 import time
 import utils.run_on_shell as shell
+import base64
 
 ES_SERVER_URL = 'http://localhost:9876/'
 PROFILE_REQ_URL = ES_SERVER_URL + 'users/'
@@ -20,9 +21,16 @@ def update_password():
     log.info('update_password : started')
     body = request.get_json()
     user_id = body['user_id']
-    password = body['password']
-    log.info("password == "+password + " username == "+user_id )
-    if password is None or password.__len__() < 6:
+    user_name = body['user_name']
+    old_password = body['old_password']
+    new_password = body['new_password']
+
+    password_checked = check_password(user_name, old_password)
+    if not password_checked:
+        res = CustomResponse(Status.ERROR_WRONG_PASSWORD.value, None)
+        return res.getres()
+
+    if new_password is None or new_password.__len__() < 6:
         log.info('update_password : password is too weak, at least provide 6 characters')
         res = CustomResponse(Status.ERROR_WEAK_PASSWORD.value, None)
         return res.getres()
@@ -31,11 +39,11 @@ def update_password():
     response = requests.put(req, json=data)
     res = response.json()
     status = res['status']
-    log.info("status == "+status)
+    log.info("status == " + status)
     if not status == 'Deactivated':
         res = CustomResponse(Status.ERROR_GATEWAY.value, None)
         return res.getres()
-    shell_response = shell.create_basic_auth_credentials(user_id, password)
+    shell_response = shell.create_basic_auth_credentials(user_id, new_password)
     if shell_response['isActive']:
         res = CustomResponse(Status.SUCCESS.value, None)
         return res.getres()
@@ -81,7 +89,7 @@ def get_user_profile():
         try:
             profile = requests.get(PROFILE_REQ_URL + request.headers.get('ad-userid')).content
             profile = json.loads(profile)
-            roles_ = redis_cli.get_user_roles_basic_auth(user_id)
+            roles_ = get_user_roles_basic_auth(user_id)
             profile['roles'] = roles_
             res = CustomResponse(Status.SUCCESS.value, profile)
 
@@ -98,3 +106,22 @@ def get_user_profile():
 
 def getcurrenttime():
     return int(round(time.time() * 1000))
+
+
+def check_password(username, password):
+    data = username + ':' + password
+
+    encodedBytes = base64.b64encode(data.encode("utf-8"))
+    encodedStr = str(encodedBytes, "utf-8")
+    headers = {"Authorization": "Basic %s" % encodedStr}
+    response = requests.get('http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/app/hello', headers=headers)
+
+    log.info('check_password: response is ')
+    log.info(response.__dict__)
+    try:
+        if response.__dict__['status_code'] == 200:
+            return True
+        else:
+            return False
+    except:
+        return False
