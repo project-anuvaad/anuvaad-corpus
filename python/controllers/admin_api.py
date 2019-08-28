@@ -110,11 +110,14 @@ def getcurrenttime():
 
 def check_password(username, password):
     data = username + ':' + password
+
     encodedBytes = base64.b64encode(data.encode("utf-8"))
     encodedStr = str(encodedBytes, "utf-8")
-    auth = 'Basic ' + encodedStr
-    headers = {'Authorization': auth}
-    response = requests.get('http://localhost:8080/hello', headers=headers)
+    headers = {"Authorization": "Basic %s" % encodedStr}
+    response = requests.get('http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/app/hello', headers=headers)
+
+    log.info('check_password: response is ')
+    log.info(response.__dict__)
     try:
         if response.__dict__['status_code'] == 200:
             return True
