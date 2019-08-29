@@ -37,6 +37,7 @@ from models.corpus import Corpus
 from models.old_corpus import Oldcorpus
 from controllers.corpus import corpus_api
 from werkzeug.utils import secure_filename
+import math
 import subprocess
 import json
 import multiprocessing as mp
@@ -435,6 +436,50 @@ def downloadDocx():
     result = flask.send_file(os.path.join('upload/', filename), as_attachment=True)
     result.headers["x-suggested-filename"] = filename
     return result
+
+@app.route('/batch-sentences', methods=['GET'])
+def batchsentences():
+    basename = request.args.get('basename')
+    current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+    sentences = Sentence.objects(basename=basename)
+    corpus_obj = Corpus.objects(basename=basename)
+    index = 2
+    batch_size = 10000
+    if len(sentences) > batch_size:
+        for i in range(2,1+math.ceil(len(sentences)/batch_size)):
+            base = str(uuid.uuid4())
+            if (i)*batch_size > len(sentences):
+                sentence_batch = sentences[(i-1)*batch_size:len(sentences)]
+                print(len(sentence_batch))
+                if len(sentence_batch)>0:
+                    corpus = Corpus(source_lang='English', target_lang='Hindi', status=STATUS_PROCESSED,
+                                name='SC Judgment 2019 Batch '+str(index), domain='LAW', created_on=current_time,
+                                last_modified=current_time, author='', comment='', no_of_sentences=len(sentence_batch),
+                                basename=base)
+                    corpus.save()
+                    
+                    for sentence in sentence_batch:
+                        sentence_dict = json.loads(sentence.to_json())
+                        sen = Sentence.objects(_id=sentence_dict['_id']['$oid'])
+                        print(sen.to_json())
+                        sen.update(set__basename=base)
+            else:
+                sentence_batch = sentences[(i-1)*batch_size:i*batch_size]
+                print(len(sentence_batch))
+                if len(sentence_batch)>0:
+                    corpus = Corpus(source_lang='English', target_lang='Hindi', status=STATUS_PROCESSED,
+                                name='SC Judgment 2019 Batch '+str(index), domain='LAW', created_on=current_time,
+                                last_modified=current_time, author='', comment='', no_of_sentences=len(sentence_batch),
+                                basename=base)
+                    corpus.save()
+                    for sentence in sentence_batch:
+                        sentence_dict = json.loads(sentence.to_json())
+                        sen = Sentence.objects(_id=sentence_dict['_id']['$oid'])
+                        print(sen.to_json())
+                        sen.update(set__basename=base)
+            index+=1
+    res = CustomResponse(Status.FAILURE.value, basename)
+    return res.getres()
 
 
 @app.route('/remove-process', methods=['POST'])

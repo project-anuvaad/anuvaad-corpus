@@ -8,7 +8,7 @@
  
 from mongoengine import *
 
-class Sentence(Document):
+class Sentence(DynamicDocument):
     basename = StringField()
     _id = ObjectIdField()
     source = StringField()
