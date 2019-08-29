@@ -449,7 +449,7 @@ def batchsentences():
         for i in range(2,1+math.ceil(len(sentences)/batch_size)):
             base = str(uuid.uuid4())
             if (i)*batch_size > len(sentences):
-                sentence_batch = sentences[(i-1)*batch_size:len(sentences)]
+                sentence_batch = sentences[0:(i-1)*batch_size-len(sentences)]
                 print(len(sentence_batch))
                 if len(sentence_batch)>0:
                     corpus = Corpus(source_lang='English', target_lang='Hindi', status=STATUS_PROCESSED,
@@ -464,7 +464,7 @@ def batchsentences():
                         print(sen.to_json())
                         sen.update(set__basename=base)
             else:
-                sentence_batch = sentences[(i-1)*batch_size:i*batch_size]
+                sentence_batch = sentences[0:batch_size]
                 print(len(sentence_batch))
                 if len(sentence_batch)>0:
                     corpus = Corpus(source_lang='English', target_lang='Hindi', status=STATUS_PROCESSED,
