@@ -56,14 +56,14 @@ function startApp() {
   app.use(helmet())
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({
-    extended: true
+    extended: false
   }));
   app.use(methodOverride());
-  LOG.info('Server started at',APP_CONFIG.PORT)
+  app.use(upload.any());
   app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-
+    // req.pipe(req.busboy);
     if ('OPTIONS' === req.method) {
       res.sendStatus(200);
     }
@@ -202,6 +202,8 @@ function startApp() {
     }
   });
 
-  var server = app.listen(APP_CONFIG.PORT);
+  var server = app.listen(APP_CONFIG.PORT, function() {
+    LOG.info('Listening on port %d', server.address().port);
+});
   server.timeout = 10000000;
 }

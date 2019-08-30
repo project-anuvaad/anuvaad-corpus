@@ -10,4 +10,7 @@ var corpusController = require('../../controllers/corpus');
 module.exports = function (router) {
     router.route('/fetch-corpus')
         .get(corpusController.fetchCorpus);
+
+    router.route('/upload-corpus')
+        .post(corpusController.uploadCorpus);
 }
