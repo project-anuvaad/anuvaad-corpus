@@ -1,11 +1,11 @@
 /*
  * @Author: ghost 
- * @Date: 2018-05-08 17:32:50 
+ * @Date: 2019-08-29 17:32:50 
  * @Last Modified by: aroop.ghosh@tarento.com
- * @Last Modified time: 2018-05-11 14:22:51
+ * @Last Modified time: 2019-08-30 14:22:51
  */
-var Users = require('../models/users');
 var Corpus = require('../models/corpus');
+var Sentence = require('../models/sentence');
 var Response = require('../models/response')
 var APIStatus = require('../errors/apistatus')
 var StatusCode = require('../errors/statuscodes').StatusCode
@@ -13,6 +13,7 @@ var Status = require('../utils/status').Status
 var LOG = require('../logger/logger').logger
 var UUIDV4 = require('uuid/v4')
 var async = require('async');
+var fs = require("fs");
 
 
 var COMPONENT = "corpus";
@@ -26,6 +27,45 @@ exports.fetchCorpus = function (req, res) {
         }
         let response = new Response(StatusCode.SUCCESS, corpus).getRsp()
         return res.status(response.http.status).json(response);
+    })
+}
+
+exports.uploadCorpus = function (req, res) {
+    //Check required params
+    if (!req.files || req.files.length == 0 || !req.body || !req.body.name || !req.body.lang) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let corpusid = UUIDV4()
+    //Create corpus obj and save
+    let corpus = { status: 'ACTIVE', created_on: new Date(), corpusid: corpusid, name: req.body.name, lang: req.body.lang }
+    corpus.tags = ['BASE_CORPUS', req.body.lang]
+    Corpus.saveCorpus(corpus, (err, doc) => {
+        if (err) {
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+        fs.readFile(req.files[0].path, 'utf8', function (err, data) {
+            if(data.length>0){
+                let sentences = data.split('\n')
+                let sentencearr = []
+                sentences.map((sentence, index)=>{
+                    let sentenceobj = {sentence:sentence, index:index}
+                    sentenceobj.tags = [corpusid, req.body.lang]
+                    sentenceobj.original = true
+                    sentenceobj.parallelcorpusid = []
+                    sentencearr.push(sentenceobj)
+                })
+                Sentence.saveSentences(sentencearr, (err, docs)=>{
+                    if (err) {
+                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                        return res.status(apistatus.http.status).json(apistatus);
+                    }
+                    let apistatus = new APIStatus(StatusCode.SUCCESS, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                })
+            }
+        })
     })
 }
 
