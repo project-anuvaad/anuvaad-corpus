@@ -9,10 +9,8 @@ var Sentence = mongoose.model('Corpussentence', SentenceSchema);
 
 
 Sentence.saveSentences = function(sentences, cb){
-    LOG.info(sentences.length)
     Sentence.collection.insertMany(sentences,function(err,docs){
         if (err) {
-            // TODO: handle error
             return cb(err, null)
         } else {
             LOG.info('%s sentences was successfully stored.', JSON.stringify(docs));
