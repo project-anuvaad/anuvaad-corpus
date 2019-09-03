@@ -1,6 +1,8 @@
 var mongoose = require("../db/mongoose");
 var LOG = require('../logger/logger').logger
 var Schema = mongoose.Schema;
+var fs = require("fs");
+
 
 var CorpusSchema = new Schema({
     _id: {type: String},
@@ -15,6 +17,7 @@ Corpus.fetchAll = function(id, cb){
             return cb(err, null);
         }
         // LOG.info("[%s] Corpus found",corpus);
+        var valuearr = []
         corpus.map((c)=>{
             var value = 0
             if(c._doc.target_edited_words && Array.isArray(c._doc.target_edited_words)){
@@ -27,6 +30,9 @@ Corpus.fetchAll = function(id, cb){
                 })
             }
             console.log(value)
+            valuearr.push(value)
+        })
+        fs.appendFile("output.txt", valuearr, function(err) {
         })
         return cb(null, corpus);
     })
