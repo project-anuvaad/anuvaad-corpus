@@ -19,9 +19,9 @@ Corpus.fetchAll = function(id, cb){
             var value = 0
             if(c._doc.target_edited_words && Array.isArray(c._doc.target_edited_words)){
                 c._doc.target_edited_words.map((word)=>{
-                    // console.log(c.target)
-                    // console.log(word)
                     if(c._doc.target.indexOf(word)<0){
+                        console.log(word)
+                        console.log(c._doc.target)
                         value++;
                     }
                 })
