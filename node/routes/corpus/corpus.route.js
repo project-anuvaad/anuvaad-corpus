@@ -13,4 +13,11 @@ module.exports = function (router) {
 
     router.route('/upload-corpus')
         .post(corpusController.uploadCorpus);
+    
+    router.route('/get-parallel-corpus-sentences')
+        .get(corpusController.getParallelCorpusSentence);
+
+    router.route('/fetch-parallel-corpus')
+        .get(corpusController.fetchParallelCorpus);
+
 }
