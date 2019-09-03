@@ -12,11 +12,11 @@ var SentenceSchema = new Schema({
 var Sentence = mongoose.model('Corpussentence', SentenceSchema);
 
 
+
 Sentence.saveSentences = function (sentences, cb) {
     LOG.info(sentences.length)
     Sentence.collection.insertMany(sentences, function (err, docs) {
-        if (err) {
-            // TODO: handle error
+   if (err) {
             return cb(err, null)
         } else {
             LOG.info('%s sentences was successfully stored.', JSON.stringify(docs));
@@ -26,9 +26,7 @@ Sentence.saveSentences = function (sentences, cb) {
 }
 
 Sentence.findWithtagId = function (parallelCorpusId, tagId, cb) {
-    var corpusIds = []
     if (parallelCorpusId != null) {
-        corpusIds = [parallelCorpusId]
         Sentence.collection.findOne({
             "tags": tagId,
             "parallelcorpusid": parallelCorpusId}, function (err, sentences) {
@@ -41,7 +39,7 @@ Sentence.findWithtagId = function (parallelCorpusId, tagId, cb) {
         })
     } else {
         
-        Sentence.collection.find({"tags": tagId,"parallelcorpusid": corpusIds}).sort({"index": 1}, function (err, sentences) {
+        Sentence.collection.find({"tags": tagId}).sort({"index": 1}, function (err, sentences) {
             if (err) {
                 LOG.error("Unable to find sentences id  due to [%s]", tagId, JSON.stringify(err));
                 return cb(err, null);
