@@ -10,7 +10,7 @@ var CorpusSchema = new Schema({
 var Corpus = mongoose.model('Singlecorpus', CorpusSchema, 'sentencelog');
 
 Corpus.fetchAll = function(id, cb){
-    Corpus.find({
+    Corpus.find({edited_by:id
     }, function (err, corpus) {
         if (err) {
             LOG.error("Unable to find corpus due to [%s]", JSON.stringify(err));
