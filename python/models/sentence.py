@@ -30,22 +30,22 @@ class Sentence(DynamicDocument):
 
     def limit(page_size, basename, status=None,pagenumber=None):
         if status is not None:
-            totalcount = Sentence.objects.filter(Q(basename=basename) and Q(status=status)).count()
+            totalcount = Sentence.objects.filter(Q(basename=basename) & Q(status=status)).count()
         else:
             totalcount = Sentence.objects.filter(Q(basename=basename)).count()
         if page_size is None:
             if status is not None:
-                cursor = Sentence.objects.filter(Q(basename=basename) and Q(status=status)).limit(5)    
+                cursor = Sentence.objects.filter(Q(basename=basename) & Q(status=status)).limit(5)    
             else:
                 cursor = Sentence.objects.filter(Q(basename=basename)).limit(5)
         elif pagenumber is None:
             if status is not None:
-                cursor = Sentence.objects.filter(Q(basename=basename) and Q(status=status)).limit(page_size)
+                cursor = Sentence.objects.filter(Q(basename=basename) & Q(status=status)).limit(page_size)
             else:
                 cursor = Sentence.objects.filter(Q(basename=basename)).limit(page_size)
         else:
             if status is not None:
-                cursor = Sentence.objects.filter(Q(basename=basename) and Q(status=status)).skip( (int(pagenumber)-1)*int(page_size) ).limit(int(page_size))
+                cursor = Sentence.objects.filter(Q(basename=basename) & Q(status=status)).skip( (int(pagenumber)-1)*int(page_size) ).limit(int(page_size))
             else:
                 cursor = Sentence.objects.filter(Q(basename=basename)).skip( (int(pagenumber)-1)*int(page_size) ).limit(int(page_size))
 
