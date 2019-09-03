@@ -8,7 +8,7 @@ var CorpusSchema = new Schema({
 var Corpus = mongoose.model('Singlecorpus', CorpusSchema, 'sentencelog');
 
 Corpus.fetchAll = function(id, cb){
-    Corpus.find({edited_by:id
+    Corpus.find({
     }, function (err, corpus) {
         if (err) {
             LOG.error("Unable to find corpus due to [%s]", JSON.stringify(err));
@@ -16,10 +16,12 @@ Corpus.fetchAll = function(id, cb){
         }
         // LOG.info("[%s] Corpus found",corpus);
         corpus.map((c)=>{
-            let value = 0
-            if(c.target_edited_words && Array.isArray(c.target_edited_words)){
-                c.target_edited_words.map((word)=>{
-                    if(c.target.indexOf(word)<0){
+            var value = 0
+            if(c._doc.target_edited_words && Array.isArray(c._doc.target_edited_words)){
+                c._doc.target_edited_words.map((word)=>{
+                    // console.log(c.target)
+                    // console.log(word)
+                    if(c._doc.target.indexOf(word)<0){
                         value++;
                     }
                 })
@@ -31,9 +33,9 @@ Corpus.fetchAll = function(id, cb){
 }
 
 if(process.argv.length>2){
-    console.log(process.argv[2]);
+    // console.log(process.argv[2]);
     Corpus.fetchAll(process.argv[2],function(err, corpus){
-        console.log(corpus.length)
+        // console.log(corpus.length)
     })
 }
 
