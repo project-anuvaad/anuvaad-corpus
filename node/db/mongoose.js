@@ -13,7 +13,7 @@ var LOG = require('../logger/logger').logger;
 
 
 mongoose.connect(config.MONGO_URL);
-module.exports = exports = mongoose;
+module.exports = mongoose;
 
 mongoose.connection.on('connected', function () {
     LOG.info('Mongoose connected to ' + config.MONGO_URL);
