@@ -7,7 +7,9 @@ var methodOverride = require('method-override');
 var LOG = require('./logger/logger').logger
 var APP_CONFIG = require('./config/config').config
 var APIStatus = require('./errors/apistatus')
+var daemon = require('./controllers/daemon/daemon');
 var mongo = require('./db/mongoose')
+var elastic = require('./db/elastic')
 var StatusCode = require('./errors/statuscodes').StatusCode
 var multer = require('multer');
 var upload = multer({ dest: 'upload/' });
@@ -48,7 +50,7 @@ process.on('SIGINT', function () {
 });
 startApp()
 
-
+daemon.start();
 function startApp() {
   var app = express();
   app.set('trust proxy', 1);
@@ -190,6 +192,7 @@ function startApp() {
 
 
   app.use('/anuvaad/v1', router);
+
 
   app.use(function (err, req, res, next) {
     if (err && !err.ok) {
