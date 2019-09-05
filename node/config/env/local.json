@@ -3,6 +3,7 @@
         "PORT": 9090,
         "PASSPORTJS_SECRET": "aidemo-DEV-123$",
         "LOG_DIRECTORY": "../app_log/aidemo-dev",
-        "MONGO_URL":"mongodb://localhost/preprocessing"
+        "MONGO_URL":"mongodb://localhost/preprocessing",
+        "ELASTIC_URL":"http://52.88.54.220:9200"
     }
 }
