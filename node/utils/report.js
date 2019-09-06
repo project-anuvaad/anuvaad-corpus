@@ -30,7 +30,7 @@ Corpus.fetchAll = function(id, cb){
                 })
             }
             console.log(value)
-            valuearr.push(value+','+c._doc.target_edited.length)
+            valuearr.push(value+':'+c._doc.target_edited.length)
         })
         fs.appendFile("output.txt", valuearr, function(err) {
         })
