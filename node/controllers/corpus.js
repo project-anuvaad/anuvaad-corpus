@@ -33,6 +33,44 @@ exports.fetchCorpus = function (req, res) {
     })
 }
 
+exports.fetchCorpusSentences = function (req, res) {
+    var basename = req.query.basename
+    if (basename == null || basename.length == 0) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, PARALLEL_CORPUS_COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    Sentence.fetch(basename, function (err, sentences) {
+        if (err) {
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+        let response = new Response(StatusCode.SUCCESS, sentences).getRsp()
+        return res.status(response.http.status).json(response);
+    })
+}
+
+exports.updateSentences = function (req, res) {
+    //Check required params
+    if (!req.body || !req.body.sentences || !Array.isArray(req.body.sentences)) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    async.each(req.body.sentences, function (sentence, callback) {
+        LOG.info("Updating sentence [%s]",JSON.stringify(sentence))
+        Sentence.updateSentence(sentence, (error, results) => {
+            LOG.info(results)
+            callback()
+        })
+    }, function (err) {
+        if (err) {
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+        let apistatus = new APIStatus(StatusCode.SUCCESS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    });
+}
+
 exports.uploadCorpus = function (req, res) {
     //Check required params
     if (!req.files || req.files.length == 0 || !req.body || !req.body.name || !req.body.lang) {
@@ -49,17 +87,17 @@ exports.uploadCorpus = function (req, res) {
             return res.status(apistatus.http.status).json(apistatus);
         }
         fs.readFile(req.files[0].path, 'utf8', function (err, data) {
-            if(data.length>0){
+            if (data.length > 0) {
                 let sentences = data.split('\n')
                 let sentencearr = []
-                sentences.map((sentence, index)=>{
-                    let sentenceobj = {sentence:sentence, index:index}
+                sentences.map((sentence, index) => {
+                    let sentenceobj = { sentence: sentence, index: index }
                     sentenceobj.tags = [corpusid, req.body.lang]
                     sentenceobj.original = true
                     sentenceobj.parallelcorpusid = []
                     sentencearr.push(sentenceobj)
                 })
-                Sentence.saveSentences(sentencearr, (err, docs)=>{
+                Sentence.saveSentences(sentencearr, (err, docs) => {
                     if (err) {
                         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                         return res.status(apistatus.http.status).json(apistatus);
@@ -83,37 +121,37 @@ exports.fetchParallelCorpus = function (req, res) {
     })
 }
 
-exports.getParallelCorpusSentence = function(req, res){
+exports.getParallelCorpusSentence = function (req, res) {
     var basename = req.query.basename
-    if (basename == null || basename.length == 0){
+    if (basename == null || basename.length == 0) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, PARALLEL_CORPUS_COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
-    ParallelCorpus.findById(basename,(err, result)=>{
-        if (err){
+    ParallelCorpus.findById(basename, (err, result) => {
+        if (err) {
             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
             return res.status(apistatus.http.status).json(apistatus);
         }
 
         sourceId = result.source_id
         targetId = result.target_id
-        console.log("sourceId = "+sourceId)
-        console.log("targetId = "+targetId)
-        Sentence.findWithtagId(basename, sourceId, (err, source_sentences) =>{
-            if (err){
+        console.log("sourceId = " + sourceId)
+        console.log("targetId = " + targetId)
+        Sentence.findWithtagId(basename, sourceId, (err, source_sentences) => {
+            if (err) {
                 console.log("error while finding source sentence")
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
-            console.log("source sentences are "+CJSON.stringify( source_sentences))
-            Sentence.findWithtagId(basename, targetId, (err, target_sentences) =>{ 
-                if (err){
+            console.log("source sentences are " + CJSON.stringify(source_sentences))
+            Sentence.findWithtagId(basename, targetId, (err, target_sentences) => {
+                if (err) {
                     console.log("error while finding target sentence")
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);
                 }
-                console.log("target sentences are "+target_sentences.sentence)
-                let results = {'source':source_sentences.sentence,'target':target_sentences.sentence}
+                console.log("target sentences are " + target_sentences.sentence)
+                let results = { 'source': source_sentences.sentence, 'target': target_sentences.sentence }
                 let response = new Response(StatusCode.SUCCESS, results).getRsp()
                 return res.status(response.http.status).json(response);
             })

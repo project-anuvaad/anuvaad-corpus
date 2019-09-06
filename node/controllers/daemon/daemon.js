@@ -11,9 +11,9 @@ var async = require('async');
 
 
 function start() {
-    Sentences.saveSentences()
+    // Sentences.saveSentences()
     cron.schedule('* * * * *', function () {
-        Sentences.saveSentences()
+        // Sentences.saveSentences()
     });
 }
 
