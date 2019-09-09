@@ -104,7 +104,7 @@ def get_user_profile():
     return res.getres()
 
 @admin_api.route('/get-profiles', methods=['POST'])
-def get_user_profile():
+def get_user_profiles():
     log.info('get_user_profile : started at ' + str(getcurrenttime()))
     body = request.get_json()
     if body['userids'] is None or not isinstance(body['userids'], list):
