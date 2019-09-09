@@ -787,7 +787,7 @@ def upload_indian_kannon_file():
             data = {'hindi': hindi_res, 'english': english_res}
             sentences = []
             for i in range(0, len(hindi_res)):
-                sentence = Sentence(status=STATUS_PENDING, basename=str(
+                sentence = Sentence(sentenceid=str(uuid.uuid4()),status=STATUS_PENDING, basename=str(
                     basename), source=english_res[i], target=hindi_res[i])
                 sentences.append(sentence)
                 # sentence.save()
