@@ -103,6 +103,31 @@ def get_user_profile():
     res = CustomResponse(Status.FAILURE.value, 'please provide valid userid ')
     return res.getres()
 
+@admin_api.route('/get-profiles', methods=['POST'])
+def get_user_profile():
+    log.info('get_user_profile : started at ' + str(getcurrenttime()))
+    body = request.get_json()
+    if body['userids'] is None or not isinstance(body['userids'], list):
+        res = CustomResponse(
+            Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
+        return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
+    user_profiles = []
+    for user_id in body['userids']:
+        log.info('get_user_profile : userid = ' + user_id)
+        res = None
+        try:
+            profile = requests.get(PROFILE_REQ_URL + user_id).content
+            profile = json.loads(profile)
+            roles_ = get_user_roles_basic_auth(user_id)
+            profile['roles'] = roles_
+            user_profiles.append(profile)
+        except Exception as e:
+            log.error(e)
+            res = CustomResponse(Status.FAILURE.value,
+                                 'user does not exists with user-id :' + request.headers.get('ad-userid'))
+    res = CustomResponse(Status.SUCCESS.value, user_profiles)
+    return res.getres()
+
 
 def getcurrenttime():
     return int(round(time.time() * 1000))
