@@ -17,6 +17,12 @@ module.exports = function (router) {
     router.route('/update-sentences')
         .post(corpusController.updateSentences);
 
+    router.route('/update-sentences-status')
+        .post(corpusController.updateSentencesStatus);
+
+    router.route('/update-sentences-grade')
+        .post(corpusController.updateSentencesGrade);
+
     router.route('/upload-corpus')
         .post(corpusController.uploadCorpus);
     

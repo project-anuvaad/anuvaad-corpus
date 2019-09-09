@@ -35,11 +35,14 @@ exports.fetchCorpus = function (req, res) {
 
 exports.fetchCorpusSentences = function (req, res) {
     var basename = req.query.basename
+    var pagesize = req.query.pagesize
+    var pageno = req.query.pageno
+    var status = req.query.status
     if (basename == null || basename.length == 0) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, PARALLEL_CORPUS_COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
-    Sentence.fetch(basename, function (err, sentences) {
+    Sentence.fetch(basename, pagesize, pageno, status, function (err, sentences) {
         if (err) {
             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
             return res.status(apistatus.http.status).json(apistatus);
@@ -56,9 +59,50 @@ exports.updateSentences = function (req, res) {
         return res.status(apistatus.http.status).json(apistatus);
     }
     async.each(req.body.sentences, function (sentence, callback) {
-        LOG.info("Updating sentence [%s]",JSON.stringify(sentence))
+        LOG.info("Updating sentence [%s]", JSON.stringify(sentence))
         Sentence.updateSentence(sentence, (error, results) => {
-            LOG.info(results)
+            callback()
+        })
+    }, function (err) {
+        if (err) {
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+        let apistatus = new APIStatus(StatusCode.SUCCESS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    });
+}
+
+exports.updateSentencesStatus = function (req, res) {
+    //Check required params
+    if (!req.body || !req.body.sentences || !Array.isArray(req.body.sentences)) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    async.each(req.body.sentences, function (sentence, callback) {
+        LOG.info("Updating sentence status [%s]", JSON.stringify(sentence))
+        Sentence.updateSentenceStatus(sentence, (error, results) => {
+            callback()
+        })
+    }, function (err) {
+        if (err) {
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+        let apistatus = new APIStatus(StatusCode.SUCCESS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    });
+}
+
+exports.updateSentencesGrade = function (req, res) {
+    //Check required params
+    if (!req.body || !req.body.sentences || !Array.isArray(req.body.sentences)) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    async.each(req.body.sentences, function (sentence, callback) {
+        LOG.info("Updating sentence grade [%s]", JSON.stringify(sentence))
+        Sentence.updateSentenceGrade(sentence, (error, results) => {
             callback()
         })
     }, function (err) {

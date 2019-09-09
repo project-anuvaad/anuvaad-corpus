@@ -1,5 +1,6 @@
 var mongoose = require("../db/mongoose");
 var LOG = require('../logger/logger').logger
+var ObjectID = require('mongodb').ObjectID;
 var Schema = mongoose.Schema;
 
 var SentenceSchema = new Schema({
@@ -26,20 +27,46 @@ Sentence.saveSentences = function (sentences, cb) {
 }
 
 Sentence.updateSentence = function (sentence, cb) {
-    LOG.info(sentence._id)
-    Sentence.updateOne({ _id: sentence._id }, sentence, { upsert: false }, function (err, doc) {
+    Sentence.collection.updateOne({ _id: new ObjectID(sentence._id) }, { $set: { source: sentence.source, target: sentence.target } }, { upsert: false }, function (err, doc) {
         if (err) {
             LOG.error(err)
             cb(err, null)
         }
         else {
+            LOG.info(doc)
             cb(null, doc)
         }
     });
 }
 
-Sentence.fetch = function (basename, cb) {
-    Sentence.find({ basename: basename }, function (err, sentences) {
+Sentence.updateSentenceStatus = function (sentence, cb) {
+    Sentence.collection.updateOne({ _id: new ObjectID(sentence._id) }, { $set: { status: sentence.status } }, { upsert: false }, function (err, doc) {
+        if (err) {
+            LOG.error(err)
+            cb(err, null)
+        }
+        else {
+            LOG.info(doc)
+            cb(null, doc)
+        }
+    });
+}
+
+Sentence.updateSentenceGrade = function (sentence, cb) {
+    Sentence.collection.updateOne({ _id: new ObjectID(sentence._id) }, { $set: { rating: sentence.rating } }, { upsert: false }, function (err, doc) {
+        if (err) {
+            LOG.error(err)
+            cb(err, null)
+        }
+        else {
+            LOG.info(doc)
+            cb(null, doc)
+        }
+    });
+}
+
+Sentence.fetch = function (basename, pagesize, pageno, status, cb) {
+    Sentence.find((status ? { status: status, basename: basename } : { basename: basename }), {}, (pagesize && pageno ? { skip: (pageno - 1) * pagesize, limit: parseInt(pagesize) } : {}), function (err, sentences) {
         if (err) {
             LOG.error("Unable to find sentences  due to [%s]", JSON.stringify(err));
             return cb(err, null);

@@ -23,9 +23,15 @@ const TOKENIZER = '_'
 const EXTENSION = '.txt'
 
 var COMPONENT = "sentences";
+const TRANSLATORS = ['f517d392-a840-455d-bdde-196def6f2f0a','4d6c1fb9-b90a-421b-b784-fe9510d9640f']
 
 
-exports.saveSentences = function saveSentences() {
+exports.assignBatch = function(){
+    
+}
+
+
+exports.saveSentences = function () {
     fs.readdir(UPLOAD_DIR, function (err, files) {
         if (err) {
             LOG.error(err)
