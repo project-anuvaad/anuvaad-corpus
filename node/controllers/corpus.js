@@ -5,6 +5,7 @@
  * @Last Modified time: 2019-08-30 14:22:51
  */
 var Corpus = require('../models/corpus');
+var SentenceLog = require('../models/sentencelog');
 var Sentence = require('../models/sentence');
 var Response = require('../models/response')
 var APIStatus = require('../errors/apistatus')
@@ -60,8 +61,26 @@ exports.updateSentences = function (req, res) {
     }
     async.each(req.body.sentences, function (sentence, callback) {
         LOG.info("Updating sentence [%s]", JSON.stringify(sentence))
-        Sentence.updateSentence(sentence, (error, results) => {
-            callback()
+        Sentence.find({ sentenceid: sentence.sentenceid }, {}, function (err, results) {
+            if (results && Array.isArray(results) && results.length > 0) {
+                var sentencedb = results[0]
+                let sentencelog = { source_words: sentencedb._doc.source.split(' '), target_words: sentencedb._doc.target.split(' '), source_edited_words: sentence.source.split(' '), target_edited_words: sentence.target.split(' '), updated_on: new Date(), parent_id: sentencedb._doc.sentenceid, basename: sentencedb._doc.basename, source: sentencedb._doc.source, source_edited: sentence.source, target: sentencedb._doc.target, target_edited: sentence.target }
+                SentenceLog.save([sentencelog], (err, results) => {
+                    if (err) {
+                        LOG.error(err)
+                        callback()
+                    }
+                    Sentence.updateSentence(sentence, (error, results) => {
+                        if (error) {
+                            LOG.error(error)
+                            callback()
+                        }
+                        LOG.info("Sentence updated [%s]", JSON.stringify(sentence))
+                        callback()
+                    })
+                })
+
+            }
         })
     }, function (err) {
         if (err) {
@@ -81,8 +100,26 @@ exports.updateSentencesStatus = function (req, res) {
     }
     async.each(req.body.sentences, function (sentence, callback) {
         LOG.info("Updating sentence status [%s]", JSON.stringify(sentence))
-        Sentence.updateSentenceStatus(sentence, (error, results) => {
-            callback()
+        Sentence.find({ sentenceid: sentence.sentenceid }, {}, function (err, results) {
+            if (results && Array.isArray(results) && results.length > 0) {
+                var sentencedb = results[0]
+                let sentencelog = { is_status_changed: true, updated_on: new Date(), parent_id: sentencedb._doc.sentenceid, basename: sentencedb._doc.basename, status: sentencedb._doc.status, status_edited: sentence.status }
+                SentenceLog.save([sentencelog], (err, results) => {
+                    if (err) {
+                        LOG.error(err)
+                        callback()
+                    }
+                    Sentence.updateSentenceStatus(sentence, (error, results) => {
+                        if (error) {
+                            LOG.error(error)
+                            callback()
+                        }
+                        LOG.info("Sentence updated [%s]", JSON.stringify(sentence))
+                        callback()
+                    })
+                })
+
+            }
         })
     }, function (err) {
         if (err) {

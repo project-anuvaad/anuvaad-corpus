@@ -6,28 +6,80 @@
  */
 var Jobs = require('../models/job');
 var Corpus = require('../models/corpus');
-var Response = require('../models/response')
-var APIStatus = require('../errors/apistatus')
-var StatusCode = require('../errors/statuscodes').StatusCode
-var Status = require('../utils/status').Status
+var Sentence = require('../models/sentence');
 var LOG = require('../logger/logger').logger
 var glob = require("glob")
 var UUIDV4 = require('uuid/v4')
 var async = require('async');
+var axios = require('axios');
 var fs = require("fs");
 const STATUS_PROCESSING = 'PROCESSING'
+const STATUS_ACCEPTED = 'ACCEPTED'
 const UPLOAD_DIR = './corpusfiles/'
 const PROCESSING_DIR = 'processing/'
 const TARGET_IDENTIFIER = '_target'
 const TOKENIZER = '_'
 const EXTENSION = '.txt'
+const MIN_LIMIT = 200
 
 var COMPONENT = "sentences";
-const TRANSLATORS = ['f517d392-a840-455d-bdde-196def6f2f0a','4d6c1fb9-b90a-421b-b784-fe9510d9640f']
+const ES_SERVER_URL = 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/'
+const USERS_REQ_URL = ES_SERVER_URL + 'admin/users?count=1000'
+const PROFILE_REQ_URL = ES_SERVER_URL + 'corpus/get-profiles'
+const EDITOR_ROLE = 'editor'
 
+exports.assignBatch = function () {
+    axios.get(USERS_REQ_URL).then((res) => {
+        if (res.data && res.data.users && Array.isArray(res.data.users)) {
+            let userIds = []
+            res.data.users.map((u) => {
+                if (u.isActive) {
+                    userIds.push(u.id)
+                }
+            })
+            axios.post(PROFILE_REQ_URL, { userids: userIds }).then((res) => {
+                if (res.data) {
+                    if (res.data.data && Array.isArray(res.data.data)) {
+                        res.data.data.map((p) => {
+                            if (p.roles && p.roles.includes(EDITOR_ROLE)) {
+                                checkForEditor(p.id, p.username)
+                            }
+                        })
+                    }
+                }
+            }).catch((e) => {
+                LOG.error(e)
+            })
+        }
+    }).catch((e) => {
+        LOG.error(e)
+    })
+}
 
-exports.assignBatch = function(){
-    
+var checkForEditor = function (id, username) {
+    LOG.info('Checking for [%s]', username)
+    Sentence.fetchByAssignedTo({ $ne: STATUS_ACCEPTED }, id, (err, sentences) => {
+        if (err) {
+            LOG.error(err)
+        } else {
+            LOG.info('Sentences found [%d]', sentences.length)
+            if (sentences.length < MIN_LIMIT) {
+                LOG.info('Syncing with data lake for %s', username)
+                Sentence.fetchByAssignedTo(STATUS_ACCEPTED, id, (err, sentences) => {
+                    //Todo: send sentences to data lake before deleting
+                    if (sentences && Array.isArray(sentences) && sentences.length > 0) {
+                        Sentence.deleteMany({ status: STATUS_ACCEPTED, assigned_to: id }, (err, docs) => {
+                            if (err) {
+                                LOG.error(err)
+                            } else {
+                                LOG.info('Sentences deleted for %s', username)
+                            }
+                        })
+                    }
+                })
+            }
+        }
+    })
 }
 
 
