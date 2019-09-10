@@ -64,7 +64,9 @@ exports.updateSentences = function (req, res) {
         Sentence.find({ sentenceid: sentence.sentenceid }, {}, function (err, results) {
             if (results && Array.isArray(results) && results.length > 0) {
                 var sentencedb = results[0]
-                let sentencelog = { source_words: sentencedb._doc.source.split(' '), target_words: sentencedb._doc.target.split(' '), source_edited_words: sentence.source.split(' '), target_edited_words: sentence.target.split(' '), updated_on: new Date(), parent_id: sentencedb._doc.sentenceid, basename: sentencedb._doc.basename, source: sentencedb._doc.source, source_edited: sentence.source, target: sentencedb._doc.target, target_edited: sentence.target }
+                let userId = req.headers['ad-userid']
+                LOG.info(userId)
+                let sentencelog = { edited_by: userId, source_words: sentencedb._doc.source.split(' '), target_words: sentencedb._doc.target.split(' '), source_edited_words: sentence.source.split(' '), target_edited_words: sentence.target.split(' '), updated_on: new Date(), parent_id: sentencedb._doc.sentenceid, basename: sentencedb._doc.basename, source: sentencedb._doc.source, source_edited: sentence.source, target: sentencedb._doc.target, target_edited: sentence.target }
                 SentenceLog.save([sentencelog], (err, results) => {
                     if (err) {
                         LOG.error(err)
@@ -80,6 +82,8 @@ exports.updateSentences = function (req, res) {
                     })
                 })
 
+            } else {
+                callback('data not found')
             }
         })
     }, function (err) {
@@ -103,7 +107,9 @@ exports.updateSentencesStatus = function (req, res) {
         Sentence.find({ sentenceid: sentence.sentenceid }, {}, function (err, results) {
             if (results && Array.isArray(results) && results.length > 0) {
                 var sentencedb = results[0]
-                let sentencelog = { is_status_changed: true, updated_on: new Date(), parent_id: sentencedb._doc.sentenceid, basename: sentencedb._doc.basename, status: sentencedb._doc.status, status_edited: sentence.status }
+                let userId = req.headers['ad-userid']
+                LOG.info(userId)
+                let sentencelog = { edited_by: userId, is_status_changed: true, updated_on: new Date(), parent_id: sentencedb._doc.sentenceid, basename: sentencedb._doc.basename, status: sentencedb._doc.status, status_edited: sentence.status }
                 SentenceLog.save([sentencelog], (err, results) => {
                     if (err) {
                         LOG.error(err)
@@ -119,6 +125,9 @@ exports.updateSentencesStatus = function (req, res) {
                     })
                 })
 
+            }
+            else {
+                callback('data not found')
             }
         })
     }, function (err) {
