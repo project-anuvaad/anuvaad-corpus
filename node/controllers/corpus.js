@@ -18,9 +18,17 @@ var fs = require("fs");
 var ParallelCorpus = require('../models/parallelCorpus');
 var Sentence = require('../models/sentence')
 const CJSON = require('circular-json');
+const { Translate } = require('@google-cloud/translate');
+const projectId = "translate-1552888031121";
 
 var COMPONENT = "corpus";
 var PARALLEL_CORPUS_COMPONENT = "parallelCorpus";
+
+const LANGUAGES = {
+    'Hindi': 'hi',
+    'English': 'en',
+    'Tamil': 'ta'
+}
 
 
 exports.fetchCorpus = function (req, res) {
@@ -43,14 +51,52 @@ exports.fetchCorpusSentences = function (req, res) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, PARALLEL_CORPUS_COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
-    Sentence.fetch(basename, pagesize, pageno, status, function (err, sentences) {
-        if (err) {
-            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-            return res.status(apistatus.http.status).json(apistatus);
-        }
-        let response = new Response(StatusCode.SUCCESS, sentences).getRsp()
-        return res.status(response.http.status).json(response);
+    Corpus.findOne({ basename: basename }, function (error, corpus) {
+        Sentence.fetch(basename, pagesize, pageno, status, function (err, sentences) {
+            if (err) {
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+
+            if (sentences && Array.isArray(sentences) && sentences.length > 0) {
+                let sentences_arr = []
+                let target_lang = 'en'
+                target_lang = LANGUAGES[corpus['target_lang']] ? LANGUAGES[corpus['target_lang']] : 'en'
+                sentences.map((sentence) => {
+                    sentences_arr.push(sentence._doc.source)
+                })
+                return translateFromGoogle(target_lang, sentences_arr, sentences, res)
+            }
+            // let response = new Response(StatusCode.SUCCESS, sentences).getRsp()
+            // return res.status(response.http.status).json(response);
+        })
     })
+}
+
+var translateFromGoogle = function (targetlang, text, sentences, res) {
+    const translate = new Translate({
+        projectId: projectId,
+    });
+
+    // Translates some text into English
+    translate
+        .translate(text, targetlang)
+        .then(results => {
+            LOG.info(`Translation: ${results[0].length}`);
+            let sentencearr = []
+            results[0].map((r, index) => {
+                var s = sentences[index]
+                s['_doc']['translation'] = r
+                sentencearr.push(s)
+            })
+            let response = new Response(StatusCode.SUCCESS, sentencearr).getRsp()
+            return res.status(response.http.status).json(response);
+        })
+        .catch(err => {
+            LOG.error(err)
+            let response = new Response(StatusCode.SUCCESS, sentences).getRsp()
+            return res.status(response.http.status).json(response);
+        });
 }
 
 exports.updateSentences = function (req, res) {
