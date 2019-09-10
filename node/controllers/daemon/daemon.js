@@ -11,7 +11,6 @@ var async = require('async');
 
 
 function start() {
-    Sentences.assignBatch()
     cron.schedule('* * * * *', function () {
         // Sentences.assignBatch()
     });
