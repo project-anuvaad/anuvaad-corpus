@@ -52,28 +52,31 @@ exports.fetchCorpusSentences = function (req, res) {
         return res.status(apistatus.http.status).json(apistatus);
     }
     Corpus.findOne({ basename: basename }, function (error, corpus) {
-        Sentence.fetch(basename, pagesize, pageno, status, function (err, sentences) {
-            if (err) {
-                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                return res.status(apistatus.http.status).json(apistatus);
-            }
+        Sentence.countDocuments({ basename: basename }, function (err, count) {
+            LOG.info(count)
+            Sentence.fetch(basename, pagesize, pageno, status, function (err, sentences) {
+                if (err) {
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
 
-            if (sentences && Array.isArray(sentences) && sentences.length > 0) {
-                let sentences_arr = []
-                let target_lang = 'en'
-                target_lang = LANGUAGES[corpus['_doc']['target_lang']] ? LANGUAGES[corpus['_doc']['target_lang']] : 'en'
-                sentences.map((sentence) => {
-                    sentences_arr.push(sentence._doc.source)
-                })
-                return translateFromGoogle(target_lang, sentences_arr, sentences, res)
-            }
-            // let response = new Response(StatusCode.SUCCESS, sentences).getRsp()
-            // return res.status(response.http.status).json(response);
+                if (sentences && Array.isArray(sentences) && sentences.length > 0) {
+                    let sentences_arr = []
+                    let target_lang = 'en'
+                    target_lang = LANGUAGES[corpus['_doc']['target_lang']] ? LANGUAGES[corpus['_doc']['target_lang']] : 'en'
+                    sentences.map((sentence) => {
+                        sentences_arr.push(sentence._doc.source)
+                    })
+                    return translateFromGoogle(target_lang, sentences_arr, sentences, res, count)
+                }
+                let response = new Response(StatusCode.SUCCESS, sentences).getRsp()
+                return res.status(response.http.status).json(response);
+            })
         })
     })
 }
 
-var translateFromGoogle = function (targetlang, text, sentences, res) {
+var translateFromGoogle = function (targetlang, text, sentences, res, count) {
     const translate = new Translate({
         projectId: projectId,
     });
@@ -89,7 +92,7 @@ var translateFromGoogle = function (targetlang, text, sentences, res) {
                 s['_doc']['translation'] = r
                 sentencearr.push(s)
             })
-            let response = new Response(StatusCode.SUCCESS, sentencearr).getRsp()
+            let response = new Response(StatusCode.SUCCESS, sentencearr, count).getRsp()
             return res.status(response.http.status).json(response);
         })
         .catch(err => {
