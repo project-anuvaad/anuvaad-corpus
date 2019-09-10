@@ -61,7 +61,7 @@ exports.fetchCorpusSentences = function (req, res) {
             if (sentences && Array.isArray(sentences) && sentences.length > 0) {
                 let sentences_arr = []
                 let target_lang = 'en'
-                LOG.info(corpus['target_lang'])
+                LOG.info(corpus['_doc']['target_lang'])
                 target_lang = LANGUAGES[corpus['target_lang']] ? LANGUAGES[corpus['target_lang']] : 'en'
                 LOG.info(target_lang)
                 sentences.map((sentence) => {
