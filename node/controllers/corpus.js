@@ -113,8 +113,7 @@ exports.updateSentences = function (req, res) {
             if (results && Array.isArray(results) && results.length > 0) {
                 var sentencedb = results[0]
                 let userId = req.headers['ad-userid']
-                LOG.info(userId)
-                let sentencelog = { edited_by: userId, source_words: sentencedb._doc.source.split(' '), target_words: sentencedb._doc.target.split(' '), source_edited_words: sentence.source.split(' '), target_edited_words: sentence.target.split(' '), updated_on: new Date(), parent_id: sentencedb._doc.sentenceid, basename: sentencedb._doc.basename, source: sentencedb._doc.source, source_edited: sentence.source, target: sentencedb._doc.target, target_edited: sentence.target }
+                let sentencelog = { edited_by: userId, status: sentencedb._doc.status, source_words: sentencedb._doc.source.split(' '), target_words: sentencedb._doc.target.split(' '), source_edited_words: sentence.source.split(' '), target_edited_words: sentence.target.split(' '), updated_on: new Date(), parent_id: sentencedb._doc._id, basename: sentencedb._doc.basename, source: sentencedb._doc.source, source_edited: sentence.source, target: sentencedb._doc.target, target_edited: sentence.target }
                 SentenceLog.save([sentencelog], (err, results) => {
                     if (err) {
                         LOG.error(err)
@@ -156,8 +155,7 @@ exports.updateSentencesStatus = function (req, res) {
             if (results && Array.isArray(results) && results.length > 0) {
                 var sentencedb = results[0]
                 let userId = req.headers['ad-userid']
-                LOG.info(userId)
-                let sentencelog = { edited_by: userId, is_status_changed: true, updated_on: new Date(), parent_id: sentencedb._doc.sentenceid, basename: sentencedb._doc.basename, status: sentencedb._doc.status, status_edited: sentence.status }
+                let sentencelog = { edited_by: userId, source: sentencedb._doc.source, target: sentencedb._doc.target, is_status_changed: true, updated_on: new Date(), parent_id: sentencedb._doc._id, basename: sentencedb._doc.basename, status: sentencedb._doc.status, status_edited: sentence.status }
                 SentenceLog.save([sentencelog], (err, results) => {
                     if (err) {
                         LOG.error(err)
@@ -197,9 +195,30 @@ exports.updateSentencesGrade = function (req, res) {
     }
     async.each(req.body.sentences, function (sentence, callback) {
         LOG.info("Updating sentence grade [%s]", JSON.stringify(sentence))
-        Sentence.updateSentenceGrade(sentence, (error, results) => {
+        if (sentence.rating) {
+            Sentence.find({ _id: sentence._id }, {}, function (err, results) {
+                if (results && Array.isArray(results) && results.length > 0) {
+                    var sentencedb = results[0]
+                    let userId = req.headers['ad-userid']
+                    let sentencelog = { edited_by: userId, source: sentencedb._doc.source, target: sentencedb._doc.target, is_grade_changed: true, updated_on: new Date(), parent_id: sentencedb._doc._id, basename: sentencedb._doc.basename, status: sentencedb._doc.status, grade_edited: sentence.rating, grade: sentencedb._doc.rating }
+                    SentenceLog.save([sentencelog], (err, results) => {
+                        if (err) {
+                            LOG.error(err)
+                            callback()
+                        }
+                        Sentence.updateSentenceGrade(sentence, (error, results) => {
+                            callback()
+                        })
+                    })
+                } else {
+                    LOG.info('Data not found')
+                    callback('data not found')
+                }
+            })
+        } else {
+            LOG.info('Rating not specified')
             callback()
-        })
+        }
     }, function (err) {
         if (err) {
             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
