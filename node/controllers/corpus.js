@@ -187,6 +187,39 @@ exports.updateSentencesStatus = function (req, res) {
     });
 }
 
+exports.translateSource = function (req, res) {
+    var basename = req.query.basename
+    var source = req.query.source
+    if (basename == null || basename.length == 0 || !source || source.length == 0) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, PARALLEL_CORPUS_COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    Corpus.findOne({ basename: basename }, function (error, corpus) {
+        if (corpus) {
+            let target_lang = 'en'
+            target_lang = corpus['_doc'] && LANGUAGES[corpus['_doc']['target_lang']] ? LANGUAGES[corpus['_doc']['target_lang']] : 'en'
+            const translate = new Translate({
+                projectId: projectId,
+            });
+            translate
+                .translate(source, target_lang)
+                .then(results => {
+                    let response = new Response(StatusCode.SUCCESS, [results[0]]).getRsp()
+                    return res.status(response.http.status).json(response);
+                })
+                .catch(err => {
+                    LOG.error(err)
+                    let response = new Response(StatusCode.SUCCESS, sentences).getRsp()
+                    return res.status(response.http.status).json(response);
+                });
+        }
+        else {
+            let response = new APIStatus(StatusCode.ERR_GLOBAL_NOTFOUND, COMPONENT).getRsp()
+            return res.status(response.http.status).json(response);
+        }
+    })
+}
+
 exports.updateSentencesGrade = function (req, res) {
     //Check required params
     if (!req.body || !req.body.sentences || !Array.isArray(req.body.sentences)) {
