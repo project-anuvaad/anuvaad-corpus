@@ -214,7 +214,7 @@ exports.translateSource = function (req, res) {
                 });
         }
         else {
-            let response = new APIStatus(StatusCode.ERR_GLOBAL_NOTFOUND, COMPONENT).getRsp()
+            let response = new APIStatus(StatusCode.ERR_GLOBAL_NOTFOUND, COMPONENT).getRspStatus()
             return res.status(response.http.status).json(response);
         }
     })
