@@ -8,7 +8,7 @@ var SentenceSchema = new Schema({
 });
 var Sentence = mongoose.model('Corpussentence', SentenceSchema, 'sentence');
 
-
+const STATUS_EDITED = 'EDITED'
 
 Sentence.saveSentences = function (sentences, cb) {
     Sentence.collection.insertMany(sentences, function (err, docs) {
@@ -22,7 +22,7 @@ Sentence.saveSentences = function (sentences, cb) {
 }
 
 Sentence.updateSentence = function (sentence, cb) {
-    Sentence.collection.findOneAndUpdate({ _id: mongoose.Types.ObjectId(sentence._id)}, { $set: { source: sentence.source, target: sentence.target } }, { upsert: false }, function (err, doc) {
+    Sentence.collection.findOneAndUpdate({ _id: mongoose.Types.ObjectId(sentence._id)}, { $set: { status: STATUS_EDITED,source: sentence.source, target: sentence.target } }, { upsert: false }, function (err, doc) {
         if (err) {
             LOG.error(err)
             cb(err, null)
