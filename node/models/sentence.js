@@ -3,9 +3,6 @@ var LOG = require('../logger/logger').logger
 var Schema = mongoose.Schema;
 
 var SentenceSchema = new Schema({
-    _id: {
-        type: String
-    },
 }, {
     strict: true
 });
@@ -25,17 +22,18 @@ Sentence.saveSentences = function (sentences, cb) {
 }
 
 Sentence.updateSentence = function (sentence, cb) {
-    Sentence.collection.updateOne({ sentenceid: sentence.sentenceid }, { $set: { source: sentence.source, target: sentence.target } }, { upsert: false }, function (err, doc) {
+    Sentence.collection.findOneAndUpdate({ _id: mongoose.Types.ObjectId(sentence._id)}, { $set: { source: sentence.source, target: sentence.target } }, { upsert: false }, function (err, doc) {
         if (err) {
             LOG.error(err)
             cb(err, null)
         }
+        LOG.info(doc)
         cb(null, doc)
     });
 }
 
 Sentence.updateSentenceStatus = function (sentence, cb) {
-    Sentence.collection.updateOne({ sentenceid: sentence.sentenceid }, { $set: { status: sentence.status } }, { upsert: false }, function (err, doc) {
+    Sentence.collection.findOneAndUpdate({ _id: mongoose.Types.ObjectId(sentence._id) }, { $set: { status: sentence.status } }, { upsert: false }, function (err, doc) {
         if (err) {
             LOG.error(err)
             cb(err, null)
@@ -45,7 +43,7 @@ Sentence.updateSentenceStatus = function (sentence, cb) {
 }
 
 Sentence.updateSentenceGrade = function (sentence, cb) {
-    Sentence.collection.updateOne({ sentenceid: sentence.sentenceid }, { $set: { rating: sentence.rating } }, { upsert: false }, function (err, doc) {
+    Sentence.collection.updateOne({ _id: mongoose.Types.ObjectId(sentence._id) }, { $set: { rating: sentence.rating } }, { upsert: false }, function (err, doc) {
         if (err) {
             LOG.error(err)
             cb(err, null)
