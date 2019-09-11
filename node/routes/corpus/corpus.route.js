@@ -26,6 +26,9 @@ module.exports = function (router) {
     router.route('/upload-corpus')
         .post(corpusController.uploadCorpus);
     
+    router.route('/translate-source')
+        .get(corpusController.translateSource);
+    
     router.route('/get-parallel-corpus-sentences')
         .get(corpusController.getParallelCorpusSentence);
 
