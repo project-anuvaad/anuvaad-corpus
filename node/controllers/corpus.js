@@ -85,7 +85,6 @@ var translateFromGoogle = function (targetlang, text, sentences, res, count) {
     translate
         .translate(text, targetlang)
         .then(results => {
-            LOG.info(`Translation: ${results[0].length}`);
             let sentencearr = []
             results[0].map((r, index) => {
                 var s = sentences[index]
@@ -110,7 +109,7 @@ exports.updateSentences = function (req, res) {
     }
     async.each(req.body.sentences, function (sentence, callback) {
         LOG.info("Updating sentence [%s]", JSON.stringify(sentence))
-        Sentence.find({ sentenceid: sentence.sentenceid }, {}, function (err, results) {
+        Sentence.find({ _id: sentence._id }, {}, function (err, results) {
             if (results && Array.isArray(results) && results.length > 0) {
                 var sentencedb = results[0]
                 let userId = req.headers['ad-userid']
@@ -153,7 +152,7 @@ exports.updateSentencesStatus = function (req, res) {
     }
     async.each(req.body.sentences, function (sentence, callback) {
         LOG.info("Updating sentence status [%s]", JSON.stringify(sentence))
-        Sentence.find({ sentenceid: sentence.sentenceid }, {}, function (err, results) {
+        Sentence.find({ _id: sentence._id }, {}, function (err, results) {
             if (results && Array.isArray(results) && results.length > 0) {
                 var sentencedb = results[0]
                 let userId = req.headers['ad-userid']
@@ -176,6 +175,7 @@ exports.updateSentencesStatus = function (req, res) {
 
             }
             else {
+                LOG.info('Data not found')
                 callback('data not found')
             }
         })
