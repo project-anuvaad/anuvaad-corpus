@@ -78,6 +78,8 @@ function startApp() {
   var router = express.Router();
   require('./routes/user/user.route')(router);
   require('./routes/corpus/corpus.route')(router);
+  require('./routes/language/language.route')(router);
+  require('./routes/nmt/nmt.route')(router);
 
   app.get('/test', function (req, res) {
     res.send("Hello world!");
