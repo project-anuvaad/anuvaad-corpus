@@ -21,7 +21,7 @@ Language.saveLanguage = function(language, cb){
 }
 
 Language.updateLanguage = function (language, cb) {
-    Language.collection.findOneAndUpdate({ _id: mongoose.Types.ObjectId(language._id)}, { $set: { status: language.status} }, { upsert: false }, function (err, doc) {
+    Language.collection.findOneAndUpdate({ _id: mongoose.Types.ObjectId(language._id)}, { $set: { language_code: language.language_code, language_name: language.language_name,status: language.status} }, { upsert: false }, function (err, doc) {
         if (err) {
             LOG.error(err)
             cb(err, null)
