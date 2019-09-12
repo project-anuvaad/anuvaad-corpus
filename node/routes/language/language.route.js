@@ -11,6 +11,9 @@ module.exports = function (router) {
     router.route('/fetch-languages')
         .get(languageController.fetchLanguages);
 
+    router.route('/update-language')
+        .post(languageController.updateLanguages);
+
     router.route('/save-language')
         .post(languageController.saveLanguages);
 

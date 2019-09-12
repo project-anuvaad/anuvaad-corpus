@@ -19,6 +19,22 @@ exports.fetchLanguages = function (req, res) {
 
 }
 
+exports.updateLanguages = function(req, res){
+    if (!req.body || !req.body.language || !req.body.language.language_code) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let language = req.body.language
+    Language.updateLanguage(language, function (err, doc) {
+        if (err) {
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+        let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+        return res.status(response.http.status).json(response);
+    })
+}
+
 exports.saveLanguages = function (req, res) {
     if (!req.body || !req.body.language || !req.body.language.language_code || !req.body.language.language_name) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()

@@ -20,6 +20,17 @@ Language.saveLanguage = function(language, cb){
     })
 }
 
+Language.updateLanguage = function (language, cb) {
+    Language.collection.findOneAndUpdate({ _id: mongoose.Types.ObjectId(language._id)}, { $set: { status: language.status} }, { upsert: false }, function (err, doc) {
+        if (err) {
+            LOG.error(err)
+            cb(err, null)
+        }
+        LOG.info(doc)
+        cb(null, doc)
+    });
+}
+
 Language.findByCondition = function(condition, cb){
     Language.find(condition, function (err, languages) {
         if (err) {
