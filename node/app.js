@@ -41,6 +41,13 @@ const translationAllowFallback = "False";
 
 const GOOGLE_BUCKET_NAME = 'nlp-nmt'
 
+const LANG_CODES = {
+  'Hindi': 'hin',
+  'Tamil':'ta',
+  'English':'eng',
+  'Gujarati':'gu',
+}
+
 // Creates a client
 const client = new vision.ImageAnnotatorClient();
 
@@ -85,6 +92,43 @@ function startApp() {
     res.send("Hello world!");
   });
 
+  app.post('/translate', async (req, res) => {
+    let text = req.body.text;
+    let target_lang = req.body.target_lang;
+    let target = 'eng';
+    if(LANG_CODES[target_lang]){
+      target = LANG_CODES[target_lang]
+    }
+
+    try {
+      // Instantiates a client
+      const translate = new Translate({
+        projectId: projectId,
+      });
+
+      // The text to translate
+      // The target language
+      
+
+      // Translates some text into English
+      translate
+        .translate(text, target)
+        .then(results => {
+          const translation = results[0];
+
+          console.log(`Text: ${text}`);
+          console.log(`Translation: ${translation}`);
+          return res.status(200).json(translation);
+        })
+        .catch(err => {
+          return res.status(200).json(err);
+        });
+    }
+    catch (e) {
+      console.log(e)
+      return res.status(200).json(e);
+    }
+  })
 
   app.post('/hin', async (req, res) => {
     let text = req.body.text;
