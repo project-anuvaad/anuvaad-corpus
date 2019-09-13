@@ -51,10 +51,10 @@ exports.fetchReports = function (req, res) {
                 }
                 else if (!res._doc.is_status_changed && !res._doc.is_grade_changed) {
                     let target_edited_words = res._doc.target_edited_words
-                    let source_words = res._doc.source_words
+                    let target_words = res._doc.target_words
                     let target = res._doc.target
-                    if (source_words && target_edited_words) {
-                        if (source_words.length <= 10) {
+                    if (target_words && target_edited_words) {
+                        if (target_words.length <= 10) {
                             short_edited++
                             target_edited_words.map((t) => {
                                 if (target.indexOf(t) < 0) {
@@ -62,7 +62,7 @@ exports.fetchReports = function (req, res) {
                                 }
                             })
                         }
-                        else if (source_words.length > 10 && source_words.length < 25) {
+                        else if (target_words.length > 10 && target_words.length < 25) {
                             medium_edited++
                             target_edited_words.map((t) => {
                                 if (target.indexOf(t) < 0) {
