@@ -50,7 +50,7 @@ exports.fetchReports = function (req, res) {
                     rejected_sentences_count++
                 }
                 else if (!res._doc.is_status_changed && !res._doc.is_grade_changed) {
-                    let target_edited_words = res._doc.target_edited_words
+                    let target_edited_words = res._doc.source_words
                     let target = res._doc.target
                     if (target_edited_words) {
                         if (target_edited_words.length <= 10) {
