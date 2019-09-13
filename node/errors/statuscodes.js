@@ -22,6 +22,7 @@ exports.StatusCode = {
     SUCCESS: { ok: true, http: { status: 200 }, why: "request successful" },
     ERR_GLOBAL_SYSTEM: { ok: false, http: { status: 500 }, why: "Internal Server Error" },
     ERR_GLOBAL_MISSING_PARAMETERS: { ok: false, http: { status: 400 }, why: "required data missing" },
+    ERR_GLOBAL_INVALID_PARAMETERS: { ok: false, http: { status: 400 }, why: "invalid params passed" },
     ERR_DATA_EXIST: { ok: false, http: { status: 400 }, why: "requested data already exist" },
     ERR_GLOBAL_UNAUTHORIZED: { ok: false, http: { status: 401 }, why: "unauthorized request" },
     ERR_GLOBAL_NOTFOUND: { ok: false, http: { status: 404 }, why: "requested information doesn't exist" },
