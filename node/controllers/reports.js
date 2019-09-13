@@ -39,7 +39,7 @@ exports.fetchReports = function (req, res) {
                     if (target && target.split(' ').length <= 10) {
                         accepted_short_sentences_count++
                     }
-                    else if (target && target.split(' ').length > 10 && target.split(' ').length <= 25) {
+                    else if (target && target.split(' ').length > 10 && target.split(' ').length < 25) {
                         accepted_medium_sentences_count++
                     }
                     else {
@@ -61,7 +61,7 @@ exports.fetchReports = function (req, res) {
                                 }
                             })
                         }
-                        else if (target_edited_words.length > 10 && target_edited_words.length <= 25) {
+                        else if (target_edited_words.length > 10 && target_edited_words.length < 25) {
                             medium_edited++
                             target_edited_words.map((t) => {
                                 if (target.indexOf(t) < 0) {
