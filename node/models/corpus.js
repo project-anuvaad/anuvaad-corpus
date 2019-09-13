@@ -5,7 +5,7 @@ var Schema = mongoose.Schema;
 var CorpusSchema = new Schema({
     _id: {type: String},
 }, { strict: false });
-var Corpus = mongoose.model('Singlecorpus', CorpusSchema);
+var Corpus = mongoose.model('Corpus', CorpusSchema, 'corpus');
 
 Corpus.fetchAll = function(cb){
     Corpus.find({
@@ -25,7 +25,7 @@ Corpus.saveCorpus = function(corpus, cb){
             // TODO: handle error
             return cb(err, null);
         } else {
-            console.info('%s corpus was successfully stored.', JSON.stringify(docs));
+            LOG.info('%s corpus was successfully stored.', JSON.stringify(docs));
             return cb(null, docs);
         }
     })
