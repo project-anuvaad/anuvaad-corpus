@@ -36,10 +36,10 @@ exports.fetchReports = function (req, res) {
             results.map((res) => {
                 if (res._doc.is_status_changed && res._doc.status_edited == STATUS_ACCEPTED) {
                     let target = res._doc.target
-                    if (target && target.split(' ').length < 10) {
+                    if (target && target.split(' ').length <= 10) {
                         accepted_short_sentences_count++
                     }
-                    else if (target && target.split(' ').length >= 10 && target.split(' ').length <= 25) {
+                    else if (target && target.split(' ').length > 10 && target.split(' ').length <= 25) {
                         accepted_medium_sentences_count++
                     }
                     else {
@@ -53,7 +53,7 @@ exports.fetchReports = function (req, res) {
                     let target_edited_words = res._doc.target_edited_words
                     let target = res._doc.target
                     if (target_edited_words) {
-                        if (target_edited_words.length < 10) {
+                        if (target_edited_words.length <= 10) {
                             short_edited++
                             target_edited_words.map((t) => {
                                 if (target.indexOf(t) < 0) {
@@ -61,7 +61,7 @@ exports.fetchReports = function (req, res) {
                                 }
                             })
                         }
-                        else if (target_edited_words.length >= 10 && target_edited_words.length <= 25) {
+                        else if (target_edited_words.length > 10 && target_edited_words.length <= 25) {
                             medium_edited++
                             target_edited_words.map((t) => {
                                 if (target.indexOf(t) < 0) {
