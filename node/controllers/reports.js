@@ -17,6 +17,10 @@ exports.fetchReports = function (req, res) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
+    if(!isValidDate(new Date(from_date)) || !isValidDate(new Date(to_date))){
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_INVALID_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
     SentenceLog.find({ edited_by: user_id, updated_on: { "$gte": new Date(from_date), "$lt": new Date(to_date) } }, (err, results) => {
         let accepted_short_sentences_count = 0
         let accepted_medium_sentences_count = 0
@@ -92,5 +96,8 @@ exports.fetchReports = function (req, res) {
         let response = new Response(StatusCode.SUCCESS, res_data).getRsp()
         return res.status(response.http.status).json(response);
     })
-
 }
+
+function isValidDate(d) {
+    return d instanceof Date && !isNaN(d);
+  }
