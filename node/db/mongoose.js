@@ -12,9 +12,9 @@ var config = require('../config/config').config;
 var LOG = require('../logger/logger').logger;
 
 
-mongoose.connect(config.MONGO_URL);
+mongoose.connect(process.env.MONGO_URL ? process.env.MONGO_URL : config.MONGO_URL);
 module.exports = mongoose;
 
 mongoose.connection.on('connected', function () {
-    LOG.info('Mongoose connected to ' + config.MONGO_URL);
+    LOG.info('Mongoose connected to ' + (process.env.MONGO_URL ? process.env.MONGO_URL : config.MONGO_URL));
 });

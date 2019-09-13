@@ -4,6 +4,7 @@
 **/node_modules
 **/upload
 /node/package-lock.json
+/node/app_log
 /node/corpusfiles/
 /python/env
 /python/upload/*
