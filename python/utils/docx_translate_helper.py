@@ -136,7 +136,7 @@ def modify_text(nodes):
     log.info('modify_text: following are the text and its translation')          
     for node in nodes:
         log.info(node.text + '\n')
-        node.text = results[i]['tgt']
+        node.text = results[i]
         log.info(node.text + '\n')
         i = i + 1
 
@@ -297,15 +297,14 @@ def modify_text_with_tokenization(nodes, url):
 
     i =0
     Q_response = queue.Queue()
-
+    index = 0
+    ids = []
     while not Q.qsize() == 0:
-
+        index+=1
         N_T = Q.get()
         t_= N_T.text
         s_id = N_T.node_id
-        ids = []
         ids.append(s_id)
-        
         arr.append(t_)
         
         i = i +1
@@ -321,14 +320,14 @@ def modify_text_with_tokenization(nodes, url):
                 if translationarray is not None:
                     log.info('modify_text_with_tokenization: ') 
                     log.info( translationarray )
-                    index = 0
+                    
                     for translation in translationarray:
                         try:    
-                            log.info('modify_text_with_tokenization: id '+ str(ids[index]))
-                            log.info('modify_text_with_tokenization: index '+ str(index))
-                            res = Text_Object(translation['translatedText'],str(ids[index]))
-                            index = index + 1
-                            log.info('checking index'+str(index))
+                            log.info('modify_text_with_tokenization: id '+ str(ids[index-1]))
+                            log.info('modify_text_with_tokenization: index '+ str(index-1))
+                            res = Text_Object(translation['translatedText'],str(ids[index-1]))
+                            log.info('checking index'+str(index-1))
+                            log.info('checking length'+str(len(ids)))
                             Q_response.put(res)
                            
                         except:
