@@ -1,5 +1,6 @@
 import zipfile
 from lxml import etree
+import json
 import uuid 
 import tempfile
 import os
@@ -9,6 +10,7 @@ import requests
 from nltk.tokenize import sent_tokenize
 import queue
 from models.Text_Object import Text_Object
+from google.cloud import translate
 import logging
 
 translate_url = 'http://18.236.30.130:3003/translator/translation_en'
@@ -77,32 +79,31 @@ def add_identification_tag(xmltree, identifier):
     
       
 def modify_text(nodes):
-    
+    translate_client = translate.Client()
     arr = []
     results = []
     """ Adding all the nodes into an array"""
     
     """ Iterating Over nodes one by one and making Translate API call in a batch of 25 text """
     for node in nodes:
-        if not node.text.strip() == '':
-            arr.append({'src': node.text.lower().strip(), 'id': 1})
-        else:
-            arr.append({'src': node.text, 'id': 1})
+        arr.append(node.text)
 
         log.info('modify_text: node text before translation:' +node.text)
 
         if(arr.__len__ == max_calls):
             try:    
-                res = requests.post(translate_url, json=arr)
-                dictFromServer = res.json()
-                if dictFromServer['response_body'] is not None:
+                # res = requests.post(translate_url, json=arr)
+                translationarray = translate_client.translate(
+                arr,
+                target_language='hin')
+                if translationarray is not None:
                     log.info('modify_text: ') 
-                    log.info( dictFromServer['response_body'])
-                    for translation in dictFromServer['response_body']:
+                    log.info( translationarray)
+                    for translation in translationarray:
                         try: 
                             # log.info('modify_text: recieved translating from server: ') 
                             # log.info(translation)
-                            results.append(translation)
+                            results.append(translation['translatedText'])
                         except:
                             log.info("modify_text: ERROR: while adding to the results list")
                             results.append({'text':None})    
@@ -114,16 +115,17 @@ def modify_text(nodes):
         arr_len = arr.__len__
     if not (arr.__len__ ==  0):
             try:    
-                res = requests.post(translate_url, json=arr)
-                dictFromServer = res.json()
-                if dictFromServer['response_body'] is not None:
+                translationarray = translate_client.translate(
+                arr,
+                target_language='hin')
+                if translationarray is not None:
                     log.info('modify_text: ') 
-                    log.info( dictFromServer['response_body'])
-                    for translation in dictFromServer['response_body']:
+                    log.info( translationarray)
+                    for translation in translationarray:
                         try: 
                             # log.info('modify_text: recieved translating from server: ') 
                             # log.info(translation)
-                            results.append(translation)
+                            results.append(translation['translatedText'])
                         except:
                             log.error("modify_text: ERROR: while adding to the results list")
                             results.append({'text':None})    
@@ -270,6 +272,7 @@ def pre_process_text(xmltree):
 
 def modify_text_with_tokenization(nodes, url):
     _url = 'http://18.236.30.130:3003/translator/translation_en'
+    translate_client = translate.Client()
     if not  url == None:
         _url = url 
     
@@ -300,52 +303,72 @@ def modify_text_with_tokenization(nodes, url):
         N_T = Q.get()
         t_= N_T.text
         s_id = N_T.node_id
+        ids = []
+        ids.append(s_id)
         
-        arr.append({'src': t_, 'id': 1,'s_id':s_id})
+        arr.append(t_)
         
         i = i +1
         del N_T
 
         if i == 25:
             try:
-                res = requests.post(_url, json=arr)
-                dictFromServer = res.json()
-                if dictFromServer['response_body'] is not None:
+                # res = requests.post(_url, json=arr)
+                translationarray = translate_client.translate(
+                arr,
+                target_language='hin')
+                # dictFromServer = res.json()
+                if translationarray is not None:
                     log.info('modify_text_with_tokenization: ') 
-                    log.info( dictFromServer['response_body'])
-                    for translation in dictFromServer['response_body']:
+                    log.info( translationarray )
+                    index = 0
+                    for translation in translationarray:
                         try:    
-                            
-                            res = Text_Object(translation['tgt'],str(translation['s_id']))
+                            log.info('modify_text_with_tokenization: id '+ str(ids[index]))
+                            log.info('modify_text_with_tokenization: index '+ str(index))
+                            res = Text_Object(translation['translatedText'],str(ids[index]))
+                            index = index + 1
+                            log.info('checking index'+str(index))
                             Q_response.put(res)
                            
                         except:
-                            log.error('modify_text_with_tokenization: ERROR OCCURED for '+ translation)    
+                            log.error('modify_text_with_tokenization: ERROR OCCURED for '+ translation)  
+                            index = index + 1   
                         
-            except: 
+            except Exception as e: 
                 log.error('modify_text_with_tokenization: ERROR WHILE MAKING TRANSLATION REQUEST')
+                print(e)
                 pass   
             arr = []
             i = 0
     if i > 0:
         try:    
-                res = requests.post(_url, json=arr)
-                dictFromServer = res.json()
-                if dictFromServer['response_body'] is not None:
+                # res = requests.post(_url, json=arr)
+                # dictFromServer = res.json()
+                translationarray = translate_client.translate(
+                arr,
+                target_language='hin')
+                index = 0
+                if translationarray is not None:
                     log.info('modify_text_with_tokenization: LAST: ') 
-                    log.info( dictFromServer['response_body'])
-                    for translation in dictFromServer['response_body']:
+                    log.info( translationarray)
+                    for translation in translationarray:
                         try: 
-                            
-                            res = Text_Object(translation['tgt'],str(translation['s_id']))
+                            log.info('modify_text_with_tokenization: id '+ str(ids[index]))
+                            log.info('modify_text_with_tokenization: index '+ str(index))
+                            res = Text_Object(translation['translatedText'],str(ids[index]))
+                            index = index+ 1
+                            log.info('checking index'+str(index))
                             Q_response.put(res)
                            
                         except:
-                           log.error('modify_text_with_tokenization: ERROR OCCURED for '+ translation)   
+                           log.error('modify_text_with_tokenization: ERROR OCCURED for '+ translation) 
+                           index = index + 1  
                         
                 
-        except: 
+        except Exception as e: 
                 log.error('modify_text_with_tokenization: ERROR WHILE MAKING TRANSLATION REQUEST')
+                print(e)
                 pass   
         arr = []
         i = 0 
