@@ -43,9 +43,9 @@ const GOOGLE_BUCKET_NAME = 'nlp-nmt'
 
 const LANG_CODES = {
   'Hindi': 'hin',
-  'Tamil':'ta',
-  'English':'eng',
-  'Gujarati':'gu',
+  'Tamil': 'ta',
+  'English': 'eng',
+  'Gujarati': 'gu',
 }
 
 // Creates a client
@@ -96,9 +96,13 @@ function startApp() {
   app.post('/translate', async (req, res) => {
     let text = req.body.text;
     let target_lang = req.body.target_lang;
+
     let target = 'eng';
-    if(LANG_CODES[target_lang]){
+    if (LANG_CODES[target_lang]) {
       target = LANG_CODES[target_lang]
+    }
+    if (target_lang && target_lang.length <= 3) {
+      target = target_lang
     }
 
     try {
@@ -109,7 +113,7 @@ function startApp() {
 
       // The text to translate
       // The target language
-      
+
 
       // Translates some text into English
       translate
@@ -252,8 +256,8 @@ function startApp() {
     }
   });
 
-  var server = app.listen(APP_CONFIG.PORT, function() {
+  var server = app.listen(APP_CONFIG.PORT, function () {
     LOG.info('Listening on port %d', server.address().port);
-});
+  });
   server.timeout = 10000000;
 }
