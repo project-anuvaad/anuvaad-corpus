@@ -58,13 +58,45 @@ def iter_para(xmltree):
 def itertext(xmltree):
     """Iterator to go through xml tree's text nodes"""
     for node in xmltree.iter(tag=etree.Element):
-        if check_element_is(node, 't'):
-            yield (node, node.text)
+        if check_element_is(node, 'r'):
+            log.info('node is')
+            log.info(etree.tostring(node, pretty_print=True))
+            text_node_found = False
+            start_node = None
+            text = ''
+            for node2 in node.iter():
+                if check_element_is(node2, 't'):
+                    text_node_found = True
+                    text = text + ' '+node2.text
+                    if start_node is None:
+                        start_node = node2
+                    else:
+                        node2.text = ''
+            if text_node_found is True:
+                log.info("text is "+text)
+                start_node.text = text
+                yield (start_node, text)
 def itertext_1(xmltree):
     """Iterator to go through xml tree's text nodes"""
     for node in xmltree.iter(tag=etree.Element):
-        if check_element_is(node, 't'):
-            yield (node, node.text)            
+        if check_element_is(node, 'r'):
+            log.info('node is')
+            log.info(etree.tostring(node, pretty_print=True))
+            text_node_found = False
+            start_node = None
+            text = ''
+            for node2 in node.iter():
+                if check_element_is(node2, 't'):
+                    text_node_found = True
+                    text = text + ' '+node2.text
+                    if start_node is None:
+                        start_node = node2
+                    else:
+                        node2.text = ''
+            if text_node_found is True:
+                log.info("text is "+text)
+                start_node.text = text
+                yield (start_node, text)         
 
 def check_element_is(element, type_char):
     word_schema = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
