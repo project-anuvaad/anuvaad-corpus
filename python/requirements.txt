@@ -42,7 +42,7 @@ packaging==19.1
 pathlib2==2.3.4
 pdf2image==1.5.4
 Pillow==6.0.0
-pkg-resources==0.0.0
+#pkg-resources==0.0.0
 pluggy==0.12.0
 protobuf==3.8.0
 public==2019.4.13
