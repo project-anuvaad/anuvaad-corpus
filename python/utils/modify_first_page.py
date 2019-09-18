@@ -10,12 +10,12 @@ def update_lookup_data():
     lookup_data = json.loads(lookup_data_string)
     return (lookup_data)
      
-def modify_text_on_first_page_using_model(nodes):
+def modify_text_on_first_page_using_model(nodes, modelid, endpoint):
     if not nodes == None:
         for node in nodes:
             if not node.text == '':
                 log.info('modify_text_on_first_page_using_model : text before translation == '+node.text)
-                node.text = call_translate(node.text)
+                node.text = call_translate(node.text, modelid, endpoint)
                 log.info('modify_text_on_first_page_using_model : text after translation == '+node.text)
 
 def modify_text_on_first_page(nodes):
@@ -63,12 +63,12 @@ def get_numeric_translation(text):
     return number + '/' + year
 
 
-def call_translate(text_):
+def call_translate(text_, modelid, endpoint):
     try :       
                 arr = []
                 log.info(text_)
-                arr.append({'src': text_, 'id': 8,'s_id':'1'})
-                res = requests.post('http://18.236.30.130:3003/translator/translation_en', json=arr)
+                arr.append({'src': text_, 'id': modelid,'s_id':'1'})
+                res = requests.post('http://18.236.30.130:3003/translator/'+endpoint, json=arr)
                 dictFromServer = res.json()
                 if dictFromServer['response_body'] is not None:
                     log.info('call_translate : ') 
