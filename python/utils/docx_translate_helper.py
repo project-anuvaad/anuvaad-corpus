@@ -300,8 +300,10 @@ def pre_process_text(xmltree):
                     
 
 
-def modify_text_with_tokenization(nodes, url):
-    _url = 'http://18.236.30.130:3003/translator/translation_en'
+def modify_text_with_tokenization(nodes, url, model_id, url_end_point):
+    log.info('model id'+str(model_id))
+    log.info('url_end_point'+url_end_point)
+    _url = 'http://18.236.30.130:3003/translator/'+url_end_point
     if not  url == None:
         _url = url 
     
@@ -333,7 +335,7 @@ def modify_text_with_tokenization(nodes, url):
         t_= N_T.text
         s_id = N_T.node_id
         
-        arr.append({'src': t_, 'id': 1,'s_id':s_id})
+        arr.append({'src': t_, 'id': model_id,'s_id':s_id})
         
         i = i +1
         del N_T

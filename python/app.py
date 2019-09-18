@@ -508,6 +508,13 @@ def translateDocx():
         app.config['UPLOAD_FOLDER'], basename + '.docx')
 
     sourceLang = request.form.getlist('sourceLang')[0]
+    model_meta_data = request.form.getlist('model')[0]
+    log.info('model meta data'+model_meta_data)
+    model_obj = json.loads(model_meta_data)
+    url_end_point = 'translation_en'
+    model_id = int(model_obj['model_id'])
+    if 'url_end_point' in model_obj:
+        url_end_point = model_obj['url_end_point']
     targetLang = request.form.getlist('targetLang')[0]
     translationProcess = TranslationProcess(created_by=request.headers.get('ad-userid'),
                                             status=STATUS_PROCESSING, name=f.filename, created_on=current_time,
@@ -545,9 +552,9 @@ def translateDocx():
     first_page_node_len = modify_first_page.get_size(nodes_first_page)
     node_after_first_page = modify_first_page.get_nodes_after_f_page(nodes, first_page_node_len)
 
-    modify_first_page.modify_text_on_first_page_using_model(nodes_first_page)
-    docx_helper.modify_text_with_tokenization(node_after_first_page, None)
-    xml_footer_list = translate_footer.translate_footer(filepath)
+    modify_first_page.modify_text_on_first_page_using_model(nodes_first_page, model_id, url_end_point)
+    docx_helper.modify_text_with_tokenization(node_after_first_page, None, model_id, url_end_point)
+    xml_footer_list = translate_footer.translate_footer(filepath, model_id, url_end_point)
 
     docx_helper.save_docx(filepath, xmltree, filepath_processed, xml_footer_list)
 
