@@ -6,6 +6,7 @@ import os
 import shutil
 import codecs
 import requests
+import re
 from nltk.tokenize import sent_tokenize
 import queue
 from models.Text_Object import Text_Object
@@ -57,7 +58,11 @@ def iter_para(xmltree):
 
 def itertext(xmltree):
     """Iterator to go through xml tree's text nodes"""
+    # previous_node = None
     for node in xmltree.iter(tag=etree.Element):
+        # if check_element_is(node, 'bookmarkStart'):
+        #     if previous_node is not None:
+        #         previous_node.getparent().remove(previous_node)
         if check_element_is(node, 'r'):
             log.info('node is')
             log.info(etree.tostring(node, pretty_print=True))
@@ -76,9 +81,13 @@ def itertext(xmltree):
                 log.info("text is "+text)
                 start_node.text = text
                 yield (start_node, text)
+        # if check_element_is(node, 'p'):
+        #     previous_node = node
 def itertext_1(xmltree):
     """Iterator to go through xml tree's text nodes"""
     for node in xmltree.iter(tag=etree.Element):
+        if check_element_is(node, 'bookmarkStart') or check_element_is(node, 'bookmarkEnd'):
+            node.getparent().remove(node)
         if check_element_is(node, 'r'):
             log.info('node is')
             log.info(etree.tostring(node, pretty_print=True))
@@ -117,7 +126,7 @@ def modify_text(nodes):
     """ Iterating Over nodes one by one and making Translate API call in a batch of 25 text """
     for node in nodes:
         if not node.text.strip() == '':
-            arr.append({'src': node.text.lower().strip(), 'id': 1})
+            arr.append({'src': node.text.strip(), 'id': 1})
         else:
             arr.append({'src': node.text, 'id': 1})
 
@@ -317,8 +326,8 @@ def modify_text_with_tokenization(nodes, url, model_id, url_end_point):
             if not tokens.__len__ == 0:
 
                 for text_ in tokens:
-                    if text_.isupper():
-                        text_ = text_.lower()
+                    # if text_.isupper():
+                    #     text_ = text_.lower()
                     log.info('modify_text_with_tokenization : TEXT SENT ==  '+text_)
                     N_T = Text_Object(text_ , str(node_id))
                     Q.put(N_T)
@@ -429,6 +438,9 @@ def save_docx(input_docx_filepath, xmltree, output_docx_filepath, xml_tree_foote
         file.extractall(tmp_dir)
         with open(os.path.join(tmp_dir,'word/document.xml'), 'w') as f:
             xmlstr = etree.tostring(xmltree, encoding='unicode')
+            # out = re.sub("^<w:bookmarkStart*\/>$", '', xmlstr)
+            # out = re.sub("^<w:bookmarkEnd*\/>$", '', out)
+            log.info('xml is'+xmlstr)
             f.write(xmlstr)
             f.close()
         try:
