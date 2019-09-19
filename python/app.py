@@ -8,15 +8,23 @@
 from flask import Flask, jsonify, request
 import os
 import glob
-import sys
 from datetime import datetime
 import time
+import logging
+import math
+import json
+import uuid
+import multiprocessing as mp
+from flask_cors import CORS
+import flask as flask
+from models.status import Status
+from models.response import CustomResponse
+from logging.config import dictConfig
 from db.conmgr import getinstance
 from db.conmgr_mongo import connectmongo
 from utils.pdftoimage import converttoimage
 from utils.imagetotext import convertimagetotext
 from utils.imagetoalto import convertimagetoalto
-from utils.puttext import puttext
 from utils.removetextv2 import removetext
 from utils.imagetopdf import converttopdf
 from utils.translateandupdateimage import translateandupdateimage
@@ -25,38 +33,21 @@ from utils.process_paragraph_eng import processenglish
 from utils.remove_page_number_filter import filtertext
 from utils.separate import separate
 from utils.translatewithgoogle import translatewithgoogle, translatesinglesentence
-from utils.translatewithanuvada import translatewithanuvada
 from utils.translatewithanuvada_eng import translatewithanuvadaeng
 from models.words import savewords
 from models.sentence_log import Sentencelog
 from models.translation import Translation
 from models.translation_process import TranslationProcess
-from models.words import fetchwordsfromsentence, fetchwordhocrfromsentence
+from models.words import fetchwordsfromsentence
 from models.sentence import Sentence
 from models.corpus import Corpus
-from models.old_corpus import Oldcorpus
-from controllers.corpus import corpus_api
-from werkzeug.utils import secure_filename
-import math
-import subprocess
-import json
-import multiprocessing as mp
-import codecs
-from flask_cors import CORS
-from flask import Response
-import flask as flask
-from models.status import Status
-from models.response import CustomResponse
-import utils.docx_translate_helper as docx_helper
-import uuid
-import logging
-from logging.handlers import RotatingFileHandler
-import utils.modify_first_page as modify_first_page
-import utils.translate_footnote as translate_footer
-from logging.config import dictConfig
-import requests
-import db.redis_client as redis_cli
+from utils.document_assembler import keep_on_running
+from utils.document_writer import write_document
 from controllers.admin_api import admin_api
+from controllers.corpus import corpus_api
+from controllers.document_api import document_api
+import threading
+
 
 """ Logging Config, for debug logs please set env 'app_debug_logs' to True  """
 dictConfig({
@@ -108,6 +99,7 @@ CORS(app)
 
 app.register_blueprint(corpus_api)
 app.register_blueprint(admin_api)
+app.register_blueprint(document_api)
 
 UPLOAD_FOLDER = 'upload'
 STATUS_PENDING = 'PENDING'
@@ -121,6 +113,7 @@ es = getinstance()
 words = []
 connectmongo()
 
+
 log = logging.getLogger('file')
 try:
     app_debug_logs = os.environ['app_debug_logs']
@@ -133,6 +126,8 @@ try:
 except:
     logging.disable(logging.DEBUG)
     log.info("DEBUG LOGS InACTIVE")
+
+
 
 
 @app.route('/hello', methods=['GET'])
@@ -430,13 +425,6 @@ def translate():
     return res.getres()
 
 
-@app.route('/download-docx', methods=['GET'])
-def downloadDocx():
-    filename = request.args.get('filename')
-    result = flask.send_file(os.path.join('upload/', filename), as_attachment=True)
-    result.headers["x-suggested-filename"] = filename
-    return result
-
 @app.route('/batch-sentences', methods=['GET'])
 def batchsentences():
     basename = request.args.get('basename')
@@ -446,18 +434,19 @@ def batchsentences():
     index = 2
     batch_size = 10000
     if len(sentences) > batch_size:
-        for i in range(2,1+math.ceil(len(sentences)/batch_size)):
+        for i in range(2, 1 + math.ceil(len(sentences) / batch_size)):
             base = str(uuid.uuid4())
-            if (i)*batch_size > len(sentences):
-                sentence_batch = sentences[0:(i-1)*batch_size-len(sentences)]
+            if (i) * batch_size > len(sentences):
+                sentence_batch = sentences[0:(i - 1) * batch_size - len(sentences)]
                 print(len(sentence_batch))
-                if len(sentence_batch)>0:
+                if len(sentence_batch) > 0:
                     corpus = Corpus(source_lang='English', target_lang='Hindi', status=STATUS_PROCESSED,
-                                name='SC Judgment 2019 Batch '+str(index), domain='LAW', created_on=current_time,
-                                last_modified=current_time, author='', comment='', no_of_sentences=len(sentence_batch),
-                                basename=base)
+                                    name='SC Judgment 2019 Batch ' + str(index), domain='LAW', created_on=current_time,
+                                    last_modified=current_time, author='', comment='',
+                                    no_of_sentences=len(sentence_batch),
+                                    basename=base)
                     corpus.save()
-                    
+
                     for sentence in sentence_batch:
                         sentence_dict = json.loads(sentence.to_json())
                         sen = Sentence.objects(_id=sentence_dict['_id']['$oid'])
@@ -466,18 +455,19 @@ def batchsentences():
             else:
                 sentence_batch = sentences[0:batch_size]
                 print(len(sentence_batch))
-                if len(sentence_batch)>0:
+                if len(sentence_batch) > 0:
                     corpus = Corpus(source_lang='English', target_lang='Hindi', status=STATUS_PROCESSED,
-                                name='SC Judgment 2019 Batch '+str(index), domain='LAW', created_on=current_time,
-                                last_modified=current_time, author='', comment='', no_of_sentences=len(sentence_batch),
-                                basename=base)
+                                    name='SC Judgment 2019 Batch ' + str(index), domain='LAW', created_on=current_time,
+                                    last_modified=current_time, author='', comment='',
+                                    no_of_sentences=len(sentence_batch),
+                                    basename=base)
                     corpus.save()
                     for sentence in sentence_batch:
                         sentence_dict = json.loads(sentence.to_json())
                         sen = Sentence.objects(_id=sentence_dict['_id']['$oid'])
                         print(sen.to_json())
                         sen.update(set__basename=base)
-            index+=1
+            index += 1
     res = CustomResponse(Status.FAILURE.value, basename)
     return res.getres()
 
@@ -494,121 +484,6 @@ def delete_process():
     except:
         log.info('delte_process : ERROR while processing  basename  : ' + basename)
         res = CustomResponse(Status.FAILURE.value, basename)
-    return res.getres()
-
-
-@app.route('/translate-docx', methods=['POST'])
-def translateDocx():
-    start_time = int(round(time.time() * 1000))
-    log.info('translateDocx: started at ' + str(start_time))
-    basename = str(int(time.time()))
-    current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-    f = request.files['file']
-    filepath = os.path.join(
-        app.config['UPLOAD_FOLDER'], basename + '.docx')
-
-    sourceLang = request.form.getlist('sourceLang')[0]
-    targetLang = request.form.getlist('targetLang')[0]
-    translationProcess = TranslationProcess(created_by=request.headers.get('ad-userid'),
-                                            status=STATUS_PROCESSING, name=f.filename, created_on=current_time,
-                                            basename=basename, sourceLang=sourceLang, targetLang=targetLang)
-    translationProcess.save()
-    f.save(filepath)
-    filename_to_processed = f.filename
-    filepath_processed = os.path.join(
-        app.config['UPLOAD_FOLDER'], basename + '_t' + '.docx')
-    filepath_processed_src_with_ids = os.path.join(
-        app.config['UPLOAD_FOLDER'], basename + '_s' + '.docx')
-
-    log.info("translate-doxc : " + filename_to_processed)
-
-    xml_content = docx_helper.get_document_xml(filepath)
-    xmltree = docx_helper.get_xml_tree(xml_content)
-
-    nodes = []
-    texts = []
-    docx_helper.add_identification_tag(xmltree, basename + '-' + str(uuid.uuid4()))
-    docx_helper.warp_original_with_identification_tags(filepath, xmltree, filepath_processed_src_with_ids)
-    docx_helper.pre_process_text(xmltree)
-
-    for node, text in docx_helper.itertext(xmltree):
-        nodes.append(node)
-        texts.append(text)
-
-    log.info('translateDocx: number of nodes ' + str(len(nodes)) + ' and text are : ' + str(len(texts)))
-
-    """  method which don't use tokenization  """
-    # docx_helper.modify_text(nodes)
-
-    nodes_first_page = []
-    nodes_first_page = modify_first_page.get_first_page_nodes(nodes)
-    first_page_node_len = modify_first_page.get_size(nodes_first_page)
-    node_after_first_page = modify_first_page.get_nodes_after_f_page(nodes, first_page_node_len)
-
-    modify_first_page.modify_text_on_first_page_using_model(nodes_first_page)
-    docx_helper.modify_text_with_tokenization(node_after_first_page, None)
-    xml_footer_list = translate_footer.translate_footer(filepath)
-
-    docx_helper.save_docx(filepath, xmltree, filepath_processed, xml_footer_list)
-
-    res = CustomResponse(Status.SUCCESS.value, basename + '_t' + '.docx')
-    translationProcess = TranslationProcess.objects(basename=basename)
-    translationProcess.update(set__status=STATUS_PROCESSED)
-
-    log.info('translateDocx: ended at ' + str(getcurrenttime()) + 'total time elapsed : ' + str(
-        getcurrenttime() - start_time))
-    return res.getres()
-
-
-@app.route('/translate-docx-new', methods=['POST'])
-def translateDocxNew():
-    _url = 'http://18.236.30.130:3003/translator/translation_en'
-    start_time = int(round(time.time() * 1000))
-    log.info('translateDocx-new: started at ' + str(start_time))
-    basename = str(int(time.time()))
-    current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-    f = request.files['file']
-    filepath = os.path.join(
-        app.config['UPLOAD_FOLDER'], basename + '.docx')
-
-    sourceLang = request.form.getlist('sourceLang')[0]
-    targetLang = request.form.getlist('targetLang')[0]
-    translationProcess = TranslationProcess(created_by=request.headers.get('ad-userid'),
-                                            status=STATUS_PROCESSING, name=f.filename, created_on=current_time,
-                                            basename=basename, sourceLang=sourceLang, targetLang=targetLang)
-    translationProcess.save()
-    f.save(filepath)
-    filename_to_processed = f.filename
-    filepath_processed = os.path.join(
-        app.config['UPLOAD_FOLDER'], basename + '_t' + '.docx')
-
-    xml_content = docx_helper.get_document_xml(filepath)
-    xmltree = docx_helper.get_xml_tree(xml_content)
-
-    nodes = []
-    texts = []
-    docx_helper.add_identification_tag(xmltree, str(uuid.uuid4()))
-    docx_helper.pre_process_text(xmltree)
-
-    for node, text in docx_helper.itertext(xmltree):
-        nodes.append(node)
-        texts.append(text)
-
-    log.info('translateDocx-new: number of nodes ' + str(len(nodes)) + ' and text are : ' + str(len(texts)))
-
-    """  method which don't use tokenization  """
-    # docx_helper.modify_text(nodes)
-
-    docx_helper.modify_text_with_tokenization(nodes, _url)
-
-    docx_helper.save_docx(filepath, xmltree, filepath_processed)
-
-    res = CustomResponse(Status.SUCCESS.value, basename + '_t' + '.docx')
-    translationProcess = TranslationProcess.objects(basename=basename)
-    translationProcess.update(set__status=STATUS_PROCESSED)
-
-    log.info('translateDocx-new: ended at ' + str(getcurrenttime()) + 'total time elapsed : ' + str(
-        getcurrenttime() - start_time))
     return res.getres()
 
 
@@ -744,7 +619,7 @@ def upload_indian_kannon_file():
             comment = ['']
         if target_lang is None or len(target_lang) == 0 or len(target_lang[0]) == 0 or source_lang is None or len(
                 source_lang) == 0 or len(source_lang[0]) == 0 or name is None or len(name) == 0 or len(
-                name[0]) == 0 or domain is None or len(domain) == 0 or len(domain[0]) == 0 or request.files is None or \
+            name[0]) == 0 or domain is None or len(domain) == 0 or len(domain[0]) == 0 or request.files is None or \
                 request.files['english'] is None:
             res = CustomResponse(
                 Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
@@ -770,8 +645,8 @@ def upload_indian_kannon_file():
             #             '/'+basename+'_hin_filtered.txt')
             target_lang = LANGUAGES[target_lang[0]]
             translatewithgoogle(app.config['UPLOAD_FOLDER'] +
-                        '/'+basename+'_eng_filtered.txt', app.config['UPLOAD_FOLDER'] +
-                        '/'+basename+'_hin_filtered.txt', target_lang)
+                                '/' + basename + '_eng_filtered.txt', app.config['UPLOAD_FOLDER'] +
+                                '/' + basename + '_hin_filtered.txt', target_lang)
             # os.system('./helpers/bleualign.py -s ' + os.getcwd() + '/upload/' + basename + '_hin_filtered' + '.txt' + ' -t ' + os.getcwd() + '/upload/' + basename +
             #         '_eng_filtered' + '.txt' + ' --srctotarget ' + os.getcwd() + '/upload/' + basename + '_eng_tran' + '.txt' + ' -o ' + os.getcwd() + '/upload/' + basename + '_output')
             english_res = []
@@ -787,7 +662,7 @@ def upload_indian_kannon_file():
             data = {'hindi': hindi_res, 'english': english_res}
             sentences = []
             for i in range(0, len(hindi_res)):
-                sentence = Sentence(sentenceid=str(uuid.uuid4()),status=STATUS_PENDING, basename=str(
+                sentence = Sentence(sentenceid=str(uuid.uuid4()), status=STATUS_PENDING, basename=str(
                     basename), source=english_res[i], target=hindi_res[i])
                 sentences.append(sentence)
                 # sentence.save()
@@ -931,4 +806,9 @@ def getcurrenttime():
 
 
 if __name__ == '__main__':
+    t1 = threading.Thread(target=keep_on_running)
+    t1.start()
+    t2 = threading.Thread(target=write_document)
+    t2.start()
+
     app.run(host='0.0.0.0', port=5001)
