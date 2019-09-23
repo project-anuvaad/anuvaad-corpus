@@ -27,6 +27,13 @@ var PARALLEL_CORPUS_COMPONENT = "parallelCorpus";
 const LANGUAGES = {
     'Hindi': 'hi',
     'English': 'en',
+    'Bengali':'bn',
+    'Gujarati':'gu',
+    'Marathi':'mr',
+    'Kannada':'kn',
+    'Telugu':'te',
+    'Malayalam':'ml',
+    'Punjabi':'pa',
     'Tamil': 'ta'
 }
 
