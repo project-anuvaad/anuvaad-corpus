@@ -44,7 +44,7 @@ def translatebigtext(f_eng, flist, index, model_id):
     for eng in englist:
         engarr.append({'src': eng, 'id': int(model_id)})
     # print(hindiarr)
-    res = requests.post('http://18.236.30.130:3003/translator/translation_en', json=engarr)
+    res = requests.post('http://52.40.71.62:3003/translator/translation_en', json=engarr)
     dictFromServer = res.json()
     print(dictFromServer)
     if dictFromServer and 'response_body' in dictFromServer and dictFromServer['response_body'] is not None:
