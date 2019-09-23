@@ -548,12 +548,12 @@ def translateDocx():
     # docx_helper.modify_text(nodes)
 
     nodes_first_page = []
-    nodes_first_page = modify_first_page.get_first_page_nodes(nodes)
-    first_page_node_len = modify_first_page.get_size(nodes_first_page)
-    node_after_first_page = modify_first_page.get_nodes_after_f_page(nodes, first_page_node_len)
-
-    modify_first_page.modify_text_on_first_page_using_model(nodes_first_page, model_id, url_end_point)
-    docx_helper.modify_text_with_tokenization(node_after_first_page, None, model_id, url_end_point)
+    # nodes_first_page = modify_first_page.get_first_page_nodes(nodes)
+    # first_page_node_len = modify_first_page.get_size(nodes_first_page)
+    # node_after_first_page = modify_first_page.get_nodes_after_f_page(nodes, first_page_node_len)
+    #
+    # modify_first_page.modify_text_on_first_page_using_model(nodes_first_page, model_id, url_end_point)
+    docx_helper.modify_text_with_tokenization(nodes, None, model_id, url_end_point)
     xml_footer_list = translate_footer.translate_footer(filepath, model_id, url_end_point)
 
     docx_helper.save_docx(filepath, xmltree, filepath_processed, xml_footer_list)
