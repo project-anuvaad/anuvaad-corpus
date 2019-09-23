@@ -753,6 +753,7 @@ def upload_indian_kannon_file():
         domain = request.form.getlist('domain')
         source_lang = request.form.getlist('source_lang')
         target_lang = request.form.getlist('target_lang')
+        model_id = request.form.getlist('model_id')
         comment = request.form.getlist('comment')
         if comment is None or len(comment) == 0:
             comment = ['']
@@ -779,13 +780,13 @@ def upload_indian_kannon_file():
             # filepath = os.path.join(
             #     app.config['UPLOAD_FOLDER'], basename + '_hin_filtered.txt')
             # f.save(filepath)
-            # translatewithanuvadaeng(app.config['UPLOAD_FOLDER'] +
-            #             '/'+basename+'_eng_filtered.txt', app.config['UPLOAD_FOLDER'] +
-            #             '/'+basename+'_hin_filtered.txt')
-            target_lang = LANGUAGES[target_lang[0]]
-            translatewithgoogle(app.config['UPLOAD_FOLDER'] +
+            translatewithanuvadaeng(app.config['UPLOAD_FOLDER'] +
                         '/'+basename+'_eng_filtered.txt', app.config['UPLOAD_FOLDER'] +
-                        '/'+basename+'_hin_filtered.txt', target_lang)
+                        '/'+basename+'_hin_filtered.txt', model_id[0])
+            # target_lang = LANGUAGES[target_lang[0]]
+            # translatewithgoogle(app.config['UPLOAD_FOLDER'] +
+            #             '/'+basename+'_eng_filtered.txt', app.config['UPLOAD_FOLDER'] +
+            #             '/'+basename+'_hin_filtered.txt', target_lang)
             # os.system('./helpers/bleualign.py -s ' + os.getcwd() + '/upload/' + basename + '_hin_filtered' + '.txt' + ' -t ' + os.getcwd() + '/upload/' + basename +
             #         '_eng_filtered' + '.txt' + ' --srctotarget ' + os.getcwd() + '/upload/' + basename + '_eng_tran' + '.txt' + ' -o ' + os.getcwd() + '/upload/' + basename + '_output')
             english_res = []
