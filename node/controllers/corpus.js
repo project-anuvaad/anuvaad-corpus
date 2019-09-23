@@ -228,7 +228,7 @@ exports.updateSentencesGrade = function (req, res) {
     }
     async.each(req.body.sentences, function (sentence, callback) {
         LOG.info("Updating sentence grade [%s]", JSON.stringify(sentence))
-        if (sentence.rating) {
+        if (sentence.rating || sentence.spelling_rating) {
             Sentence.find({ _id: sentence._id }, {}, function (err, results) {
                 if (results && Array.isArray(results) && results.length > 0) {
                     var sentencedb = results[0]
