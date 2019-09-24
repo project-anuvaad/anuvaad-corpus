@@ -28,11 +28,13 @@ def process_sentence(sentences):
     text_node = TextNode.objects(node_id=node_id)
     if text_node is not None:
         text_node_dict = json.loads(text_node.to_json())
-        log.info('process_sentence : ' + str(text_node_dict))
+        log.info('process_sentence : text_node is ==' + str(text_node_dict))
         for sentence in sentences:
+            log.info('process_sentence : sentence is =='+str(sentence))
             s_id = sentence['s_id']
             text = sentence['tgt']
             sen = {'tgt': text, 's_id': s_id}
+            log.info('process_sentence : sen objects is = '+str(sen))
 
             text_node_dict[0]['sentences'].append(sen)
         ttl_sentences = len(sentences)

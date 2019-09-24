@@ -2,14 +2,22 @@ from producer import get_producer
 from consumer import get_consumer
 import json
 
-c = get_consumer('qwe')
-p = get_producer()
-for msg in c:
-    sentences = json.loads(msg.value)
-    print(sentences)
-    if sentences is not None and len(sentences) is not 0:
-        for sen in sentences:
-            print(sen)
-            sen['tgt'] = 'example'
-        p.send('abc', value=sentences)
-        p.flush()
+
+def abc():
+    print('abc called')
+    i =0
+    c = get_consumer('to-nmt')
+    p = get_producer()
+    for msg in c:
+        print('count == '+str(i))
+        i =i +1
+        sentences = json.loads(msg.value)
+        if sentences is not None and len(sentences) is not 0:
+            for sen in sentences:
+                print(sen)
+                sen['tgt'] = sen['text'].upper()
+                print(sen)
+            p.send('listener', value=sentences)
+            p.flush()
+
+abc()
