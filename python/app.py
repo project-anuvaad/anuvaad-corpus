@@ -46,6 +46,8 @@ from utils.document_writer import write_document
 from controllers.admin_api import admin_api
 from controllers.corpus import corpus_api
 from controllers.document_api import document_api
+from controllers.elastic_search_api import indexer_api
+from elastic_utils.elastic_search_indexer import sentence_creator
 import threading
 
 
@@ -100,6 +102,7 @@ CORS(app)
 app.register_blueprint(corpus_api)
 app.register_blueprint(admin_api)
 app.register_blueprint(document_api)
+app.register_blueprint(indexer_api)
 
 UPLOAD_FOLDER = 'upload'
 STATUS_PENDING = 'PENDING'
@@ -810,5 +813,7 @@ if __name__ == '__main__':
     t1.start()
     t2 = threading.Thread(target=write_document)
     t2.start()
+    t3 = threading.Thread(target=sentence_creator)
+    t3.start()
 
     app.run(host='0.0.0.0', port=5001)
