@@ -7,4 +7,4 @@ class DocumentNodes(Document):
     nodes_sent = IntField()
     nodes_received = IntField()
     is_complete = BooleanField()
-    created_date = DateTimeField()
+    created_date = StringField()

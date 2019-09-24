@@ -32,6 +32,15 @@ def modify_text_on_first_page_using_model(nodes):
                 node.text = call_translate(node.text)
                 log.info('modify_text_on_first_page_using_model : text after translation == ' + node.text)
 
+     
+def modify_text_on_first_page_using_model(nodes, modelid, endpoint):
+    if not nodes == None:
+        for node in nodes:
+            if not node.text == '':
+                log.info('modify_text_on_first_page_using_model : text before translation == '+node.text)
+                node.text = call_translate(node.text, modelid, endpoint)
+                log.info('modify_text_on_first_page_using_model : text after translation == '+node.text)
+
 
 def modify_text_on_first_page(nodes):
     update_lookup_data()
@@ -99,6 +108,29 @@ def call_translate(text_):
 
     except:
         log.error('call_translate : ERROR : while getting data from translating server for less than 25 batch size ')
+
+
+def call_translate(text_, modelid, endpoint):
+    try :       
+                arr = []
+                log.info(text_)
+                arr.append({'src': text_, 'id': modelid,'s_id':'1'})
+                res = requests.post('http://18.236.30.130:3003/translator/'+endpoint, json=arr)
+                dictFromServer = res.json()
+                if dictFromServer['response_body'] is not None:
+                    log.info('call_translate : ') 
+                    log.info( dictFromServer['response_body'])
+                    for translation in dictFromServer['response_body']:
+                        try : 
+                            # log.info('docx_translate_helper:modify_text : recieved translating from server : ') 
+                            log.info(translation)
+                            return (translation['tgt'])
+                        except:
+                            log.error("call_translate : ERROR : while adding to the results list")
+                            return None    
+                
+    except: 
+                log.error('call_translate : ERROR : while getting data from translating server for less than 25 batch size ')
 
 
 def get_from_lookup(text_):

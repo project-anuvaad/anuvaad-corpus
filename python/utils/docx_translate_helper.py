@@ -6,6 +6,7 @@ import os
 import shutil
 import codecs
 import requests
+import re
 from nltk.tokenize import sent_tokenize
 import queue
 from models.Text_Object import Text_Object
@@ -66,7 +67,43 @@ def iter_para(xmltree):
 
 def itertext(xmltree):
     """Iterator to go through xml tree's text nodes"""
+    # previous_node = None
     for node in xmltree.iter(tag=etree.Element):
+
+        if check_element_is(node, 't'):
+            yield (node, node.text)
+
+        # if check_element_is(node, 'bookmarkStart'):
+        #     if previous_node is not None:
+        #         previous_node.getparent().remove(previous_node)
+        if check_element_is(node, 'r'):
+            log.info('node is')
+            log.info(etree.tostring(node, pretty_print=True))
+            text_node_found = False
+            start_node = None
+            text = ''
+            for n in node.iter():
+                if check_element_is(n, 't'):
+                    text_node_found = True
+                    if n.text is not None:
+                        text = text + ' ' + n.text
+                    if start_node is None:
+                        start_node = n
+                    else:
+                        n.text = ''
+            if text_node_found is True:
+                log.info("text is " + text)
+                start_node.text = text
+                yield (start_node, text)
+        # if check_element_is(node, 'p'):
+        #     previous_node = node
+
+
+def itertext_old(xmltree):
+    """Iterator to go through xml tree's text nodes"""
+    # previous_node = None
+    for node in xmltree.iter(tag=etree.Element):
+
         if check_element_is(node, 't'):
             yield (node, node.text)
 
@@ -74,8 +111,30 @@ def itertext(xmltree):
 def itertext_1(xmltree):
     """Iterator to go through xml tree's text nodes"""
     for node in xmltree.iter(tag=etree.Element):
+
         if check_element_is(node, 't'):
             yield (node, node.text)
+
+        if check_element_is(node, 'bookmarkStart') or check_element_is(node, 'bookmarkEnd'):
+            node.getparent().remove(node)
+        if check_element_is(node, 'r'):
+            log.info('node is')
+            log.info(etree.tostring(node, pretty_print=True))
+            text_node_found = False
+            start_node = None
+            text = ''
+            for node2 in node.iter():
+                if check_element_is(node2, 't'):
+                    text_node_found = True
+                    text = text + ' ' + node2.text
+                    if start_node is None:
+                        start_node = node2
+                    else:
+                        node2.text = ''
+            if text_node_found is True:
+                log.info("text is " + text)
+                start_node.text = text
+                yield (start_node, text)
 
 
 def check_element_is(element, type_char):
@@ -85,7 +144,7 @@ def check_element_is(element, type_char):
 
 def add_identification_tag(xmltree, identifier):
     """ adding translation id for each node """
-    for node, text in itertext(xmltree):
+    for node, text in itertext_old(xmltree):
         node.attrib['id'] = identifier + '-' + str(uuid.uuid4())
 
 
@@ -97,13 +156,15 @@ def modify_text(nodes):
     """ Iterating Over nodes one by one and making Translate API call in a batch of 25 text """
     for node in nodes:
         if not node.text.strip() == '':
-            arr.append({'src': node.text.lower().strip(), 'id': 1})
+            arr.append({'src': node.text.strip(), 'id': 1})
         else:
             arr.append({'src': node.text, 'id': 1})
 
         log.info('modify_text: node text before translation:' + node.text)
 
+
         if arr.__len__ == max_calls:
+
             try:
                 res = requests.post(translate_url, json=arr)
                 dictFromServer = res.json()
@@ -279,11 +340,12 @@ def pre_process_text(xmltree):
                         prev_prop_node = None
 
 
-def modify_text_with_tokenization(nodes, url):
-    _url = 'http://18.236.30.130:3003/translator/translation_en'
+def modify_text_with_tokenization(nodes, url, model_id, url_end_point):
+    log.info('model id' + str(model_id))
+    log.info('url_end_point' + url_end_point)
+    _url = 'http://18.236.30.130:3003/translator/' + url_end_point
     if not url == None:
         _url = url
-
     arr = []
     Q = queue.Queue()
     """ Adding all the nodes into an array"""
@@ -294,7 +356,6 @@ def modify_text_with_tokenization(nodes, url):
             if not tokens.__len__ == 0:
 
                 for text_ in tokens:
-
                     log.info('modify_text_with_tokenization : TEXT SENT ==  ' + text_)
                     N_T = Text_Object(text_, str(node_id))
                     Q.put(N_T)
@@ -312,7 +373,8 @@ def modify_text_with_tokenization(nodes, url):
         t_ = N_T.text
         s_id = N_T.node_id
 
-        arr.append({'src': t_, 'id': 1, 's_id': s_id})
+        arr.append({'src': t_, 'id': model_id, 's_id': s_id})
+
 
         i = i + 1
         del N_T
@@ -384,8 +446,11 @@ def modify_text_with_tokenization(nodes, url):
                 node.text = text
                 log.info('modify_text_with_tokenization: node text after = ' + node.text)
                 break
-        if Q_response.qsize() == 0 and not text == '':
-            node.text = text
+
+        if Q_response.qsize() == 0 and text == '':
+            log.info('modify_text_with_tokenization **: node text before == ' + node.text)
+            node.text = prev.text
+            log.info('modify_text_with_tokenization **: node text before == ' + node.text)
 
 
 def warp_original_with_identification_tags(input_docx_file_path, xml_tree, output_docx_filepath):
@@ -422,6 +487,21 @@ def save_docx(input_docx_filepath, xmltree, output_docx_filepath, xml_tree_foote
                         log.info("save_docx: closing:" + file_name_xml + str(i) + '.xml')
         except Exception as e:
             log.error("save_docx: ERROR while writing footers == "+str(e))
+
+
+            i = 1
+            file_name_xml = 'footer'
+            for footer in xml_tree_footer_list:
+                log.info("save_docx: opening:" + file_name_xml + str(i) + '.xml')
+                with open(os.path.join(tmp_dir, 'word/' + file_name_xml + str(i) + '.xml'), 'w') as f1:
+                    xmlstr = etree.tostring(footer, encoding='unicode')
+                    f1.write(xmlstr)
+                    i = i + 1
+                    f1.close()
+                    log.info("save_docx: closing:" + file_name_xml + str(i) + '.xml')
+        except:
+            log.error("save_docx: ERROR while writing footers")
+
         filenames = file.namelist()
 
     with zipfile.ZipFile(output_docx_filepath, "w") as docx:

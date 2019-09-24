@@ -27,6 +27,13 @@ var PARALLEL_CORPUS_COMPONENT = "parallelCorpus";
 const LANGUAGES = {
     'Hindi': 'hi',
     'English': 'en',
+    'Bengali':'bn',
+    'Gujarati':'gu',
+    'Marathi':'mr',
+    'Kannada':'kn',
+    'Telugu':'te',
+    'Malayalam':'ml',
+    'Punjabi':'pa',
     'Tamil': 'ta'
 }
 
@@ -228,12 +235,12 @@ exports.updateSentencesGrade = function (req, res) {
     }
     async.each(req.body.sentences, function (sentence, callback) {
         LOG.info("Updating sentence grade [%s]", JSON.stringify(sentence))
-        if (sentence.rating) {
+        if (sentence.rating || sentence.spelling_rating) {
             Sentence.find({ _id: sentence._id }, {}, function (err, results) {
                 if (results && Array.isArray(results) && results.length > 0) {
                     var sentencedb = results[0]
                     let userId = req.headers['ad-userid']
-                    let sentencelog = { edited_by: userId, source: sentencedb._doc.source, target: sentencedb._doc.target, is_grade_changed: true, updated_on: new Date(), parent_id: sentencedb._doc._id, basename: sentencedb._doc.basename, status: sentencedb._doc.status, grade_edited: sentence.rating, grade: sentencedb._doc.rating }
+                    let sentencelog = { edited_by: userId, source: sentencedb._doc.source, target: sentencedb._doc.target, is_grade_changed: true, updated_on: new Date(), parent_id: sentencedb._doc._id, basename: sentencedb._doc.basename, status: sentencedb._doc.status, spelling_rating_edited: sentence.spelling_rating, grade_edited: sentence.rating, grade: sentencedb._doc.rating, spelling_rating: sentencedb._doc.spelling_rating }
                     SentenceLog.save([sentencelog], (err, results) => {
                         if (err) {
                             LOG.error(err)

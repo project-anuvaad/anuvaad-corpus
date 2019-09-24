@@ -15,7 +15,7 @@ footer_file_ext = '.xml'
 def get_xml_tree(xml_string):
     return etree.fromstring(xml_string)
 
-def translate_footer(filename):
+def translate_footer(filename, model_id, url_end_point):
     footers = []
     has_more = True
    
@@ -35,7 +35,7 @@ def translate_footer(filename):
                         nodes = []
                         for node in iter_footers(footer):
                             nodes.append(node)
-                        docx_translate_helper.modify_text_with_tokenization(nodes, None)
+                        docx_translate_helper.modify_text_with_tokenization(nodes, None, model_id, url_end_point)
 
                         i = i +1
                     except :
