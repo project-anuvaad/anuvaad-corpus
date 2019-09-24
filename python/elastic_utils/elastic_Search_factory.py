@@ -1,5 +1,4 @@
 from elasticsearch import Elasticsearch
-from elasticsearch_dsl import connections
 import os
 import logging
 
@@ -19,7 +18,6 @@ def get_elastic_search_client():
         es_hosts = ['localhost']
         pass
     try:
-        connections.create_connection(hosts=es_hosts)
         __client__ = Elasticsearch(hosts=es_hosts)
         return __client__
     except Exception as e:
