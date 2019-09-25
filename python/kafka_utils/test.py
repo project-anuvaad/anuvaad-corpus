@@ -15,9 +15,7 @@ def abc():
         if sentences is not None and len(sentences) is not 0:
             for sen in sentences:
                 print(sen)
-                sen['tgt'] = sen['text'].upper()
-                print(sen)
-            p.send('listener', value=sentences)
-            p.flush()
+
+
 
 abc()

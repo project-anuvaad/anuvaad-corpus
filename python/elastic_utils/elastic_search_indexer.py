@@ -12,7 +12,6 @@ TOPIC_CORPUS_CREATION = 'create-corpus'
 
 def sentence_creator():
     consumer = get_consumer(TOPIC_CORPUS_CREATION)
-    log.info('######Here#######')
     for msg in consumer:
         data = msg.value['data']
         log.info('sentence_creator : message received = ' + str(data))

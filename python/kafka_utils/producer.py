@@ -1,8 +1,12 @@
 import json
 from kafka import KafkaProducer
 import logging
+import os
 
 log = logging.getLogger('file')
+kafka_ip_host = 'kafka_ip_host'
+default_value = 'localhost:9092'
+bootstrap_server = os.environ.get(kafka_ip_host,default_value)
 
 
 def get_producer():

@@ -1,15 +1,19 @@
 from kafka import KafkaConsumer
 import logging
 import json
+import os
 
 log = logging.getLogger('file')
+kafka_ip_host = 'kafka_ip_host'
+default_value = 'localhost:9092'
+bootstrap_server = os.environ.get(kafka_ip_host,default_value)
 
 
 def get_consumer(topic):
     try:
         consumer = KafkaConsumer(
             topic,
-            bootstrap_servers=['localhost:9092'],
+            bootstrap_servers=[bootstrap_server],
             value_deserializer=lambda x: json.loads(x.decode('utf-8')))
 
         log.info('get_consumer : consumer returned for topic = ' + topic)
@@ -19,4 +23,3 @@ def get_consumer(topic):
         log.error('get_consumer : ERROR = ' + str(e))
         print('error')
         return None
-
