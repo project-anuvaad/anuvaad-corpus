@@ -145,8 +145,7 @@ try :
     t3 = threading.Thread(target=sentence_creator)
     t3.start()
 except Exception as e:
-    log.info('ERROR WHILE RUNNING CUSTOM THREADS'+str(e))
-
+    log.info('ERROR WHILE RUNNING CUSTOM THREADS '+str(e))
 
 
 @app.route('/hello', methods=['GET'])
@@ -828,12 +827,5 @@ def getcurrenttime():
 
 
 if __name__ == '__main__':
-    log.info('In Main Thread ')
-    t1 = threading.Thread(target=keep_on_running)
-    t1.start()
-    t2 = threading.Thread(target=write_document)
-    t2.start()
-    t3 = threading.Thread(target=sentence_creator)
-    t3.start()
-    print("***************")
+
     app.run(host='0.0.0.0', port=5001)
