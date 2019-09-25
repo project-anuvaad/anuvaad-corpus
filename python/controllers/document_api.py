@@ -126,6 +126,9 @@ def translate_docx_v2():
     log.info('model meta data' + model_meta_data)
     model_obj = json.loads(model_meta_data)
     model_id = int(model_obj['model_id'])
+    url_end_point = 'translation_en'
+    if 'url_end_point' in model_obj:
+        url_end_point = model_obj['url_end_point']
 
     translationProcess = TranslationProcess(created_by=request.headers.get('ad-userid'),
                                             status=STATUS_PROCESSING, name=f.filename, created_on=current_time,
@@ -159,7 +162,7 @@ def translate_docx_v2():
     doc_nodes = DocumentNodes(basename=basename, created_date=current_time, total_nodes=total_nodes, nodes_sent=0,
                               nodes_received=0, is_complete=False)
     doc_nodes.save()
-    send_nodes(nodes, basename, model_id)
+    send_nodes(nodes, basename, model_id, url_end_point)
     res = CustomResponse(Status.SUCCESS.value, 'file has been queued')
     translationProcess = TranslationProcess.objects(basename=basename)
     translationProcess.update(set__status=STATUS_PROCESSING)
@@ -183,7 +186,7 @@ def get_lang(model):
         return 'hi'
 
 
-def send_nodes(nodes, basename, model_id):
+def send_nodes(nodes, basename, model_id, url_end_point):
     log.info('send_nodes : started')
     if producer is None:
         raise Exception('Kafka Producer not available, aborting process')
@@ -214,7 +217,7 @@ def send_nodes(nodes, basename, model_id):
                         producer.flush()
                         messages = []
                         i = 0
-                    msg = {'text': token.strip(), 'id': _id, 'n_id': n_id, 's_id': i}
+                    msg = {'text': token.strip(), 'id': _id, 'n_id': n_id, 's_id': i, 'url_end_point': url_end_point}
                     log.info('send_nodes : message is = ' + str(msg))
                     messages.append(msg)
                     i = i + 1
