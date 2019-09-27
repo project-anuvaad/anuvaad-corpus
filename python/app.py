@@ -41,14 +41,17 @@ from models.translation_process import TranslationProcess
 from models.words import fetchwordsfromsentence
 from models.sentence import Sentence
 from models.corpus import Corpus
-from utils.document_assembler import keep_on_running
-from utils.document_writer import write_document
 from controllers.admin_api import admin_api
 from controllers.corpus import corpus_api
 from controllers.document_api import document_api
 from controllers.elastic_search_api import indexer_api
 from elastic_utils.elastic_search_indexer import sentence_creator
+from utils.document_assembler import keep_on_running
+from utils.document_writer import write_document
 import threading
+import atexit
+from utils.thread_manager import thread_manager
+from apscheduler.schedulers.background import BackgroundScheduler
 
 
 """ Logging Config, for debug logs please set env 'app_debug_logs' to True  """
@@ -122,6 +125,13 @@ es = getinstance()
 words = []
 connectmongo()
 
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=thread_manager, trigger="interval", minutes=15)
+scheduler.start()
+
+# Shut down the scheduler when exiting the app
+atexit.register(lambda: scheduler.shutdown())
+
 
 log = logging.getLogger('file')
 
@@ -137,12 +147,15 @@ except:
     logging.disable(logging.DEBUG)
     log.info("DEBUG LOGS InACTIVE")
 
-try :
-    t1 = threading.Thread(target=keep_on_running)
+try:
+    t1 = threading.Thread(target=keep_on_running, name='keep_on_running')
+    t1.setDaemon(True)
     t1.start()
-    t2 = threading.Thread(target=write_document)
+    t2 = threading.Thread(target=write_document, name='write_document')
+    t2.setDaemon(True)
     t2.start()
-    t3 = threading.Thread(target=sentence_creator)
+    t3 = threading.Thread(target=sentence_creator, name='sentence_creator')
+    t3.setDaemon(True)
     t3.start()
 except Exception as e:
     log.info('ERROR WHILE RUNNING CUSTOM THREADS '+str(e))

@@ -37,7 +37,7 @@ def write_document():
             for node in nodes:
                 node_id = node.attrib['id']
                 if node.text is not None and node.text.strip() is not '':
-                    text_node = TextNode.objects(node_id=node_id,basename=basename)
+                    text_node = TextNode.objects(node_id=node_id, basename=basename)
                     if text_node is not None:
                         tgt_text = get_tgt_text(text_node)
                         node.text = tgt_text
@@ -48,14 +48,17 @@ def write_document():
 
 
 def get_tgt_text(text_node):
-    log.info('get_tgt_text : text_node = '+str(text_node))
+    log.info('get_tgt_text : text_node = ' + str(text_node))
     text_node_dict = json.loads(text_node.to_json())
     sentences = text_node_dict[0]['sentences']
     sorted_sentences = sorted(sentences, key=lambda i: i['s_id'])
-    log.info('get_tgt_text : sorted text = '+str(sorted_sentences))
+    log.info('get_tgt_text : sorted text = ' + str(sorted_sentences))
     tgt_text = ''
+    s_id_processed = set()
     for sentence in sorted_sentences:
-        tgt_text = tgt_text + sentence['tgt'] + ' '
+        if not s_id_processed.__contains__(sentence['s_id']):
+            tgt_text = tgt_text + sentence['tgt'] + ' '
+            s_id_processed.add(sentence['s_id'])
 
-    log.info('get_tgt_text = '+tgt_text)
+    log.info('get_tgt_text = ' + tgt_text)
     return tgt_text.strip()

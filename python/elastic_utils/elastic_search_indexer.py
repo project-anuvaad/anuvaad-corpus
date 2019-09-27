@@ -13,10 +13,15 @@ TOPIC_CORPUS_CREATION = 'create-corpus'
 def sentence_creator():
     consumer = get_consumer(TOPIC_CORPUS_CREATION)
     for msg in consumer:
-        data = msg.value['data']
-        log.info('sentence_creator : message received = ' + str(data))
-        index = get_index_for_sentence(data)
-        create_sentence(data, index)
+        try:
+            data = msg.value['data']
+            log.info('sentence_creator : message received = ' + str(data))
+            if data is not None:
+                index = get_index_for_sentence(data)
+                create_sentence(data, index)
+
+        except Exception as e:
+            log.erro('sentence_creator:  error while processing message with exception == '+str(e))
 
 
 def get_index_for_sentence(data):
