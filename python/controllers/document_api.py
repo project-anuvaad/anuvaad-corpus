@@ -50,13 +50,14 @@ def translateDocx():
         app.config['UPLOAD_FOLDER'], basename + '.docx')
 
     sourceLang = request.form.getlist('sourceLang')[0]
-    model_meta_data = request.form.getlist('model')[0]
-    log.info('model meta data' + model_meta_data)
-    model_obj = json.loads(model_meta_data)
+    # model_meta_data = request.form.getlist('model')[0]
+    # log.info('model meta data' + model_meta_data)
+    # model_obj = json.loads(model_meta_data)
     url_end_point = 'translation_en'
-    model_id = int(model_obj['model_id'])
-    if 'url_end_point' in model_obj:
-        url_end_point = model_obj['url_end_point']
+    # model_id = int(model_obj['model_id'])
+    # if 'url_end_point' in model_obj:
+    #     url_end_point = model_obj['url_end_point']
+    model_id = '1'
     targetLang = request.form.getlist('targetLang')[0]
     translationProcess = TranslationProcess(created_by=request.headers.get('ad-userid'),
                                             status=STATUS_PROCESSING, name=f.filename, created_on=current_time,
