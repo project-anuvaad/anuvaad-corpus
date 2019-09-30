@@ -311,28 +311,28 @@ def update_sentences_status():
     res = CustomResponse(Status.SUCCESS.value, None)
     return res.getres()
 
-
-@app.route('/translate-file', methods=['POST'])
-def translateFile():
-    pool = mp.Pool(mp.cpu_count())
-    basename = str(int(time.time()))
-    current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-    f = request.files['file']
-    filepath = os.path.join(
-        app.config['UPLOAD_FOLDER'], basename + '.pdf')
-    translationProcess = TranslationProcess(
-        status=STATUS_PROCESSING, name=f.filename, created_on=current_time, basename=basename)
-    translationProcess.save()
-    f.save(filepath)
-    pool.apply_async(converttoimage, args=(
-        filepath, app.config['UPLOAD_FOLDER'], basename, ''), callback=capturealtotext)
-    pool.close()
-    pool.join()
-
-    res = CustomResponse(Status.SUCCESS.value, '')
-    translationProcess = TranslationProcess.objects(basename=basename)
-    translationProcess.update(set__status=STATUS_PROCESSED)
-    return res.getres()
+#
+# @app.route('/translate-file', methods=['POST'])
+# def translateFile():
+#     pool = mp.Pool(mp.cpu_count())
+#     basename = str(int(time.time()))
+#     current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+#     f = request.files['file']
+#     filepath = os.path.join(
+#         app.config['UPLOAD_FOLDER'], basename + '.pdf')
+#     translationProcess = TranslationProcess(
+#         status=STATUS_PROCESSING, name=f.filename, created_on=current_time, basename=basename)
+#     translationProcess.save()
+#     f.save(filepath)
+#     pool.apply_async(converttoimage, args=(
+#         filepath, app.config['UPLOAD_FOLDER'], basename, ''), callback=capturealtotext)
+#     pool.close()
+#     pool.join()
+#
+#     res = CustomResponse(Status.SUCCESS.value, '')
+#     translationProcess = TranslationProcess.objects(basename=basename)
+#     translationProcess.update(set__status=STATUS_PROCESSED)
+#     return res.getres()
 
 
 @app.route('/get-file-data', methods=['POST'])
