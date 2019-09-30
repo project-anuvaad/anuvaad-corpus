@@ -1,8 +1,9 @@
 from datetime import datetime
 import logging
-from elastic_Search_factory import get_elastic_search_client
-from constant import *
+from elastic_utils.elastic_Search_factory import get_elastic_search_client
+from elastic_utils.constant import *
 from elasticsearch import helpers
+
 
 log = logging.getLogger('file')
 client = get_elastic_search_client()
@@ -32,9 +33,9 @@ def create_sentence(sentence, sentence_index):
     try:
         result = client.index(index=sentence_index,
                               body={text_lang_1: sentence[text_lang_1], text_lang_2: sentence[text_lang_2],
-                                    parallel_corpus_id: sentence_index[parallel_corpus_id],
+                                    parallel_corpus_id: sentence[parallel_corpus_id],
                                     lang_1: sentence[lang_1], created_date: sentence[created_date],
-                                    lang_2: sentence[lang_2], created_by: sentence[created_by]})
+                                    lang_2: sentence[lang_2], created_by: sentence[created_by], DOMAIN: sentence[DOMAIN]})
         log.info('create_sentence : sentence create with id = ' + result['_id'] + ' at index = ' + sentence_index)
         return result['_id']
     except Exception as e:
@@ -125,6 +126,7 @@ def validate_create_sentence(sentence):
     validate_is_str(sentence[lang_1], lang_1)
     validate_is_str(sentence[lang_2], lang_2)
     validate_is_str(sentence[created_by], created_by)
+    validate_is_str(sentence[DOMAIN], DOMAIN)
     validate_pc_id(sentence[parallel_corpus_id])
     log.info('validate_create_sentence : sentence received :' + str(sentence))
     return Sentence(sentence)
@@ -133,7 +135,7 @@ def validate_create_sentence(sentence):
 def Sentence(sen):
     data = {text_lang_1: sen[text_lang_1], text_lang_2: sen[text_lang_2],
             lang_1: sen[lang_1], lang_2: sen[lang_2], parallel_corpus_id: sen[parallel_corpus_id],
-            created_by: sen[created_by], created_date: datetime.now()}
+            created_by: sen[created_by], created_date: datetime.now(), DOMAIN: sen[DOMAIN]}
     return data
 
 
@@ -147,6 +149,3 @@ def validate_is_str(data, attr='text'):
         raise Exception('{} must be a string, but was: {}'.format(attr, None))
     if data is not None and not isinstance(data, str):
         raise Exception('{} must be a string, but was: {}'.format(attr, type(data)))
-
-
-create_index('qwerty1', None)

@@ -28,6 +28,7 @@ importlib-metadata==0.19
 isort==4.3.20
 itsdangerous==1.1.0
 Jinja2==2.10.1
+kafka-python==1.4.6
 lazy-object-proxy==1.4.1
 linecache2==1.0.0
 lxml==4.3.3
