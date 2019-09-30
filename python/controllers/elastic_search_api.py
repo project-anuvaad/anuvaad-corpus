@@ -78,28 +78,7 @@ def update_corpus():
     current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
     req_data = request.get_json()
     validate_upload_corpus_request(req_data)
-
-
-
-    # sentence is array of objects {src:'',tar:'',updated_by:'',domain:'',parallel_corpus_id:'',metadata}
-    sentences = req_data['sentences']
-    no_of_sentences = len(sentences)
-    for sen in sentences:
-        parallel_corpus_id = ''
-        try:
-            parallel_corpus_id = req_data[constants.parallel_corpus_id]
-        except Exception as e:
-            log.info('upload_corpus :  parallel corpus id is NOT present')
-        data = {constants.text_lang_1: sen['src'], constants.text_lang_2: sen['tar'],
-                constants.lang_1: lang_1, constants.lang_2: lang_2,
-                constants.parallel_corpus_id: parallel_corpus_id,
-                constants.updated_by: updated_by, constants.updated_date: updated_date,
-                constants.DOMAIN: domain}
-        msg = {'data': data}
-        producer.send(TOPIC_CORPUS_CREATION, value=msg)
-        producer.flush()
-
-    res = CustomResponse(Status.SUCCESS.value, 'no. of sentences are ' + str(no_of_sentences))
+    res = CustomResponse(Status.SUCCESS.value, 'no. of sentences are ')
     end_time = int(round(time.time() * 1000))
     log.info('upload_corpus: ended at ' + str(end_time) + 'total time elapsed = ' + str(end_time - start_time))
     return res.getres()
