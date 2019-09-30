@@ -9,7 +9,7 @@ import time
 import utils.run_on_shell as shell
 import base64
 
-ES_SERVER_URL = 'http://localhost:9876/'
+ES_SERVER_URL = 'http://gateway_apigw:9876/'
 PROFILE_REQ_URL = ES_SERVER_URL + 'users/'
 log = logging.getLogger('file')
 
