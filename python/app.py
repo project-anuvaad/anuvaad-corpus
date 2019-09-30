@@ -721,6 +721,8 @@ def upload_file():
     try:
         name = request.form.getlist('name')
         domain = request.form.getlist('domain')
+        source_lang = request.form.getlist('source_lang')
+        target_lang = request.form.getlist('target_lang')
         comment = request.form.getlist('comment')
         if comment is None or len(comment) == 0:
             comment = ['']
@@ -733,7 +735,7 @@ def upload_file():
 
         else:
             current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-            corpus = Corpus(status=STATUS_PROCESSING, name=name[0], domain=domain[0], created_on=current_time,
+            corpus = Corpus(status=STATUS_PROCESSING, name=name[0], domain=domain[0], created_on=current_time,source_lang=source_lang[0],target_lang=target_lang[0],
                             last_modified=current_time, author='', comment=comment[0], no_of_sentences=0,
                             basename=basename)
             corpus.save()
