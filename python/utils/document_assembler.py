@@ -18,7 +18,7 @@ def keep_on_running():
         log.info('keep_on_running : message received = ' + str(message))
         sentences = message['response_body']
         status = message['status']
-        if status['ok'] == 'true':
+        if status['statusCode'] == 200:
             if sentences is not None and not len(sentences) == 0:
                 process_sentence(sentences)
         else:
