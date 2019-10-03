@@ -7,7 +7,6 @@ import logging
 
 log = logging.getLogger('file')
 TOPIC = 'listener'
-producer = get_producer()
 TOPIC_TO_PROCESS = 'to-process'
 
 
@@ -50,6 +49,7 @@ def process_sentence(sentences):
             nodes_received = nodes_received + 1
             if nodes_received == nodes_sent:
                 doc_nodes.update(set__nodes_received=nodes_received, is_complete=True)
+                producer = get_producer()
                 producer.send(TOPIC_TO_PROCESS, value=basename)
                 producer.flush()
             doc_nodes.update(set__nodes_received=nodes_received)
