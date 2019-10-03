@@ -13,7 +13,7 @@ from models.Text_Object import Text_Object
 import logging
 from google.cloud import translate
 
-translate_url = 'http://18.236.30.130:3003/translator/translation_en'
+NMT_BASE_URL = os.environ.get('NMT_BASE_URL', 'http://localhost:3003/translator/')
 max_calls = 25
 log = logging.getLogger('file')
 
@@ -148,70 +148,6 @@ def add_identification_tag(xmltree, identifier):
         node.attrib['id'] = identifier + '-' + str(uuid.uuid4())
 
 
-def modify_text(nodes):
-    arr = []
-    results = []
-    """ Adding all the nodes into an array"""
-
-    """ Iterating Over nodes one by one and making Translate API call in a batch of 25 text """
-    for node in nodes:
-        if not node.text.strip() == '':
-            arr.append({'src': node.text.strip(), 'id': 1})
-        else:
-            arr.append({'src': node.text, 'id': 1})
-
-        log.info('modify_text: node text before translation:' + node.text)
-
-
-        if arr.__len__ == max_calls:
-
-            try:
-                res = requests.post(translate_url, json=arr)
-                dictFromServer = res.json()
-                if dictFromServer['response_body'] is not None:
-                    log.info('modify_text: ')
-                    log.info(dictFromServer['response_body'])
-                    for translation in dictFromServer['response_body']:
-                        try:
-                            # log.info('modify_text: recieved translating from server: ') 
-                            # log.info(translation)
-                            results.append(translation)
-                        except:
-                            log.info("modify_text: ERROR: while adding to the results list")
-                            results.append({'text': None})
-
-            except:
-                log.error('modify_text: ERROR: while getting data from translating server ')
-                pass
-            arr = []
-        arr_len = arr.__len__
-    if not (arr.__len__ == 0):
-        try:
-            res = requests.post(translate_url, json=arr)
-            dictFromServer = res.json()
-            if dictFromServer['response_body'] is not None:
-                log.info('modify_text: ')
-                log.info(dictFromServer['response_body'])
-                for translation in dictFromServer['response_body']:
-                    try:
-                        # log.info('modify_text: recieved translating from server: ')
-                        # log.info(translation)
-                        results.append(translation)
-                    except:
-                        log.error("modify_text: ERROR: while adding to the results list")
-                        results.append({'text': None})
-
-        except:
-            log.error('modify_text: ERROR: while getting data from translating server for less than 25 batch size ')
-    i = 0
-    log.info('modify_text: following are the text and its translation')
-    for node in nodes:
-        log.info(node.text + '\n')
-        node.text = results[i]['tgt']
-        log.info(node.text + '\n')
-        i = i + 1
-
-
 def check_difference(x, prev):
     if prev == None:
         log.info("PREV IS NULL")
@@ -343,7 +279,7 @@ def pre_process_text(xmltree):
 def modify_text_with_tokenization(nodes, url, model_id, url_end_point):
     log.info('model id' + str(model_id))
     log.info('url_end_point' + url_end_point)
-    _url = 'http://18.236.30.130:3003/translator/' + url_end_point
+    _url = NMT_BASE_URL + url_end_point
     if not url == None:
         _url = url
     arr = []
@@ -360,7 +296,7 @@ def modify_text_with_tokenization(nodes, url, model_id, url_end_point):
                     N_T = Text_Object(text_, str(node_id))
                     Q.put(N_T)
 
-            log.info('****************** : '+node.attrib['id']+'   ==  '+node.text)
+            log.info('****************** : ' + node.attrib['id'] + '   ==  ' + node.text)
         node.attrib['node_id'] = str(node_id)
         node_id = node_id + 1
 
@@ -374,7 +310,6 @@ def modify_text_with_tokenization(nodes, url, model_id, url_end_point):
         s_id = N_T.node_id
 
         arr.append({'src': t_, 'id': model_id, 's_id': s_id})
-
 
         i = i + 1
         del N_T
@@ -486,8 +421,7 @@ def save_docx(input_docx_filepath, xmltree, output_docx_filepath, xml_tree_foote
                         f1.close()
                         log.info("save_docx: closing:" + file_name_xml + str(i) + '.xml')
         except Exception as e:
-            log.error("save_docx: ERROR while writing footers == "+str(e))
-
+            log.error("save_docx: ERROR while writing footers == " + str(e))
 
             i = 1
             file_name_xml = 'footer'
@@ -569,10 +503,10 @@ def modify_text__2(nodes):
     log.info('modify_text: following are the text and its translation')
     for node in nodes:
         log.info(node.text + '\n')
-        try :
+        try:
             node.text = results[i]['tgt']
             log.info(node.text + '\n')
-        except Exception as e :
-            log.info('*****: '+ str(results[i]))
+        except Exception as e:
+            log.info('*****: ' + str(results[i]))
             pass
         i = i + 1
