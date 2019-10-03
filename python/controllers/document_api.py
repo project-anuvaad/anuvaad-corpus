@@ -226,9 +226,9 @@ def send_nodes(nodes, basename, model_id, url_end_point):
                     messages.append(msg)
                     i = i + 1
                 msg = {'url_end_point': url_end_point, 'message': messages}
-                producer.send(TOPIC, value=json.dumps(msg))
-                log.info('send_nodes : flushed')
+                producer.send(TOPIC, value=msg)
                 producer.flush()
+                log.info('send_nodes : flushed')
 
 
 def get_total_number_of_nodes_with_text(nodes):
