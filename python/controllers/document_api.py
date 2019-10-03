@@ -15,6 +15,8 @@ import utils.modify_first_page as modify_first_page
 import utils.translate_footnote as translate_footer
 from kafka_utils.producer import get_producer
 from nltk.tokenize import sent_tokenize
+import nltk
+nltk.download('punkt')
 from models.text_nodes import TextNode
 from models.Document_nodes import DocumentNodes
 import json
@@ -50,14 +52,14 @@ def translateDocx():
         app.config['UPLOAD_FOLDER'], basename + '.docx')
 
     sourceLang = request.form.getlist('sourceLang')[0]
-    # model_meta_data = request.form.getlist('model')[0]
-    # log.info('model meta data' + model_meta_data)
-    # model_obj = json.loads(model_meta_data)
+    model_meta_data = request.form.getlist('model')[0]
+    log.info('model meta data' + model_meta_data)
+    model_obj = json.loads(model_meta_data)
     url_end_point = 'translation_en'
-    # model_id = int(model_obj['model_id'])
-    # if 'url_end_point' in model_obj:
-    #     url_end_point = model_obj['url_end_point']
-    model_id = '1'
+    model_id = int(model_obj['model_id'])
+    if 'url_end_point' in model_obj:
+        url_end_point = model_obj['url_end_point']
+
     targetLang = request.form.getlist('targetLang')[0]
     translationProcess = TranslationProcess(created_by=request.headers.get('ad-userid'),
                                             status=STATUS_PROCESSING, name=f.filename, created_on=current_time,
@@ -130,6 +132,7 @@ def translate_docx_v2():
     url_end_point = 'translation_en'
     if 'url_end_point' in model_obj:
         url_end_point = model_obj['url_end_point']
+    log.info('translate_docx_v2: started at ' + str(start_time))
 
     translationProcess = TranslationProcess(created_by=request.headers.get('ad-userid'),
                                             status=STATUS_PROCESSING, name=f.filename, created_on=current_time,
@@ -218,11 +221,13 @@ def send_nodes(nodes, basename, model_id, url_end_point):
                         producer.flush()
                         messages = []
                         i = 0
-                    msg = {'text': token.strip(), 'id': _id, 'n_id': n_id, 's_id': i, 'url_end_point': url_end_point}
+                    msg = {'src': token.strip(), 'id': _id, 'n_id': n_id, 's_id': i}
                     log.info('send_nodes : message is = ' + str(msg))
                     messages.append(msg)
                     i = i + 1
-                producer.send(TOPIC, value=json.dumps(messages))
+                msg = {'url_end_point': url_end_point, 'message': messages}
+                producer.send(TOPIC, value=json.dumps(msg))
+                log.info('send_nodes : flushed')
                 producer.flush()
 
 
