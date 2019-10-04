@@ -6,7 +6,7 @@ from utils.document_writer import write_document
 
 log = logging.getLogger('file')
 
-MUST_RUNNING_THREADS = ['sentence_creator', 'write_document', 'sentence_creator']
+MUST_RUNNING_THREADS = ['keep_on_running', 'write_document', 'sentence_creator']
 
 
 def thread_manager():
