@@ -1,5 +1,5 @@
 #!/bin/bash
-cd node
+cd python
 commit_id=$(git rev-parse --short HEAD)
 echo $commit_id> commit_id.txt
 docker build -t gohila/$image_name:$commit_id .
