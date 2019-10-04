@@ -84,7 +84,7 @@ def translateDocx():
     docx_helper.warp_original_with_identification_tags(filepath, xmltree, filepath_processed_src_with_ids)
     docx_helper.pre_process_text(xmltree)
 
-    for node, text in docx_helper.itertext_old(xmltree):
+    for node, text in docx_helper.itertext(xmltree):
         nodes.append(node)
         texts.append(text)
 
