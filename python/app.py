@@ -154,9 +154,9 @@ try:
     t2 = threading.Thread(target=write_document, name='write_document')
     t2.setDaemon(True)
     t2.start()
-    t3 = threading.Thread(target=sentence_creator, name='sentence_creator')
-    t3.setDaemon(True)
-    t3.start()
+    # t3 = threading.Thread(target=sentence_creator, name='sentence_creator')
+    # t3.setDaemon(True)
+    # t3.start()
 except Exception as e:
     log.info('ERROR WHILE RUNNING CUSTOM THREADS '+str(e))
 
