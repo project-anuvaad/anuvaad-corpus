@@ -11,8 +11,9 @@ from nltk.tokenize import sent_tokenize
 import queue
 from models.Text_Object import Text_Object
 import logging
+from google.cloud import translate
 
-translate_url = 'http://18.236.30.130:3003/translator/translation_en'
+NMT_BASE_URL = os.environ.get('NMT_BASE_URL', 'http://localhost:3003/translator/')
 max_calls = 25
 log = logging.getLogger('file')
 
@@ -52,7 +53,8 @@ def get_endnote_xml(filename):
                 return xml_content
         else:
             return None
-    except expression as identifier:
+    except Exception as e:
+
         pass
 
 
@@ -67,6 +69,10 @@ def itertext(xmltree):
     """Iterator to go through xml tree's text nodes"""
     # previous_node = None
     for node in xmltree.iter(tag=etree.Element):
+
+        if check_element_is(node, 't'):
+            yield (node, node.text)
+
         # if check_element_is(node, 'bookmarkStart'):
         #     if previous_node is not None:
         #         previous_node.getparent().remove(previous_node)
@@ -76,14 +82,15 @@ def itertext(xmltree):
             text_node_found = False
             start_node = None
             text = ''
-            for node2 in node.iter():
-                if check_element_is(node2, 't'):
+            for n in node.iter():
+                if check_element_is(n, 't'):
                     text_node_found = True
-                    text = text + ' ' + node2.text
+                    if n.text is not None:
+                        text = text + ' ' + n.text
                     if start_node is None:
-                        start_node = node2
+                        start_node = n
                     else:
-                        node2.text = ''
+                        n.text = ''
             if text_node_found is True:
                 log.info("text is " + text)
                 start_node.text = text
@@ -92,9 +99,22 @@ def itertext(xmltree):
         #     previous_node = node
 
 
+def itertext_old(xmltree):
+    """Iterator to go through xml tree's text nodes"""
+    # previous_node = None
+    for node in xmltree.iter(tag=etree.Element):
+
+        if check_element_is(node, 't'):
+            yield (node, node.text)
+
+
 def itertext_1(xmltree):
     """Iterator to go through xml tree's text nodes"""
     for node in xmltree.iter(tag=etree.Element):
+
+        if check_element_is(node, 't'):
+            yield (node, node.text)
+
         if check_element_is(node, 'bookmarkStart') or check_element_is(node, 'bookmarkEnd'):
             node.getparent().remove(node)
         if check_element_is(node, 'r'):
@@ -124,70 +144,8 @@ def check_element_is(element, type_char):
 
 def add_identification_tag(xmltree, identifier):
     """ adding translation id for each node """
-    for node, text in itertext(xmltree):
-        node.attrib['id'] = identifier
-
-
-def modify_text(nodes):
-    arr = []
-    results = []
-    """ Adding all the nodes into an array"""
-
-    """ Iterating Over nodes one by one and making Translate API call in a batch of 25 text """
-    for node in nodes:
-        if not node.text.strip() == '':
-            arr.append({'src': node.text.strip(), 'id': 1})
-        else:
-            arr.append({'src': node.text, 'id': 1})
-
-        log.info('modify_text: node text before translation:' + node.text)
-
-        if (arr.__len__ == max_calls):
-            try:
-                res = requests.post(translate_url, json=arr)
-                dictFromServer = res.json()
-                if dictFromServer['response_body'] is not None:
-                    log.info('modify_text: ')
-                    log.info(dictFromServer['response_body'])
-                    for translation in dictFromServer['response_body']:
-                        try:
-                            # log.info('modify_text: recieved translating from server: ') 
-                            # log.info(translation)
-                            results.append(translation)
-                        except:
-                            log.info("modify_text: ERROR: while adding to the results list")
-                            results.append({'text': None})
-
-            except:
-                log.error('modify_text: ERROR: while getting data from translating server ')
-                pass
-            arr = []
-        arr_len = arr.__len__
-    if not (arr.__len__ == 0):
-        try:
-            res = requests.post(translate_url, json=arr)
-            dictFromServer = res.json()
-            if dictFromServer['response_body'] is not None:
-                log.info('modify_text: ')
-                log.info(dictFromServer['response_body'])
-                for translation in dictFromServer['response_body']:
-                    try:
-                        # log.info('modify_text: recieved translating from server: ')
-                        # log.info(translation)
-                        results.append(translation)
-                    except:
-                        log.error("modify_text: ERROR: while adding to the results list")
-                        results.append({'text': None})
-
-        except:
-            log.error('modify_text: ERROR: while getting data from translating server for less than 25 batch size ')
-    i = 0
-    log.info('modify_text: following are the text and its translation')
-    for node in nodes:
-        log.info(node.text + '\n')
-        node.text = results[i]['tgt']
-        log.info(node.text + '\n')
-        i = i + 1
+    for node, text in itertext_old(xmltree):
+        node.attrib['id'] = identifier + '-' + str(uuid.uuid4())
 
 
 def check_difference(x, prev):
@@ -321,10 +279,9 @@ def pre_process_text(xmltree):
 def modify_text_with_tokenization(nodes, url, model_id, url_end_point):
     log.info('model id' + str(model_id))
     log.info('url_end_point' + url_end_point)
-    _url = 'http://18.236.30.130:3003/translator/' + url_end_point
+    _url = NMT_BASE_URL + url_end_point
     if not url == None:
         _url = url
-
     arr = []
     Q = queue.Queue()
     """ Adding all the nodes into an array"""
@@ -335,12 +292,11 @@ def modify_text_with_tokenization(nodes, url, model_id, url_end_point):
             if not tokens.__len__ == 0:
 
                 for text_ in tokens:
-                    # if text_.isupper():
-                    #     text_ = text_.lower()
                     log.info('modify_text_with_tokenization : TEXT SENT ==  ' + text_)
                     N_T = Text_Object(text_, str(node_id))
                     Q.put(N_T)
 
+            log.info('****************** : ' + node.attrib['id'] + '   ==  ' + node.text)
         node.attrib['node_id'] = str(node_id)
         node_id = node_id + 1
 
@@ -425,6 +381,7 @@ def modify_text_with_tokenization(nodes, url, model_id, url_end_point):
                 node.text = text
                 log.info('modify_text_with_tokenization: node text after = ' + node.text)
                 break
+
         if Q_response.qsize() == 0 and text == '':
             log.info('modify_text_with_tokenization **: node text before == ' + node.text)
             node.text = prev.text
@@ -437,7 +394,7 @@ def warp_original_with_identification_tags(input_docx_file_path, xml_tree, outpu
     save_docx(input_docx_file_path, xml_tree, output_docx_filepath, none)
 
 
-def save_docx(input_docx_filepath, xmltree, output_docx_filepath, xml_tree_footer_list):
+def save_docx(input_docx_filepath, xmltree, output_docx_filepath, xml_tree_footer_list=None):
     tmp_dir = tempfile.mkdtemp()
     log.info('save_docx: Extracting ' + str(input_docx_filepath) + ' in temp directory ' + tmp_dir)
     if not zipfile.is_zipfile(input_docx_filepath):
@@ -449,12 +406,22 @@ def save_docx(input_docx_filepath, xmltree, output_docx_filepath, xml_tree_foote
         file.extractall(tmp_dir)
         with open(os.path.join(tmp_dir, 'word/document.xml'), 'w') as f:
             xmlstr = etree.tostring(xmltree, encoding='unicode')
-            # out = re.sub("^<w:bookmarkStart*\/>$", '', xmlstr)
-            # out = re.sub("^<w:bookmarkEnd*\/>$", '', out)
-            log.info('xml is' + xmlstr)
             f.write(xmlstr)
             f.close()
         try:
+            if xml_tree_footer_list is not None:
+                i = 1
+                file_name_xml = 'footer'
+                for footer in xml_tree_footer_list:
+                    log.info("save_docx: opening:" + file_name_xml + str(i) + '.xml')
+                    with open(os.path.join(tmp_dir, 'word/' + file_name_xml + str(i) + '.xml'), 'w') as f1:
+                        xmlstr = etree.tostring(footer, encoding='unicode')
+                        f1.write(xmlstr)
+                        i = i + 1
+                        f1.close()
+                        log.info("save_docx: closing:" + file_name_xml + str(i) + '.xml')
+        except Exception as e:
+            log.error("save_docx: ERROR while writing footers == " + str(e))
 
             i = 1
             file_name_xml = 'footer'
@@ -468,6 +435,7 @@ def save_docx(input_docx_filepath, xmltree, output_docx_filepath, xml_tree_foote
                     log.info("save_docx: closing:" + file_name_xml + str(i) + '.xml')
         except:
             log.error("save_docx: ERROR while writing footers")
+
         filenames = file.namelist()
 
     with zipfile.ZipFile(output_docx_filepath, "w") as docx:
@@ -475,3 +443,70 @@ def save_docx(input_docx_filepath, xmltree, output_docx_filepath, xml_tree_foote
             docx.write(os.path.join(tmp_dir, filename), filename)
 
     log.info('save_docx: saving modified document at ' + str(output_docx_filepath))
+
+
+def modify_text__2(nodes):
+    translate_client = translate.Client()
+    arr = []
+    results = []
+    """ Adding all the nodes into an array"""
+
+    """ Iterating Over nodes one by one and making Translate API call in a batch of 25 text """
+    for node in nodes:
+        arr.append(node.text)
+
+        log.info('modify_text: node text before translation:' + node.text)
+
+        if (arr.__len__ == max_calls):
+            try:
+                # res = requests.post(translate_url, json=arr)
+                translationarray = translate_client.translate(
+                    arr,
+                    target_language='hin')
+                if translationarray is not None:
+                    log.info('modify_text: ')
+                    log.info(translationarray)
+                    for translation in translationarray:
+                        try:
+                            # log.info('modify_text: recieved translating from server: ')
+                            # log.info(translation)
+                            results.append(translation['translatedText'])
+                        except:
+                            log.info("modify_text: ERROR: while adding to the results list")
+                            results.append({'text': None})
+
+            except:
+                log.error('modify_text: ERROR: while getting data from translating server ')
+                pass
+            arr = []
+        arr_len = arr.__len__
+    if not (arr.__len__ == 0):
+        try:
+            translationarray = translate_client.translate(
+                arr,
+                target_language='hin')
+            if translationarray is not None:
+                log.info('modify_text: ')
+                log.info(translationarray)
+                for translation in translationarray:
+                    try:
+                        # log.info('modify_text: recieved translating from server: ')
+                        # log.info(translation)
+                        results.append(translation['translatedText'])
+                    except:
+                        log.error("modify_text: ERROR: while adding to the results list")
+                        results.append({'text': None})
+
+        except:
+            log.error('modify_text: ERROR: while getting data from translating server for less than 25 batch size ')
+    i = 0
+    log.info('modify_text: following are the text and its translation')
+    for node in nodes:
+        log.info(node.text + '\n')
+        try:
+            node.text = results[i]['tgt']
+            log.info(node.text + '\n')
+        except Exception as e:
+            log.info('*****: ' + str(results[i]))
+            pass
+        i = i + 1

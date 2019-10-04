@@ -8,9 +8,10 @@ import json
 import time
 import utils.run_on_shell as shell
 import base64
+import os
 
-ES_SERVER_URL = 'http://localhost:9876/'
-PROFILE_REQ_URL = ES_SERVER_URL + 'users/'
+REDIS_SERVER_URL = os.environ.get('redis_url', 'http://localhost:9876/')
+PROFILE_REQ_URL = REDIS_SERVER_URL + 'users/'
 log = logging.getLogger('file')
 
 admin_api = Blueprint('admin_api', __name__)
