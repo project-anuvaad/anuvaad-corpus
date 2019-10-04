@@ -27,6 +27,7 @@ log = logging.getLogger('file')
 document_api = Blueprint('document_api', __name__)
 UPLOAD_FOLDER = 'upload'
 STATUS_PENDING = 'PENDING'
+STATUS_FAILED = 'FAILED'
 STATUS_PROCESSING = 'PROCESSING'
 STATUS_PROCESSED = 'COMPLETED'
 producer = get_producer()
@@ -153,7 +154,11 @@ def translate_docx_v2():
     nodes = []
     texts = []
     docx_helper.add_identification_tag(xmltree, basename)
-    docx_helper.pre_process_text(xmltree)
+    try:
+        docx_helper.pre_process_text(xmltree)
+    except Exception as e:
+        log.error('translate_docx_v2 : error occureed for pre-processing document. Error is '+str(e))
+        log.info('translate_docx_v2 : not pre-processing document')
     docx_helper.warp_original_with_identification_tags(filepath, xmltree, filepath_processed_src_with_ids)
 
     for node, text in docx_helper.itertext_old(xmltree):
@@ -163,17 +168,25 @@ def translate_docx_v2():
     log.info('translate_docx_v2 : number of nodes = ' + str(len(nodes)) + ' and text are : ' + str(len(texts)))
 
     total_nodes = get_total_number_of_nodes_with_text(nodes)
-    doc_nodes = DocumentNodes(basename=basename, created_date=current_time, total_nodes=total_nodes, nodes_sent=0,
+    try:
+        doc_nodes = DocumentNodes(basename=basename, created_date=current_time, total_nodes=total_nodes, nodes_sent=0,
                               nodes_received=0, is_complete=False)
-    doc_nodes.save()
-    send_nodes(nodes, basename, model_id, url_end_point)
-    res = CustomResponse(Status.SUCCESS.value, 'file has been queued')
-    translationProcess = TranslationProcess.objects(basename=basename)
-    translationProcess.update(set__status=STATUS_PROCESSING)
-
-    log.info('translate_docx_v2: ended at ' + str(getcurrenttime()) + 'total time elapsed : ' + str(
-        getcurrenttime() - start_time))
-    return res.getres()
+        doc_nodes.save()
+        send_nodes(nodes, basename, model_id, url_end_point)
+        res = CustomResponse(Status.SUCCESS.value, 'file has been queued')
+        translationProcess = TranslationProcess.objects(basename=basename)
+        translationProcess.update(set__status=STATUS_PROCESSING)
+        log.info('translate_docx_v2: ended at ' + str(getcurrenttime()) + 'total time elapsed : ' + str(
+            getcurrenttime() - start_time))
+        return res.getres()
+    except Exception as e:
+        log.error('translate_docx_v2 : error occurred file not processing, Error is = '+str(e))
+        translationProcess = TranslationProcess.objects(basename=basename)
+        translationProcess.update(set__status=STATUS_FAILED)
+        res = CustomResponse(Status.FAILURE.value, 'something went wrong')
+        log.info('translate_docx_v2: ended at ' + str(getcurrenttime()) + 'total time elapsed : ' + str(
+            getcurrenttime() - start_time))
+        return res.getres()
 
 
 def getcurrenttime():
