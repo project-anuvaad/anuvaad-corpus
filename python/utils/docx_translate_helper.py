@@ -383,9 +383,13 @@ def modify_text_with_tokenization(nodes, url, model_id, url_end_point):
                 break
 
         if Q_response.qsize() == 0 and text == '':
-            log.info('modify_text_with_tokenization **: node text before == ' + node.text)
-            node.text = prev.text
-            log.info('modify_text_with_tokenization **: node text before == ' + node.text)
+            try:
+                log.info('modify_text_with_tokenization **: node text before == ' + node.text)
+                node.text = prev.text
+                log.info('modify_text_with_tokenization **: node text before == ' + node.text)
+            except Exception as e:
+                pass
+
 
 
 def warp_original_with_identification_tags(input_docx_file_path, xml_tree, output_docx_filepath):
