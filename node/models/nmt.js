@@ -21,7 +21,8 @@ Nmtmodels.saveModel = function(model, cb){
 }
 
 Nmtmodels.updateModel = function (model, cb) {
-    Nmtmodels.collection.findOneAndUpdate({ _id: mongoose.Types.ObjectId(model._id)}, { $set: { is_primary: model.is_primary,status: model.status, model_id: model.model_id , model_name: model.model_name} }, { upsert: false }, function (err, doc) {
+    // Nmtmodels.collection.findOneAndUpdate({ _id: mongoose.Types.ObjectId(model._id)}, { $set: { is_primary: model.is_primary,status: model.status, model_id: model.model_id , model_name: model.model_name} }, { upsert: false }, function (err, doc) {
+    Nmtmodels.collection.findOneAndUpdate({ _id: mongoose.Types.ObjectId(model._id)}, {model}, { upsert: false }, function (err, doc) {
         if (err) {
             LOG.error(err)
             cb(err, null)
