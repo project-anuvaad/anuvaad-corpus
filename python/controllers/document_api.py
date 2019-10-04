@@ -84,7 +84,7 @@ def translateDocx():
     docx_helper.warp_original_with_identification_tags(filepath, xmltree, filepath_processed_src_with_ids)
     docx_helper.pre_process_text(xmltree)
 
-    for node, text in docx_helper.itertext(xmltree):
+    for node, text in docx_helper.itertext_old(xmltree):
         nodes.append(node)
         texts.append(text)
 
@@ -100,9 +100,9 @@ def translateDocx():
     #
     # modify_first_page.modify_text_on_first_page_using_model(nodes_first_page, model_id, url_end_point)
     docx_helper.modify_text_with_tokenization(nodes, None, model_id, url_end_point)
-    xml_footer_list = translate_footer.translate_footer(filepath, model_id, url_end_point)
+    # xml_footer_list = translate_footer.translate_footer(filepath, model_id, url_end_point)
 
-    docx_helper.save_docx(filepath, xmltree, filepath_processed, xml_footer_list)
+    docx_helper.save_docx(filepath, xmltree, filepath_processed, None)
 
     res = CustomResponse(Status.SUCCESS.value, basename + '_t' + '.docx')
     translationProcess = TranslationProcess.objects(basename=basename)
