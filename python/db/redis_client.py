@@ -2,7 +2,7 @@ import redis
 import json
 import os
 
-redis_ip = 'redis_ip'
+redis_ip = 'REDIS_URL'
 default_value = 'localhost'
 redis_server = os.environ.get(redis_ip, default_value)
 
