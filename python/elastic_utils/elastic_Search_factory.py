@@ -3,7 +3,7 @@ import os
 import logging
 
 log = logging.getLogger('file')
-elastic_search_hosts = 'es_hosts'
+elastic_search_hosts = 'ES_HOSTS'
 default_value = 'localhost'
 elastic_search_ports = '9200'
 

@@ -1,7 +1,7 @@
 from mongoengine import *
 import os
 
-mongo_ip = 'mongo_ip'
+mongo_ip = 'MONGO_IP'
 default_value = 'localhost'
 mongo_server = os.environ.get(mongo_ip, default_value)
 

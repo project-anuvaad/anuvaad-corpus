@@ -10,8 +10,8 @@ import utils.run_on_shell as shell
 import base64
 import os
 
-REDIS_SERVER_URL = os.environ.get('redis_url', 'http://localhost:9876/')
-PROFILE_REQ_URL = REDIS_SERVER_URL + 'users/'
+GATEWAY_SERVER_URL = os.environ.get('GATEWAY_URL', 'http://localhost:9876/')
+PROFILE_REQ_URL = GATEWAY_SERVER_URL + 'users/'
 log = logging.getLogger('file')
 
 admin_api = Blueprint('admin_api', __name__)
@@ -36,7 +36,7 @@ def update_password():
         res = CustomResponse(Status.ERROR_WEAK_PASSWORD.value, None)
         return res.getres()
     data = {"status": "false"}
-    req = ES_SERVER_URL + 'credentials/basic-auth/' + user_id + '/status'
+    req = GATEWAY_SERVER_URL + 'credentials/basic-auth/' + user_id + '/status'
     response = requests.put(req, json=data)
     res = response.json()
     status = res['status']
@@ -64,7 +64,7 @@ def roles():
             if not body['role-type'] == '':
 
                 try:
-                    response = requests.post(ES_SERVER_URL + 'scopes')
+                    response = requests.post(GATEWAY_SERVER_URL + 'scopes')
                     res = CustomResponse(Status.SUCCESS.value, json.loads(response))
 
                 except:
