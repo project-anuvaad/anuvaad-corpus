@@ -70,9 +70,6 @@ def itertext(xmltree):
     # previous_node = None
     for node in xmltree.iter(tag=etree.Element):
 
-        if check_element_is(node, 't'):
-            yield (node, node.text)
-
         # if check_element_is(node, 'bookmarkStart'):
         #     if previous_node is not None:
         #         previous_node.getparent().remove(previous_node)
