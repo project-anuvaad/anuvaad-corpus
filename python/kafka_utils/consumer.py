@@ -14,6 +14,7 @@ def get_consumer(topic):
         consumer = KafkaConsumer(
             topic,
             bootstrap_servers=[bootstrap_server],
+            auto_offset_reset='earliest',
             value_deserializer=lambda x: json.loads(x.decode('utf-8')))
 
         log.info('get_consumer : consumer returned for topic = ' + topic)
