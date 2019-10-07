@@ -15,6 +15,8 @@ def get_consumer(topic):
             topic,
             bootstrap_servers=[bootstrap_server],
             auto_offset_reset='earliest',
+            enable_auto_commit=True,
+            group_id='anuvaad',
             value_deserializer=lambda x: json.loads(x.decode('utf-8')))
 
         log.info('get_consumer : consumer returned for topic = ' + topic)
