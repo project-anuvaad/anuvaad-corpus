@@ -57,6 +57,7 @@ def process_sentence(sentences):
                 producer = get_producer()
                 producer.send(TOPIC_TO_PROCESS, value=basename)
                 producer.flush()
+                producer.close()
             doc_nodes.update(set__nodes_received=nodes_received)
         text_node.update(set__sentences=text_node_dict[0]['sentences'],
                          set__tokens_received=ttl_sentences, set__is_complete=completed)
