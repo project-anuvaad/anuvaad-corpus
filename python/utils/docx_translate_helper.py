@@ -70,9 +70,6 @@ def itertext(xmltree):
     # previous_node = None
     for node in xmltree.iter(tag=etree.Element):
 
-        if check_element_is(node, 't'):
-            yield (node, node.text)
-
         # if check_element_is(node, 'bookmarkStart'):
         #     if previous_node is not None:
         #         previous_node.getparent().remove(previous_node)
@@ -309,7 +306,7 @@ def modify_text_with_tokenization(nodes, url, model_id, url_end_point):
         t_ = N_T.text
         s_id = N_T.node_id
 
-        arr.append({'src': t_, 'id': model_id, 's_id': s_id})
+        arr.append({'src': t_, 'id': model_id, 's_id': s_id, 'n_id':0})
 
         i = i + 1
         del N_T
@@ -382,13 +379,12 @@ def modify_text_with_tokenization(nodes, url, model_id, url_end_point):
                 log.info('modify_text_with_tokenization: node text after = ' + node.text)
                 break
 
-        if Q_response.qsize() == 0 and text == '':
-            try:
-                log.info('modify_text_with_tokenization **: node text before == ' + node.text)
-                node.text = prev.text
-                log.info('modify_text_with_tokenization **: node text before == ' + node.text)
-            except Exception as e:
-                pass
+        if Q_response.qsize() == 0 and text == '' and prev is not None:
+
+            log.info('modify_text_with_tokenization **: node text before == ' + node.text)
+            node.text = prev.text
+            log.info('modify_text_with_tokenization **: node text after == ' + node.text)
+
 
 
 
