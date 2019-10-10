@@ -41,6 +41,7 @@ from models.translation_process import TranslationProcess
 from models.words import fetchwordsfromsentence
 from models.sentence import Sentence
 from models.corpus import Corpus
+from models.benchmark import Benchmark
 from controllers.admin_api import admin_api
 from controllers.corpus import corpus_api
 from controllers.document_api import document_api
@@ -635,10 +636,75 @@ def remove_junk():
     res = CustomResponse(Status.SUCCESS.value, None)
     return res.getres()
 
+@app.route('/upload-benchmark', methods=['POST'])
+def upload_benchmark_file():
+    basename = str(int(time.time()))
+    try:
+        name = request.form.getlist('name')
+        source_lang = request.form.getlist('source_lang')
+        if source_lang is None or len(
+                source_lang) == 0 or len(source_lang[0]) == 0 or name is None or len(name) == 0 or len(
+            name[0]) == 0 or request.files is None or \
+                request.files['english'] is None:
+            res = CustomResponse(
+                Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
+            return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
+
+        else:
+            current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+            corpus = Benchmark(source_lang=source_lang[0], status=STATUS_PROCESSING,
+                            name=name[0], created_on=current_time,
+                            last_modified=current_time, author='', no_of_sentences=0,
+                            basename=basename)
+            corpus.save()
+            f_eng = request.files['english']
+            filepath_eng = os.path.join(
+                app.config['UPLOAD_FOLDER'], basename + '_eng_filtered.txt')
+            f_eng.save(filepath_eng)
+            # f = request.files['hindi']
+            # filepath = os.path.join(
+            #     app.config['UPLOAD_FOLDER'], basename + '_hin_filtered.txt')
+            # f.save(filepath)
+
+            # translatewithanuvadaeng(app.config['UPLOAD_FOLDER'] +
+            #             '/'+basename+'_eng_filtered.txt', app.config['UPLOAD_FOLDER'] +
+            #             '/'+basename+'_hin_filtered.txt', model_id[0])
+            # target_lang = LANGUAGES[target_lang[0]]
+            # translatewithgoogle(app.config['UPLOAD_FOLDER'] +
+            #             '/'+basename+'_eng_filtered.txt', app.config['UPLOAD_FOLDER'] +
+            #             '/'+basename+'_hin_filtered.txt', target_lang)
+
+            # os.system('./helpers/bleualign.py -s ' + os.getcwd() + '/upload/' + basename + '_hin_filtered' + '.txt' + ' -t ' + os.getcwd() + '/upload/' + basename +
+            #         '_eng_filtered' + '.txt' + ' --srctotarget ' + os.getcwd() + '/upload/' + basename + '_eng_tran' + '.txt' + ' -o ' + os.getcwd() + '/upload/' + basename + '_output')
+            english_res = []
+            f_eng = open(app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng_filtered.txt', 'r')
+            for f in f_eng:
+                english_res.append(f)
+            f_eng.close()
+            data = {'english': english_res}
+            sentences = []
+            for i in range(0, len(english_res)):
+                sentence = Sentence(sentenceid=str(uuid.uuid4()), status=STATUS_PENDING, basename=str(
+                    basename), source=english_res[i])
+                sentences.append(sentence)
+                # sentence.save()
+            Sentence.objects.insert(sentences)
+            for f in glob.glob(app.config['UPLOAD_FOLDER'] + '/' + basename + '*'):
+                os.remove(f)
+            res = CustomResponse(Status.SUCCESS.value, data)
+            corpus = Benchmark.objects(basename=basename)
+            corpus.update(set__status=STATUS_PROCESSED,
+                          set__no_of_sentences=len(english_res))
+            return res.getres()
+    except Exception as e:
+        print(e)
+        res = CustomResponse(Status.ERR_GLOBAL_SYSTEM.value, None)
+        return res.getres(), Status.ERR_GLOBAL_SYSTEM.value['http']['status']
+
+
 
 @app.route('/indian-kanoon', methods=['POST'])
 def upload_indian_kannon_file():
-    pool = mp.Pool(mp.cpu_count())
     basename = str(int(time.time()))
     try:
         name = request.form.getlist('name')
