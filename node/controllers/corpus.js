@@ -241,6 +241,9 @@ exports.updateSentencesGrade = function (req, res) {
                     var sentencedb = results[0]
                     let userId = req.headers['ad-userid']
                     let sentencelog = { edited_by: userId, source: sentencedb._doc.source, target: sentencedb._doc.target, is_grade_changed: true, updated_on: new Date(), parent_id: sentencedb._doc._id, basename: sentencedb._doc.basename, status: sentencedb._doc.status, spelling_rating_edited: sentence.spelling_rating, grade_edited: sentence.rating, grade: sentencedb._doc.rating, spelling_rating: sentencedb._doc.spelling_rating, context_rating:  sentencedb._doc.context_rating, context_rating_edited: sentence.context_rating}
+                    if(req.body.modelid){
+                        sentencelog.modelid = req.body.modelid
+                    }
                     SentenceLog.save([sentencelog], (err, results) => {
                         if (err) {
                             LOG.error(err)
