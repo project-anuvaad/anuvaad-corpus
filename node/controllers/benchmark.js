@@ -42,7 +42,7 @@ exports.fetchBenchmarkSentences = function (req, res) {
         return res.status(apistatus.http.status).json(apistatus);
     }
     if (!pagesize) {
-        pagesize = 30
+        pagesize = 5
         pageno = 1
     }
     Sentence.countDocuments({ basename: basename }, function (err, totalcount) {
@@ -59,7 +59,7 @@ exports.fetchBenchmarkSentences = function (req, res) {
                 })
             }
             else {
-                Sentence.fetch(basename, pagesize, pageno, status, function (err, sentences) {
+                Sentence.fetch(basename, null, null, null, function (err, sentences) {
                     if (err) {
                         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                         return res.status(apistatus.http.status).json(apistatus);
@@ -80,7 +80,7 @@ exports.fetchBenchmarkSentences = function (req, res) {
                                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                                 return res.status(apistatus.http.status).json(apistatus);
                             }
-                            return translateByAnuvaad(sentences, model_id, totalcountc, res)
+                            return translateByAnuvaad(sentences, model_id, totalcount, res)
                             // let response = new Response(StatusCode.SUCCESS, sentences, sentences_arr.length).getRsp()
                             // return res.status(response.http.status).json(response);
                         })
@@ -92,7 +92,7 @@ exports.fetchBenchmarkSentences = function (req, res) {
 }
 
 
-var translateByAnuvaad = function (sentences, modelid, count, res) {
+var translateByAnuvaad = function (sentences, modelid, totalcount, res) {
     let req_arr = []
     let data_arr = []
     let target_not_available = false
@@ -105,7 +105,7 @@ var translateByAnuvaad = function (sentences, modelid, count, res) {
 
     })
     if (!target_not_available) {
-        let response = new Response(StatusCode.SUCCESS, sentences, req_arr.length).getRsp()
+        let response = new Response(StatusCode.SUCCESS, sentences, totalcount).getRsp()
         return res.status(response.http.status).json(response);
     }
     axios
@@ -131,7 +131,7 @@ var translateByAnuvaad = function (sentences, modelid, count, res) {
                     });
                 },
                 function () {
-                    let response = new Response(StatusCode.SUCCESS, data_arr, count).getRsp()
+                    let response = new Response(StatusCode.SUCCESS, data_arr, totalcount).getRsp()
                     return res.status(response.http.status).json(response);
                 }
             ])
