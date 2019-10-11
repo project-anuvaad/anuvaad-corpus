@@ -3,24 +3,36 @@ var LOG = require('../logger/logger').logger
 var Schema = mongoose.Schema;
 
 var BenchmarkSchema = new Schema({
-    _id: {type: String},
+    _id: { type: String },
 }, { strict: false });
 var Benchmark = mongoose.model('Benchmark', BenchmarkSchema, 'benchmark');
 
-Benchmark.fetchAll = function(cb){
-    Benchmark.find({
-    }, function (err, benchmarks) {
+Benchmark.fetchAll = function (condition, cb) {
+    Benchmark.find(condition, function (err, benchmarks) {
         if (err) {
             LOG.error("Unable to find benchmark due to [%s]", JSON.stringify(err));
             return cb(err, null);
         }
-        LOG.info("[%s] Benchmark found",benchmarks);
+        LOG.info("[%s] Benchmark found", benchmarks);
         return cb(null, benchmarks);
     })
 }
 
-Benchmark.saveCorpus = function(benchmark, cb){
-    Benchmark.collection.insert(benchmark,function(err,docs){
+Benchmark.fetchByCondition = function (condition, cb) {
+    Benchmark.find(
+        condition
+        , function (err, benchmarks) {
+            if (err) {
+                LOG.error("Unable to find benchmark due to [%s]", JSON.stringify(err));
+                return cb(err, null);
+            }
+            LOG.info("[%s] Benchmark found", benchmarks);
+            return cb(null, benchmarks);
+        })
+}
+
+Benchmark.saveBenchmarks = function (benchmarks, cb) {
+    Benchmark.collection.insertMany(benchmarks, function (err, docs) {
         if (err) {
             // TODO: handle error
             return cb(err, null);
@@ -29,6 +41,17 @@ Benchmark.saveCorpus = function(benchmark, cb){
             return cb(null, docs);
         }
     })
+}
+
+Benchmark.updateBenchmarkData = function (benchmark,useid, cb) {
+    Benchmark.collection.findOneAndUpdate({ _id: mongoose.Types.ObjectId(benchmark._id)}, { $set: { assigned_to: useid } }, { upsert: false }, function (err, doc) {
+        if (err) {
+            LOG.error(err)
+            cb(err, null)
+        }
+        LOG.info(doc)
+        cb(null, doc)
+    });
 }
 
 
