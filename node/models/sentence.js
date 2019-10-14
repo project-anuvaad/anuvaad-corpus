@@ -22,7 +22,7 @@ Sentence.saveSentences = function (sentences, cb) {
 }
 
 Sentence.updateSentence = function (sentence, cb) {
-    Sentence.collection.findOneAndUpdate({ _id: mongoose.Types.ObjectId(sentence._id)}, { $set: { status: STATUS_EDITED,source: sentence.source, target: sentence.target } }, { upsert: false }, function (err, doc) {
+    Sentence.collection.findOneAndUpdate({ _id: mongoose.Types.ObjectId(sentence._id) }, { $set: { status: STATUS_EDITED, source: sentence.source, target: sentence.target } }, { upsert: false }, function (err, doc) {
         if (err) {
             LOG.error(err)
             cb(err, null)
@@ -32,8 +32,22 @@ Sentence.updateSentence = function (sentence, cb) {
     });
 }
 
+Sentence.sumRatings = function (basename, cb) {
+    Sentence.aggregate([
+        { $match: { basename:  basename} },
+        { $group: { _id: null,grammer_grade: { $sum: "$rating" }, context_rating: { $sum: "$context_rating" }, spelling_rating: { $sum: "$spelling_rating" } } }
+    ], function (err, doc) {
+        if (err) {
+            LOG.error(err)
+            cb(err, null)
+        }
+        LOG.info(doc)
+        cb(null, doc)
+    })
+}
+
 Sentence.updateSentenceData = function (sentence, cb) {
-    Sentence.collection.findOneAndUpdate({ _id: mongoose.Types.ObjectId(sentence._id)}, { $set: { source: sentence.source, target: sentence.target } }, { upsert: false }, function (err, doc) {
+    Sentence.collection.findOneAndUpdate({ _id: mongoose.Types.ObjectId(sentence._id) }, { $set: { source: sentence.source, target: sentence.target } }, { upsert: false }, function (err, doc) {
         if (err) {
             LOG.error(err)
             cb(err, null)
@@ -54,7 +68,7 @@ Sentence.updateSentenceStatus = function (sentence, cb) {
 }
 
 Sentence.updateSentenceGrade = function (sentence, cb) {
-    Sentence.collection.updateOne({ _id: mongoose.Types.ObjectId(sentence._id) }, { $set: { context_rating: sentence.context_rating, rating: sentence.rating, spelling_rating:  sentence.spelling_rating} }, { upsert: false }, function (err, doc) {
+    Sentence.collection.updateOne({ _id: mongoose.Types.ObjectId(sentence._id) }, { $set: { context_rating: sentence.context_rating, rating: sentence.rating, spelling_rating: sentence.spelling_rating } }, { upsert: false }, function (err, doc) {
         if (err) {
             LOG.error(err)
             cb(err, null)

@@ -17,7 +17,7 @@ var COMPONENT = "benchmark";
 
 exports.fetchBenchmark = function (req, res) {
     let userId = req.headers['ad-userid']
-    Benchmark.fetchAll({ $or: [{ assigned_to: { $exists: false} }, { 'assigned_to': userId }] }, (err, benchmarks) => {
+    Benchmark.fetchAll({ $or: [{ assigned_to: { $exists: false } }, { 'assigned_to': userId }] }, (err, benchmarks) => {
         if (err) {
             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
             return res.status(apistatus.http.status).json(apistatus);
@@ -66,7 +66,7 @@ exports.fetchBenchmarkSentences = function (req, res) {
                                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                                     return res.status(apistatus.http.status).json(apistatus);
                                 }
-                                return translateByAnuvaad(sentences, model_id, totalcount, res)
+                                return translateByAnuvaad(basename, sentences, model_id, totalcount, res)
                                 // let response = new Response(StatusCode.SUCCESS, sentences, count).getRsp()
                                 // return res.status(response.http.status).json(response);
                             })
@@ -93,7 +93,7 @@ exports.fetchBenchmarkSentences = function (req, res) {
                                             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                                             return res.status(apistatus.http.status).json(apistatus);
                                         }
-                                        return translateByAnuvaad(sentences, model_id, totalcount, res)
+                                        return translateByAnuvaad(basename, sentences, model_id, totalcount, res)
                                         // let response = new Response(StatusCode.SUCCESS, sentences, sentences_arr.length).getRsp()
                                         // return res.status(response.http.status).json(response);
                                     })
@@ -112,7 +112,7 @@ exports.fetchBenchmarkSentences = function (req, res) {
 }
 
 
-var translateByAnuvaad = function (sentences, modelid, totalcount, res) {
+var translateByAnuvaad = function (basename, sentences, modelid, totalcount, res) {
     let req_arr = []
     let data_arr = []
     let target_not_available = false
@@ -125,40 +125,53 @@ var translateByAnuvaad = function (sentences, modelid, totalcount, res) {
 
     })
     if (!target_not_available) {
-        let response = new Response(StatusCode.SUCCESS, sentences, totalcount).getRsp()
-        return res.status(response.http.status).json(response);
-    }
-    axios
-        .post('http://52.40.71.62:3003/translator/translation_en', req_arr)
-        .then(res_anuvaad => {
-            LOG.info(res_anuvaad.data)
-            let response_body = res_anuvaad.data['response_body']
-            sentences.map((s, index) => {
-                s['_doc']['target'] = response_body[index]['tgt']
-                data_arr.push(s['_doc'])
+        Sentence.sumRatings(basename + '_' + modelid, function (err, ratings) {
+            if (err) {
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+            let response = new Response(StatusCode.SUCCESS, sentences, totalcount, ratings[0]).getRsp()
+            return res.status(response.http.status).json(response);
+        })
+    } else {
+        axios
+            .post('http://52.40.71.62:3003/translator/translation_en', req_arr)
+            .then(res_anuvaad => {
+                LOG.info(res_anuvaad.data)
+                let response_body = res_anuvaad.data['response_body']
+                sentences.map((s, index) => {
+                    s['_doc']['target'] = response_body[index]['tgt']
+                    data_arr.push(s['_doc'])
 
-            })
-            async.waterfall([
-                function (callback) {
-                    async.each(data_arr, function (d, callback) {
-                        Sentence.updateSentenceData(d, function (err, doc) {
-                            LOG.info(err)
+                })
+                async.waterfall([
+                    function (callback) {
+                        async.each(data_arr, function (d, callback) {
+                            Sentence.updateSentenceData(d, function (err, doc) {
+                                LOG.info(err)
+                                callback()
+                            })
+
+                        }, function (err) {
                             callback()
+                        });
+                    },
+                    function () {
+                        Sentence.sumRatings(basename + '_' + modelid, function (err, ratings) {
+                            if (err) {
+                                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                return res.status(apistatus.http.status).json(apistatus);
+                            }
+                            let response = new Response(StatusCode.SUCCESS, data_arr, totalcount, ratings[0]).getRsp()
+                            return res.status(response.http.status).json(response);
                         })
 
-                    }, function (err) {
-                        callback()
-                    });
-                },
-                function () {
-                    let response = new Response(StatusCode.SUCCESS, data_arr, totalcount).getRsp()
-                    return res.status(response.http.status).json(response);
-                }
-            ])
-        })
-        .catch(err => {
-            LOG.error(err)
-            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-            return res.status(apistatus.http.status).json(apistatus);
-        });
+                    }
+                ])
+            })
+            .catch(err => {
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            });
+    }
 }
