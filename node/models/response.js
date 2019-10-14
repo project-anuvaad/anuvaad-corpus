@@ -28,7 +28,7 @@ Response.prototype.getRsp = function () {
     if(this.sum){
         result.sum = this.sum
     }
-    if(this.pending){
+    if(!isNaN(this.pending)){
         result.pending = this.pending
     }
     return result
