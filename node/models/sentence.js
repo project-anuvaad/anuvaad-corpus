@@ -78,7 +78,7 @@ Sentence.updateSentenceGrade = function (sentence, cb) {
 }
 
 Sentence.fetch = function (basename, pagesize, pageno, status, pending, cb) {
-    Sentence.find((pending ? { $or: [{ rating: { $exists: false }, spelling_rating: { $exists: false }, context_rating: { $exists: false }, rating: null, spelling_rating: null, context_rating: null }], basename: basename } : (status ? { status: status, basename: basename } : { basename: basename })), {}, (pagesize && pageno ? { skip: (pageno - 1) * pagesize, limit: parseInt(pagesize) } : {}), function (err, sentences) {
+    Sentence.find((pending ? { $or: [{ rating: { $exists: false } }, { spelling_rating: { $exists: false } }, { context_rating: { $exists: false } }, { rating: null }, { spelling_rating: null }, { context_rating: null }], basename: basename } : (status ? { status: status, basename: basename } : { basename: basename })), {}, (pagesize && pageno ? { skip: (pageno - 1) * pagesize, limit: parseInt(pagesize) } : {}), function (err, sentences) {
         if (err) {
             LOG.error("Unable to find sentences  due to [%s]", JSON.stringify(err));
             return cb(err, null);
