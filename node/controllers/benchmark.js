@@ -125,13 +125,19 @@ var translateByAnuvaad = function (basename, sentences, modelid, totalcount, res
 
     })
     if (!target_not_available) {
-        Sentence.sumRatings(basename + '_' + modelid, function (err, ratings) {
+        Sentence.countDocuments({ basename: basename + '_' + modelid, rating: { $gt: 0 }, spelling_rating: { $gt: 0 }, context_rating: { $gt: 0 } }, function (err, countNonPending) {
             if (err) {
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
-            let response = new Response(StatusCode.SUCCESS, sentences, totalcount, ratings[0]).getRsp()
-            return res.status(response.http.status).json(response);
+            Sentence.sumRatings(basename + '_' + modelid, function (err, ratings) {
+                if (err) {
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
+                let response = new Response(StatusCode.SUCCESS, sentences, totalcount, ratings[0], totalcount - countNonPending).getRsp()
+                return res.status(response.http.status).json(response);
+            })
         })
     } else {
         axios
@@ -157,13 +163,19 @@ var translateByAnuvaad = function (basename, sentences, modelid, totalcount, res
                         });
                     },
                     function () {
-                        Sentence.sumRatings(basename + '_' + modelid, function (err, ratings) {
+                        Sentence.countDocuments({ basename: basename + '_' + modelid, rating: { $gt: 0 }, spelling_rating: { $gt: 0 }, context_rating: { $gt: 0 } }, function (err, countNonPending) {
                             if (err) {
                                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                                 return res.status(apistatus.http.status).json(apistatus);
                             }
-                            let response = new Response(StatusCode.SUCCESS, data_arr, totalcount, ratings[0]).getRsp()
-                            return res.status(response.http.status).json(response);
+                            Sentence.sumRatings(basename + '_' + modelid, function (err, ratings) {
+                                if (err) {
+                                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                    return res.status(apistatus.http.status).json(apistatus);
+                                }
+                                let response = new Response(StatusCode.SUCCESS, data_arr, totalcount, ratings[0], totalcount - countNonPending).getRsp()
+                                return res.status(response.http.status).json(response);
+                            })
                         })
 
                     }

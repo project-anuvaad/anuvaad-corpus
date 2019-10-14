@@ -9,11 +9,12 @@ function Response(statuscode, data) {
     this.data = data;
 }
 
-function Response(statuscode, data, count, sum) {
+function Response(statuscode, data, count, sum, pending) {
     this.statuscode = statuscode;
     this.data = data;
     this.count = count;
     this.sum = sum
+    this.pending = pending
 }
 
 Response.prototype.getRsp = function () {
@@ -26,6 +27,9 @@ Response.prototype.getRsp = function () {
     }
     if(this.sum){
         result.sum = this.sum
+    }
+    if(this.pending){
+        result.pending = this.pending
     }
     return result
 };
