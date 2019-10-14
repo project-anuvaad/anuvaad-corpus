@@ -61,7 +61,7 @@ exports.fetchCorpusSentences = function (req, res) {
     Corpus.findOne({ basename: basename }, function (error, corpus) {
         Sentence.countDocuments({ basename: basename }, function (err, count) {
             LOG.info(count)
-            Sentence.fetch(basename, pagesize, pageno, status, function (err, sentences) {
+            Sentence.fetch(basename, pagesize, pageno, status,null, function (err, sentences) {
                 if (err) {
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);

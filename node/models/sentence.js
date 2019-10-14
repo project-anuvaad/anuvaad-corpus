@@ -34,8 +34,8 @@ Sentence.updateSentence = function (sentence, cb) {
 
 Sentence.sumRatings = function (basename, cb) {
     Sentence.aggregate([
-        { $match: { basename:  basename} },
-        { $group: { _id: null,grammer_grade: { $sum: "$rating" }, context_rating: { $sum: "$context_rating" }, spelling_rating: { $sum: "$spelling_rating" } } }
+        { $match: { basename: basename } },
+        { $group: { _id: null, grammer_grade: { $sum: "$rating" }, context_rating: { $sum: "$context_rating" }, spelling_rating: { $sum: "$spelling_rating" } } }
     ], function (err, doc) {
         if (err) {
             LOG.error(err)
@@ -77,8 +77,8 @@ Sentence.updateSentenceGrade = function (sentence, cb) {
     });
 }
 
-Sentence.fetch = function (basename, pagesize, pageno, status, cb) {
-    Sentence.find((status ? { status: status, basename: basename } : { basename: basename }), {}, (pagesize && pageno ? { skip: (pageno - 1) * pagesize, limit: parseInt(pagesize) } : {}), function (err, sentences) {
+Sentence.fetch = function (basename, pagesize, pageno, status, pending, cb) {
+    Sentence.find((pending ? { $or: [{ rating: { $exists: false }, spelling_rating: { $exists: false }, context_rating: { $exists: false }, rating: null, spelling_rating: null, context_rating: null }], basename: basename } : (status ? { status: status, basename: basename } : { basename: basename })), {}, (pagesize && pageno ? { skip: (pageno - 1) * pagesize, limit: parseInt(pagesize) } : {}), function (err, sentences) {
         if (err) {
             LOG.error("Unable to find sentences  due to [%s]", JSON.stringify(err));
             return cb(err, null);
