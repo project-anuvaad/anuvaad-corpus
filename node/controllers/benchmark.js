@@ -35,6 +35,7 @@ exports.fetchBenchmarkSentences = function (req, res) {
     var pageno = req.query.pageno
     var model_id = req.query.modelid
     var status = req.query.status
+    var pending = false
     if (basename == null || basename.length == 0 && !model_id) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, PARALLEL_CORPUS_COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
@@ -42,6 +43,9 @@ exports.fetchBenchmarkSentences = function (req, res) {
     if (pagesize && pagesize > 30) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MAX_LIMIT_EXCEEDED, PARALLEL_CORPUS_COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
+    }
+    if (status && status == 'PENDING') {
+        pending = true
     }
     if (!pagesize) {
         pagesize = 5
@@ -61,7 +65,7 @@ exports.fetchBenchmarkSentences = function (req, res) {
                 Sentence.countDocuments({ basename: basename }, function (err, totalcount) {
                     Sentence.countDocuments({ basename: basename + '_' + model_id }, function (err, count) {
                         if (count > 0) {
-                            Sentence.fetch(basename + '_' + model_id, pagesize, pageno, status, function (err, sentences) {
+                            Sentence.fetch(basename + '_' + model_id, pagesize, pageno, null, pending, function (err, sentences) {
                                 if (err) {
                                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                                     return res.status(apistatus.http.status).json(apistatus);
@@ -72,7 +76,7 @@ exports.fetchBenchmarkSentences = function (req, res) {
                             })
                         }
                         else {
-                            Sentence.fetch(basename, null, null, null, function (err, sentences) {
+                            Sentence.fetch(basename, null, null, null, null, function (err, sentences) {
                                 if (err) {
                                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                                     return res.status(apistatus.http.status).json(apistatus);
@@ -88,7 +92,7 @@ exports.fetchBenchmarkSentences = function (req, res) {
                                         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                                         return res.status(apistatus.http.status).json(apistatus);
                                     }
-                                    Sentence.fetch(basename + '_' + model_id, pagesize, pageno, status, function (err, sentences) {
+                                    Sentence.fetch(basename + '_' + model_id, pagesize, pageno, null,pending, function (err, sentences) {
                                         if (err) {
                                             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                                             return res.status(apistatus.http.status).json(apistatus);
