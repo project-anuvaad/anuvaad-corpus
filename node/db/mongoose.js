@@ -12,7 +12,12 @@ var config = require('../config/config').config;
 var LOG = require('../logger/logger').logger;
 
 
-mongoose.connect(process.env.MONGO_URL ? process.env.MONGO_URL : config.MONGO_URL);
+mongoose.connect(process.env.MONGO_URL ? process.env.MONGO_URL : config.MONGO_URL, function(err) {
+    if (err) {
+        LOG.error(err)
+        process.exit(0);
+    }
+});
 module.exports = mongoose;
 
 mongoose.connection.on('connected', function () {
