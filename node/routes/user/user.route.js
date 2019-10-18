@@ -10,4 +10,7 @@ var userController = require('../../controllers/users');
 module.exports = function (router) {
     router.route('/list-users')
         .get(userController.listUsers);
+
+    router.route('/list-roles')
+        .get(userController.listRoles);
 }
