@@ -16,20 +16,37 @@ var axios = require('axios');
 
 
 var COMPONENT = "users";
-const ES_SERVER_URL = process.env.MONGO_URL ? process.env.GATEWAY_URL : 'http://localhost:9876/'
+const ES_SERVER_URL = process.env.GATEWAY_URL ? process.env.GATEWAY_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/admin/'
 const USERS_REQ_URL = ES_SERVER_URL + 'users?count=1000'
-
+const PROFILE_BASE_URL = process.env.PROFILE_APP_URL ? process.env.PROFILE_APP_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/'
+const PROFILE_REQ_URL = PROFILE_BASE_URL + 'corpus/get-profiles'
 
 
 exports.listUsers = function (req, res) {
     axios.get(USERS_REQ_URL).then((api_res) => {
         if (api_res.data && api_res.data.users && Array.isArray(api_res.data.users)) {
-            let response = new Response(StatusCode.SUCCESS, api_res.data.users).getRsp()
-            return res.status(response.http.status).json(response);
+            let userIds = []
+            api_res.data.users.map((u) => {
+                userIds.push(u.id)
+            })
+            axios.post(PROFILE_REQ_URL, { userids: userIds }).then((api_res) => {
+                if (api_res.data) {
+                    if (api_res.data.data && Array.isArray(api_res.data.data)) {
+                        let response = new Response(StatusCode.SUCCESS, api_res.data.data).getRsp()
+                        return res.status(response.http.status).json(response);
+                    }
+                }
+            }).catch((e) => {
+                LOG.error(e)
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            })
         }
-        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-        return res.status(apistatus.http.status).json(apistatus);
-    }).catch((e)=>{
+        else {
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+    }).catch((e) => {
         LOG.info(e)
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
