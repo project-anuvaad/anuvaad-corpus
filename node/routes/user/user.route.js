@@ -13,4 +13,7 @@ module.exports = function (router) {
 
     router.route('/list-roles')
         .get(userController.listRoles);
+
+    router.route('/create-user')
+        .post(userController.createUser);
 }
