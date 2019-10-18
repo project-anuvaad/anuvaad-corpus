@@ -13,18 +13,19 @@ var LOG = require('../logger/logger').logger
 var UUIDV4 = require('uuid/v4')
 var async = require('async');
 var axios = require('axios');
+const { exec } = require('child_process');
 
 
 var COMPONENT = "users";
 const ES_SERVER_URL = process.env.GATEWAY_URL ? process.env.GATEWAY_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/admin/'
-const USERS_REQ_URL = ES_SERVER_URL + 'users?count=1000'
+const USERS_REQ_URL = ES_SERVER_URL + 'users'
 const SCOPE_URL = ES_SERVER_URL + 'scopes?count=1000'
 const PROFILE_BASE_URL = process.env.PROFILE_APP_URL ? process.env.PROFILE_APP_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/'
 const PROFILE_REQ_URL = PROFILE_BASE_URL + 'corpus/get-profiles'
 
 
 exports.listUsers = function (req, res) {
-    axios.get(USERS_REQ_URL).then((api_res) => {
+    axios.get(USERS_REQ_URL + '?count=1000').then((api_res) => {
         if (api_res.data && api_res.data.users && Array.isArray(api_res.data.users)) {
             let userIds = []
             api_res.data.users.map((u) => {
@@ -66,8 +67,43 @@ exports.listRoles = function (req, res) {
             return res.status(apistatus.http.status).json(apistatus);
         }
     }).catch((e) => {
-        LOG.info(e)
+        LOG.error(e)
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    })
+}
+
+exports.createUser = function (req, res) {
+    if (!req.body || !req.body.user || !req.body.user.username || !req.body.user.password) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let user = req.body.user
+    let user_to_be_saved = {}
+    user_to_be_saved.username = user.username
+    user_to_be_saved.firstname = user.firstname
+    user_to_be_saved.lastname = user.lastname
+    user_to_be_saved.email = user.email
+    axios.post(USERS_REQ_URL, user_to_be_saved).then((api_res) => {
+        exec('eg credentials create -c ' + user_to_be_saved.username + ' -t oauth2', (err, stdout, stderr) => {
+            if (err) {
+                LOG.error(err)
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+            exec('eg credentials create -c ' + user_to_be_saved.username + ' -t basic-auth -p "password=' + user.password + '"', (err, stdout, stderr) => {
+                if (err) {
+                    LOG.error(err)
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
+                LOG.info(stdout)
+                let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                return res.status(response.http.status).json(response);
+            });
+        });
+    }).catch((e) => {
+        let apistatus = new APIStatus(e.response.status == 409 ? StatusCode.ERR_DATA_EXIST : StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     })
 }
