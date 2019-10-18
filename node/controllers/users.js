@@ -84,28 +84,28 @@ exports.createUser = function (req, res) {
     user_to_be_saved.firstname = user.firstname
     user_to_be_saved.lastname = user.lastname
     user_to_be_saved.email = user.email
-    axios.post(USERS_REQ_URL, user_to_be_saved).then((api_res) => {
+    // axios.post(USERS_REQ_URL, user_to_be_saved).then((api_res) => {
         exec('eg credentials create -c ' + user_to_be_saved.username + ' -t oauth2', (err, stdout, stderr) => {
             if (err) {
                 LOG.error(err)
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
+            LOG.info(stdout)
             exec('eg credentials create -c ' + user_to_be_saved.username + ' -t basic-auth -p "password=' + user.password + '"', (err, stdout, stderr) => {
                 if (err) {
                     LOG.error(err)
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);
                 }
-                LOG.info(stdout)
                 let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
                 return res.status(response.http.status).json(response);
             });
         });
-    }).catch((e) => {
-        let apistatus = new APIStatus(e.response.status == 409 ? StatusCode.ERR_DATA_EXIST : StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-        return res.status(apistatus.http.status).json(apistatus);
-    })
+    // }).catch((e) => {
+    //     let apistatus = new APIStatus(e.response.status == 409 ? StatusCode.ERR_DATA_EXIST : StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+    //     return res.status(apistatus.http.status).json(apistatus);
+    // })
 }
 
 
