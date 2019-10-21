@@ -42,7 +42,7 @@ def create_user_basic_auth():
     firstname = body['firstname']
     lastname = body['lastname']
     password = body['password']
-    scope = body['scope']
+    scope = body['scopes']
 
     try:
         profile = requests.get(PROFILE_REQ_URL + user_name)
