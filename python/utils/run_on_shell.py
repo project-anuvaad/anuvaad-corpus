@@ -15,6 +15,7 @@ def create_basic_auth_credentials(username, password):
         CREATE_BASIC_AUTH_PART + password + '"'
     log.info(command)
     p = subprocess.call(command, shell=True)
+    log.info(p)
     # (output, err) = p.communicate()
     # data = json.loads(output.decode('utf-8'))
     return 'success'
