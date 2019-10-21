@@ -12,10 +12,10 @@ log = logging.getLogger('file')
 
 def create_basic_auth_credentials(username, password):
     command = CREATE_BASIC_AUTH_BASE + username + CREATE_BASIC_AUTH_PART + password + '"'
-    p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
-    (output, err) = p.communicate()
-    data = json.loads(output.decode('utf-8'))
-    return data
+    p = subprocess.call(command , shell=True)
+    # (output, err) = p.communicate()
+    # data = json.loads(output.decode('utf-8'))
+    return 'success'
 
 
 def create_user(username, firstname, lastname):
@@ -37,11 +37,12 @@ def scope_add(username, scopes):
         scope = ''
         for s in scopes:
             scope = scope + 's '
+        log.info('scope is '+ scope)
         command = 'eg credential:scopes add -t basic-auth --id ' + username + ' ' + scope
         p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
         (output, err) = p.communicate()
         data = json.loads(output.decode('utf-8'))
-        log.info(' scope_add : response for username = ' + username + ', scope = ' + str(data))
+        # log.info(' scope_add : response for username = ' + username + ', scope = ' + str(data))
         return data
     except Exception as e:
         return None
