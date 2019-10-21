@@ -21,6 +21,7 @@ def create_basic_auth_credentials(username, password):
 def create_user(username, firstname, lastname):
     try:
         command = CREATE_USER_BASE + '\'username=' + username + '\' -p \'firstname=' + firstname + '\' -p \'lastname=' + lastname + '\' ';
+        log.info(command)
         p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
         (output, err) = p.communicate()
         data = json.loads(output.decode('utf-8'))
