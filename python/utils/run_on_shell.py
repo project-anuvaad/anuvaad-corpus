@@ -43,6 +43,7 @@ def scope_add(username, scopes):
             scope = scope + s + ' '
         log.info('scope is ' + scope)
         command = 'eg credential:scopes add -t basic-auth --id ' + username + ' ' + scope
+        log.info(command)
         p = subprocess.call(command, shell=True)
         # (output, err) = p.communicate()
         # data = json.loads(output.decode('utf-8'))
