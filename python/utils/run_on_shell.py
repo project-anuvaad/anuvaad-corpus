@@ -23,11 +23,11 @@ def create_user(username, firstname, lastname):
         command = CREATE_USER_BASE + '\'username=' + username + '\' -p \'firstname=' + firstname + '\' -p \'lastname=' + lastname + '\' ';
         log.info(command)
         p = subprocess.call(command, shell=True)
-        (output, err) = p.communicate()
-        log.info(str(output))
-        log.error(str(err))
-        data = json.loads(output.decode('utf-8'))
-        return data
+        # (output, err) = p.communicate()
+        # log.info(str(output))
+        # log.error(str(err))
+        # data = json.loads(output.decode('utf-8'))
+        return 'success'
     except Exception as e:
         return None
 
