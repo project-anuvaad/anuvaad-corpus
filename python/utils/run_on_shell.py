@@ -24,6 +24,8 @@ def create_user(username, firstname, lastname):
         log.info(command)
         p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
         (output, err) = p.communicate()
+        log.info(str(output))
+        log.error(str(err))
         data = json.loads(output.decode('utf-8'))
         return data
     except Exception as e:
