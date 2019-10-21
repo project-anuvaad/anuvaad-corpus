@@ -29,8 +29,11 @@ def create_user(username, firstname, lastname):
         return None
 
 
-def scope_add(username, scope):
+def scope_add(username, scopes):
     try:
+        scope = ''
+        for s in scopes:
+            scope = scope + 's '
         command = 'eg credential:scopes add -t basic-auth --id ' + username + ' ' + scope
         p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
         (output, err) = p.communicate()
