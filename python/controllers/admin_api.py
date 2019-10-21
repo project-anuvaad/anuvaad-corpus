@@ -64,6 +64,8 @@ def create_user_basic_auth():
         log.info('basic auth created')
         response = shell.create_oauth(user_name)
         log.info('oauth created')
+        user = shell.get_user_info(user_name)
+        log.info(str(user))
         scope_response = shell.scope_add(user_name, scope)
         time.sleep(3)
         log.info('scope added')
