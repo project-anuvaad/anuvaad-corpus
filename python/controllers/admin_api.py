@@ -17,6 +17,58 @@ log = logging.getLogger('file')
 admin_api = Blueprint('admin_api', __name__)
 
 
+@admin_api.route("/create-user-oauth", methods=['POST'])
+def create_user_oauth():
+    log.info('create_user_oauth : started')
+    body = request.get_json()
+    user_name = body['username']
+
+    try:
+
+        response = shell.create_oauth(user_name)
+        res = CustomResponse(Status.SUCCESS.value, response)
+        return res.getres()
+    except Exception as e:
+        log.info('create_user_oauth : error ' + str(e))
+        res = CustomResponse(Status.ERROR_GATEWAY.value, None)
+        return res.getres()
+
+
+@admin_api.route("/create-user-basic-auth", methods=['POST'])
+def create_user_basic_auth():
+    log.info('create_user_basic_auth : started')
+    body = request.get_json()
+    user_name = body['username']
+    firstname = body['firstname']
+    lastname = body['lastname']
+    password = body['password']
+    scope = body['scope']
+
+    try:
+        profile = requests.get(PROFILE_REQ_URL + user_name)
+        try:
+            profile = profile.json()
+            if profile['isActive']:
+                # _id = profile['']
+                log.info('create_user_oauth : profile is = : ' + str(profile))
+                res = CustomResponse(Status.USER_ALREADY_EXISTS.value, None)
+                return res.getres()
+        except:
+            pass
+
+        log.info('here')
+        create_response = shell.create_user(user_name, firstname, lastname)
+        shell_response = shell.create_basic_auth_credentials(user_name, password)
+        scope_response = shell.scope_add(user_name, scope)
+        res = CustomResponse(Status.SUCCESS.value, scope_response)
+        return res.getres()
+
+    except Exception as e:
+        log.info(' create_user_basic_auth : error ' + str(e))
+        res = CustomResponse(Status.ERROR_GATEWAY.value, None)
+        return res.getres()
+
+
 @admin_api.route("/update-password", methods=['POST'])
 def update_password():
     log.info('update_password : started')
@@ -103,6 +155,7 @@ def get_user_profile():
     log.error('get_user_profile : Error : userid not provided')
     res = CustomResponse(Status.FAILURE.value, 'please provide valid userid ')
     return res.getres()
+
 
 @admin_api.route('/get-profiles', methods=['POST'])
 def get_user_profiles():
