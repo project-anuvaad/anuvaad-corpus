@@ -14,15 +14,19 @@ def keep_on_running():
     consumer = get_consumer(TOPIC)
 
     for msg in consumer:
-        message = msg.value['out']
-        log.info('keep_on_running : message received = ' + str(message))
-        sentences = message['response_body']
-        status = message['status']
-        if status['statusCode'] == 200:
-            if sentences is not None and not len(sentences) == 0:
-                process_sentence(sentences)
-        else:
-            log.error('keep_on_running : ERROR OCCURRED : NMT SERVER ERROR '+str(status))
+        try:
+            message = msg.value['out']
+            log.info('keep_on_running : message received = ' + str(message))
+            sentences = message['response_body']
+            status = message['status']
+            if status['statusCode'] == 200:
+                if sentences is not None and not len(sentences) == 0:
+                    process_sentence(sentences)
+            else:
+                log.error('keep_on_running : ERROR OCCURRED : NMT SERVER ERROR '+str(status))
+        except Exception as e:
+            log.error('keep_on_running : ERROR OCCURRED : NMT SERVER ERROR '+str(e))
+        
 
 
 def process_sentence(sentences):
