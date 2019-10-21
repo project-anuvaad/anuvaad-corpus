@@ -34,7 +34,7 @@ def create_user_oauth():
         return res.getres()
 
 
-@admin_api.route("/create-user-basic-auth", methods=['POST'])
+@admin_api.route("/create-user", methods=['POST'])
 def create_user_basic_auth():
     log.info('create_user_basic_auth : started')
     body = request.get_json()
@@ -42,7 +42,7 @@ def create_user_basic_auth():
     firstname = body['firstname']
     lastname = body['lastname']
     password = body['password']
-    scope = body['scopes']
+    scope = body['roles']
 
     try:
         profile = requests.get(PROFILE_REQ_URL + user_name)
@@ -60,11 +60,12 @@ def create_user_basic_auth():
         create_response = shell.create_user(user_name, firstname, lastname)
         shell_response = shell.create_basic_auth_credentials(user_name, password)
         scope_response = shell.scope_add(user_name, scope)
-        res = CustomResponse(Status.SUCCESS.value, scope_response)
+        response = shell.create_oauth(user_name)
+        res = CustomResponse(Status.SUCCESS.value, response)
         return res.getres()
 
     except Exception as e:
-        log.info(' create_user_basic_auth : error ' + str(e))
+        log.info(' create_user : error ' + str(e))
         res = CustomResponse(Status.ERROR_GATEWAY.value, None)
         return res.getres()
 
