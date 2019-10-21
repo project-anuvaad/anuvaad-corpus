@@ -10,7 +10,7 @@ import utils.run_on_shell as shell
 import base64
 import os
 
-GATEWAY_SERVER_URL = os.environ.get('GATEWAY_URLAA', 'http://localhost:9876/')
+GATEWAY_SERVER_URL = os.environ.get('GATEWAY_URL', 'http://localhost:9876/')
 PROFILE_REQ_URL = GATEWAY_SERVER_URL + 'users/'
 log = logging.getLogger('file')
 
