@@ -54,7 +54,7 @@ def scope_add(username, scopes):
 
 def create_oauth(user_name):
     try:
-        command = 'eg credentials create -c ' + user_name + '-t oauth2'
+        command = 'eg credentials create -c ' + user_name + ' -t oauth2'
         log.info(command)
         p = subprocess.call(command, shell=True)
         # (output, err) = p.communicate()
