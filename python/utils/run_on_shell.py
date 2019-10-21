@@ -39,11 +39,11 @@ def scope_add(username, scopes):
             scope = scope + 's '
         log.info('scope is '+ scope)
         command = 'eg credential:scopes add -t basic-auth --id ' + username + ' ' + scope
-        p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
-        (output, err) = p.communicate()
-        data = json.loads(output.decode('utf-8'))
+        p = subprocess.call(command, shell=True)
+        # (output, err) = p.communicate()
+        # data = json.loads(output.decode('utf-8'))
         # log.info(' scope_add : response for username = ' + username + ', scope = ' + str(data))
-        return data
+        return 'success'
     except Exception as e:
         return None
 
