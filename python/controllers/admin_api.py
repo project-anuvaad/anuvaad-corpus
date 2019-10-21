@@ -58,8 +58,11 @@ def create_user_basic_auth():
 
         log.info('here')
         create_response = shell.create_user(user_name, firstname, lastname)
+        log.info('user created', str(create_response))
         shell_response = shell.create_basic_auth_credentials(user_name, password)
+        log.info('basic auth created', str(shell_response))
         scope_response = shell.scope_add(user_name, scope)
+        log.info('scope added', str(scope_response))
         response = shell.create_oauth(user_name)
         res = CustomResponse(Status.SUCCESS.value, response)
         return res.getres()
