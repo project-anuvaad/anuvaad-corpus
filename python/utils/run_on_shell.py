@@ -11,8 +11,9 @@ log = logging.getLogger('file')
 
 
 def create_basic_auth_credentials(username, password):
-    command = CREATE_BASIC_AUTH_BASE + username + CREATE_BASIC_AUTH_PART + password + '"'
-    p = subprocess.call(command , shell=True)
+    command = CREATE_BASIC_AUTH_BASE + username + \
+        CREATE_BASIC_AUTH_PART + password + '"'
+    p = subprocess.call(command, shell=True)
     # (output, err) = p.communicate()
     # data = json.loads(output.decode('utf-8'))
     return 'success'
@@ -20,7 +21,8 @@ def create_basic_auth_credentials(username, password):
 
 def create_user(username, firstname, lastname):
     try:
-        command = CREATE_USER_BASE + '\'username=' + username + '\' -p \'firstname=' + firstname + '\' -p \'lastname=' + lastname + '\' ';
+        command = CREATE_USER_BASE + '\'username=' + username + \
+            '\' -p \'firstname=' + firstname + '\' -p \'lastname=' + lastname + '\' '
         log.info(command)
         p = subprocess.call(command, shell=True)
         # (output, err) = p.communicate()
@@ -36,8 +38,8 @@ def scope_add(username, scopes):
     try:
         scope = ''
         for s in scopes:
-            scope = s + 's '
-        log.info('scope is '+ scope)
+            scope = scope + s + ' '
+        log.info('scope is ' + scope)
         command = 'eg credential:scopes add -t basic-auth --id ' + username + ' ' + scope
         p = subprocess.call(command, shell=True)
         # (output, err) = p.communicate()
