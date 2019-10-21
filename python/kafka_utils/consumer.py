@@ -17,7 +17,7 @@ def get_consumer(topic):
             auto_offset_reset='earliest',
             enable_auto_commit=True,
             group_id='anuvaad',
-            value_deserializer=lambda x: json.loads(x.decode('utf-8')))
+            value_deserializer=lambda x: handle_json(x))
 
         log.info('get_consumer : consumer returned for topic = ' + topic)
         return consumer
@@ -26,3 +26,10 @@ def get_consumer(topic):
         log.error('get_consumer : ERROR = ' + str(e))
         print('error')
         return None
+
+
+def handle_json(x):
+    try:
+        return json.loads(x.decode('utf-8'))
+    except Exception as e:
+        return {}
