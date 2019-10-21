@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request, current_app as app
 import logging
 import requests
+import time
 from models.status import Status
 from models.response import CustomResponse
 from db.redis_client import get_user_roles_basic_auth
@@ -61,9 +62,10 @@ def create_user_basic_auth():
         log.info('user created')
         shell_response = shell.create_basic_auth_credentials(user_name, password)
         log.info('basic auth created')
-        scope_response = shell.scope_add(user_name, scope)
-        log.info('scope added')
         response = shell.create_oauth(user_name)
+        scope_response = shell.scope_add(user_name, scope)
+        time.sleep(3)
+        log.info('scope added')
         res = CustomResponse(Status.SUCCESS.value, response)
         return res.getres()
 
