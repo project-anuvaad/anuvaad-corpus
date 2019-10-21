@@ -36,7 +36,7 @@ def scope_add(username, scopes):
     try:
         scope = ''
         for s in scopes:
-            scope = scope + 's '
+            scope = s + 's '
         log.info('scope is '+ scope)
         command = 'eg credential:scopes add -t basic-auth --id ' + username + ' ' + scope
         p = subprocess.call(command, shell=True)
