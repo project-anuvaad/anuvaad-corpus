@@ -22,7 +22,7 @@ def create_user(username, firstname, lastname):
     try:
         command = CREATE_USER_BASE + '\'username=' + username + '\' -p \'firstname=' + firstname + '\' -p \'lastname=' + lastname + '\' ';
         log.info(command)
-        p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+        p = subprocess.call(command, shell=True)
         (output, err) = p.communicate()
         log.info(str(output))
         log.error(str(err))
