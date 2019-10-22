@@ -16,4 +16,7 @@ module.exports = function (router) {
 
     router.route('/create-user')
         .post(userController.createUser);
+
+    router.route('/update-user-status')
+        .post(userController.updateUserStatus);
 }

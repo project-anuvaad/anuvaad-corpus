@@ -74,8 +74,25 @@ exports.listRoles = function (req, res) {
     })
 }
 
+exports.updateUserStatus = function (req, res) {
+    if (!req.body || !req.body.status || !req.body.username) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let api_req = {}
+    api_req.status = req.body.status == 'DELETE' ? false : true
+    axios.put(USERS_REQ_URL + '/' + req.body.username+'/status', api_req).then((api_res) => {
+        let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+        return res.status(response.http.status).json(response);
+    }).catch((e) => {
+        LOG.error(e)
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    })
+}
+
 exports.createUser = function (req, res) {
-    if (!req.body || !req.body || !req.body.username || !req.body.password || !req.body.roles) {
+    if (!req.body || !req.body.username || !req.body.password || !req.body.roles) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
