@@ -1,6 +1,7 @@
 import subprocess
 import json
 import logging
+import os
 
 CREATE_BASIC_AUTH_BASE = 'eg credentials create -c '
 CREATE_BASIC_AUTH_PART = ' -t basic-auth -p "password='
@@ -11,14 +12,17 @@ log = logging.getLogger('file')
 
 
 def create_basic_auth_credentials(username, password):
-    command = CREATE_BASIC_AUTH_BASE + username + \
-        CREATE_BASIC_AUTH_PART + password + '"'
-    log.info(command)
-    p = subprocess.call(command, shell=True)
-    log.info(p)
-    # (output, err) = p.communicate()
-    # data = json.loads(output.decode('utf-8'))
-    return 'success'
+    try:
+        command = CREATE_BASIC_AUTH_BASE + username + \
+            CREATE_BASIC_AUTH_PART + password + '"'
+        log.info(command)
+        os.system(command)
+        # log.info(p)
+        # (output, err) = p.communicate()
+        # data = json.loads(output.decode('utf-8'))
+        return 'success'
+    except Exception as e:
+        return None
 
 
 def create_user(username, firstname, lastname):
@@ -26,7 +30,7 @@ def create_user(username, firstname, lastname):
         command = CREATE_USER_BASE + '\'username=' + username + \
             '\' -p \'firstname=' + firstname + '\' -p \'lastname=' + lastname + '\' '
         log.info(command)
-        p = subprocess.call(command, shell=True)
+        os.system(command)
         # (output, err) = p.communicate()
         # log.info(str(output))
         # log.error(str(err))
@@ -44,7 +48,7 @@ def scope_add(username, scopes):
         log.info('scope is ' + scope)
         command = 'eg credential:scopes add -t basic-auth --id ' + username + ' ' + scope
         log.info(command)
-        p = subprocess.call(command, shell=True)
+        os.system(command)
         # (output, err) = p.communicate()
         # data = json.loads(output.decode('utf-8'))
         # log.info(' scope_add : response for username = ' + username + ', scope = ' + str(data))
@@ -57,7 +61,7 @@ def create_oauth(user_name):
     try:
         command = 'eg credentials create -c ' + user_name + ' -t oauth2'
         log.info(command)
-        p = subprocess.call(command, shell=True)
+        os.system(command)
         # (output, err) = p.communicate()
         # data = json.loads(output.decode('utf-8'))
         return 'success'
