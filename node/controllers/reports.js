@@ -12,9 +12,15 @@ const STATUS_REJECTED = 'REJECTED'
 
 
 exports.fetchBenchmarkReports = function (req, res) {
+    var from_date = req.query.from_date
+    var to_date = req.query.to_date
+    if (!to_date || !from_date) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
     SentenceLog.aggregate([
         {
-            $match: { "modelid": { $ne: null } }
+            $match: { "modelid": { $ne: null }, updated_on: { "$gte": new Date(from_date), "$lt": new Date(to_date) } }
         },
         {
             $group: {
