@@ -19,6 +19,7 @@ const { exec } = require('child_process');
 var COMPONENT = "users";
 const ES_SERVER_URL = process.env.GATEWAY_URL ? process.env.GATEWAY_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/admin/'
 const USERS_REQ_URL = ES_SERVER_URL + 'users'
+const CREDENTIALS_URL = ES_SERVER_URL + 'credentials'
 const SCOPE_URL = ES_SERVER_URL + 'scopes?count=1000'
 const PROFILE_BASE_URL = process.env.PROFILE_APP_URL ? process.env.PROFILE_APP_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/'
 const PROFILE_REQ_URL = PROFILE_BASE_URL + 'corpus/get-profiles'
@@ -74,38 +75,45 @@ exports.listRoles = function (req, res) {
 }
 
 exports.createUser = function (req, res) {
-    if (!req.body || !req.body.user || !req.body.user.username || !req.body.user.password) {
+    if (!req.body || !req.body || !req.body.username || !req.body.password || !req.body.roles) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
-    let user = req.body.user
+    let user = req.body
+    let roles = req.body.roles
     let user_to_be_saved = {}
     user_to_be_saved.username = user.username
     user_to_be_saved.firstname = user.firstname
     user_to_be_saved.lastname = user.lastname
     user_to_be_saved.email = user.email
-    // axios.post(USERS_REQ_URL, user_to_be_saved).then((api_res) => {
-        exec('eg credentials create -c ' + user_to_be_saved.username + ' -t oauth2', (err, stdout, stderr) => {
-            if (err) {
-                LOG.error(err)
-                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                return res.status(apistatus.http.status).json(apistatus);
-            }
-            LOG.info(stdout)
-            exec('eg credentials create -c ' + user_to_be_saved.username + ' -t basic-auth -p "password=' + user.password + '"', (err, stdout, stderr) => {
-                if (err) {
-                    LOG.error(err)
-                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                    return res.status(apistatus.http.status).json(apistatus);
-                }
+    axios.post(USERS_REQ_URL, user_to_be_saved).then((api_res) => {
+        let id = api_res.data.id
+        let oauth = {}
+        oauth.consumerId = id
+        oauth.type = "oauth2"
+        axios.post(CREDENTIALS_URL, oauth).then((api_res) => {
+            let base_auth = {}
+            base_auth.credential = {}
+            base_auth.credential.scopes = roles
+            base_auth.credential.password = user.password
+            base_auth.consumerId = id
+            base_auth.type = 'basic-auth'
+            axios.post(CREDENTIALS_URL, base_auth).then((api_res) => {
+                LOG.info(api_res)
                 let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
                 return res.status(response.http.status).json(response);
-            });
-        });
-    // }).catch((e) => {
-    //     let apistatus = new APIStatus(e.response.status == 409 ? StatusCode.ERR_DATA_EXIST : StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-    //     return res.status(apistatus.http.status).json(apistatus);
-    // })
+            }).catch((e) => {
+                let apistatus = new APIStatus(e.response.status == 409 ? StatusCode.ERR_DATA_EXIST : StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            })
+        }).catch((e) => {
+            let apistatus = new APIStatus(e.response.status == 409 ? StatusCode.ERR_DATA_EXIST : StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        })
+    }).catch((e) => {
+        let apistatus = new APIStatus(e.response.status == 409 ? StatusCode.ERR_DATA_EXIST : StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    })
 }
 
 
