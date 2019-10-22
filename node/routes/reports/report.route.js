@@ -11,4 +11,9 @@ module.exports = function (router) {
     router.route('/fetch-reports')
         .get(reportsController.fetchReports);
 
+    router.route('/fetch-benchmark-reports')
+        .get(reportsController.fetchBenchmarkReports);
+
+
+
 }

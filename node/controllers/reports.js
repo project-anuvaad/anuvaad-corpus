@@ -9,6 +9,29 @@ var COMPONENT = "reports";
 const STATUS_ACCEPTED = 'ACCEPTED'
 const STATUS_REJECTED = 'REJECTED'
 
+exports.fetchBenchmarkReports = function (req, res) {
+    SentenceLog.aggregate([
+        {
+            $match: { "modelid": { $ne: null } }
+        },
+        {
+            $group: {
+                _id: '$edited_by',
+                source: { $addToSet: "$source" },
+                parent_id: { $addToSet: "$parent_id" },
+                spelling_rating_edited: { $push: '$spelling_rating_edited' },
+                grade_edited: { $push: '$grade_edited' },
+                context_rating_edited: { $push: '$context_rating_edited' },
+                modelid: { $addToSet: '$modelid' }
+
+            }
+        }
+    ], (err, results) => {
+        let response = new Response(StatusCode.SUCCESS, results).getRsp()
+        return res.status(response.http.status).json(response);
+    })
+}
+
 exports.fetchReports = function (req, res) {
     var from_date = req.query.from_date
     var user_id = req.query.user_id
@@ -17,7 +40,7 @@ exports.fetchReports = function (req, res) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
-    if(!isValidDate(new Date(from_date)) || !isValidDate(new Date(to_date))){
+    if (!isValidDate(new Date(from_date)) || !isValidDate(new Date(to_date))) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_INVALID_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
@@ -101,4 +124,4 @@ exports.fetchReports = function (req, res) {
 
 function isValidDate(d) {
     return d instanceof Date && !isNaN(d);
-  }
+}
