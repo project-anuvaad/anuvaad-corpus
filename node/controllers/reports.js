@@ -19,11 +19,10 @@ exports.fetchBenchmarkReports = function (req, res) {
         {
             $group: {
                 _id: '$edited_by',
-                source: { $addToSet: "$source" },
+                record: {
+                    $push: { parent_id: "$parent_id", source: "$source", grade_edited: "$grade_edited", context_rating_edited: "$context_rating_edited", spelling_rating_edited: "$spelling_rating_edited" }
+                },
                 parent_id: { $addToSet: "$parent_id" },
-                spelling_rating_edited: { $push: '$spelling_rating_edited' },
-                grade_edited: { $push: '$grade_edited' },
-                context_rating_edited: { $push: '$context_rating_edited' },
                 modelid: { $addToSet: '$modelid' }
             }
         }
@@ -31,13 +30,21 @@ exports.fetchBenchmarkReports = function (req, res) {
         if (results && Array.isArray(results)) {
             results.map((res) => {
                 let word_count = 0
-                if (res.source && Array.isArray(res.source)) {
-                    res.source.map((source) => {
-                        word_count += source.split(' ').length
+                let record_unique = []
+                let parent_ids = []
+                if (res.record && Array.isArray(res.record)) {
+                    res.record.map((record) => {
+                        if (!parent_ids.includes(record.parent_id + '')) {
+                            word_count += record.source.split(' ').length
+                            record_unique.push(record)
+                            parent_ids.push(record.parent_id + '')
+                            LOG.info(parent_ids)
+                        }
                     })
                 }
                 res.word_count = word_count
                 res.sentence_count = res.parent_id.length
+                res.record_unique = record_unique
             })
         }
         let response = new Response(StatusCode.SUCCESS, results).getRsp()
