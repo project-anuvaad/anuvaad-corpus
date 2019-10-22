@@ -9,6 +9,8 @@ var COMPONENT = "reports";
 const STATUS_ACCEPTED = 'ACCEPTED'
 const STATUS_REJECTED = 'REJECTED'
 
+
+
 exports.fetchBenchmarkReports = function (req, res) {
     SentenceLog.aggregate([
         {
@@ -23,10 +25,21 @@ exports.fetchBenchmarkReports = function (req, res) {
                 grade_edited: { $push: '$grade_edited' },
                 context_rating_edited: { $push: '$context_rating_edited' },
                 modelid: { $addToSet: '$modelid' }
-
             }
         }
     ], (err, results) => {
+        if (results && Array.isArray(results)) {
+            results.map((res) => {
+                let word_count = 0
+                if (res.source && Array.isArray(res.source)) {
+                    res.source.map((source) => {
+                        word_count += source.split(' ').length
+                    })
+                }
+                res.word_count = word_count
+                res.sentence_count = res.source.length
+            })
+        }
         let response = new Response(StatusCode.SUCCESS, results).getRsp()
         return res.status(response.http.status).json(response);
     })
