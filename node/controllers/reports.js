@@ -37,7 +37,7 @@ exports.fetchBenchmarkReports = function (req, res) {
                     })
                 }
                 res.word_count = word_count
-                res.sentence_count = res.source.length
+                res.sentence_count = res.parent_id.length
             })
         }
         let response = new Response(StatusCode.SUCCESS, results).getRsp()
