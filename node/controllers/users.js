@@ -60,7 +60,13 @@ exports.listUsers = function (req, res) {
 exports.listRoles = function (req, res) {
     axios.get(SCOPE_URL).then((api_res) => {
         if (api_res.data && api_res.data.scopes && Array.isArray(api_res.data.scopes)) {
-            let response = new Response(StatusCode.SUCCESS, api_res.data.scopes).getRsp()
+            let roles = []
+            api_res.data.scopes.map((res)=>{
+                if(res !== 'admin'){
+                    roles.push(res)
+                }
+            })
+            let response = new Response(StatusCode.SUCCESS, roles).getRsp()
             return res.status(response.http.status).json(response);
         }
         else {
