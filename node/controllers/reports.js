@@ -50,7 +50,7 @@ exports.fetchBenchmarkReports = function (req, res) {
                                 var sentencedb = results[0]
                                 Benchmark.fetchByCondition({ basename: sentencedb._doc.basename.split('_')[0] }, (err, benchmark) => {
                                     if (benchmark && Array.isArray(benchmark) && benchmark.length > 0) {
-                                        sentencedb._doc.category_name = benchmark[0].name
+                                        sentencedb._doc.category_name = benchmark[0]._doc.name
                                         LOG.info(sentencedb._doc)
                                     }
                                     records_db.push(sentencedb)
