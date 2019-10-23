@@ -115,14 +115,13 @@ def update_password():
     data = {"credential": {"password":new_password,"scopes":roles_},"consumerId":user_id,"type":"basic-auth"}
     req = GATEWAY_SERVER_URL + 'credentials'
     response = requests.post(req, json=data)
-    shell_response = shell.create_basic_auth_credentials(user_id, new_password)
     res = CustomResponse(Status.SUCCESS.value, None)
     return res.getres()
     # if shell_response['isActive']:
     #     res = CustomResponse(Status.SUCCESS.value, None)
     #     return res.getres()
-    res = CustomResponse(Status.FAILURE.value, None)
-    return res.getres()
+    # res = CustomResponse(Status.FAILURE.value, None)
+    # return res.getres()
 
 @admin_api.route("/update-password-admin", methods=['POST'])
 def update_password_admin():
@@ -134,6 +133,11 @@ def update_password_admin():
         log.info('update_password : password is too weak, at least provide 6 characters')
         res = CustomResponse(Status.ERROR_WEAK_PASSWORD.value, None)
         return res.getres()
+    
+    profile = requests.get(PROFILE_REQ_URL + user_id).content
+    profile = json.loads(profile)
+    roles_ = get_user_roles_basic_auth(user_id)
+    
     data = {"status": "false"}
     req = GATEWAY_SERVER_URL + 'credentials/basic-auth/' + user_id + '/status'
     response = requests.put(req, json=data)
@@ -143,11 +147,11 @@ def update_password_admin():
     if not status == 'Deactivated':
         res = CustomResponse(Status.ERROR_GATEWAY.value, None)
         return res.getres()
-    shell_response = shell.create_basic_auth_credentials(user_id, new_password)
-    if shell_response['isActive']:
-        res = CustomResponse(Status.SUCCESS.value, None)
-        return res.getres()
-    res = CustomResponse(Status.FAILURE.value, None)
+    
+    data = {"credential": {"password":new_password,"scopes":roles_},"consumerId":user_id,"type":"basic-auth"}
+    req = GATEWAY_SERVER_URL + 'credentials'
+    response = requests.post(req, json=data)
+    res = CustomResponse(Status.SUCCESS.value, None)
     return res.getres()
 
 
