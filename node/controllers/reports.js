@@ -1,4 +1,5 @@
 var Response = require('../models/response')
+var Benchmark = require('../models/benchmark');
 var APIStatus = require('../errors/apistatus')
 var StatusCode = require('../errors/statuscodes').StatusCode
 var Sentence = require('../models/sentence');
