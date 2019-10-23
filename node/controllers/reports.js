@@ -44,16 +44,23 @@ exports.fetchBenchmarkReports = function (req, res) {
                 if (res.record && Array.isArray(res.record)) {
                     let records_db = []
                     async.each(res.record, function (record, callback) {
-                            Sentence.find({ _id: record.parent_id }, {}, function (err, results) {
-                                if (results && Array.isArray(results) && results.length > 0) {
-                                    var sentencedb = results[0]
+                        Sentence.find({ _id: record.parent_id }, {}, function (err, results) {
+                            if (results && Array.isArray(results) && results.length > 0) {
+                                var sentencedb = results[0]
+                                Benchmark.fetchByCondition({ basename: sentencedb._doc.basename.split('_')[0] }, (err, benchmark) => {
+                                    if (benchmark && Array.isArray(benchmark) && benchmark.length > 0) {
+                                        sentencedb._doc.category_name = benchmark[0].name
+                                    }
                                     records_db.push(sentencedb)
-                                }
-                                callback()
-                            })
+                                    callback()
+                                })
+
+                            }
+
+                        })
 
                     }, function (err) {
-                        records_db.map((record)=>{
+                        records_db.map((record) => {
                             if (!parent_ids.includes(record._doc._id + '')) {
                                 word_count += record._doc.source.split(' ').length
                                 record_unique.push(record)
