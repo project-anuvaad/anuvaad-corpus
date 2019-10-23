@@ -24,6 +24,7 @@ def create_basic_auth_credentials(username, password):
         # data = json.loads(output.decode('utf-8'))
         # return 'success'
     except Exception as e:
+        log.info(e)
         return None
 
 
