@@ -6,12 +6,14 @@ var Sentence = require('../models/sentence');
 var LOG = require('../logger/logger').logger
 var SentenceLog = require('../models/sentencelog');
 var async = require('async')
+var axios = require('axios');
 
 var COMPONENT = "reports";
 
 const STATUS_ACCEPTED = 'ACCEPTED'
 const STATUS_REJECTED = 'REJECTED'
-
+const ES_SERVER_URL = process.env.GATEWAY_URL ? process.env.GATEWAY_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/admin/'
+const USER_INFO_URL = ES_SERVER_URL + 'users'
 
 
 exports.fetchBenchmarkReports = function (req, res) {
@@ -36,54 +38,74 @@ exports.fetchBenchmarkReports = function (req, res) {
             }
         }
     ], (err, results) => {
+        if (err) {
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
         let results_out = []
         if (results && Array.isArray(results)) {
             async.each(results, function (res, callback) {
-                let word_count = 0
-                let record_unique = []
-                let parent_ids = []
-                if (res.record && Array.isArray(res.record)) {
-                    let records_db = []
-                    async.each(res.record, function (record, callback) {
-                        Sentence.find({ _id: record.parent_id }, {}, function (err, results) {
-                            if (results && Array.isArray(results) && results.length > 0) {
-                                var sentencedb = results[0]
-                                Benchmark.fetchByCondition({ basename: sentencedb._doc.basename.split('_')[0] }, (err, benchmark) => {
-                                    if (benchmark && Array.isArray(benchmark) && benchmark.length > 0) {
-                                        sentencedb._doc.category_name = benchmark[0]._doc.name
-                                        LOG.info(sentencedb._doc)
+                axios.get(USER_INFO_URL + '/' + res._id).then((api_res) => {
+                    if (api_res.data) {
+                        res.username = api_res.data.username
+                        let word_count = 0
+                        let record_unique = []
+                        let parent_ids = []
+                        if (res.record && Array.isArray(res.record)) {
+                            let records_db = []
+                            async.each(res.record, function (record, callback) {
+                                Sentence.find({ _id: record.parent_id }, {}, function (err, results) {
+                                    if (results && Array.isArray(results) && results.length > 0) {
+                                        var sentencedb = results[0]
+                                        Benchmark.fetchByCondition({ basename: sentencedb._doc.basename.split('_')[0] }, (err, benchmark) => {
+                                            if (benchmark && Array.isArray(benchmark) && benchmark.length > 0) {
+                                                sentencedb._doc.category_name = benchmark[0]._doc.name
+                                                LOG.info(sentencedb._doc)
+                                            }
+                                            records_db.push(sentencedb)
+                                            callback()
+                                        })
+
                                     }
-                                    records_db.push(sentencedb)
-                                    callback()
+
                                 })
 
-                            }
-
-                        })
-
-                    }, function (err) {
-                        records_db.map((record) => {
-                            if (!parent_ids.includes(record._doc._id + '')) {
-                                word_count += record._doc.source.split(' ').length
-                                record_unique.push(record)
-                                parent_ids.push(record._doc._id + '')
-                            }
-                        })
-                        res.word_count = word_count
-                        res.sentence_count = res.parent_id.length
-                        res.record_unique = record_unique
-                        results_out.push(res)
-                        callback()
-                    });
-                }
-
+                            }, function (err) {
+                                if (err) {
+                                    callback('error')
+                                }
+                                records_db.map((record) => {
+                                    if (!parent_ids.includes(record._doc._id + '')) {
+                                        word_count += record._doc.source.split(' ').length
+                                        record_unique.push(record)
+                                        parent_ids.push(record._doc._id + '')
+                                    }
+                                })
+                                res.word_count = word_count
+                                res.sentence_count = res.parent_id.length
+                                res.record_unique = record_unique
+                                results_out.push(res)
+                                callback()
+                            });
+                        }
+                    }
+                    else {
+                        callback('error')
+                    }
+                })
             }, function (err) {
+                if (err) {
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
                 let response = new Response(StatusCode.SUCCESS, results_out).getRsp()
                 return res.status(response.http.status).json(response);
             });
-        }
 
+
+        }
     })
+
 }
 
 exports.fetchReports = function (req, res) {
