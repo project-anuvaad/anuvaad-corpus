@@ -15,12 +15,14 @@ def create_basic_auth_credentials(username, password):
     try:
         command = CREATE_BASIC_AUTH_BASE + username + \
             CREATE_BASIC_AUTH_PART + password + '"'
-        log.info(command)
-        os.system(command)
+        p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+        (output, err) = p.communicate()
+        data = json.loads(output.decode('utf-8'))
+        return data
         # log.info(p)
         # (output, err) = p.communicate()
         # data = json.loads(output.decode('utf-8'))
-        return 'success'
+        # return 'success'
     except Exception as e:
         return None
 
