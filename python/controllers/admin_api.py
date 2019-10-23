@@ -117,7 +117,6 @@ def update_password_admin():
     log.info('update_password : started')
     body = request.get_json()
     user_id = body['user_id']
-    user_name = body['user_name']
     new_password = body['new_password']
     if new_password is None or new_password.__len__() < 6:
         log.info('update_password : password is too weak, at least provide 6 characters')
