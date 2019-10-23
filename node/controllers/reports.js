@@ -1,6 +1,7 @@
 var Response = require('../models/response')
 var APIStatus = require('../errors/apistatus')
 var StatusCode = require('../errors/statuscodes').StatusCode
+var Sentence = require('../models/sentence');
 var LOG = require('../logger/logger').logger
 var SentenceLog = require('../models/sentencelog');
 
@@ -26,7 +27,7 @@ exports.fetchBenchmarkReports = function (req, res) {
             $group: {
                 _id: '$edited_by',
                 record: {
-                    $push: { parent_id: "$parent_id", source: "$source", grade_edited: "$grade_edited", context_rating_edited: "$context_rating_edited", spelling_rating_edited: "$spelling_rating_edited" }
+                    $push: { parent_id: "$parent_id", source: "$source" }
                 },
                 parent_id: { $addToSet: "$parent_id" },
                 modelid: { $addToSet: '$modelid' }
@@ -41,10 +42,17 @@ exports.fetchBenchmarkReports = function (req, res) {
                 if (res.record && Array.isArray(res.record)) {
                     res.record.map((record) => {
                         if (!parent_ids.includes(record.parent_id + '')) {
-                            word_count += record.source.split(' ').length
-                            record_unique.push(record)
-                            parent_ids.push(record.parent_id + '')
-                            LOG.info(parent_ids)
+                            Sentence.find({ _id: record.parent_id }, {}, function (err, results) {
+                                if (results && Array.isArray(results) && results.length > 0) {
+                                    var sentencedb = results[0]
+                                    record.rating = sentencedb.rating
+                                    record.spelling_rating = sentencedb.spelling_rating
+                                    record.context_rating = sentencedb.context_rating
+                                    word_count += record.source.split(' ').length
+                                    record_unique.push(record)
+                                    parent_ids.push(record.parent_id + '')
+                                }
+                            })
                         }
                     })
                 }
