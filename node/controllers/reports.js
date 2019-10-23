@@ -4,6 +4,7 @@ var StatusCode = require('../errors/statuscodes').StatusCode
 var Sentence = require('../models/sentence');
 var LOG = require('../logger/logger').logger
 var SentenceLog = require('../models/sentencelog');
+var async = require('async')
 
 var COMPONENT = "reports";
 
@@ -34,35 +35,45 @@ exports.fetchBenchmarkReports = function (req, res) {
             }
         }
     ], (err, results) => {
+        let results_out = []
         if (results && Array.isArray(results)) {
-            results.map((res) => {
+            async.each(results, function (res, callback) {
                 let word_count = 0
                 let record_unique = []
                 let parent_ids = []
                 if (res.record && Array.isArray(res.record)) {
-                    res.record.map((record) => {
-                        if (!parent_ids.includes(record.parent_id + '')) {
+                    let records_db = []
+                    async.each(res.record, function (record, callback) {
                             Sentence.find({ _id: record.parent_id }, {}, function (err, results) {
                                 if (results && Array.isArray(results) && results.length > 0) {
                                     var sentencedb = results[0]
-                                    record.rating = sentencedb.rating
-                                    record.spelling_rating = sentencedb.spelling_rating
-                                    record.context_rating = sentencedb.context_rating
-                                    word_count += record.source.split(' ').length
-                                    record_unique.push(record)
-                                    parent_ids.push(record.parent_id + '')
+                                    records_db.push(sentencedb)
                                 }
+                                callback()
                             })
-                        }
-                    })
+
+                    }, function (err) {
+                        records_db.map((record)=>{
+                            if (!parent_ids.includes(record._doc._id + '')) {
+                                word_count += record._doc.source.split(' ').length
+                                record_unique.push(record)
+                                parent_ids.push(record._doc._id + '')
+                            }
+                        })
+                        res.word_count = word_count
+                        res.sentence_count = res.parent_id.length
+                        res.record_unique = record_unique
+                        results_out.push(res)
+                        callback()
+                    });
                 }
-                res.word_count = word_count
-                res.sentence_count = res.parent_id.length
-                res.record_unique = record_unique
-            })
+
+            }, function (err) {
+                let response = new Response(StatusCode.SUCCESS, results_out).getRsp()
+                return res.status(response.http.status).json(response);
+            });
         }
-        let response = new Response(StatusCode.SUCCESS, results).getRsp()
-        return res.status(response.http.status).json(response);
+
     })
 }
 
