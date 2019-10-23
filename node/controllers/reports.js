@@ -53,7 +53,7 @@ exports.fetchBenchmarkReports = function (req, res) {
                                         sentencedb._doc.category_name = benchmark[0].name
                                         LOG.info(sentencedb._doc)
                                     }
-                                    records_db.push(sentencedb._doc)
+                                    records_db.push(sentencedb)
                                     callback()
                                 })
 
