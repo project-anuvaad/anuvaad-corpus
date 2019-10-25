@@ -132,9 +132,9 @@ var translateByAnuvaad = function (basename, sentences, modelid, totalcount, res
     })
     if (!target_not_available) {
         let query_condition = { basename: basename + '_' + modelid, rating: { $gt: 0 }, spelling_rating: { $gt: 0 }, context_rating: { $gt: 0 } }
-        if (basename === NAMES_BENCHMARK) {
-            query_condition = { basename: basename + '_' + modelid, rating: { $gt: 0 }, spelling_rating: { $gt: 0 }, context_rating: { $gt: 0 }, name_accuracy_rating: { $gt: 0 } }
-        }
+        // if (basename === NAMES_BENCHMARK) {
+        //     query_condition = { basename: basename + '_' + modelid, rating: { $gt: 0 }, spelling_rating: { $gt: 0 }, context_rating: { $gt: 0 }, name_accuracy_rating: { $gt: 0 } }
+        // }
         Sentence.countDocuments(query_condition, function (err, countNonPending) {
             if (err) {
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
@@ -173,9 +173,9 @@ var translateByAnuvaad = function (basename, sentences, modelid, totalcount, res
                     },
                     function () {
                         let query_condition = { basename: basename + '_' + modelid, rating: { $gt: 0 }, spelling_rating: { $gt: 0 }, context_rating: { $gt: 0 } }
-                        if (basename === NAMES_BENCHMARK) {
-                            query_condition = { basename: basename + '_' + modelid, rating: { $gt: 0 }, spelling_rating: { $gt: 0 }, context_rating: { $gt: 0 }, name_accuracy_rating: { $gt: 0 } }
-                        }
+                        // if (basename === NAMES_BENCHMARK) {
+                        //     query_condition = { basename: basename + '_' + modelid, rating: { $gt: 0 }, spelling_rating: { $gt: 0 }, context_rating: { $gt: 0 }, name_accuracy_rating: { $gt: 0 } }
+                        // }
                         Sentence.countDocuments(query_condition, function (err, countNonPending) {
                             if (err) {
                                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
