@@ -35,7 +35,7 @@ Sentence.updateSentence = function (sentence, cb) {
 Sentence.sumRatings = function (basename, cb) {
     Sentence.aggregate([
         { $match: { basename: basename } },
-        { $group: { _id: null, grammer_grade: { $sum: "$rating" }, context_rating: { $sum: "$context_rating" }, spelling_rating: { $sum: "$spelling_rating" } } }
+        { $group: { _id: null, name_accuracy_rating: { $sum: "$name_accuracy_rating" }, grammer_grade: { $sum: "$rating" }, context_rating: { $sum: "$context_rating" }, spelling_rating: { $sum: "$spelling_rating" } } }
     ], function (err, doc) {
         if (err) {
             LOG.error(err)
@@ -68,7 +68,7 @@ Sentence.updateSentenceStatus = function (sentence, cb) {
 }
 
 Sentence.updateSentenceGrade = function (sentence, cb) {
-    Sentence.collection.updateOne({ _id: mongoose.Types.ObjectId(sentence._id) }, { $set: { context_rating: sentence.context_rating, rating: sentence.rating, spelling_rating: sentence.spelling_rating } }, { upsert: false }, function (err, doc) {
+    Sentence.collection.updateOne({ _id: mongoose.Types.ObjectId(sentence._id) }, { $set: { context_rating: sentence.context_rating, rating: sentence.rating, spelling_rating: sentence.spelling_rating, name_accuracy_rating: sentence.name_accuracy_rating } }, { upsert: false }, function (err, doc) {
         if (err) {
             LOG.error(err)
             cb(err, null)
