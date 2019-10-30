@@ -30,6 +30,68 @@ exports.fetchBenchmark = function (req, res) {
     })
 }
 
+exports.translateWithHemat = function (req, res) {
+    let userId = req.headers['ad-userid']
+    if (!req || !req.body || !req.body.sentence || !req.body.target) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let reverse = false
+    let source_code = 'en'
+    let target_code = 'hi'
+    if (req.body.target == 'English') {
+        reverse = true
+        source_code = 'hi'
+        target_code = 'en'
+    }
+    Benchmark.fetchByCondition({ basename: 'INDEPENDENT' }, (err, benchmark) => {
+        async.waterfall([
+            function (callback) {
+                if (!benchmark || benchmark.length == 0) {
+                    let benchmark_to_be_saved = { name: 'Independent Benchmark', basename: 'INDEPENDENT', assigned_to: userId, status: 'COMPLETED' }
+                    Benchmark.insertMany([benchmark_to_be_saved], function (err, doc) {
+                        callback()
+                    })
+                }
+                else {
+                    callback()
+                }
+            }
+        ], function () {
+            let benchmark_sent = { source: req.body.sentence, basename: 'INDEPENDENT', status: 'PENDING' }
+            Sentence.insertMany([benchmark_sent], function (err, sen_doc) {
+                NMT.findByCondition({ is_primary: true, source_language_code: source_code, target_language_code: target_code }, function (err, modeldblist) {
+                    if (modeldblist && modeldblist.length > 0) {
+                        let model_id = modeldblist[0]['_doc']['model_id']
+                        var doc_nmt = Object.create(sen_doc[0]['_doc'])
+                        doc_nmt['_id'] = null
+                        doc_nmt['source'] = req.body.sentence
+                        doc_nmt['status'] = 'PENDING'
+                        doc_nmt['basename'] = 'INDEPENDENT_' + model_id
+                        doc_nmt['parent_id'] = sen_doc[0]['_doc']['_id']
+                        var doc = Object.create(sen_doc[0]['_doc'])
+                        doc['_id'] = null
+                        doc['source'] = req.body.sentence
+                        doc['status'] = 'PENDING'
+                        doc['basename'] = 'INDEPENDENT_hemat'
+                        doc['parent_id'] = sen_doc[0]['_doc']['_id']
+                        Sentence.saveSentences([doc_nmt], function (err, sentences_nmt) {
+                            Sentence.saveSentences([doc], function (err, sentences_hemat) {
+                                if (err) {
+                                    LOG.info(err)
+                                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                    return res.status(apistatus.http.status).json(apistatus);
+                                }
+                                return translateByAnuvaadHemat('INDEPENDENT', [{ '_doc': sentences_nmt['ops'][0] }], [{ '_doc': sentences_hemat['ops'][0] }], model_id, 0, reverse, res)
+                            })
+                        })
+                    }
+                })
+            })
+        })
+    })
+}
+
 exports.fetchBenchmarkCompareSentences = function (req, res) {
     var basename = req.query.basename
     let userId = req.headers['ad-userid']
@@ -183,11 +245,11 @@ var translateByAnuvaadHemat = function (basename, sentences, sentences_hemat, mo
         let data_arr = []
         async.waterfall([
             function (callback) {
-                callTranslationApi(sentences, 'http://52.40.71.62:3003/translator/' + reverse ? 'translation_hi' : 'translation_en', false, req_arr, res, callback)
+                callTranslationApi(sentences, 'http://52.40.71.62:3003/translator/' + (reverse ? 'translation_hi' : 'translation_en'), false, req_arr, res, callback)
             },
             function (data, callback) {
                 data_arr = data_arr.concat(data)
-                callTranslationApi(sentences_hemat, 'http://100.22.17.144:5000/translate ', true, req_hemat, res, callback)
+                callTranslationApi(sentences_hemat, 'http://100.22.17.144:5000/translate', true, req_hemat, res, callback)
             }
         ], function (err, data) {
             data_arr = data_arr.concat(data)
@@ -246,9 +308,7 @@ var callTranslationApi = function (sentences, endpoint, is_hemat, req_arr, res, 
 
         })
         .catch(err => {
-            LOG.info(err)
-            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-            return res.status(apistatus.http.status).json(apistatus);
+            cb(null, data_arr)
         });
 }
 

@@ -16,6 +16,9 @@ module.exports = function (router) {
     
     router.route('/fetch-benchmark-compare-sentences')
         .get(benchmarkController.fetchBenchmarkCompareSentences);
+    
+    router.route('/translate-with-hemat')
+        .post(benchmarkController.translateWithHemat);
 
     // router.route('/update-sentences')
     //     .post(corpusController.updateSentences);
