@@ -645,7 +645,7 @@ def upload_benchmark_file():
         if source_lang is None or len(
                 source_lang) == 0 or len(source_lang[0]) == 0 or name is None or len(name) == 0 or len(
             name[0]) == 0 or request.files is None or \
-                request.files['english'] is None:
+                request.files['file'] is None:
             res = CustomResponse(
                 Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
             return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
@@ -657,7 +657,7 @@ def upload_benchmark_file():
                             last_modified=current_time, author='', no_of_sentences=0,
                             basename=basename)
             corpus.save()
-            f_eng = request.files['english']
+            f_eng = request.files['file']
             filepath_eng = os.path.join(
                 app.config['UPLOAD_FOLDER'], basename + '_eng_filtered.txt')
             f_eng.save(filepath_eng)
