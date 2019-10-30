@@ -183,10 +183,10 @@ var translateByAnuvaadHemat = function (basename, sentences, sentences_hemat, mo
             function (callback) {
                 callTranslationApi(sentences, 'http://52.40.71.62:3003/translator/translation_en', false, req_arr, res, callback)
             },
-            // function (data, callback) {
-            //     data_arr = data_arr.concat(data)
-            //     callTranslationApi(sentences_hemat, 'http://172.17.21.68:5000//translate ', true, req_hemat, res, callback)
-            // }
+            function (data, callback) {
+                data_arr = data_arr.concat(data)
+                callTranslationApi(sentences_hemat, 'http://100.22.17.144:5000/translate ', true, req_hemat, res, callback)
+            }
         ], function (err, data) {
             data_arr = data_arr.concat(data)
             let query_condition = { basename: basename + '_' + modelid, rating: { $gt: 0 }, spelling_rating: { $gt: 0 }, context_rating: { $gt: 0 } }
