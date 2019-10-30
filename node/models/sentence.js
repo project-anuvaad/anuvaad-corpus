@@ -47,12 +47,11 @@ Sentence.sumRatings = function (basename, cb) {
 }
 
 Sentence.updateSentenceData = function (sentence, cb) {
-    Sentence.collection.findOneAndUpdate({ _id: mongoose.Types.ObjectId(sentence._id) }, { $set: { source: sentence.source, target: sentence.target } }, { upsert: false }, function (err, doc) {
+    Sentence.collection.findOneAndUpdate({ _id: mongoose.Types.ObjectId(sentence._id) }, { $set: { source: sentence.source, target: sentence.target, time_taken: sentence.time_taken } }, { upsert: false }, function (err, doc) {
         if (err) {
             LOG.error(err)
             cb(err, null)
         }
-        LOG.info(doc)
         cb(null, doc)
     });
 }

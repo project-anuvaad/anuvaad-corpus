@@ -72,18 +72,20 @@ exports.fetchBenchmarkCompareSentences = function (req, res) {
                 }
                 NMT.findByCondition({ is_primary: true, source_language_code: source_code, target_language_code: target_code }, function (err, modeldblist) {
                     if (modeldblist && modeldblist.length > 0) {
-                        let model_id = modeldblist[0].model_id
+                        let model_id = modeldblist[0]['_doc']['model_id']
                         Sentence.countDocuments({ basename: basename }, function (err, totalcount) {
                             Sentence.countDocuments({ basename: basename + '_' + model_id }, function (err, count) {
                                 if (count > 0) {
                                     Sentence.fetch(basename + '_' + model_id, pagesize, pageno, null, pending, function (err, sentences) {
-                                        if (err) {
-                                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                                            return res.status(apistatus.http.status).json(apistatus);
-                                        }
-                                        return translateByAnuvaad(basename, sentences, model_id, totalcount, res)
-                                        // let response = new Response(StatusCode.SUCCESS, sentences, count).getRsp()
-                                        // return res.status(response.http.status).json(response);
+                                        Sentence.fetch(basename + '_hemat', pagesize, pageno, null, pending, function (err, sentences_hemat) {
+                                            if (err) {
+                                                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                                return res.status(apistatus.http.status).json(apistatus);
+                                            }
+                                            return translateByAnuvaadHemat(basename, sentences, sentences_hemat, model_id, totalcount, res)
+                                            // let response = new Response(StatusCode.SUCCESS, sentences, count).getRsp()
+                                            // return res.status(response.http.status).json(response);
+                                        })
                                     })
                                 }
                                 else {
@@ -94,23 +96,33 @@ exports.fetchBenchmarkCompareSentences = function (req, res) {
                                         }
                                         let sentences_arr = []
                                         sentences.map((s) => {
-                                            s['_doc']['basename'] = basename + '_' + model_id
-                                            s['_doc']['_id'] = null
-                                            sentences_arr.push(s['_doc'])
+                                            var doc_nmt = Object.create(s['_doc'])
+                                            doc_nmt['basename'] = basename + '_' + model_id
+                                            doc_nmt['_id'] = null
+                                            doc_nmt['parent_id'] = s['_doc']['_id']
+                                            sentences_arr.push(doc_nmt)
+                                            var doc = Object.create(s['_doc'])
+                                            doc['_id'] = null
+                                            doc['basename'] = basename + '_hemat'
+                                            doc['parent_id'] = s['_doc']['_id']
+                                            sentences_arr.push(doc)
                                         })
                                         Sentence.saveSentences(sentences_arr, function (err, sentences) {
                                             if (err) {
+                                                LOG.info(err)
                                                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                                                 return res.status(apistatus.http.status).json(apistatus);
                                             }
                                             Sentence.fetch(basename + '_' + model_id, pagesize, pageno, null, pending, function (err, sentences) {
-                                                if (err) {
-                                                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                                                    return res.status(apistatus.http.status).json(apistatus);
-                                                }
-                                                return translateByAnuvaad(basename, sentences, model_id, totalcount, res)
-                                                // let response = new Response(StatusCode.SUCCESS, sentences, sentences_arr.length).getRsp()
-                                                // return res.status(response.http.status).json(response);
+                                                Sentence.fetch(basename + '_hemat', pagesize, pageno, null, pending, function (err, sentences_hemat) {
+                                                    if (err) {
+                                                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                                        return res.status(apistatus.http.status).json(apistatus);
+                                                    }
+                                                    return translateByAnuvaadHemat(basename, sentences, sentences_hemat, model_id, totalcount, res)
+                                                    // let response = new Response(StatusCode.SUCCESS, sentences, sentences_arr.length).getRsp()
+                                                    // return res.status(response.http.status).json(response);
+                                                })
                                             })
                                         })
                                     })
@@ -119,7 +131,7 @@ exports.fetchBenchmarkCompareSentences = function (req, res) {
                         })
                     }
                     else {
-                        LOG.info('Model not found for benchmark ',benchmark.name)
+                        LOG.info('Model not found for benchmark ', benchmark.name)
                         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_NOTFOUND, COMPONENT).getRspStatus()
                         return res.status(apistatus.http.status).json(apistatus);
                     }
@@ -133,6 +145,111 @@ exports.fetchBenchmarkCompareSentences = function (req, res) {
         }
     })
 }
+
+var translateByAnuvaadHemat = function (basename, sentences, sentences_hemat, modelid, totalcount, res) {
+    let req_arr = []
+    let req_arr_hemat = []
+    let target_not_available = false
+    sentences.map((s) => {
+        if (!s['_doc']['target']) {
+            target_not_available = true
+        }
+        let req = { "src": s['_doc']['source'], "id": parseInt(modelid) }
+        req_arr.push(req)
+        req_arr_hemat.push(s['_doc']['source'])
+
+    })
+    let req_hemat = { "source": req_arr_hemat, "direction": "enhi" }
+    if (!target_not_available) {
+        let query_condition = { basename: basename + '_' + modelid, rating: { $gt: 0 }, spelling_rating: { $gt: 0 }, context_rating: { $gt: 0 } }
+        Sentence.countDocuments(query_condition, function (err, countNonPending) {
+            if (err) {
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+            Sentence.sumRatings(basename + '_' + modelid, function (err, ratings) {
+                if (err) {
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
+                let sentence_res = sentences.concat(sentences_hemat)
+                let response = new Response(StatusCode.SUCCESS, sentence_res, totalcount, ratings[0], totalcount - countNonPending).getRsp()
+                return res.status(response.http.status).json(response);
+            })
+        })
+    } else {
+        let data_arr = []
+        async.waterfall([
+            function (callback) {
+                callTranslationApi(sentences, 'http://52.40.71.62:3003/translator/translation_en', false, req_arr, res, callback)
+            },
+            // function (data, callback) {
+            //     data_arr = data_arr.concat(data)
+            //     callTranslationApi(sentences_hemat, 'http://172.17.21.68:5000//translate ', true, req_hemat, res, callback)
+            // }
+        ], function (err, data) {
+            data_arr = data_arr.concat(data)
+            let query_condition = { basename: basename + '_' + modelid, rating: { $gt: 0 }, spelling_rating: { $gt: 0 }, context_rating: { $gt: 0 } }
+            Sentence.countDocuments(query_condition, function (err, countNonPending) {
+                if (err) {
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
+                Sentence.sumRatings(basename + '_' + modelid, function (err, ratings) {
+                    if (err) {
+                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                        return res.status(apistatus.http.status).json(apistatus);
+                    }
+                    let response = new Response(StatusCode.SUCCESS, data_arr, totalcount, ratings[0], totalcount - countNonPending).getRsp()
+                    return res.status(response.http.status).json(response);
+                })
+            })
+
+        })
+    }
+}
+
+var callTranslationApi = function (sentences, endpoint, is_hemat, req_arr, res, cb) {
+    let data_arr = []
+    let req_start_time = new Date().getTime()
+    axios
+        .post(endpoint, req_arr)
+        .then(res_anuvaad => {
+            let res_end_time = new Date().getTime()
+            if (is_hemat) {
+                let response_body = res_anuvaad.data.data
+                sentences.map((s, index) => {
+                    s['_doc']['target'] = response_body[index]['target']
+                    s['_doc']['time_taken'] = res_end_time - req_start_time
+                    data_arr.push(s['_doc'])
+                })
+            }
+            else {
+                let response_body = res_anuvaad.data['response_body']
+                sentences.map((s, index) => {
+                    s['_doc']['target'] = response_body[index]['tgt']
+                    s['_doc']['time_taken'] = res_end_time - req_start_time
+                    data_arr.push(s['_doc'])
+
+                })
+            }
+            async.each(data_arr, function (d, callback) {
+                Sentence.updateSentenceData(d, function (err, doc) {
+                    callback()
+                })
+
+            }, function (err) {
+                cb(err, data_arr)
+            });
+
+        })
+        .catch(err => {
+            LOG.info(err)
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        });
+}
+
 
 exports.fetchBenchmarkSentences = function (req, res) {
     var basename = req.query.basename
@@ -154,7 +271,7 @@ exports.fetchBenchmarkSentences = function (req, res) {
         pending = true
     }
     if (!pagesize) {
-        pagesize = 5
+        pagesize = 1
         pageno = 1
     }
     Benchmark.fetchByCondition({ basename: basename }, (err, benchmark) => {
