@@ -13,6 +13,9 @@ module.exports = function (router) {
 
     router.route('/fetch-benchmark-sentences')
         .get(benchmarkController.fetchBenchmarkSentences);
+    
+    router.route('/fetch-benchmark-compare-sentences')
+        .get(benchmarkController.fetchBenchmarkCompareSentences);
 
     // router.route('/update-sentences')
     //     .post(corpusController.updateSentences);
