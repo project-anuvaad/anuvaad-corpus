@@ -64,11 +64,13 @@ exports.fetchBenchmarkCompareSentences = function (req, res) {
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);
                 }
+                let reverse = false
                 let source_code = 'en'
                 let target_code = 'hi'
                 if (benchmark.source_lang === 'Hindi') {
                     source_code = 'hi'
                     target_code = 'en'
+                    reverse = true
                 }
                 NMT.findByCondition({ is_primary: true, source_language_code: source_code, target_language_code: target_code }, function (err, modeldblist) {
                     if (modeldblist && modeldblist.length > 0) {
@@ -82,7 +84,7 @@ exports.fetchBenchmarkCompareSentences = function (req, res) {
                                                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                                                 return res.status(apistatus.http.status).json(apistatus);
                                             }
-                                            return translateByAnuvaadHemat(basename, sentences, sentences_hemat, model_id, totalcount, res)
+                                            return translateByAnuvaadHemat(basename, sentences, sentences_hemat, model_id, totalcount, reverse, res)
                                             // let response = new Response(StatusCode.SUCCESS, sentences, count).getRsp()
                                             // return res.status(response.http.status).json(response);
                                         })
@@ -119,7 +121,7 @@ exports.fetchBenchmarkCompareSentences = function (req, res) {
                                                         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                                                         return res.status(apistatus.http.status).json(apistatus);
                                                     }
-                                                    return translateByAnuvaadHemat(basename, sentences, sentences_hemat, model_id, totalcount, res)
+                                                    return translateByAnuvaadHemat(basename, sentences, sentences_hemat, model_id, totalcount, reverse, res)
                                                     // let response = new Response(StatusCode.SUCCESS, sentences, sentences_arr.length).getRsp()
                                                     // return res.status(response.http.status).json(response);
                                                 })
@@ -146,7 +148,7 @@ exports.fetchBenchmarkCompareSentences = function (req, res) {
     })
 }
 
-var translateByAnuvaadHemat = function (basename, sentences, sentences_hemat, modelid, totalcount, res) {
+var translateByAnuvaadHemat = function (basename, sentences, sentences_hemat, modelid, totalcount, reverse, res) {
     let req_arr = []
     let req_arr_hemat = []
     let target_not_available = false
@@ -159,7 +161,7 @@ var translateByAnuvaadHemat = function (basename, sentences, sentences_hemat, mo
         req_arr_hemat.push(s['_doc']['source'])
 
     })
-    let req_hemat = { "source": req_arr_hemat, "direction": "enhi" }
+    let req_hemat = { "source": req_arr_hemat, "direction": reverse ? "hien" : "enhi" }
     if (!target_not_available) {
         let query_condition = { basename: basename + '_' + modelid, rating: { $gt: 0 }, spelling_rating: { $gt: 0 }, context_rating: { $gt: 0 } }
         Sentence.countDocuments(query_condition, function (err, countNonPending) {
@@ -181,7 +183,7 @@ var translateByAnuvaadHemat = function (basename, sentences, sentences_hemat, mo
         let data_arr = []
         async.waterfall([
             function (callback) {
-                callTranslationApi(sentences, 'http://52.40.71.62:3003/translator/translation_en', false, req_arr, res, callback)
+                callTranslationApi(sentences, 'http://52.40.71.62:3003/translator/' + reverse ? 'translation_hi' : 'translation_en', false, req_arr, res, callback)
             },
             function (data, callback) {
                 data_arr = data_arr.concat(data)
