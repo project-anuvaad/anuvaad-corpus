@@ -227,7 +227,7 @@ var callTranslationApi = function (sentences, endpoint, is_hemat, req_arr, res, 
             else {
                 let response_body = res_anuvaad.data['response_body']
                 sentences.map((s, index) => {
-                    s['_doc']['target'] = response_body[index]['tgt']
+                    s['_doc']['target'] = response_body && response_body.length > 0 ? response_body[index]['tgt'] : ''
                     s['_doc']['time_taken'] = res_end_time - req_start_time
                     data_arr.push(s['_doc'])
 
