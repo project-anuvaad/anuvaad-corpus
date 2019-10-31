@@ -59,22 +59,22 @@ exports.translateWithHemat = function (req, res) {
             }
         ], function () {
             let benchmark_sent = { source: req.body.sentence, basename: 'INDEPENDENT', status: 'PENDING' }
-            Sentence.insertMany([benchmark_sent], function (err, sen_doc) {
+            Sentence.saveSentences([benchmark_sent], function (err, sen_doc) {
                 NMT.findByCondition({ is_primary: true, source_language_code: source_code, target_language_code: target_code }, function (err, modeldblist) {
                     if (modeldblist && modeldblist.length > 0) {
                         let model_id = modeldblist[0]['_doc']['model_id']
-                        var doc_nmt = Object.create(sen_doc[0]['_doc'])
+                        var doc_nmt = Object.create(sen_doc['ops'][0])
                         doc_nmt['_id'] = null
                         doc_nmt['source'] = req.body.sentence
                         doc_nmt['status'] = 'PENDING'
                         doc_nmt['basename'] = 'INDEPENDENT_' + model_id
-                        doc_nmt['parent_id'] = sen_doc[0]['_doc']['_id']
-                        var doc = Object.create(sen_doc[0]['_doc'])
+                        doc_nmt['parent_id'] = sen_doc['ops'][0]['_id']
+                        var doc = Object.create(sen_doc['ops'][0])
                         doc['_id'] = null
                         doc['source'] = req.body.sentence
                         doc['status'] = 'PENDING'
                         doc['basename'] = 'INDEPENDENT_hemat'
-                        doc['parent_id'] = sen_doc[0]['_doc']['_id']
+                        doc['parent_id'] = sen_doc['ops'][0]['_id']
                         Sentence.saveSentences([doc_nmt], function (err, sentences_nmt) {
                             Sentence.saveSentences([doc], function (err, sentences_hemat) {
                                 if (err) {
