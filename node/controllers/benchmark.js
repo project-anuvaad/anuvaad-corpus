@@ -39,16 +39,17 @@ exports.translateWithHemat = function (req, res) {
     let reverse = false
     let source_code = 'en'
     let target_code = 'hi'
+    let basename = 'INDEPENDENT_' + userId
     if (req.body.target == 'English') {
         reverse = true
         source_code = 'hi'
         target_code = 'en'
     }
-    Benchmark.fetchByCondition({ basename: 'INDEPENDENT' }, (err, benchmark) => {
+    Benchmark.fetchByCondition({ basename: basename }, (err, benchmark) => {
         async.waterfall([
             function (callback) {
                 if (!benchmark || benchmark.length == 0) {
-                    let benchmark_to_be_saved = { name: 'Miscellaneous Benchmark', basename: 'INDEPENDENT', assigned_to: userId, status: 'COMPLETED' }
+                    let benchmark_to_be_saved = { name: 'Miscellaneous Benchmark', basename: basename, assigned_to: userId, status: 'COMPLETED' }
                     Benchmark.insertMany([benchmark_to_be_saved], function (err, doc) {
                         callback()
                     })
@@ -58,7 +59,7 @@ exports.translateWithHemat = function (req, res) {
                 }
             }
         ], function () {
-            let benchmark_sent = { source: req.body.sentence, basename: 'INDEPENDENT', status: 'PENDING' }
+            let benchmark_sent = { source: req.body.sentence, basename: basename, status: 'PENDING' }
             Sentence.saveSentences([benchmark_sent], function (err, sen_doc) {
                 NMT.findByCondition({ is_primary: true, source_language_code: source_code, target_language_code: target_code }, function (err, modeldblist) {
                     if (modeldblist && modeldblist.length > 0) {
@@ -67,13 +68,13 @@ exports.translateWithHemat = function (req, res) {
                         doc_nmt['_id'] = null
                         doc_nmt['source'] = req.body.sentence
                         doc_nmt['status'] = 'PENDING'
-                        doc_nmt['basename'] = 'INDEPENDENT_' + model_id
+                        doc_nmt['basename'] = basename + '_' + model_id
                         doc_nmt['parent_id'] = sen_doc['ops'][0]['_id']
                         var doc = Object.create(sen_doc['ops'][0])
                         doc['_id'] = null
                         doc['source'] = req.body.sentence
                         doc['status'] = 'PENDING'
-                        doc['basename'] = 'INDEPENDENT_hemat'
+                        doc['basename'] = basename + '_hemat'
                         doc['parent_id'] = sen_doc['ops'][0]['_id']
                         Sentence.saveSentences([doc_nmt], function (err, sentences_nmt) {
                             Sentence.saveSentences([doc], function (err, sentences_hemat) {
@@ -82,7 +83,7 @@ exports.translateWithHemat = function (req, res) {
                                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                                     return res.status(apistatus.http.status).json(apistatus);
                                 }
-                                return translateByAnuvaadHemat('INDEPENDENT', [{ '_doc': sentences_nmt['ops'][0] }], [{ '_doc': sentences_hemat['ops'][0] }], model_id, 0, reverse, res)
+                                return translateByAnuvaadHemat(basename, [{ '_doc': sentences_nmt['ops'][0] }], [{ '_doc': sentences_hemat['ops'][0] }], model_id, 0, reverse, res)
                             })
                         })
                     }
@@ -490,19 +491,19 @@ var translateByAnuvaad = function (basename, sentences, modelid, totalcount, res
 
 function shuffle(array) {
     var currentIndex = array.length, temporaryValue, randomIndex;
-  
+
     // While there remain elements to shuffle...
     while (0 !== currentIndex) {
-  
-      // Pick a remaining element...
-      randomIndex = Math.floor(Math.random() * currentIndex);
-      currentIndex -= 1;
-  
-      // And swap it with the current element.
-      temporaryValue = array[currentIndex];
-      array[currentIndex] = array[randomIndex];
-      array[randomIndex] = temporaryValue;
+
+        // Pick a remaining element...
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex -= 1;
+
+        // And swap it with the current element.
+        temporaryValue = array[currentIndex];
+        array[currentIndex] = array[randomIndex];
+        array[randomIndex] = temporaryValue;
     }
-  
+
     return array;
-  }
+}
