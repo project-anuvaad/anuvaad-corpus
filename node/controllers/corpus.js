@@ -244,6 +244,9 @@ exports.updateSentencesGrade = function (req, res) {
                     if (req.body.modelid) {
                         sentencelog.modelid = req.body.modelid
                     }
+                    else if (sentencedb.basename.indexOf('_') > 0) {
+                        sentencelog.modelid = sentencedb.basename.split('_')[1]
+                    }
                     SentenceLog.save([sentencelog], (err, results) => {
                         if (err) {
                             LOG.error(err)
