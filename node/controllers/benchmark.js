@@ -237,6 +237,7 @@ var translateByAnuvaadHemat = function (basename, sentences, sentences_hemat, mo
                     return res.status(apistatus.http.status).json(apistatus);
                 }
                 let sentence_res = sentences.concat(sentences_hemat)
+                sentence_res = shuffle(sentence_res)
                 let response = new Response(StatusCode.SUCCESS, sentence_res, totalcount, ratings[0], totalcount - countNonPending).getRsp()
                 return res.status(response.http.status).json(response);
             })
