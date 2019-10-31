@@ -16,8 +16,8 @@ var COMPONENT = "benchmark";
 var NMT = require('../models/nmt');
 
 const NAMES_BENCHMARK = "1570785751"
-const ANUVAAD_URL = process.env.ANUVAAD_URL ? process.env.ANUVAAD_URL : 'http://52.40.71.62:3003/'
-const HEMAT_URL = process.env.HEMAT_URL ? process.env.HEMAT_URL : 'http://100.22.17.144:5000/'
+const ANUVAAD_URL = process.env.ANUVAAD_URL ? process.env.ANUVAAD_URL : 'http://52.40.71.62:3003'
+const HEMAT_URL = process.env.HEMAT_URL ? process.env.HEMAT_URL : 'http://100.22.17.144:5000'
 
 
 exports.fetchBenchmark = function (req, res) {
