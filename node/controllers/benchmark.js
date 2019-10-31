@@ -253,6 +253,7 @@ var translateByAnuvaadHemat = function (basename, sentences, sentences_hemat, mo
             }
         ], function (err, data) {
             data_arr = data_arr.concat(data)
+            data_arr = shuffle(data_arr)
             let query_condition = { basename: basename + '_' + modelid, rating: { $gt: 0 }, spelling_rating: { $gt: 0 }, context_rating: { $gt: 0 } }
             Sentence.countDocuments(query_condition, function (err, countNonPending) {
                 if (err) {
@@ -483,3 +484,24 @@ var translateByAnuvaad = function (basename, sentences, modelid, totalcount, res
             });
     }
 }
+
+
+
+function shuffle(array) {
+    var currentIndex = array.length, temporaryValue, randomIndex;
+  
+    // While there remain elements to shuffle...
+    while (0 !== currentIndex) {
+  
+      // Pick a remaining element...
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex -= 1;
+  
+      // And swap it with the current element.
+      temporaryValue = array[currentIndex];
+      array[currentIndex] = array[randomIndex];
+      array[randomIndex] = temporaryValue;
+    }
+  
+    return array;
+  }
