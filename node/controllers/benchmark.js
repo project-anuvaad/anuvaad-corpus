@@ -281,6 +281,7 @@ var translateByAnuvaadHemat = function (basename, sentences, sentences_hemat, mo
 var callTranslationApi = function (sentences, endpoint, is_hemat, req_arr, res, cb) {
     let data_arr = []
     let req_start_time = new Date().getTime()
+    LOG.info('Calling api', endpoint)
     axios
         .post(endpoint, req_arr)
         .then(res_anuvaad => {
@@ -313,6 +314,7 @@ var callTranslationApi = function (sentences, endpoint, is_hemat, req_arr, res, 
 
         })
         .catch(err => {
+            LOG.error('Error received', err)
             cb(null, data_arr)
         });
 }
