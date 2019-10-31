@@ -48,7 +48,7 @@ exports.translateWithHemat = function (req, res) {
         async.waterfall([
             function (callback) {
                 if (!benchmark || benchmark.length == 0) {
-                    let benchmark_to_be_saved = { name: 'Independent Benchmark', basename: 'INDEPENDENT', assigned_to: userId, status: 'COMPLETED' }
+                    let benchmark_to_be_saved = { name: 'Miscellaneous Benchmark', basename: 'INDEPENDENT', assigned_to: userId, status: 'COMPLETED' }
                     Benchmark.insertMany([benchmark_to_be_saved], function (err, doc) {
                         callback()
                     })
