@@ -124,7 +124,7 @@ exports.fetchBenchmarkCompareSentences = function (req, res) {
             return res.status(apistatus.http.status).json(apistatus);
         }
         if (benchmark) {
-            Benchmark.updateBenchmarkData(benchmark[0], userId, function (err, doc) {
+            // Benchmark.updateBenchmarkData(benchmark[0], userId, function (err, doc) {
                 if (err) {
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);
@@ -203,7 +203,7 @@ exports.fetchBenchmarkCompareSentences = function (req, res) {
                         return res.status(apistatus.http.status).json(apistatus);
                     }
                 })
-            })
+            // })
 
         }
         else {
@@ -234,16 +234,16 @@ var translateByAnuvaadHemat = function (basename, sentences, sentences_hemat, mo
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
-            Sentence.sumRatings(basename + '_' + modelid, function (err, ratings) {
-                if (err) {
-                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                    return res.status(apistatus.http.status).json(apistatus);
-                }
+            // Sentence.sumRatings(basename + '_' + modelid, function (err, ratings) {
+            //     if (err) {
+            //         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            //         return res.status(apistatus.http.status).json(apistatus);
+            //     }
                 let sentence_res = sentences.concat(sentences_hemat)
                 sentence_res = shuffle(sentence_res)
-                let response = new Response(StatusCode.SUCCESS, sentence_res, totalcount, ratings[0], totalcount - countNonPending).getRsp()
+                let response = new Response(StatusCode.SUCCESS, sentence_res, totalcount, null, totalcount - countNonPending).getRsp()
                 return res.status(response.http.status).json(response);
-            })
+            // })
         })
     } else {
         let data_arr = []
@@ -264,14 +264,14 @@ var translateByAnuvaadHemat = function (basename, sentences, sentences_hemat, mo
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);
                 }
-                Sentence.sumRatings(basename + '_' + modelid, function (err, ratings) {
-                    if (err) {
-                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                        return res.status(apistatus.http.status).json(apistatus);
-                    }
-                    let response = new Response(StatusCode.SUCCESS, data_arr, totalcount, ratings[0], totalcount - countNonPending).getRsp()
+                // Sentence.sumRatings(basename + '_' + modelid, function (err, ratings) {
+                //     if (err) {
+                //         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                //         return res.status(apistatus.http.status).json(apistatus);
+                //     }
+                    let response = new Response(StatusCode.SUCCESS, data_arr, totalcount, null, totalcount - countNonPending).getRsp()
                     return res.status(response.http.status).json(response);
-                })
+                // })
             })
 
         })
