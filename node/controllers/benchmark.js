@@ -16,6 +16,8 @@ var COMPONENT = "benchmark";
 var NMT = require('../models/nmt');
 
 const NAMES_BENCHMARK = "1570785751"
+const ANUVAAD_URL = process.env.ANUVAAD_URL ? process.env.ANUVAAD_URL : 'http://52.40.71.62:3003/'
+const HEMAT_URL = process.env.HEMAT_URL ? process.env.HEMAT_URL : 'http://100.22.17.144:5000/'
 
 
 exports.fetchBenchmark = function (req, res) {
@@ -247,11 +249,11 @@ var translateByAnuvaadHemat = function (basename, sentences, sentences_hemat, mo
         let data_arr = []
         async.waterfall([
             function (callback) {
-                callTranslationApi(sentences, 'http://52.40.71.62:3003/translator/' + (reverse ? 'translation_hi' : 'translation_en'), false, req_arr, res, callback)
+                callTranslationApi(sentences, `${ANUVAAD_URL}/translator/` + (reverse ? 'translation_hi' : 'translation_en'), false, req_arr, res, callback)
             },
             function (data, callback) {
                 data_arr = data_arr.concat(data)
-                callTranslationApi(sentences_hemat, 'http://100.22.17.144:5000/translate', true, req_hemat, res, callback)
+                callTranslationApi(sentences_hemat, `${HEMAT_URL}/translate`, true, req_hemat, res, callback)
             }
         ], function (err, data) {
             data_arr = data_arr.concat(data)
@@ -437,7 +439,7 @@ var translateByAnuvaad = function (basename, sentences, modelid, totalcount, res
         })
     } else {
         axios
-            .post('http://52.40.71.62:3003/translator/translation_en', req_arr)
+            .post(`${ANUVAAD_URL}/translator/translation_en`, req_arr)
             .then(res_anuvaad => {
                 let response_body = res_anuvaad.data['response_body']
                 sentences.map((s, index) => {
