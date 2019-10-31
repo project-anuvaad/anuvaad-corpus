@@ -28,7 +28,7 @@ exports.fetchBenchmarkAnalyzerReports = function (req, res) {
         },
         {
             $group: {
-                _id: '$edited_by',
+                _id: '$modelid',
                 record: {
                     $push: { parent_id: "$parent_id", source: "$source" }
                 },
