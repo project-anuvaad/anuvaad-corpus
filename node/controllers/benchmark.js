@@ -132,8 +132,7 @@ exports.fetchBenchmarkCompareSentences = function (req, res) {
                 let reverse = false
                 let source_code = 'en'
                 let target_code = 'hi'
-                LOG.info(benchmark[0]._doc.source_lang)
-                if (benchmark[0].source_lang === 'Hindi') {
+                if (benchmark[0]._doc.source_lang === 'Hindi') {
                     source_code = 'hi'
                     target_code = 'en'
                     reverse = true
