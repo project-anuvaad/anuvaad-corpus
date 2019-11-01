@@ -222,11 +222,12 @@ var translateByAnuvaadHemat = function (basename, sentences, sentences_hemat, mo
             target_not_available = true
         }
         let req = { "src": s['_doc']['source'], "id": parseInt(modelid) }
+        let req_hemat = { "src": s['_doc']['source'], "id": 32 }
         req_arr.push(req)
-        req_arr_hemat.push(s['_doc']['source'])
+        req_arr_hemat.push(req_hemat)
 
     })
-    let req_hemat = { "source": req_arr_hemat, "direction": reverse ? "hien" : "enhi" }
+    
     if (!target_not_available) {
         let query_condition = { basename: basename + '_' + modelid, rating: { $gt: 0 }, spelling_rating: { $gt: 0 }, context_rating: { $gt: 0 } }
         Sentence.countDocuments(query_condition, function (err, countNonPending) {
@@ -253,7 +254,7 @@ var translateByAnuvaadHemat = function (basename, sentences, sentences_hemat, mo
             },
             function (data, callback) {
                 data_arr = data_arr.concat(data)
-                callTranslationApi(sentences_hemat, `${HEMAT_URL}/translate`, true, req_hemat, res, callback)
+                callTranslationApi(sentences_hemat, `${ANUVAAD_URL}/translator/` + (reverse ? 'translation_hi' : 'translation_en'), true, req_arr_hemat, res, callback)
             }
         ], function (err, data) {
             data_arr = data_arr.concat(data)
@@ -287,11 +288,12 @@ var callTranslationApi = function (sentences, endpoint, is_hemat, req_arr, res, 
         .then(res_anuvaad => {
             let res_end_time = new Date().getTime()
             if (is_hemat) {
-                let response_body = res_anuvaad.data.data
+                let response_body = res_anuvaad.data['response_body']
                 sentences.map((s, index) => {
-                    s['_doc']['target'] = response_body[index]['target']
+                    s['_doc']['target'] = response_body && response_body.length > 0 ? response_body[index]['tgt'] : ''
                     s['_doc']['time_taken'] = res_end_time - req_start_time
                     data_arr.push(s['_doc'])
+
                 })
             }
             else {
