@@ -124,7 +124,7 @@ exports.fetchBenchmarkCompareSentences = function (req, res) {
             return res.status(apistatus.http.status).json(apistatus);
         }
         if (benchmark) {
-            // Benchmark.updateBenchmarkData(benchmark[0], userId, function (err, doc) {
+            Benchmark.updateBenchmarkData(benchmark[0], userId, function (err, doc) {
                 if (err) {
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);
@@ -203,7 +203,7 @@ exports.fetchBenchmarkCompareSentences = function (req, res) {
                         return res.status(apistatus.http.status).json(apistatus);
                     }
                 })
-            // })
+            })
 
         }
         else {
