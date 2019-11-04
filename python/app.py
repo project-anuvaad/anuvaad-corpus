@@ -716,13 +716,13 @@ def upload_benchmark_file():
                 res = Status.ERR_GLOBAL_SYSTEM.value
                 res['why'] = error_messages
                 # res = CustomResponse(Status.ERR_GLOBAL_SYSTEM.value, error_messages)
-                return jsonify(res)
+                return jsonify(res),500
             else:
                 res = CustomResponse(Status.SUCCESS.value, data)
             corpus = Benchmark.objects(basename=basename)
             corpus.update(set__status=STATUS_PROCESSED,
                           set__no_of_sentences=len(english_res))
-            return res.getres(), 500
+            return res.getres()
     except Exception as e:
         print(e)
         res = CustomResponse(Status.ERR_GLOBAL_SYSTEM.value, None)
