@@ -36,6 +36,7 @@ TOPIC = "to-nmt"
 
 @document_api.route('/download-docx', methods=['GET'])
 def download_docx():
+    log.info('download-docx: started')
     filename = request.args.get('filename')
     if filename == '':
         return CustomResponse(Status.ERR_GLOBAL_MISSING_PARAMETERS.value, 'filename missing').getres()
@@ -43,17 +44,18 @@ def download_docx():
         result = flask.send_file(os.path.join('upload/', filename), as_attachment=True)
         n_filename = filename.split('_')
         try:
+            log.info('download-docx: finding process from basename : '+str(n_filename[0]))
             translationProcess = TranslationProcess.objects(basename=n_filename[0])
 
             if translationProcess is not None:
                 data = translationProcess[0]['name']
+                log.info('download-docx: process found for basename with name = '+ str(data))
                 result.headers["x-suggested-filename"] = data
         except Exception as e :
-
+            log.info('download-docx: error in finding process for basename : '+str(n_filename))
             result.headers["x-suggested-filename"] = filename
         return result
     except Exception as e:
-        print('here 1')
         return CustomResponse(Status.DATA_NOT_FOUND.value, 'file not found').getres()
 
 @document_api.route('/translate-docx', methods=['POST'])
