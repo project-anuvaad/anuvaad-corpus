@@ -677,21 +677,48 @@ def upload_benchmark_file():
             # os.system('./helpers/bleualign.py -s ' + os.getcwd() + '/upload/' + basename + '_hin_filtered' + '.txt' + ' -t ' + os.getcwd() + '/upload/' + basename +
             #         '_eng_filtered' + '.txt' + ' --srctotarget ' + os.getcwd() + '/upload/' + basename + '_eng_tran' + '.txt' + ' -o ' + os.getcwd() + '/upload/' + basename + '_output')
             english_res = []
-            f_eng = open(app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng_filtered.txt', 'r')
-            for f in f_eng:
-                english_res.append(f)
-            f_eng.close()
+            # f_eng = open(app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng_filtered.txt', 'r')
+            error = False
+            error_messages = 'Error came for Sentences '
+            with open(app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng_filtered.txt', 'rb') as f:
+            # for f in f_eng:
+                flist = f.readlines()
+                index = 1
+                for f_data in flist:
+                    try:
+                        if f_data.decode("utf8") != '\n' and len(f_data.decode("utf8")) > 0:
+                            index = index + 1
+                            english_res.append(f_data.decode("utf8"))
+                    except Exception as e:
+                        error = True
+                        error_messages = error_messages +str(index)+' '
+                        index = index + 1
+            # f_eng.close()
             data = {'english': english_res}
             sentences = []
             for i in range(0, len(english_res)):
                 sentence = Sentence(sentenceid=str(uuid.uuid4()), status=STATUS_PENDING, basename=str(
                     basename), source=english_res[i])
-                sentences.append(sentence)
+                try:
+                    sentence.save()
+                except Exception as e:
+                    error = True
+                    error_messages = error_messages+'Error came for :'+english_res[i]
+                # sentences.append(sentence)
                 # sentence.save()
-            Sentence.objects.insert(sentences)
+            # Sentence.objects.insert(sentences)
             for f in glob.glob(app.config['UPLOAD_FOLDER'] + '/' + basename + '*'):
                 os.remove(f)
-            res = CustomResponse(Status.SUCCESS.value, data)
+            res = None
+            log.info(error)
+            if error:
+                res = {}
+                res = Status.ERR_GLOBAL_SYSTEM.value
+                res['why'] = error_messages
+                # res = CustomResponse(Status.ERR_GLOBAL_SYSTEM.value, error_messages)
+                return jsonify(res)
+            else:
+                res = CustomResponse(Status.SUCCESS.value, data)
             corpus = Benchmark.objects(basename=basename)
             corpus.update(set__status=STATUS_PROCESSED,
                           set__no_of_sentences=len(english_res))
