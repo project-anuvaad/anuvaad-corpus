@@ -722,7 +722,7 @@ def upload_benchmark_file():
             corpus = Benchmark.objects(basename=basename)
             corpus.update(set__status=STATUS_PROCESSED,
                           set__no_of_sentences=len(english_res))
-            return res.getres()
+            return res.getres(), 500
     except Exception as e:
         print(e)
         res = CustomResponse(Status.ERR_GLOBAL_SYSTEM.value, None)
