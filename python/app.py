@@ -639,6 +639,9 @@ def remove_junk():
 @app.route('/upload-benchmark', methods=['POST'])
 def upload_benchmark_file():
     basename = str(int(time.time()))
+    assign_to = ''
+    if request.headers.get('ad-userid') is not None:
+        assign_to
     try:
         name = request.form.getlist('name')
         source_lang = request.form.getlist('source_lang')
@@ -653,7 +656,7 @@ def upload_benchmark_file():
         else:
             current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
             corpus = Benchmark(source_lang=source_lang[0], status=STATUS_PROCESSING,
-                            name=name[0], created_on=current_time,
+                            name=name[0], created_on=current_time,assigned_to=request.headers.get('ad-userid'),
                             last_modified=current_time, author='', no_of_sentences=0,
                             basename=basename)
             corpus.save()
