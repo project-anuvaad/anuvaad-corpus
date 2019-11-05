@@ -145,8 +145,7 @@ exports.fetchBenchmarkReports = function (req, res) {
                                         Benchmark.fetchByCondition({ basename: sentencedb._doc.basename.split('_')[0] }, (err, benchmark) => {
                                             if (benchmark && Array.isArray(benchmark) && benchmark.length > 0) {
                                                 sentencedb._doc.category_name = benchmark[0]._doc.name
-                                                sentencedb._doc.model_id = record.model_id
-                                                LOG.info(sentencedb._doc)
+                                                sentencedb._doc.model_id = sentencedb._doc.basename.split('_').length > 1 ? sentencedb._doc.basename.split('_')[1] : record.model_id
                                             }
                                             records_db.push(sentencedb)
                                             callback()
