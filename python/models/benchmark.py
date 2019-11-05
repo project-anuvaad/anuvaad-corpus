@@ -17,3 +17,4 @@ class Benchmark(Document):
     no_of_sentences = IntField()
     status = StringField()
     basename = StringField()
+    assigned_to = StringField()
