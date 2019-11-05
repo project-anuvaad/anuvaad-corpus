@@ -682,7 +682,7 @@ def upload_benchmark_file():
             english_res = []
             # f_eng = open(app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng_filtered.txt', 'r')
             error = False
-            error_messages = 'Error came for Sentences '
+            error_messages = 'Error came for Sentences'
             with open(app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng_filtered.txt', 'rb') as f:
             # for f in f_eng:
                 flist = f.readlines()
@@ -694,7 +694,7 @@ def upload_benchmark_file():
                             english_res.append(f_data.decode("utf8"))
                     except Exception as e:
                         error = True
-                        error_messages = error_messages +str(index)+' '
+                        error_messages = error_messages +' '+str(index)
                         index = index + 1
             # f_eng.close()
             data = {'english': english_res}
@@ -706,7 +706,7 @@ def upload_benchmark_file():
                     sentence.save()
                 except Exception as e:
                     error = True
-                    error_messages = error_messages+'Error came for :'+english_res[i]
+                    error_messages = error_messages+' '+english_res[i]
                 # sentences.append(sentence)
                 # sentence.save()
             # Sentence.objects.insert(sentences)
