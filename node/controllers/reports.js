@@ -161,7 +161,7 @@ exports.fetchBenchmarkReports = function (req, res) {
                                     callback('error')
                                 }
                                 records_db.map((record) => {
-                                    LOG.info(record._doc._id + record._doc.model_id + '')
+                                    LOG.info(record._doc)
                                     if (!parent_ids.includes(record._doc._id + record._doc.model_id + '')) {
                                         word_count += record._doc.source.split(' ').length
                                         record_unique.push(record)
