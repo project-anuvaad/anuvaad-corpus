@@ -116,7 +116,7 @@ exports.fetchBenchmarkReports = function (req, res) {
             $group: {
                 _id: '$edited_by',
                 record: {
-                    $push: { parent_id: "$parent_id", source: "$source" }
+                    $push: { parent_id: "$parent_id", source: "$source", model_id: "$modelid" }
                 },
                 parent_id: { $addToSet: "$parent_id" },
                 modelid: { $addToSet: '$modelid' }
@@ -145,6 +145,7 @@ exports.fetchBenchmarkReports = function (req, res) {
                                         Benchmark.fetchByCondition({ basename: sentencedb._doc.basename.split('_')[0] }, (err, benchmark) => {
                                             if (benchmark && Array.isArray(benchmark) && benchmark.length > 0) {
                                                 sentencedb._doc.category_name = benchmark[0]._doc.name
+                                                sentencedb._doc.model_id = record.model_id
                                                 LOG.info(sentencedb._doc)
                                             }
                                             records_db.push(sentencedb)
@@ -160,10 +161,10 @@ exports.fetchBenchmarkReports = function (req, res) {
                                     callback('error')
                                 }
                                 records_db.map((record) => {
-                                    if (!parent_ids.includes(record._doc._id + '')) {
+                                    if (!parent_ids.includes(record._doc._id + record._doc.model_id + '')) {
                                         word_count += record._doc.source.split(' ').length
                                         record_unique.push(record)
-                                        parent_ids.push(record._doc._id + '')
+                                        parent_ids.push(record._doc._id + record._doc.model_id + '')
                                     }
                                 })
                                 res.word_count = word_count
