@@ -111,7 +111,8 @@ def translateDocx():
         texts.append(text)
 
     log.info('translateDocx: number of nodes ' + str(len(nodes)) + ' and text are : ' + str(len(texts)))
-
+    translationProcess = TranslationProcess.objects(basename=basename)
+    translationProcess.update(set__eta=(TEXT_PROCESSING_TIME)*(len(texts)+get_pending_nodes())/25)
     """  method which don't use tokenization  """
     # docx_helper.modify_text(nodes)
 
