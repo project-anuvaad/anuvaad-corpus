@@ -186,7 +186,7 @@ def translate_docx_v2():
 
     log.info('translate_docx_v2 : number of nodes = ' + str(len(nodes)) + ' and text are : ' + str(len(texts)))
     translationProcess = TranslationProcess.objects(basename=basename)
-    translationProcess.update(set__eta=TEXT_PROCESSING_TIME*len(texts))
+    translationProcess.update(set__eta=(TEXT_PROCESSING_TIME/25)*len(texts))
     total_nodes = get_total_number_of_nodes_with_text(nodes)
     try:
         doc_nodes = DocumentNodes(basename=basename, created_date=current_time, total_nodes=total_nodes, nodes_sent=0,
