@@ -249,16 +249,17 @@ def pre_process_text(xmltree):
                                 sentence = ''
 
                         log.debug('SENTENCE IS === ' + sentence)
-                        if not x.text == None and x.text.strip() == '':
-                            prev_text_node = None
-                            prev_prop_node = None
-                            log.debug("x.text is null")
-                        else:
-                            log.debug("x.text is not null, text is == " + x.text)
-                            sentence = sentence + x.text
-                            prev_text_node = x
+                        if not x.text:
+                            if x.text.strip() == '':
+                                prev_text_node = None
+                                prev_prop_node = None
+                                log.debug("x.text is null")
+                            else:
+                                log.debug("x.text is not null, text is == " + x.text)
+                                sentence = sentence + x.text
+                                prev_text_node = x
 
-                            x.text = ''
+                                x.text = ''
 
                         if para_child_count == elements:
                             x.text = sentence
