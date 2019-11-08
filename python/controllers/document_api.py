@@ -16,12 +16,14 @@ import utils.translate_footnote as translate_footer
 from kafka_utils.producer import get_producer
 from nltk.tokenize import sent_tokenize
 import nltk
+
 nltk.download('punkt')
 from models.text_nodes import TextNode
 from models.Document_nodes import DocumentNodes
 import json
 import uuid
 from datetime import datetime
+
 log = logging.getLogger('file')
 
 document_api = Blueprint('document_api', __name__)
@@ -44,21 +46,22 @@ def download_docx():
 
         n_filename = filename.split('_')
         try:
-            log.info('download-docx: finding process from basename : '+str(n_filename[0]))
+            log.info('download-docx: finding process from basename : ' + str(n_filename[0]))
             translationProcess = TranslationProcess.objects(basename=n_filename[0])
             if translationProcess is not None:
                 data = translationProcess[0]['name']
-                log.info('download-docx: process found for basename with name = '+ str(data))
+                log.info('download-docx: process found for basename with name = ' + str(data))
                 result = flask.send_file(os.path.join('upload/', filename), as_attachment=True,
                                          attachment_filename=data)
                 result.headers["x-suggested-filename"] = data
-        except Exception as e :
-            log.info('download-docx: error in finding process for basename : '+str(n_filename))
+        except Exception as e:
+            log.info('download-docx: error in finding process for basename : ' + str(n_filename))
             result = flask.send_file(os.path.join('upload/', filename), as_attachment=True, attachment_filename="happy")
             result.headers["x-suggested-filename"] = filename
         return result
     except Exception as e:
         return CustomResponse(Status.DATA_NOT_FOUND.value, 'file not found').getres()
+
 
 @document_api.route('/translate-docx', methods=['POST'])
 def translateDocx():
@@ -175,7 +178,7 @@ def translate_docx_v2():
     try:
         docx_helper.pre_process_text(xmltree)
     except Exception as e:
-        log.error('translate_docx_v2 : error occureed for pre-processing document. Error is '+str(e))
+        log.error('translate_docx_v2 : error occureed for pre-processing document. Error is ' + str(e))
         log.info('translate_docx_v2 : not pre-processing document')
     docx_helper.warp_original_with_identification_tags(filepath, xmltree, filepath_processed_src_with_ids)
 
@@ -188,7 +191,7 @@ def translate_docx_v2():
     total_nodes = get_total_number_of_nodes_with_text(nodes)
     try:
         doc_nodes = DocumentNodes(basename=basename, created_date=current_time, total_nodes=total_nodes, nodes_sent=0,
-                              nodes_received=0, is_complete=False)
+                                  nodes_received=0, is_complete=False)
         doc_nodes.save()
         send_nodes(nodes, basename, model_id, url_end_point)
         res = CustomResponse(Status.SUCCESS.value, 'file has been queued')
@@ -198,12 +201,37 @@ def translate_docx_v2():
             getcurrenttime() - start_time))
         return res.getres()
     except Exception as e:
-        log.error('translate_docx_v2 : error occurred file not processing, Error is = '+str(e))
+        log.error('translate_docx_v2 : error occurred file not processing, Error is = ' + str(e))
         translationProcess = TranslationProcess.objects(basename=basename)
         translationProcess.update(set__status=STATUS_FAILED)
         res = CustomResponse(Status.FAILURE.value, 'something went wrong')
         log.info('translate_docx_v2: ended at ' + str(getcurrenttime()) + 'total time elapsed : ' + str(
             getcurrenttime() - start_time))
+        return res.getres()
+
+
+@document_api.route('/get-nodes-info', methods=['GET'])
+def get_pending_nodes():
+    no_of_nodes = 0
+    node_received = 0
+    try:
+        translationProcess = TranslationProcess.objects(status=STATUS_PROCESSING)
+        for tp in translationProcess:
+            doc_nodes = DocumentNodes.objects(basename=tp['basename'])
+            try:
+                no_of_nodes = no_of_nodes + doc_nodes[0]['nodes_sent']
+                node_received = node_received + doc_nodes[0]['nodes_received']
+            except Exception as e:
+                log.info('get_pending_nodes : Exception occured while counting nodes for basename = ' + tp[
+                    'basename'] + ' with error ' + str(e))
+                pass
+        log.info(
+            'get_pending_nodes : nodes details == total_nodes : ' + no_of_nodes + ', node_completed : ' + node_received)
+        res = CustomResponse(Status.SUCCESS.value, {'total_nodes': no_of_nodes, 'node_completed': node_received})
+        return res.getres()
+    except Exception as e:
+        log.info('get_pending_nodes : Exception occured : error is = ' + str(e))
+        res = CustomResponse(Status.FAILURE.value, 'something went wrong while getting nodes information')
         return res.getres()
 
 
@@ -240,7 +268,7 @@ def send_nodes(nodes, basename, model_id, url_end_point):
             tokens = sent_tokenize(node.text)
             token_len = len(tokens)
             created_date = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-            log.info('send_nodes : text in a node == '+node.text)
+            log.info('send_nodes : text in a node == ' + node.text)
             if not token_len == 0:
                 text_node = TextNode(node_id=n_id, sentences=messages, created_date=created_date,
                                      tokens_sent=token_len, is_complete=False, tokens_received=0, basename=basename)
