@@ -32,6 +32,7 @@ STATUS_PROCESSING = 'PROCESSING'
 STATUS_PROCESSED = 'COMPLETED'
 producer = get_producer()
 TOPIC = "to-nmt"
+TEXT_PROCESSING_TIME = 6
 
 
 @document_api.route('/download-docx', methods=['GET'])
@@ -184,7 +185,8 @@ def translate_docx_v2():
         texts.append(text)
 
     log.info('translate_docx_v2 : number of nodes = ' + str(len(nodes)) + ' and text are : ' + str(len(texts)))
-
+    translationProcess = TranslationProcess.objects(basename=basename)
+    translationProcess.update(set__eta=TEXT_PROCESSING_TIME*len(texts))
     total_nodes = get_total_number_of_nodes_with_text(nodes)
     try:
         doc_nodes = DocumentNodes(basename=basename, created_date=current_time, total_nodes=total_nodes, nodes_sent=0,
