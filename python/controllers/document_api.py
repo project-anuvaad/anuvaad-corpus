@@ -189,7 +189,7 @@ def translate_docx_v2():
 
     log.info('translate_docx_v2 : number of nodes = ' + str(len(nodes)) + ' and text are : ' + str(len(texts)))
     translationProcess = TranslationProcess.objects(basename=basename)
-    translationProcess.update(set__eta=(TEXT_PROCESSING_TIME/25)*len(texts))
+    translationProcess.update(set__eta=(TEXT_PROCESSING_TIME)*(len(texts)+get_pending_nodes())/25)
     total_nodes = get_total_number_of_nodes_with_text(nodes)
     try:
         doc_nodes = DocumentNodes(basename=basename, created_date=current_time, total_nodes=total_nodes, nodes_sent=0,
@@ -212,7 +212,6 @@ def translate_docx_v2():
         return res.getres()
 
 
-@document_api.route('/get-nodes-info', methods=['GET'])
 def get_pending_nodes():
     no_of_nodes = 0
     node_received = 0
@@ -229,12 +228,10 @@ def get_pending_nodes():
                 pass
         log.info(
             'get_pending_nodes : nodes details == total_nodes : ' + no_of_nodes + ', node_completed : ' + node_received)
-        res = CustomResponse(Status.SUCCESS.value, {'total_nodes': no_of_nodes, 'node_completed': node_received})
-        return res.getres()
+        return no_of_nodes - node_received
     except Exception as e:
         log.info('get_pending_nodes : Exception occured : error is = ' + str(e))
-        res = CustomResponse(Status.FAILURE.value, 'something went wrong while getting nodes information')
-        return res.getres()
+        return 0
 
 
 def getcurrenttime():
