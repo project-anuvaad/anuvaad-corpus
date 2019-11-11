@@ -228,8 +228,10 @@ def get_pending_nodes():
                     'basename'] + ' with error ' + str(e))
                 pass
         log.info(
-            'get_pending_nodes : nodes details == total_nodes : ' + no_of_nodes + ', node_completed : ' + node_received)
+
+            'get_pending_nodes : nodes details == total_nodes : ' + str(no_of_nodes) + ', node_completed : ' + str(node_received))
         return no_of_nodes - node_received
+
     except Exception as e:
         log.info('get_pending_nodes : Exception occured : error is = ' + str(e))
         return 0
