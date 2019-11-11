@@ -639,13 +639,16 @@ def remove_junk():
 @app.route('/upload-benchmark', methods=['POST'])
 def upload_benchmark_file():
     basename = str(int(time.time()))
+    assign_to = ''
+    if request.headers.get('ad-userid') is not None:
+        assign_to
     try:
         name = request.form.getlist('name')
         source_lang = request.form.getlist('source_lang')
         if source_lang is None or len(
                 source_lang) == 0 or len(source_lang[0]) == 0 or name is None or len(name) == 0 or len(
             name[0]) == 0 or request.files is None or \
-                request.files['english'] is None:
+                request.files['file'] is None:
             res = CustomResponse(
                 Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
             return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
@@ -653,11 +656,11 @@ def upload_benchmark_file():
         else:
             current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
             corpus = Benchmark(source_lang=source_lang[0], status=STATUS_PROCESSING,
-                            name=name[0], created_on=current_time,
+                            name=name[0], created_on=current_time,assigned_to=request.headers.get('ad-userid'),
                             last_modified=current_time, author='', no_of_sentences=0,
                             basename=basename)
             corpus.save()
-            f_eng = request.files['english']
+            f_eng = request.files['file']
             filepath_eng = os.path.join(
                 app.config['UPLOAD_FOLDER'], basename + '_eng_filtered.txt')
             f_eng.save(filepath_eng)
@@ -677,21 +680,48 @@ def upload_benchmark_file():
             # os.system('./helpers/bleualign.py -s ' + os.getcwd() + '/upload/' + basename + '_hin_filtered' + '.txt' + ' -t ' + os.getcwd() + '/upload/' + basename +
             #         '_eng_filtered' + '.txt' + ' --srctotarget ' + os.getcwd() + '/upload/' + basename + '_eng_tran' + '.txt' + ' -o ' + os.getcwd() + '/upload/' + basename + '_output')
             english_res = []
-            f_eng = open(app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng_filtered.txt', 'r')
-            for f in f_eng:
-                english_res.append(f)
-            f_eng.close()
+            # f_eng = open(app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng_filtered.txt', 'r')
+            error = False
+            error_messages = 'Error came for Sentences'
+            with open(app.config['UPLOAD_FOLDER'] + '/' + basename + '_eng_filtered.txt', 'rb') as f:
+            # for f in f_eng:
+                flist = f.readlines()
+                index = 1
+                for f_data in flist:
+                    try:
+                        if f_data.decode("utf8") != '\n' and len(f_data.decode("utf8")) > 0:
+                            index = index + 1
+                            english_res.append(f_data.decode("utf8"))
+                    except Exception as e:
+                        error = True
+                        error_messages = error_messages +' '+str(index)
+                        index = index + 1
+            # f_eng.close()
             data = {'english': english_res}
             sentences = []
             for i in range(0, len(english_res)):
                 sentence = Sentence(sentenceid=str(uuid.uuid4()), status=STATUS_PENDING, basename=str(
                     basename), source=english_res[i])
-                sentences.append(sentence)
+                try:
+                    sentence.save()
+                except Exception as e:
+                    error = True
+                    error_messages = error_messages+' '+english_res[i]
+                # sentences.append(sentence)
                 # sentence.save()
-            Sentence.objects.insert(sentences)
+            # Sentence.objects.insert(sentences)
             for f in glob.glob(app.config['UPLOAD_FOLDER'] + '/' + basename + '*'):
                 os.remove(f)
-            res = CustomResponse(Status.SUCCESS.value, data)
+            res = None
+            log.info(error)
+            if error:
+                res = {}
+                res = Status.ERR_GLOBAL_SYSTEM.value
+                res['why'] = error_messages
+                # res = CustomResponse(Status.ERR_GLOBAL_SYSTEM.value, error_messages)
+                return jsonify(res),500
+            else:
+                res = CustomResponse(Status.SUCCESS.value, data)
             corpus = Benchmark.objects(basename=basename)
             corpus.update(set__status=STATUS_PROCESSED,
                           set__no_of_sentences=len(english_res))
