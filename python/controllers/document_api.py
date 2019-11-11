@@ -34,7 +34,7 @@ STATUS_PROCESSING = 'PROCESSING'
 STATUS_PROCESSED = 'COMPLETED'
 producer = get_producer()
 TOPIC = "to-nmt"
-TEXT_PROCESSING_TIME = 6
+TEXT_PROCESSING_TIME = 20
 
 
 @document_api.route('/download-docx', methods=['GET'])
