@@ -3,6 +3,7 @@ var Benchmark = require('../models/benchmark');
 var APIStatus = require('../errors/apistatus')
 var StatusCode = require('../errors/statuscodes').StatusCode
 var Sentence = require('../models/sentence');
+var Nmtmodels = require('../models/nmt');
 var LOG = require('../logger/logger').logger
 var SentenceLog = require('../models/sentencelog');
 var async = require('async')
@@ -12,6 +13,7 @@ var COMPONENT = "reports";
 
 const STATUS_ACCEPTED = 'ACCEPTED'
 const STATUS_REJECTED = 'REJECTED'
+const STATUS_ACTIVE = 'ACTIVE'
 const ES_SERVER_URL = process.env.GATEWAY_URL ? process.env.GATEWAY_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/admin/'
 const USER_INFO_URL = ES_SERVER_URL + 'users'
 
@@ -160,18 +162,28 @@ exports.fetchBenchmarkReports = function (req, res) {
                                     callback('error')
                                 }
                                 records_db.map((record) => {
-                                    if (!parent_ids.includes(record._doc._id +''+ record._doc.model_id + '')) {
+                                    if (!parent_ids.includes(record._doc._id + '' + record._doc.model_id + '')) {
                                         LOG.info(record._doc.model_id + '')
                                         word_count += record._doc.source.split(' ').length
                                         record_unique.push(record)
-                                        parent_ids.push(record._doc._id +''+ record._doc.model_id + '')
+                                        parent_ids.push(record._doc._id + '' + record._doc.model_id + '')
                                     }
                                 })
-                                res.word_count = word_count
-                                res.sentence_count = res.parent_id.length
-                                res.record_unique = record_unique
-                                results_out.push(res)
-                                callback()
+                                res.models = []
+                                async.each(res.modelid, function (model, callback) {
+                                    Nmtmodels.findByCondition({ model_id: model, status: STATUS_ACTIVE }, function (err, models) {
+                                        if (!err && models && models.length > 0) {
+                                            res.models.push(models[0])
+                                        }
+                                        callback()
+                                    })
+                                }, function (err) {
+                                    res.word_count = word_count
+                                    res.sentence_count = res.parent_id.length
+                                    res.record_unique = record_unique
+                                    results_out.push(res)
+                                    callback()
+                                })
                             });
                         }
                     }
