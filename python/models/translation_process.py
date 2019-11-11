@@ -16,3 +16,4 @@ class TranslationProcess(Document):
     sourceLang = StringField()
     targetLang = StringField()
     created_by = StringField()
+    eta = IntField()

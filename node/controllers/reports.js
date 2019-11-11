@@ -1,13 +1,198 @@
 var Response = require('../models/response')
+var Benchmark = require('../models/benchmark');
 var APIStatus = require('../errors/apistatus')
 var StatusCode = require('../errors/statuscodes').StatusCode
+var Sentence = require('../models/sentence');
 var LOG = require('../logger/logger').logger
 var SentenceLog = require('../models/sentencelog');
+var async = require('async')
+var axios = require('axios');
 
 var COMPONENT = "reports";
 
 const STATUS_ACCEPTED = 'ACCEPTED'
 const STATUS_REJECTED = 'REJECTED'
+const ES_SERVER_URL = process.env.GATEWAY_URL ? process.env.GATEWAY_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/admin/'
+const USER_INFO_URL = ES_SERVER_URL + 'users'
+
+exports.fetchBenchmarkAnalyzerReports = function (req, res) {
+    var from_date = req.query.from_date
+    var to_date = req.query.to_date
+    if (!to_date || !from_date) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    SentenceLog.aggregate([
+        {
+            $match: { "modelid": { $ne: null }, updated_on: { "$gte": new Date(from_date), "$lt": new Date(to_date) } }
+        },
+        {
+            $group: {
+                _id: '$modelid',
+                record: {
+                    $push: { parent_id: "$parent_id", source: "$source" }
+                },
+                parent_id: { $addToSet: "$parent_id" },
+                modelid: { $addToSet: '$modelid' }
+            }
+        }
+    ], (err, results) => {
+        if (err) {
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+        let results_out = []
+        if (results && Array.isArray(results)) {
+            LOG.info(results)
+            async.each(results, function (res, callback) {
+                let word_count = 0
+                let record_unique = []
+                let parent_ids = []
+                if (res.record && Array.isArray(res.record)) {
+                    let records_db = []
+                    async.each(res.record, function (record, callback) {
+                        Sentence.find({ _id: record.parent_id }, {}, function (err, results) {
+                            if (results && Array.isArray(results) && results.length > 0) {
+                                var sentencedb = results[0]
+                                Benchmark.fetchByCondition({ basename: sentencedb._doc.basename.split('_')[0] }, (err, benchmark) => {
+                                    if (benchmark && Array.isArray(benchmark) && benchmark.length > 0) {
+                                        sentencedb._doc.category_name = benchmark[0]._doc.name
+                                        LOG.info(sentencedb._doc)
+                                    }
+                                    records_db.push(sentencedb)
+                                    callback()
+                                })
+
+                            }
+
+                        })
+
+                    }, function (err) {
+                        if (err) {
+                            callback('error')
+                        }
+                        records_db.map((record) => {
+                            if (!parent_ids.includes(record._doc._id + '')) {
+                                word_count += record._doc.source.split(' ').length
+                                record_unique.push(record)
+                                parent_ids.push(record._doc._id + '')
+                            }
+                        })
+                        res.word_count = word_count
+                        res.sentence_count = res.parent_id.length
+                        res.record_unique = record_unique
+                        results_out.push(res)
+                        callback()
+                    });
+                }
+
+            }, function (err) {
+                if (err) {
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
+                let response = new Response(StatusCode.SUCCESS, results_out).getRsp()
+                return res.status(response.http.status).json(response);
+            });
+
+
+        }
+    })
+
+}
+
+exports.fetchBenchmarkReports = function (req, res) {
+    var from_date = req.query.from_date
+    var to_date = req.query.to_date
+    if (!to_date || !from_date) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    SentenceLog.aggregate([
+        {
+            $match: { "modelid": { $ne: null }, updated_on: { "$gte": new Date(from_date), "$lt": new Date(to_date) } }
+        },
+        {
+            $group: {
+                _id: '$edited_by',
+                record: {
+                    $push: { parent_id: "$parent_id", source: "$source", model_id: "$modelid" }
+                },
+                parent_id: { $addToSet: "$parent_id" },
+                modelid: { $addToSet: '$modelid' }
+            }
+        }
+    ], (err, results) => {
+        if (err) {
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+        let results_out = []
+        if (results && Array.isArray(results)) {
+            async.each(results, function (res, callback) {
+                axios.get(USER_INFO_URL + '/' + res._id).then((api_res) => {
+                    if (api_res.data) {
+                        res.username = api_res.data.username
+                        let word_count = 0
+                        let record_unique = []
+                        let parent_ids = []
+                        if (res.record && Array.isArray(res.record)) {
+                            let records_db = []
+                            async.each(res.record, function (record, callback) {
+                                Sentence.find({ _id: record.parent_id }, {}, function (err, results) {
+                                    if (results && Array.isArray(results) && results.length > 0) {
+                                        var sentencedb = results[0]
+                                        Benchmark.fetchByCondition({ basename: sentencedb._doc.basename.split('_')[0] }, (err, benchmark) => {
+                                            if (benchmark && Array.isArray(benchmark) && benchmark.length > 0) {
+                                                sentencedb._doc.category_name = benchmark[0]._doc.name
+                                                sentencedb._doc.model_id = sentencedb._doc.basename.split('_').length > 1 ? sentencedb._doc.basename.split('_')[1] : record.model_id
+                                            }
+                                            records_db.push(sentencedb)
+                                            callback()
+                                        })
+
+                                    }
+
+                                })
+
+                            }, function (err) {
+                                if (err) {
+                                    callback('error')
+                                }
+                                records_db.map((record) => {
+                                    if (!parent_ids.includes(record._doc._id +''+ record._doc.model_id + '')) {
+                                        LOG.info(record._doc.model_id + '')
+                                        word_count += record._doc.source.split(' ').length
+                                        record_unique.push(record)
+                                        parent_ids.push(record._doc._id +''+ record._doc.model_id + '')
+                                    }
+                                })
+                                res.word_count = word_count
+                                res.sentence_count = res.parent_id.length
+                                res.record_unique = record_unique
+                                results_out.push(res)
+                                callback()
+                            });
+                        }
+                    }
+                    else {
+                        callback('error')
+                    }
+                })
+            }, function (err) {
+                if (err) {
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
+                let response = new Response(StatusCode.SUCCESS, results_out).getRsp()
+                return res.status(response.http.status).json(response);
+            });
+
+
+        }
+    })
+
+}
 
 exports.fetchReports = function (req, res) {
     var from_date = req.query.from_date
@@ -17,7 +202,7 @@ exports.fetchReports = function (req, res) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
-    if(!isValidDate(new Date(from_date)) || !isValidDate(new Date(to_date))){
+    if (!isValidDate(new Date(from_date)) || !isValidDate(new Date(to_date))) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_INVALID_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
@@ -101,4 +286,4 @@ exports.fetchReports = function (req, res) {
 
 function isValidDate(d) {
     return d instanceof Date && !isNaN(d);
-  }
+}
