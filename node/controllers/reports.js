@@ -161,14 +161,6 @@ exports.fetchBenchmarkReports = function (req, res) {
                                 if (err) {
                                     callback('error')
                                 }
-                                records_db.map((record) => {
-                                    if (!parent_ids.includes(record._doc._id + '' + record._doc.model_id + '')) {
-                                        LOG.info(record._doc.model_id + '')
-                                        word_count += record._doc.source.split(' ').length
-                                        record_unique.push(record)
-                                        parent_ids.push(record._doc._id + '' + record._doc.model_id + '')
-                                    }
-                                })
                                 res.models = []
                                 async.each(res.modelid, function (model, callback) {
                                     Nmtmodels.findByCondition({ $or: [{ model_id: model }, { model_id: parseInt(model) }] }, function (err, models) {
@@ -178,6 +170,25 @@ exports.fetchBenchmarkReports = function (req, res) {
                                         callback()
                                     })
                                 }, function (err) {
+                                    records_db.map((record) => {
+                                        if (!parent_ids.includes(record._doc._id + '' + record._doc.model_id + '')) {
+                                            LOG.info(record._doc.model_id + '')
+                                            res.models.map((model) => {
+                                                if (record._doc.model_id == model.model_id) {
+                                                    if (model.records && Array.isArray(model.records)) {
+                                                        model.records.push(record)
+                                                    }
+                                                    else{
+                                                        model.records = []
+                                                        model.records.push(record)
+                                                    }
+                                                }
+                                            })
+                                            word_count += record._doc.source.split(' ').length
+                                            record_unique.push(record)
+                                            parent_ids.push(record._doc._id + '' + record._doc.model_id + '')
+                                        }
+                                    })
                                     res.word_count = word_count
                                     res.sentence_count = res.parent_id.length
                                     res.record_unique = record_unique
