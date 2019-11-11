@@ -226,7 +226,7 @@ def get_pending_nodes():
                     'basename'] + ' with error ' + str(e))
                 pass
         log.info(
-            'get_pending_nodes : nodes details == total_nodes : ' + no_of_nodes + ', node_completed : ' + node_received)
+            'get_pending_nodes : nodes details == total_nodes : ' + str(no_of_nodes) + ', node_completed : ' + str(node_received))
         res = CustomResponse(Status.SUCCESS.value, {'total_nodes': no_of_nodes, 'node_completed': node_received})
         return res.getres()
     except Exception as e:
