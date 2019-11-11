@@ -174,13 +174,13 @@ exports.fetchBenchmarkReports = function (req, res) {
                                         if (!parent_ids.includes(record._doc._id + '' + record._doc.model_id + '')) {
                                             LOG.info(record._doc.model_id + '')
                                             res.models.map((model) => {
-                                                if (record._doc.model_id == model.model_id) {
-                                                    if (model.records && Array.isArray(model.records)) {
-                                                        model.records.push(record)
+                                                if (record._doc.model_id == model._doc.model_id) {
+                                                    if (model._doc.records && Array.isArray(model._doc.records)) {
+                                                        model._doc.records.push(record)
                                                     }
                                                     else{
-                                                        model.records = []
-                                                        model.records.push(record)
+                                                        model._doc.records = []
+                                                        model._doc.records.push(record)
                                                     }
                                                 }
                                             })
