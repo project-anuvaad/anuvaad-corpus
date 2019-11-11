@@ -171,7 +171,7 @@ exports.fetchBenchmarkReports = function (req, res) {
                                 })
                                 res.models = []
                                 async.each(res.modelid, function (model, callback) {
-                                    Nmtmodels.findByCondition({ model_id: model, status: STATUS_ACTIVE }, function (err, models) {
+                                    Nmtmodels.findByCondition({ $or: [{ model_id: model }, { model_id: parseInt(model) }] }, function (err, models) {
                                         if (!err && models && models.length > 0) {
                                             res.models.push(models[0])
                                         }
