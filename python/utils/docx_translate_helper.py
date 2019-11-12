@@ -12,10 +12,12 @@ import queue
 from models.Text_Object import Text_Object
 import logging
 from google.cloud import translate
+import subprocess
 
 NMT_BASE_URL = os.environ.get('NMT_BASE_URL', 'http://localhost:3003/translator/')
 max_calls = 25
 log = logging.getLogger('file')
+DOCX_CONVERTOR = "soffice --headless --convert-to docx "
 
 
 def get_xml_tree(xml_string):
@@ -307,7 +309,7 @@ def modify_text_with_tokenization(nodes, url, model_id, url_end_point):
         t_ = N_T.text
         s_id = N_T.node_id
 
-        arr.append({'src': t_, 'id': model_id, 's_id': s_id, 'n_id':0})
+        arr.append({'src': t_, 'id': model_id, 's_id': s_id, 'n_id': 0})
 
         i = i + 1
         del N_T
@@ -381,12 +383,9 @@ def modify_text_with_tokenization(nodes, url, model_id, url_end_point):
                 break
 
         if Q_response.qsize() == 0 and text == '' and prev is not None:
-
             log.info('modify_text_with_tokenization **: node text before == ' + node.text)
             node.text = prev.text
             log.info('modify_text_with_tokenization **: node text after == ' + node.text)
-
-
 
 
 def warp_original_with_identification_tags(input_docx_file_path, xml_tree, output_docx_filepath):
@@ -511,3 +510,15 @@ def modify_text__2(nodes):
             log.info('*****: ' + str(results[i]))
             pass
         i = i + 1
+
+
+def convert_DOC_to_DOCX(filename):
+    log.info('convert_DOC_to_DOCX : filename is == '+filename)
+    try:
+        name = filename.split('/')
+        command = DOCX_CONVERTOR + filename + ' --outdir upload'
+        os.system(command)
+    except Exception as e:
+        log.info('convert_DOC_to_DOCX : Error Occured == '+str(e))
+        pass
+    log.info('convert_DOC_to_DOCX : completed')
