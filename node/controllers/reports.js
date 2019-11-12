@@ -147,6 +147,7 @@ exports.fetchBenchmarkReports = function (req, res) {
                                         Benchmark.fetchByCondition({ basename: sentencedb._doc.basename.split('_')[0] }, (err, benchmark) => {
                                             if (benchmark && Array.isArray(benchmark) && benchmark.length > 0) {
                                                 sentencedb._doc.category_name = benchmark[0]._doc.name
+                                                sentencedb._doc.category_id = benchmark[0]._doc._id
                                                 sentencedb._doc.model_id = sentencedb._doc.basename.split('_').length > 1 ? sentencedb._doc.basename.split('_')[1] : record.model_id
                                             }
                                             records_db.push(sentencedb)
@@ -175,10 +176,26 @@ exports.fetchBenchmarkReports = function (req, res) {
                                             LOG.info(record._doc.model_id + '')
                                             res.models.map((model) => {
                                                 if (record._doc.model_id == model._doc.model_id) {
+                                                    if (model._doc.categories && Array.isArray(model._doc.categories)) {
+                                                        let found = false
+                                                        model._doc.categories.map((category) => {
+                                                            if (category.category_id == record._doc.category_id) {
+                                                                found = true
+                                                                category.records.push(record)
+                                                            }
+                                                        })
+                                                        if (!found) {
+                                                            model._doc.categories.push({ category_name: record._doc.category_name, category_id: record._doc.category_id, records: [record] })
+                                                        }
+                                                    }
+                                                    else{
+                                                        model._doc.categories = []
+                                                        model._doc.categories.push({ category_name: record._doc.category_name, category_id: record._doc.category_id, records: [record] })
+                                                    }
                                                     if (model._doc.records && Array.isArray(model._doc.records)) {
                                                         model._doc.records.push(record)
                                                     }
-                                                    else{
+                                                    else {
                                                         model._doc.records = []
                                                         model._doc.records.push(record)
                                                     }
