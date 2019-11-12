@@ -16,6 +16,18 @@ const STATUS_REJECTED = 'REJECTED'
 const STATUS_ACTIVE = 'ACTIVE'
 const ES_SERVER_URL = process.env.GATEWAY_URL ? process.env.GATEWAY_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/admin/'
 const USER_INFO_URL = ES_SERVER_URL + 'users'
+const LANGUAGES = {
+    'hi': 'Hindi',
+    'en': 'English',
+    'bn': 'Bengali',
+    'gu': 'Gujarati',
+    'mr': 'Marathi',
+    'kn': 'Kannada',
+    'te': 'Telugu',
+    'ml': 'Malayalam',
+    'pa': 'Punjabi',
+    'ta': 'Tamil'
+}
 
 exports.fetchBenchmarkAnalyzerReports = function (req, res) {
     var from_date = req.query.from_date
@@ -166,6 +178,8 @@ exports.fetchBenchmarkReports = function (req, res) {
                                 async.each(res.modelid, function (model, callback) {
                                     Nmtmodels.findByCondition({ $or: [{ model_id: model }, { model_id: parseInt(model) }] }, function (err, models) {
                                         if (!err && models && models.length > 0) {
+                                            models[0]._doc.source_lang = LANGUAGES[models[0]._doc.source_language_code]
+                                            models[0]._doc.target_lang = LANGUAGES[models[0]._doc.target_language_code]
                                             res.models.push(models[0])
                                         }
                                         callback()
@@ -206,12 +220,11 @@ exports.fetchBenchmarkReports = function (req, res) {
                                                         category.spelling_rating = (record._doc.spelling_rating ? record._doc.spelling_rating : 0)
                                                         model._doc.categories.push(category)
                                                     }
-                                                    if (model._doc.records && Array.isArray(model._doc.records)) {
-                                                        model._doc.records.push(record)
+                                                    if (model._doc.records_count) {
+                                                        model._doc.records_count = model._doc.records_count + 1
                                                     }
                                                     else {
-                                                        model._doc.records = []
-                                                        model._doc.records.push(record)
+                                                        model._doc.records_count = 1
                                                     }
                                                 }
                                             })
