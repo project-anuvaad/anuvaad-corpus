@@ -169,15 +169,41 @@ def translate_docx_v2():
     filepath_processed_src_with_ids = os.path.join(
         app.config['UPLOAD_FOLDER'], basename + '_s' + '.docx')
 
-    log.info("translate_docx_v2 : file name" + filename_to_processed)
+    log.info("translate_docx_v2 : file name " + filename_to_processed)
 
-    xml_content = docx_helper.get_document_xml(filepath)
-    xmltree = docx_helper.get_xml_tree(xml_content)
+    xmltree = None
+    try:
+        xml_content = docx_helper.get_document_xml(filepath)
+        xmltree = docx_helper.get_xml_tree(xml_content)
+    except Exception as e:
+        log.info('translate_docx_v2 : Error while extracting docx, trying to convert it to docx from doc')
+        try:
+            log.info('here === 1  ==  '+ filepath)
+            docx_helper.convert_DOC_to_DOCX(filepath)
+            log.info('here === 2  ==  '+ filepath)
+            xml_content = docx_helper.get_document_xml(filepath)
+            log.info('here === 3  ==  '+ str(xml_content))
+
+            xmltree = docx_helper.get_xml_tree(xml_content)
+            log.info('translate_docx_v2 : doc to docx conversion successful')
+        except Exception as e:
+            log.error('translate_docx_v2 : Error while extracting docx files. error is = ' + str(e))
+            log.error('translate_docx_v2 : Error while extracting docx files. uploaded file is corrupt')
+            res = CustomResponse(Status.FAILURE.value, ' uploaded file is corrupt')
+            log.info('translate_docx_v2: ended at ' + str(getcurrenttime()) + 'total time elapsed : ' + str(
+                getcurrenttime() - start_time))
+            return res.getres()
 
     nodes = []
     texts = []
-    docx_helper.add_identification_tag(xmltree, basename)
+    if xmltree is None:
+        res = CustomResponse(Status.FAILURE.value, ' uploaded file is corrupt')
+        log.info('translate_docx_v2: ended at ' + str(getcurrenttime()) + 'total time elapsed : ' + str(
+            getcurrenttime() - start_time))
+        return res.getres()
+
     try:
+        docx_helper.add_identification_tag(xmltree, basename)
         docx_helper.pre_process_text(xmltree)
     except Exception as e:
         log.error('translate_docx_v2 : error occureed for pre-processing document. Error is ' + str(e))
