@@ -181,16 +181,30 @@ exports.fetchBenchmarkReports = function (req, res) {
                                                         model._doc.categories.map((category) => {
                                                             if (category.category_id == record._doc.category_id) {
                                                                 found = true
+                                                                category.context_rating = category.context_rating + (record._doc.context_rating ? record._doc.context_rating : 0)
+                                                                category.name_accuracy_rating = category.name_accuracy_rating + (record._doc.name_accuracy_rating ? record._doc.name_accuracy_rating : 0)
+                                                                category.rating = category.rating + (record._doc.rating ? record._doc.rating : 0)
+                                                                category.spelling_rating = category.spelling_rating + (record._doc.spelling_rating ? record._doc.spelling_rating : 0)
                                                                 category.records.push(record)
                                                             }
                                                         })
                                                         if (!found) {
-                                                            model._doc.categories.push({ category_name: record._doc.category_name, category_id: record._doc.category_id, records: [record] })
+                                                            let category = { category_name: record._doc.category_name, category_id: record._doc.category_id, records: [record] }
+                                                            category.context_rating = (record._doc.context_rating ? record._doc.context_rating : 0)
+                                                            category.name_accuracy_rating = (record._doc.name_accuracy_rating ? record._doc.name_accuracy_rating : 0)
+                                                            category.rating = (record._doc.rating ? record._doc.rating : 0)
+                                                            category.spelling_rating = (record._doc.spelling_rating ? record._doc.spelling_rating : 0)
+                                                            model._doc.categories.push(category)
                                                         }
                                                     }
-                                                    else{
+                                                    else {
                                                         model._doc.categories = []
-                                                        model._doc.categories.push({ category_name: record._doc.category_name, category_id: record._doc.category_id, records: [record] })
+                                                        let category = { category_name: record._doc.category_name, category_id: record._doc.category_id, records: [record] }
+                                                        category.context_rating = (record._doc.context_rating ? record._doc.context_rating : 0)
+                                                        category.name_accuracy_rating = (record._doc.name_accuracy_rating ? record._doc.name_accuracy_rating : 0)
+                                                        category.rating = (record._doc.rating ? record._doc.rating : 0)
+                                                        category.spelling_rating = (record._doc.spelling_rating ? record._doc.spelling_rating : 0)
+                                                        model._doc.categories.push(category)
                                                     }
                                                     if (model._doc.records && Array.isArray(model._doc.records)) {
                                                         model._doc.records.push(record)
