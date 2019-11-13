@@ -60,6 +60,9 @@ exports.fetchBenchmarkAnalyzerReports = function (req, res) {
             LOG.info(results)
             async.each(results, function (res, callback) {
                 Nmtmodels.findByCondition({ $or: [{ model_id: res._id }, { model_id: parseInt(res._id) }] }, function (err, models) {
+                    if(err){
+                        LOG.error(err)
+                    }
                     let word_count = 0
                     let context_rating = 0
                     let name_accuracy_rating = 0
