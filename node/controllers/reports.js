@@ -170,13 +170,27 @@ exports.fetchBenchmarkReports = function (req, res) {
                         let word_count = 0
                         let record_unique = []
                         let parent_ids = []
+                        let categoriesdb = {}
                         if (res.record && Array.isArray(res.record)) {
                             let records_db = []
                             async.each(res.record, function (record, callback) {
                                 Sentence.find({ _id: record.parent_id }, {}, function (err, results) {
                                     if (results && Array.isArray(results) && results.length > 0) {
                                         var sentencedb = results[0]
-                                        Benchmark.fetchByCondition({ basename: sentencedb._doc.basename.split('_')[0] }, (err, benchmark) => {
+                                        if (!categoriesdb[sentencedb._doc.basename.split('_')[0]]) {
+                                            Benchmark.fetchByCondition({ basename: sentencedb._doc.basename.split('_')[0] }, (err, benchmark) => {
+                                                if (benchmark && Array.isArray(benchmark) && benchmark.length > 0) {
+                                                    sentencedb._doc.category_name = benchmark[0]._doc.name
+                                                    sentencedb._doc.category_id = benchmark[0]._doc._id
+                                                    sentencedb._doc.model_id = sentencedb._doc.basename.split('_').length > 1 ? sentencedb._doc.basename.split('_')[1] : record.model_id
+                                                }
+                                                categoriesdb[sentencedb._doc.basename.split('_')[0]] = benchmark
+                                                records_db.push(sentencedb)
+                                                callback()
+                                            })
+                                        }
+                                        else{
+                                            let benchmark = categoriesdb[sentencedb._doc.basename.split('_')[0]]
                                             if (benchmark && Array.isArray(benchmark) && benchmark.length > 0) {
                                                 sentencedb._doc.category_name = benchmark[0]._doc.name
                                                 sentencedb._doc.category_id = benchmark[0]._doc._id
@@ -184,7 +198,7 @@ exports.fetchBenchmarkReports = function (req, res) {
                                             }
                                             records_db.push(sentencedb)
                                             callback()
-                                        })
+                                        }
 
                                     }
 
