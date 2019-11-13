@@ -67,17 +67,33 @@ exports.fetchBenchmarkAnalyzerReports = function (req, res) {
                     let parent_ids = []
                     if (res.record && Array.isArray(res.record)) {
                         let records_db = []
+                        let categoriesdb = {}
                         async.each(res.record, function (record, callback) {
                             Sentence.find({ _id: record.parent_id }, {}, function (err, results) {
                                 if (results && Array.isArray(results) && results.length > 0) {
                                     var sentencedb = results[0]
-                                    Benchmark.fetchByCondition({ basename: sentencedb._doc.basename.split('_')[0] }, (err, benchmark) => {
+                                    if (!categoriesdb[sentencedb._doc.basename.split('_')[0]]) {
+                                        Benchmark.fetchByCondition({ basename: sentencedb._doc.basename.split('_')[0] }, (err, benchmark) => {
+                                            if (benchmark && Array.isArray(benchmark) && benchmark.length > 0) {
+                                                sentencedb._doc.category_name = benchmark[0]._doc.name
+                                                sentencedb._doc.category_id = benchmark[0]._doc._id
+                                                sentencedb._doc.model_id = sentencedb._doc.basename.split('_').length > 1 ? sentencedb._doc.basename.split('_')[1] : record.model_id
+                                            }
+                                            categoriesdb[sentencedb._doc.basename.split('_')[0]] = benchmark
+                                            records_db.push(sentencedb)
+                                            callback()
+                                        })
+                                    }
+                                    else {
+                                        let benchmark = categoriesdb[sentencedb._doc.basename.split('_')[0]]
                                         if (benchmark && Array.isArray(benchmark) && benchmark.length > 0) {
                                             sentencedb._doc.category_name = benchmark[0]._doc.name
+                                            sentencedb._doc.category_id = benchmark[0]._doc._id
+                                            sentencedb._doc.model_id = sentencedb._doc.basename.split('_').length > 1 ? sentencedb._doc.basename.split('_')[1] : record.model_id
                                         }
                                         records_db.push(sentencedb)
                                         callback()
-                                    })
+                                    }
 
                                 }
 
@@ -100,6 +116,40 @@ exports.fetchBenchmarkAnalyzerReports = function (req, res) {
                                     spelling_rating = spelling_rating + (record._doc.spelling_rating ? record._doc.spelling_rating : 0)
                                     record_unique.push(record)
                                     parent_ids.push(record._doc._id + '')
+                                    if (res.categories && Array.isArray(res.categories)) {
+                                        let found = false
+                                        res.categories.map((category) => {
+                                            if (category.category_id == record._doc.category_id) {
+                                                found = true
+                                                category.context_rating = category.context_rating + (record._doc.context_rating ? record._doc.context_rating : 0)
+                                                category.name_accuracy_rating = category.name_accuracy_rating + (record._doc.name_accuracy_rating ? record._doc.name_accuracy_rating : 0)
+                                                category.rating = category.rating + (record._doc.rating ? record._doc.rating : 0)
+                                                category.spelling_rating = category.spelling_rating + (record._doc.spelling_rating ? record._doc.spelling_rating : 0)
+                                                category.records.push(record)
+                                            }
+                                        })
+                                        if (!found) {
+                                            let category = { category_name: record._doc.category_name, category_id: record._doc.category_id, records: [record] }
+                                            category.context_rating = (record._doc.context_rating ? record._doc.context_rating : 0)
+                                            category.name_accuracy_rating = (record._doc.name_accuracy_rating ? record._doc.name_accuracy_rating : 0)
+                                            category.rating = (record._doc.rating ? record._doc.rating : 0)
+                                            category.spelling_rating = (record._doc.spelling_rating ? record._doc.spelling_rating : 0)
+                                            category.records = []
+                                            category.records.push(record)
+                                            res.categories.push(category)
+                                        }
+                                    }
+                                    else {
+                                        res.categories = []
+                                        let category = { category_name: record._doc.category_name, category_id: record._doc.category_id, records: [record] }
+                                        category.context_rating = (record._doc.context_rating ? record._doc.context_rating : 0)
+                                        category.name_accuracy_rating = (record._doc.name_accuracy_rating ? record._doc.name_accuracy_rating : 0)
+                                        category.rating = (record._doc.rating ? record._doc.rating : 0)
+                                        category.spelling_rating = (record._doc.spelling_rating ? record._doc.spelling_rating : 0)
+                                        category.records = []
+                                        category.records.push(record)
+                                        res.categories.push(category)
+                                    }
                                 }
                             })
                             res.word_count = word_count
@@ -189,7 +239,7 @@ exports.fetchBenchmarkReports = function (req, res) {
                                                 callback()
                                             })
                                         }
-                                        else{
+                                        else {
                                             let benchmark = categoriesdb[sentencedb._doc.basename.split('_')[0]]
                                             if (benchmark && Array.isArray(benchmark) && benchmark.length > 0) {
                                                 sentencedb._doc.category_name = benchmark[0]._doc.name
@@ -241,6 +291,8 @@ exports.fetchBenchmarkReports = function (req, res) {
                                                             category.name_accuracy_rating = (record._doc.name_accuracy_rating ? record._doc.name_accuracy_rating : 0)
                                                             category.rating = (record._doc.rating ? record._doc.rating : 0)
                                                             category.spelling_rating = (record._doc.spelling_rating ? record._doc.spelling_rating : 0)
+                                                            category.records = []
+                                                            category.records.push(record)
                                                             model._doc.categories.push(category)
                                                         }
                                                     }
@@ -251,6 +303,8 @@ exports.fetchBenchmarkReports = function (req, res) {
                                                         category.name_accuracy_rating = (record._doc.name_accuracy_rating ? record._doc.name_accuracy_rating : 0)
                                                         category.rating = (record._doc.rating ? record._doc.rating : 0)
                                                         category.spelling_rating = (record._doc.spelling_rating ? record._doc.spelling_rating : 0)
+                                                        category.records = []
+                                                        category.records.push(record)
                                                         model._doc.categories.push(category)
                                                     }
                                                     if (model._doc.records_count) {
