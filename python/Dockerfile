@@ -1,4 +1,4 @@
-FROM sivaprakash123/anuvaad-corpus-python-base:new
+FROM anuvaadio/anuvaad-corpus-python-base:2
 #FROM python:3.6-slim
 COPY / /app
 WORKDIR /app
