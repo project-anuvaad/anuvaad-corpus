@@ -59,58 +59,65 @@ exports.fetchBenchmarkAnalyzerReports = function (req, res) {
         if (results && Array.isArray(results)) {
             LOG.info(results)
             async.each(results, function (res, callback) {
-                let word_count = 0
-                let context_rating = 0
-                let name_accuracy_rating = 0
-                let rating = 0
-                let spelling_rating = 0
-                let record_unique = []
-                let parent_ids = []
-                if (res.record && Array.isArray(res.record)) {
-                    let records_db = []
-                    async.each(res.record, function (record, callback) {
-                        Sentence.find({ _id: record.parent_id }, {}, function (err, results) {
-                            if (results && Array.isArray(results) && results.length > 0) {
-                                var sentencedb = results[0]
-                                Benchmark.fetchByCondition({ basename: sentencedb._doc.basename.split('_')[0] }, (err, benchmark) => {
-                                    if (benchmark && Array.isArray(benchmark) && benchmark.length > 0) {
-                                        sentencedb._doc.category_name = benchmark[0]._doc.name
-                                        LOG.info(sentencedb._doc)
-                                    }
-                                    records_db.push(sentencedb)
-                                    callback()
-                                })
+                Nmtmodels.findByCondition({ $or: [{ model_id: res._id }, { model_id: parseInt(res._id) }] }, function (err, models) {
+                    let word_count = 0
+                    let context_rating = 0
+                    let name_accuracy_rating = 0
+                    let rating = 0
+                    let spelling_rating = 0
+                    let record_unique = []
+                    let parent_ids = []
+                    if (res.record && Array.isArray(res.record)) {
+                        let records_db = []
+                        async.each(res.record, function (record, callback) {
+                            Sentence.find({ _id: record.parent_id }, {}, function (err, results) {
+                                if (results && Array.isArray(results) && results.length > 0) {
+                                    var sentencedb = results[0]
+                                    Benchmark.fetchByCondition({ basename: sentencedb._doc.basename.split('_')[0] }, (err, benchmark) => {
+                                        if (benchmark && Array.isArray(benchmark) && benchmark.length > 0) {
+                                            sentencedb._doc.category_name = benchmark[0]._doc.name
+                                            LOG.info(sentencedb._doc)
+                                        }
+                                        records_db.push(sentencedb)
+                                        callback()
+                                    })
 
+                                }
+
+                            })
+
+                        }, function (err) {
+                            if (err) {
+                                callback('error')
                             }
-
-                        })
-
-                    }, function (err) {
-                        if (err) {
-                            callback('error')
-                        }
-                        records_db.map((record) => {
-                            if (!parent_ids.includes(record._doc._id + '')) {
-                                word_count += record._doc.source.split(' ').length
-                                context_rating = context_rating + (record._doc.context_rating ? record._doc.context_rating : 0)
-                                name_accuracy_rating = name_accuracy_rating + (record._doc.name_accuracy_rating ? record._doc.name_accuracy_rating : 0)
-                                rating = rating + (record._doc.rating ? record._doc.rating : 0)
-                                spelling_rating = spelling_rating + (record._doc.spelling_rating ? record._doc.spelling_rating : 0)
-                                record_unique.push(record)
-                                parent_ids.push(record._doc._id + '')
+                            records_db.map((record) => {
+                                if (!parent_ids.includes(record._doc._id + '')) {
+                                    word_count += record._doc.source.split(' ').length
+                                    context_rating = context_rating + (record._doc.context_rating ? record._doc.context_rating : 0)
+                                    name_accuracy_rating = name_accuracy_rating + (record._doc.name_accuracy_rating ? record._doc.name_accuracy_rating : 0)
+                                    rating = rating + (record._doc.rating ? record._doc.rating : 0)
+                                    spelling_rating = spelling_rating + (record._doc.spelling_rating ? record._doc.spelling_rating : 0)
+                                    record_unique.push(record)
+                                    parent_ids.push(record._doc._id + '')
+                                }
+                            })
+                            res.word_count = word_count
+                            res.sentence_count = res.parent_id.length
+                            res.record_unique = record_unique
+                            res.context_rating = context_rating
+                            res.rating = rating
+                            res.spelling_rating = spelling_rating
+                            res.name_accuracy_rating = spelling_rating
+                            if(models && models.length>0){
+                                res.model_name = models[0].name
+                                res.source_lang = LANGUAGES[models[0].source_language_code]
+                                res.target_lang = LANGUAGES[models[0].target_language_code]
                             }
-                        })
-                        res.word_count = word_count
-                        res.sentence_count = res.parent_id.length
-                        res.record_unique = record_unique
-                        res.context_rating = context_rating
-                        res.rating = rating
-                        res.spelling_rating = spelling_rating
-                        res.name_accuracy_rating = name_accuracy_rating
-                        results_out.push(res)
-                        callback()
-                    });
-                }
+                            results_out.push(res)
+                            callback()
+                        });
+                    }
+                })
 
             }, function (err) {
                 if (err) {
