@@ -57,7 +57,6 @@ exports.fetchBenchmarkAnalyzerReports = function (req, res) {
         }
         let results_out = []
         if (results && Array.isArray(results)) {
-            LOG.info(results)
             async.each(results, function (res, callback) {
                 Nmtmodels.findByCondition({ $or: [{ model_id: res._id }, { model_id: parseInt(res._id) }] }, function (err, models) {
                     if(err){
@@ -79,7 +78,6 @@ exports.fetchBenchmarkAnalyzerReports = function (req, res) {
                                     Benchmark.fetchByCondition({ basename: sentencedb._doc.basename.split('_')[0] }, (err, benchmark) => {
                                         if (benchmark && Array.isArray(benchmark) && benchmark.length > 0) {
                                             sentencedb._doc.category_name = benchmark[0]._doc.name
-                                            LOG.info(sentencedb._doc)
                                         }
                                         records_db.push(sentencedb)
                                         callback()
@@ -209,7 +207,6 @@ exports.fetchBenchmarkReports = function (req, res) {
                                 }, function (err) {
                                     records_db.map((record) => {
                                         if (!parent_ids.includes(record._doc._id + '' + record._doc.model_id + '')) {
-                                            LOG.info(record._doc.model_id + '')
                                             res.models.map((model) => {
                                                 if (record._doc.model_id == model._doc.model_id) {
                                                     if (model._doc.categories && Array.isArray(model._doc.categories)) {
