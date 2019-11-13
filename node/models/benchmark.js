@@ -13,7 +13,6 @@ Benchmark.fetchAll = function (condition, cb) {
             LOG.error("Unable to find benchmark due to [%s]", JSON.stringify(err));
             return cb(err, null);
         }
-        LOG.info("[%s] Benchmark found", benchmarks);
         return cb(null, benchmarks);
     })
 }
@@ -26,7 +25,6 @@ Benchmark.fetchByCondition = function (condition, cb) {
                 LOG.error("Unable to find benchmark due to [%s]", JSON.stringify(err));
                 return cb(err, null);
             }
-            LOG.info("[%s] Benchmark found", benchmarks);
             return cb(null, benchmarks);
         })
 }
@@ -37,7 +35,6 @@ Benchmark.saveBenchmarks = function (benchmarks, cb) {
             // TODO: handle error
             return cb(err, null);
         } else {
-            LOG.info('%s benchmark was successfully stored.', JSON.stringify(docs));
             return cb(null, docs);
         }
     })
@@ -49,7 +46,6 @@ Benchmark.updateBenchmarkData = function (benchmark,useid, cb) {
             LOG.error(err)
             cb(err, null)
         }
-        LOG.info(doc)
         cb(null, doc)
     });
 }
