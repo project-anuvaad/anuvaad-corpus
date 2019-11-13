@@ -110,9 +110,9 @@ exports.fetchBenchmarkAnalyzerReports = function (req, res) {
                             res.spelling_rating = spelling_rating
                             res.name_accuracy_rating = spelling_rating
                             if(models && models.length>0){
-                                res.model_name = models[0].name
-                                res.source_lang = LANGUAGES[models[0].source_language_code]
-                                res.target_lang = LANGUAGES[models[0].target_language_code]
+                                res.model_name = models[0]._doc.name
+                                res.source_lang = LANGUAGES[models[0]._doc.source_language_code]
+                                res.target_lang = LANGUAGES[models[0]._doc.target_language_code]
                             }
                             results_out.push(res)
                             callback()
