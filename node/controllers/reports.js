@@ -60,6 +60,10 @@ exports.fetchBenchmarkAnalyzerReports = function (req, res) {
             LOG.info(results)
             async.each(results, function (res, callback) {
                 let word_count = 0
+                let context_rating = 0
+                let name_accuracy_rating = 0
+                let rating = 0
+                let spelling_rating = 0
                 let record_unique = []
                 let parent_ids = []
                 if (res.record && Array.isArray(res.record)) {
@@ -88,6 +92,10 @@ exports.fetchBenchmarkAnalyzerReports = function (req, res) {
                         records_db.map((record) => {
                             if (!parent_ids.includes(record._doc._id + '')) {
                                 word_count += record._doc.source.split(' ').length
+                                context_rating = context_rating + (record._doc.context_rating ? record._doc.context_rating : 0)
+                                name_accuracy_rating = name_accuracy_rating + (record._doc.name_accuracy_rating ? record._doc.name_accuracy_rating : 0)
+                                rating = rating + (record._doc.rating ? record._doc.rating : 0)
+                                spelling_rating = spelling_rating + (record._doc.spelling_rating ? record._doc.spelling_rating : 0)
                                 record_unique.push(record)
                                 parent_ids.push(record._doc._id + '')
                             }
@@ -95,6 +103,10 @@ exports.fetchBenchmarkAnalyzerReports = function (req, res) {
                         res.word_count = word_count
                         res.sentence_count = res.parent_id.length
                         res.record_unique = record_unique
+                        res.context_rating = context_rating
+                        res.rating = rating
+                        res.spelling_rating = spelling_rating
+                        res.name_accuracy_rating = name_accuracy_rating
                         results_out.push(res)
                         callback()
                     });
