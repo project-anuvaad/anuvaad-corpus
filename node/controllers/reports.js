@@ -59,14 +59,10 @@ exports.fetchBenchmarkAnalyzerReports = function (req, res) {
         if (results && Array.isArray(results)) {
             async.each(results, function (res, callback) {
                 Nmtmodels.findByCondition({ $or: [{ model_id: res._id }, { model_id: parseInt(res._id) }] }, function (err, models) {
-                    if(err){
+                    if (err) {
                         LOG.error(err)
                     }
                     let word_count = 0
-                    let context_rating = 0
-                    let name_accuracy_rating = 0
-                    let rating = 0
-                    let spelling_rating = 0
                     let record_unique = []
                     let parent_ids = []
                     if (res.record && Array.isArray(res.record)) {
@@ -91,6 +87,10 @@ exports.fetchBenchmarkAnalyzerReports = function (req, res) {
                             if (err) {
                                 callback('error')
                             }
+                            let context_rating = 0
+                            let name_accuracy_rating = 0
+                            let rating = 0
+                            let spelling_rating = 0
                             records_db.map((record) => {
                                 if (!parent_ids.includes(record._doc._id + '')) {
                                     word_count += record._doc.source.split(' ').length
@@ -109,7 +109,7 @@ exports.fetchBenchmarkAnalyzerReports = function (req, res) {
                             res.rating = rating
                             res.spelling_rating = spelling_rating
                             res.name_accuracy_rating = spelling_rating
-                            if(models && models.length>0){
+                            if (models && models.length > 0) {
                                 res.model_name = models[0]._doc.model_name
                                 res.source_lang = LANGUAGES[models[0]._doc.source_language_code]
                                 res.target_lang = LANGUAGES[models[0]._doc.target_language_code]
