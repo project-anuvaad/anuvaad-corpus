@@ -108,7 +108,7 @@ exports.fetchBenchmarkAnalyzerReports = function (req, res) {
                             res.context_rating = context_rating
                             res.rating = rating
                             res.spelling_rating = spelling_rating
-                            res.name_accuracy_rating = spelling_rating
+                            res.name_accuracy_rating = name_accuracy_rating
                             if (models && models.length > 0) {
                                 res.model_name = models[0]._doc.model_name
                                 res.source_lang = LANGUAGES[models[0]._doc.source_language_code]
