@@ -124,11 +124,89 @@ exports.fetchBenchmarkCompareSentences = function (req, res) {
             return res.status(apistatus.http.status).json(apistatus);
         }
         if (benchmark) {
-            Benchmark.updateBenchmarkData(benchmark[0], userId, function (err, doc) {
-                if (err) {
-                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                    return res.status(apistatus.http.status).json(apistatus);
-                }
+            if (!benchmark[0]._doc.assigned_to) {
+                Benchmark.updateBenchmarkData(benchmark[0], userId, function (err, doc) {
+                    if (err) {
+                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                        return res.status(apistatus.http.status).json(apistatus);
+                    }
+                    let reverse = false
+                    let source_code = 'en'
+                    let target_code = 'hi'
+                    if (benchmark[0]._doc.source_lang === 'Hindi') {
+                        source_code = 'hi'
+                        target_code = 'en'
+                        reverse = true
+                    }
+                    NMT.findByCondition({ is_primary: true, source_language_code: source_code, target_language_code: target_code }, function (err, modeldblist) {
+                        if (modeldblist && modeldblist.length > 0) {
+                            let model_id = modeldblist[0]['_doc']['model_id']
+                            Sentence.countDocuments({ basename: basename }, function (err, totalcount) {
+                                Sentence.countDocuments({ basename: basename + '_' + model_id }, function (err, count) {
+                                    if (count > 0) {
+                                        Sentence.fetch(basename + '_' + model_id, pagesize, pageno, null, pending, function (err, sentences) {
+                                            Sentence.fetch(basename + '_hemat', pagesize, pageno, null, pending, function (err, sentences_hemat) {
+                                                if (err) {
+                                                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                                    return res.status(apistatus.http.status).json(apistatus);
+                                                }
+                                                return translateByAnuvaadHemat(basename, sentences, sentences_hemat, model_id, totalcount, reverse, res)
+                                                // let response = new Response(StatusCode.SUCCESS, sentences, count).getRsp()
+                                                // return res.status(response.http.status).json(response);
+                                            })
+                                        })
+                                    }
+                                    else {
+                                        Sentence.fetch(basename, null, null, null, null, function (err, sentences) {
+                                            if (err) {
+                                                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                                return res.status(apistatus.http.status).json(apistatus);
+                                            }
+                                            let sentences_arr = []
+                                            sentences.map((s) => {
+                                                var doc_nmt = Object.create(s['_doc'])
+                                                doc_nmt['basename'] = basename + '_' + model_id
+                                                doc_nmt['_id'] = null
+                                                doc_nmt['parent_id'] = s['_doc']['_id']
+                                                sentences_arr.push(doc_nmt)
+                                                var doc = Object.create(s['_doc'])
+                                                doc['_id'] = null
+                                                doc['basename'] = basename + '_hemat'
+                                                doc['parent_id'] = s['_doc']['_id']
+                                                sentences_arr.push(doc)
+                                            })
+                                            Sentence.saveSentences(sentences_arr, function (err, sentences) {
+                                                if (err) {
+                                                    LOG.info(err)
+                                                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                                    return res.status(apistatus.http.status).json(apistatus);
+                                                }
+                                                Sentence.fetch(basename + '_' + model_id, pagesize, pageno, null, pending, function (err, sentences) {
+                                                    Sentence.fetch(basename + '_hemat', pagesize, pageno, null, pending, function (err, sentences_hemat) {
+                                                        if (err) {
+                                                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                                            return res.status(apistatus.http.status).json(apistatus);
+                                                        }
+                                                        return translateByAnuvaadHemat(basename, sentences, sentences_hemat, model_id, totalcount, reverse, res)
+                                                        // let response = new Response(StatusCode.SUCCESS, sentences, sentences_arr.length).getRsp()
+                                                        // return res.status(response.http.status).json(response);
+                                                    })
+                                                })
+                                            })
+                                        })
+                                    }
+                                })
+                            })
+                        }
+                        else {
+                            LOG.info('Model not found for benchmark ', benchmark.name)
+                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_NOTFOUND, COMPONENT).getRspStatus()
+                            return res.status(apistatus.http.status).json(apistatus);
+                        }
+                    })
+                })
+
+            } else {
                 let reverse = false
                 let source_code = 'en'
                 let target_code = 'hi'
@@ -203,8 +281,7 @@ exports.fetchBenchmarkCompareSentences = function (req, res) {
                         return res.status(apistatus.http.status).json(apistatus);
                     }
                 })
-            })
-
+            }
         }
         else {
             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_NOTFOUND, COMPONENT).getRspStatus()
@@ -239,10 +316,10 @@ var translateByAnuvaadHemat = function (basename, sentences, sentences_hemat, mo
             //         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
             //         return res.status(apistatus.http.status).json(apistatus);
             //     }
-                let sentence_res = sentences.concat(sentences_hemat)
-                sentence_res = shuffle(sentence_res)
-                let response = new Response(StatusCode.SUCCESS, sentence_res, totalcount, null, totalcount - countNonPending).getRsp()
-                return res.status(response.http.status).json(response);
+            let sentence_res = sentences.concat(sentences_hemat)
+            sentence_res = shuffle(sentence_res)
+            let response = new Response(StatusCode.SUCCESS, sentence_res, totalcount, null, totalcount - countNonPending).getRsp()
+            return res.status(response.http.status).json(response);
             // })
         })
     } else {
@@ -269,8 +346,8 @@ var translateByAnuvaadHemat = function (basename, sentences, sentences_hemat, mo
                 //         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 //         return res.status(apistatus.http.status).json(apistatus);
                 //     }
-                    let response = new Response(StatusCode.SUCCESS, data_arr, totalcount, null, totalcount - countNonPending).getRsp()
-                    return res.status(response.http.status).json(response);
+                let response = new Response(StatusCode.SUCCESS, data_arr, totalcount, null, totalcount - countNonPending).getRsp()
+                return res.status(response.http.status).json(response);
                 // })
             })
 
