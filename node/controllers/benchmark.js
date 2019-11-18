@@ -124,12 +124,21 @@ exports.fetchBenchmarkCompareSentences = function (req, res) {
             return res.status(apistatus.http.status).json(apistatus);
         }
         if (benchmark) {
-            if (!benchmark[0]._doc.assigned_to) {
-                Benchmark.updateBenchmarkData(benchmark[0], userId, function (err, doc) {
-                    if (err) {
-                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                        return res.status(apistatus.http.status).json(apistatus);
+            async.waterfall([
+                function (callback) {
+                    if (!benchmark[0]._doc.assigned_to) {
+                        Benchmark.updateBenchmarkData(benchmark[0], userId, function (err, doc) {
+                            if (err) {
+                                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                return res.status(apistatus.http.status).json(apistatus);
+                            }
+                            callback()
+                        })
+                    } else {
+                        callback()
                     }
+                },
+                function () {
                     let reverse = false
                     let source_code = 'en'
                     let target_code = 'hi'
@@ -204,84 +213,7 @@ exports.fetchBenchmarkCompareSentences = function (req, res) {
                             return res.status(apistatus.http.status).json(apistatus);
                         }
                     })
-                })
-
-            } else {
-                let reverse = false
-                let source_code = 'en'
-                let target_code = 'hi'
-                if (benchmark[0]._doc.source_lang === 'Hindi') {
-                    source_code = 'hi'
-                    target_code = 'en'
-                    reverse = true
-                }
-                NMT.findByCondition({ is_primary: true, source_language_code: source_code, target_language_code: target_code }, function (err, modeldblist) {
-                    if (modeldblist && modeldblist.length > 0) {
-                        let model_id = modeldblist[0]['_doc']['model_id']
-                        Sentence.countDocuments({ basename: basename }, function (err, totalcount) {
-                            Sentence.countDocuments({ basename: basename + '_' + model_id }, function (err, count) {
-                                if (count > 0) {
-                                    Sentence.fetch(basename + '_' + model_id, pagesize, pageno, null, pending, function (err, sentences) {
-                                        Sentence.fetch(basename + '_hemat', pagesize, pageno, null, pending, function (err, sentences_hemat) {
-                                            if (err) {
-                                                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                                                return res.status(apistatus.http.status).json(apistatus);
-                                            }
-                                            return translateByAnuvaadHemat(basename, sentences, sentences_hemat, model_id, totalcount, reverse, res)
-                                            // let response = new Response(StatusCode.SUCCESS, sentences, count).getRsp()
-                                            // return res.status(response.http.status).json(response);
-                                        })
-                                    })
-                                }
-                                else {
-                                    Sentence.fetch(basename, null, null, null, null, function (err, sentences) {
-                                        if (err) {
-                                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                                            return res.status(apistatus.http.status).json(apistatus);
-                                        }
-                                        let sentences_arr = []
-                                        sentences.map((s) => {
-                                            var doc_nmt = Object.create(s['_doc'])
-                                            doc_nmt['basename'] = basename + '_' + model_id
-                                            doc_nmt['_id'] = null
-                                            doc_nmt['parent_id'] = s['_doc']['_id']
-                                            sentences_arr.push(doc_nmt)
-                                            var doc = Object.create(s['_doc'])
-                                            doc['_id'] = null
-                                            doc['basename'] = basename + '_hemat'
-                                            doc['parent_id'] = s['_doc']['_id']
-                                            sentences_arr.push(doc)
-                                        })
-                                        Sentence.saveSentences(sentences_arr, function (err, sentences) {
-                                            if (err) {
-                                                LOG.info(err)
-                                                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                                                return res.status(apistatus.http.status).json(apistatus);
-                                            }
-                                            Sentence.fetch(basename + '_' + model_id, pagesize, pageno, null, pending, function (err, sentences) {
-                                                Sentence.fetch(basename + '_hemat', pagesize, pageno, null, pending, function (err, sentences_hemat) {
-                                                    if (err) {
-                                                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                                                        return res.status(apistatus.http.status).json(apistatus);
-                                                    }
-                                                    return translateByAnuvaadHemat(basename, sentences, sentences_hemat, model_id, totalcount, reverse, res)
-                                                    // let response = new Response(StatusCode.SUCCESS, sentences, sentences_arr.length).getRsp()
-                                                    // return res.status(response.http.status).json(response);
-                                                })
-                                            })
-                                        })
-                                    })
-                                }
-                            })
-                        })
-                    }
-                    else {
-                        LOG.info('Model not found for benchmark ', benchmark.name)
-                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_NOTFOUND, COMPONENT).getRspStatus()
-                        return res.status(apistatus.http.status).json(apistatus);
-                    }
-                })
-            }
+                }])
         }
         else {
             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_NOTFOUND, COMPONENT).getRspStatus()
@@ -426,12 +358,21 @@ exports.fetchBenchmarkSentences = function (req, res) {
             return res.status(apistatus.http.status).json(apistatus);
         }
         if (benchmark) {
-            if (!benchmark[0]._doc.assigned_to) {
-                Benchmark.updateBenchmarkData(benchmark[0], userId, function (err, doc) {
-                    if (err) {
-                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                        return res.status(apistatus.http.status).json(apistatus);
+            async.waterfall([
+                function (callback) {
+                    if (!benchmark[0]._doc.assigned_to) {
+                        Benchmark.updateBenchmarkData(benchmark[0], userId, function (err, doc) {
+                            if (err) {
+                                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                return res.status(apistatus.http.status).json(apistatus);
+                            }
+                            callback()
+                        })
                     }
+                    else {
+                        callback()
+                    }
+                }, function () {
                     Sentence.countDocuments({ basename: basename }, function (err, totalcount) {
                         Sentence.countDocuments({ basename: basename + '_' + model_id }, function (err, count) {
                             if (count > 0) {
@@ -476,54 +417,7 @@ exports.fetchBenchmarkSentences = function (req, res) {
                             }
                         })
                     })
-                })
-            }
-            else {
-                Sentence.countDocuments({ basename: basename }, function (err, totalcount) {
-                    Sentence.countDocuments({ basename: basename + '_' + model_id }, function (err, count) {
-                        if (count > 0) {
-                            Sentence.fetch(basename + '_' + model_id, pagesize, pageno, null, pending, function (err, sentences) {
-                                if (err) {
-                                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                                    return res.status(apistatus.http.status).json(apistatus);
-                                }
-                                return translateByAnuvaad(basename, sentences, model_id, totalcount, res)
-                                // let response = new Response(StatusCode.SUCCESS, sentences, count).getRsp()
-                                // return res.status(response.http.status).json(response);
-                            })
-                        }
-                        else {
-                            Sentence.fetch(basename, null, null, null, null, function (err, sentences) {
-                                if (err) {
-                                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                                    return res.status(apistatus.http.status).json(apistatus);
-                                }
-                                let sentences_arr = []
-                                sentences.map((s) => {
-                                    s['_doc']['basename'] = basename + '_' + model_id
-                                    s['_doc']['_id'] = null
-                                    sentences_arr.push(s['_doc'])
-                                })
-                                Sentence.saveSentences(sentences_arr, function (err, sentences) {
-                                    if (err) {
-                                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                                        return res.status(apistatus.http.status).json(apistatus);
-                                    }
-                                    Sentence.fetch(basename + '_' + model_id, pagesize, pageno, null, pending, function (err, sentences) {
-                                        if (err) {
-                                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                                            return res.status(apistatus.http.status).json(apistatus);
-                                        }
-                                        return translateByAnuvaad(basename, sentences, model_id, totalcount, res)
-                                        // let response = new Response(StatusCode.SUCCESS, sentences, sentences_arr.length).getRsp()
-                                        // return res.status(response.http.status).json(response);
-                                    })
-                                })
-                            })
-                        }
-                    })
-                })
-            }
+                }])
         }
         else {
             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_NOTFOUND, COMPONENT).getRspStatus()
