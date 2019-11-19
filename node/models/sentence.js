@@ -67,7 +67,7 @@ Sentence.updateSentenceStatus = function (sentence, cb) {
 }
 
 Sentence.updateSentenceGrade = function (sentence, cb) {
-    Sentence.collection.updateOne({ _id: mongoose.Types.ObjectId(sentence._id) }, { $set: { context_rating: sentence.context_rating, rating: sentence.rating, spelling_rating: sentence.spelling_rating, name_accuracy_rating: sentence.name_accuracy_rating } }, { upsert: false }, function (err, doc) {
+    Sentence.collection.updateOne({ _id: mongoose.Types.ObjectId(sentence._id) }, { $set: { comments: sentence.comments, context_rating: sentence.context_rating, rating: sentence.rating, spelling_rating: sentence.spelling_rating, name_accuracy_rating: sentence.name_accuracy_rating } }, { upsert: false }, function (err, doc) {
         if (err) {
             LOG.error(err)
             cb(err, null)

@@ -235,12 +235,12 @@ exports.updateSentencesGrade = function (req, res) {
     }
     async.each(req.body.sentences, function (sentence, callback) {
         LOG.info("Updating sentence grade [%s]", JSON.stringify(sentence))
-        if (sentence.rating || sentence.spelling_rating || sentence.context_rating || sentence.name_accuracy_rating) {
+        if (sentence.rating || sentence.spelling_rating || sentence.context_rating || sentence.name_accuracy_rating || sentence.comments) {
             Sentence.find({ _id: sentence._id }, {}, function (err, results) {
                 if (results && Array.isArray(results) && results.length > 0) {
                     var sentencedb = results[0]
                     let userId = req.headers['ad-userid']
-                    let sentencelog = { edited_by: userId, source: sentencedb._doc.source, target: sentencedb._doc.target, is_grade_changed: true, updated_on: new Date(), parent_id: sentencedb._doc._id, basename: sentencedb._doc.basename, status: sentencedb._doc.status, name_accuracy_rating_edited: sentence.name_accuracy_rating, name_accuracy_rating: sentencedb._doc.name_accuracy_rating, spelling_rating_edited: sentence.spelling_rating, grade_edited: sentence.rating, grade: sentencedb._doc.rating, spelling_rating: sentencedb._doc.spelling_rating, context_rating: sentencedb._doc.context_rating, context_rating_edited: sentence.context_rating }
+                    let sentencelog = { edited_by: userId, source: sentencedb._doc.source, target: sentencedb._doc.target, is_grade_changed: true, updated_on: new Date(), parent_id: sentencedb._doc._id, basename: sentencedb._doc.basename, status: sentencedb._doc.status, name_accuracy_rating_edited: sentence.name_accuracy_rating, name_accuracy_rating: sentencedb._doc.name_accuracy_rating, spelling_rating_edited: sentence.spelling_rating, grade_edited: sentence.rating, grade: sentencedb._doc.rating, spelling_rating: sentencedb._doc.spelling_rating, context_rating: sentencedb._doc.context_rating, context_rating_edited: sentence.context_rating, comments: sentencedb._doc.comments, comments_edited: sentence.comments }
                     if (req.body.modelid) {
                         sentencelog.modelid = req.body.modelid
                     }
