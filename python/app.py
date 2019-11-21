@@ -150,10 +150,8 @@ except:
 
 try:
     t1 = threading.Thread(target=keep_on_running, name='keep_on_running')
-    t1.setDaemon(True)
     t1.start()
     t2 = threading.Thread(target=write_document, name='write_document')
-    t2.setDaemon(True)
     t2.start()
     # t3 = threading.Thread(target=sentence_creator, name='sentence_creator')
     # t3.setDaemon(True)
