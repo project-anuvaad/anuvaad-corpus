@@ -125,13 +125,13 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 es = getinstance()
 words = []
 connectmongo()
-
-scheduler = BackgroundScheduler()
-scheduler.add_job(func=thread_manager, trigger="interval", minutes=5)
-scheduler.start()
-
-# Shut down the scheduler when exiting the app
-atexit.register(lambda: scheduler.shutdown())
+#
+# scheduler = BackgroundScheduler()
+# scheduler.add_job(func=thread_manager, trigger="interval", minutes=5)
+# scheduler.start()
+#
+# # Shut down the scheduler when exiting the app
+# atexit.register(lambda: scheduler.shutdown())
 
 
 log = logging.getLogger('file')
