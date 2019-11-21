@@ -1,5 +1,6 @@
 from kafka_utils.consumer import get_consumer
 from kafka_utils.producer import get_producer
+from document_writer import write_document_basename
 from models.text_nodes import TextNode
 from models.Document_nodes import DocumentNodes
 import json
@@ -65,10 +66,11 @@ def process_sentence(sentences):
             if nodes_received == nodes_sent:
                 log.info('process_sentence : producing nodes for writing')
                 doc_nodes.update(set__nodes_received=nodes_received, is_complete=True)
-                producer = get_producer()
-                producer.send(TOPIC_TO_PROCESS, value=basename)
-                producer.flush()
-                producer.close()
+                write_document_basename(basename)
+                # producer = get_producer()
+                # producer.send(TOPIC_TO_PROCESS, value=basename)
+                # producer.flush()
+                # producer.close()
             doc_nodes.update(set__nodes_received=nodes_received)
         text_node.update(set__sentences=text_node_dict[0]['sentences'],
                          set__tokens_received=ttl_sentences, set__is_complete=completed)

@@ -19,9 +19,9 @@ def thread_manager():
     for thread in MUST_RUNNING_THREADS:
         if not thread_set.__contains__(thread):
             log.error('thread_manager : must running thread == ' + thread + 'is not running')
-            if thread is 'write_document':
-                run_write_document()
-            elif thread is 'sentence_creator':
+            # if thread is 'write_document':
+            #     run_write_document()
+            if thread is 'sentence_creator':
                 run_sentence_creator()
             elif thread is 'keep_on_running':
                 run_keep_on_running()
