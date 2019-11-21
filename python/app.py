@@ -126,12 +126,12 @@ es = getinstance()
 words = []
 connectmongo()
 
-scheduler = BackgroundScheduler()
-scheduler.add_job(func=thread_manager, trigger="interval", minutes=2)
-scheduler.start()
+# scheduler = BackgroundScheduler()
+# scheduler.add_job(func=thread_manager, trigger="interval", minutes=2)
+# scheduler.start()
 
-# Shut down the scheduler when exiting the app
-atexit.register(lambda: scheduler.shutdown())
+# # Shut down the scheduler when exiting the app
+# atexit.register(lambda: scheduler.shutdown())
 
 
 log = logging.getLogger('file')
