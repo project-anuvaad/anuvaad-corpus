@@ -127,7 +127,7 @@ words = []
 connectmongo()
 
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=thread_manager, trigger="interval", minutes=15)
+scheduler.add_job(func=thread_manager, trigger="interval", minutes=5)
 scheduler.start()
 
 # Shut down the scheduler when exiting the app
