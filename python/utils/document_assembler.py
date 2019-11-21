@@ -29,6 +29,7 @@ def keep_on_running():
                 log.error('keep_on_running : ERROR OCCURRED : NMT SERVER ERROR '+str(e))
     except Exception as e:
         log.error('keep_on_running : ERROR OCCURRED : NMT SERVER ERROR '+str(e))
+        keep_on_running()
         
 
 
