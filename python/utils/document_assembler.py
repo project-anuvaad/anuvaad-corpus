@@ -58,8 +58,11 @@ def process_sentence(sentences):
             doc_nodes_dict = json.loads(doc_nodes.to_json())
             nodes_received = doc_nodes_dict[0]['nodes_received']
             nodes_sent = doc_nodes_dict[0]['nodes_sent']
+            log.info('process_sentence : nodes sent ='+str(nodes_sent))
             nodes_received = nodes_received + 1
+            log.info('process_sentence : nodes_received ='+str(nodes_received))
             if nodes_received == nodes_sent:
+                log.info('process_sentence : producing nodes for writing')
                 doc_nodes.update(set__nodes_received=nodes_received, is_complete=True)
                 producer = get_producer()
                 producer.send(TOPIC_TO_PROCESS, value=basename)
