@@ -1,6 +1,6 @@
 from kafka_utils.consumer import get_consumer
 from kafka_utils.producer import get_producer
-from document_writer import write_document_basename
+from utils.document_writer import write_document_basename
 from models.text_nodes import TextNode
 from models.Document_nodes import DocumentNodes
 import json
