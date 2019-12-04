@@ -1,6 +1,5 @@
 import logging
 import threading
-from elastic_utils.elastic_search_indexer import sentence_creator
 from utils.document_assembler import keep_on_running
 from utils.document_writer import write_document
 
@@ -21,17 +20,8 @@ def thread_manager():
             log.error('thread_manager : must running thread == ' + thread + 'is not running')
             # if thread is 'write_document':
             #     run_write_document()
-            if thread is 'sentence_creator':
-                run_sentence_creator()
-            elif thread is 'keep_on_running':
+            if thread is 'keep_on_running':
                 run_keep_on_running()
-
-
-def run_sentence_creator():
-    log.info('run_sentence_creator : starting sentence_creator thread')
-    t1 = threading.Thread(target=sentence_creator, name='sentence_creator')
-    # t1.setDaemon(True)
-    t1.start()
 
 
 def run_write_document():

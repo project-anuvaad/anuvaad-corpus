@@ -1,5 +1,5 @@
 """
- * @author ['iostream04']
+ * @author ['github.com/iostream04']
 """
 
 from flask import Blueprint, request, current_app as app
@@ -315,6 +315,7 @@ def send_nodes(nodes, basename, model_id, url_end_point):
                 msg = {'url_end_point': url_end_point, 'message': messages}
                 producer.send(TOPIC, value=msg)
                 producer.flush()
+
                 log.info('send_nodes : flushed')
 
 

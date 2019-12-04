@@ -1,7 +1,6 @@
-from flask import Blueprint, jsonify, request, current_app as app
+from flask import Blueprint, request
 import logging
 import requests
-import time
 from models.status import Status
 from models.response import CustomResponse
 from db.redis_client import get_user_roles_basic_auth

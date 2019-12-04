@@ -12,6 +12,7 @@ import requests
 
 BATCH_SIZE = 20
 
+
 def translatewithanuvadaeng(fname, outputpath, model_id):
     try:
         with open(outputpath, 'w', encoding='utf-8') as f_eng:
@@ -28,18 +29,18 @@ def translatewithanuvadaeng(fname, outputpath, model_id):
 
 def translatebigtext(f_eng, flist, index, model_id):
     global BATCH_SIZE
-    endCount = BATCH_SIZE*index + BATCH_SIZE
+    endCount = BATCH_SIZE * index + BATCH_SIZE
     callnext = True
     print(len(flist))
-    if (index+1)*BATCH_SIZE > len(flist):
-        endCount = BATCH_SIZE*index + len(flist) % BATCH_SIZE
+    if (index + 1) * BATCH_SIZE > len(flist):
+        endCount = BATCH_SIZE * index + len(flist) % BATCH_SIZE
         callnext = False
     # The text to translate
     # text = s
     # The target language
     # Translates some text into English
     print(endCount)
-    englist = flist[BATCH_SIZE*index:endCount]
+    englist = flist[BATCH_SIZE * index:endCount]
     engarr = []
     for eng in englist:
         engarr.append({'src': eng, 'id': int(model_id)})
@@ -52,11 +53,11 @@ def translatebigtext(f_eng, flist, index, model_id):
         for translation in dictFromServer['response_body']:
             print(translation)
             if len(translation['tgt']) > 0:
-                f_eng.write(translation['tgt'].replace("\n","")+'\n')
+                f_eng.write(translation['tgt'].replace("\n", "") + '\n')
             else:
-                f_eng.write(translation['tgt']+'\n')
+                f_eng.write(translation['tgt'] + '\n')
     else:
-        for i in range(0,endCount):
+        for i in range(0, endCount):
             f_eng.write('\n')
     if callnext:
         index += 1

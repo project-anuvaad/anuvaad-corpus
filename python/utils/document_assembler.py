@@ -11,7 +11,6 @@ TOPIC = 'listener'
 TOPIC_TO_PROCESS = 'to-process'
 
 
-
 def keep_on_running():
     consumer = get_consumer(TOPIC)
     try:
