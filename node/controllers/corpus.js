@@ -19,7 +19,7 @@ var ParallelCorpus = require('../models/parallelCorpus');
 var Sentence = require('../models/sentence')
 const CJSON = require('circular-json');
 const { Translate } = require('@google-cloud/translate');
-const projectId = "translate-1552888031121";
+const projectId = "anuvaad";
 
 var COMPONENT = "corpus";
 var PARALLEL_CORPUS_COMPONENT = "parallelCorpus";
