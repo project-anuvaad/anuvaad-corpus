@@ -34,7 +34,7 @@ const clientPred = new automl.PredictionServiceClient();
 /**
  * TODO(developer): Uncomment the following line before running the sample.
  */
-const projectId = "translate-1552888031121";
+const projectId = "anuvaad";
 const computeRegion = "us-central1";
 const modelId = "TRL3776294168538164590";
 const translationAllowFallback = "False";
