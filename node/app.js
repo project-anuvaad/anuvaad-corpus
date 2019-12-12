@@ -7,7 +7,10 @@ var methodOverride = require('method-override');
 var LOG = require('./logger/logger').logger
 var APP_CONFIG = require('./config/config').config
 var APIStatus = require('./errors/apistatus')
+var Response = require('./models/response')
 var daemon = require('./controllers/daemon/daemon');
+var KafkaProducer = require('./kafka/producer');
+var KafkaConsumer = require('./kafka/consumer');
 var mongo = require('./db/mongoose')
 var elastic = require('./db/elastic')
 var StatusCode = require('./errors/statuscodes').StatusCode
@@ -55,6 +58,39 @@ process.on('SIGINT', function () {
   LOG.info("stopping the application")
   process.exit(0);
 });
+
+// KafkaProducer.getInstance().getProducer((err, producer) => {
+//   if (err) {
+//     LOG.error("Unable to connect to KafkaProducer");
+//   } else {
+//     LOG.info("KafkaProducer connected")
+//     // let payloads = [
+//     //   { topic: 'listener', messages: 'hi', partition: 0 },
+//     //   { topic: 'listener', messages: [{key:'test'}, 'world'] }
+//     // ]
+//     // producer.send(payloads, function (err, data) {
+//     //   LOG.info(data);
+//     // });
+//   }
+// })
+
+// KafkaConsumer.getInstance().getConsumer((err, consumer) => {
+//   if (err) {
+//     LOG.error("Unable to connect to KafkaConsumer");
+//   } else {
+//     LOG.info("KafkaConsumer connected")
+//     consumer.on('message', function (message) {
+//       LOG.info(message);
+//     });
+//     consumer.on('offsetOutOfRange', function (err) {
+//       LOG.error(err)
+//     })
+//     consumer.on('error', function (err) {
+//       LOG.error(err)
+//     })
+//   }
+// })
+
 startApp()
 
 daemon.start();
@@ -92,6 +128,11 @@ function startApp() {
 
   app.get('/test', function (req, res) {
     res.send("Hello world!");
+  });
+
+  app.post('/uploadfile', function (req, res) {
+    let response = new Response(StatusCode.SUCCESS, { filepath: req.headers['x-file'].split('/')[req.headers['x-file'].split('/').length - 1] }).getRsp()
+    return res.status(response.http.status).json(response);
   });
 
   app.post('/translate', async (req, res) => {
