@@ -5,10 +5,12 @@
 **/upload
 /node/package-lock.json
 /node/app_log
-/node/corpusfiles/
+/node/corpusfiles/processing/*
 /python/env
 /python/upload/*
+/node/processing/*
 !/python/upload/.gitkeep
+!/node/corpusfiles/processing/.gitkeep
 **__pycache__
 **.vscode
 
