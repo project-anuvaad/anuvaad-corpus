@@ -8,10 +8,21 @@ var Producer = (function () {
     function init() {
         return {
             getProducer: function (cb) {
+                // var topicsToCreate = [{
+                //     kafkaHost: APP_CONFIG.KAFKA_URL,
+                //     host: APP_CONFIG.KAFKA_URL,
+                //     topic: 'tokenext',
+                //     partitions: 1,
+                //     replicationFactor: 1
+                // }]
                 var kafka = require('kafka-node'),
                     Producer = kafka.Producer,
                     client = new kafka.KafkaClient({ kafkaHost: APP_CONFIG.KAFKA_URL }),
                     producer = new Producer(client);
+                // client.createTopics(topicsToCreate, (error, result) => {
+                //     LOG.error(error)
+                //     LOG.info(result)
+                // });
                 producer.on('ready', function () {
                     cb(null, producer)
                 });
