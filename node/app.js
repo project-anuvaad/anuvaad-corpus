@@ -64,13 +64,18 @@ process.on('SIGINT', function () {
 //     LOG.error("Unable to connect to KafkaProducer");
 //   } else {
 //     LOG.info("KafkaProducer connected")
-//     // let payloads = [
-//     //   { topic: 'listener', messages: 'hi', partition: 0 },
-//     //   { topic: 'listener', messages: [{key:'test'}, 'world'] }
-//     // ]
-//     // producer.send(payloads, function (err, data) {
-//     //   LOG.info(data);
-//     // });
+//     let payloads = [
+//       {
+//         topic: 'tokenext', messages: {
+//           path: 'tokenize',
+//           data: 'hi'
+//         }, partition: 0
+//       }
+//     ]
+//     producer.send(payloads, function (err, data) {
+//       LOG.info('Produced')
+//       LOG.info(err);
+//     });
 //   }
 // })
 
@@ -80,6 +85,7 @@ process.on('SIGINT', function () {
 //   } else {
 //     LOG.info("KafkaConsumer connected")
 //     consumer.on('message', function (message) {
+//       LOG.info('Received')
 //       LOG.info(message);
 //     });
 //     consumer.on('offsetOutOfRange', function (err) {
@@ -125,6 +131,7 @@ function startApp() {
   require('./routes/reports/report.route')(router);
   require('./routes/language/language.route')(router);
   require('./routes/nmt/nmt.route')(router);
+  require('./routes/workspace/workspace.route')(router);
 
   app.get('/test', function (req, res) {
     res.send("Hello world!");

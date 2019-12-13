@@ -31,7 +31,7 @@ var KafkaConsumer = (function () {
                     onRebalance: (isAlreadyMember, callback) => { callback(); } // or null
                 };
 
-                var consumerGroup = new kafka.ConsumerGroup(options, 'listener');
+                var consumerGroup = new kafka.ConsumerGroup(options, 'token_ext');
                 cb(null, consumerGroup)
             }
         }
