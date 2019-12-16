@@ -11,13 +11,33 @@ const BASE_PATH_PIPELINE_1 = 'corpusfiles/processing/pipeline_stage_1/'
 const STATUS_PROCESSING = 'PROCESSING'
 const STATUS_PROCESSED = 'PROCESSED'
 const STEP_UPLOAD_PRAGRAPH = 'UPLOAD_PRAGRAPH'
+const STEP_TOKENIZE = 'TOKENIZE'
 
 exports.handleTokenizeRequest = function (req) {
     if (!req || !req.data || !req.data.processId) {
         LOG.error('Data missing for [%s]', JSON.stringify(req))
     } else {
-        ParagraphWorkspace.findOne({ basename: basename }, function (error, corpus) {
-
+        ParagraphWorkspace.findOne({ session_id: req.data.processId }, function (error, workspace) {
+            if (error) {
+                LOG.error(error)
+            }
+            else if (!workspace) {
+                LOG.error('ParagraphWorkspace not found [%s]', req)
+            } else {
+                workspace._doc.step = STEP_TOKENIZE
+                workspace._doc.token_file = req.data.tokenFile
+                workspace._doc.token_count = req.data.tokenCount
+                workspace._doc.negative_token_file = req.data.negativeTokenFile
+                workspace._doc.negative_token_count = req.data.negativeTokenCount
+                ParagraphWorkspace.updateParagraphWorkspace(workspace._doc, (error, results) => {
+                    if (error) {
+                        LOG.error(error)
+                    }
+                    else {
+                        LOG.info('Data updated successfully [%s]', JSON.stringify(req))
+                    }
+                })
+            }
         })
     }
 }

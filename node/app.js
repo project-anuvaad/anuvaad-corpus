@@ -7,18 +7,13 @@ var methodOverride = require('method-override');
 var LOG = require('./logger/logger').logger
 var APP_CONFIG = require('./config/config').config
 var APIStatus = require('./errors/apistatus')
+var WorkspaceController = require('./controllers/workspace')
 var Response = require('./models/response')
 var daemon = require('./controllers/daemon/daemon');
-var KafkaProducer = require('./kafka/producer');
 var KafkaConsumer = require('./kafka/consumer');
-var mongo = require('./db/mongoose')
-var elastic = require('./db/elastic')
 var StatusCode = require('./errors/statuscodes').StatusCode
 var multer = require('multer');
 var upload = multer({ dest: 'upload/' });
-var async = require('async')
-var _ = require('lodash');
-var fs = require("fs");
 // Imports the Google Cloud client library
 const { Storage } = require('@google-cloud/storage');
 
@@ -67,6 +62,7 @@ KafkaConsumer.getInstance().getConsumer((err, consumer) => {
     consumer.on('message', function (message) {
       LOG.info('Received')
       LOG.info(message.value);
+      WorkspaceController.handleTokenizeRequest(JSON.parse(message.value))
     });
     consumer.on('offsetOutOfRange', function (err) {
       LOG.error(err)
