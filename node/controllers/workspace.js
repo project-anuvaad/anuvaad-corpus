@@ -10,8 +10,8 @@ var COMPONENT = "workspace";
 const BASE_PATH_PIPELINE_1 = 'corpusfiles/processing/pipeline_stage_1/'
 const STATUS_PROCESSING = 'PROCESSING'
 const STATUS_PROCESSED = 'PROCESSED'
-const STEP_UPLOAD_PRAGRAPH = 'UPLOAD_PRAGRAPH'
-const STEP_TOKENIZE = 'TOKENIZE'
+const STEP_UPLOAD_PRAGRAPH = 'IN-PROGRESS'
+const STEP_TOKENIZE = 'At Step1'
 
 exports.handleTokenizeRequest = function (req) {
     if (!req || !req.data || !req.data.processId) {
