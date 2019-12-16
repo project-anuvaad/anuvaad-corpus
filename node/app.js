@@ -59,43 +59,23 @@ process.on('SIGINT', function () {
   process.exit(0);
 });
 
-// KafkaProducer.getInstance().getProducer((err, producer) => {
-//   if (err) {
-//     LOG.error("Unable to connect to KafkaProducer");
-//   } else {
-//     LOG.info("KafkaProducer connected")
-//     let payloads = [
-//       {
-//         topic: 'tokenext', messages: {
-//           path: 'tokenize',
-//           data: 'hi'
-//         }, partition: 0
-//       }
-//     ]
-//     producer.send(payloads, function (err, data) {
-//       LOG.info('Produced')
-//       LOG.info(err);
-//     });
-//   }
-// })
-
-// KafkaConsumer.getInstance().getConsumer((err, consumer) => {
-//   if (err) {
-//     LOG.error("Unable to connect to KafkaConsumer");
-//   } else {
-//     LOG.info("KafkaConsumer connected")
-//     consumer.on('message', function (message) {
-//       LOG.info('Received')
-//       LOG.info(message);
-//     });
-//     consumer.on('offsetOutOfRange', function (err) {
-//       LOG.error(err)
-//     })
-//     consumer.on('error', function (err) {
-//       LOG.error(err)
-//     })
-//   }
-// })
+KafkaConsumer.getInstance().getConsumer((err, consumer) => {
+  if (err) {
+    LOG.error("Unable to connect to KafkaConsumer");
+  } else {
+    LOG.info("KafkaConsumer connected")
+    consumer.on('message', function (message) {
+      LOG.info('Received')
+      LOG.info(message.value);
+    });
+    consumer.on('offsetOutOfRange', function (err) {
+      LOG.error(err)
+    })
+    consumer.on('error', function (err) {
+      LOG.error(err)
+    })
+  }
+})
 
 startApp()
 

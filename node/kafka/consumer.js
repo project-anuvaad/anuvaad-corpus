@@ -11,7 +11,7 @@ var KafkaConsumer = (function () {
 
                 var kafka = require('kafka-node')
                 var options = {
-                    kafkaHost: APP_CONFIG.KAFKA_URL, // connect directly to kafka broker (instantiates a KafkaClient)
+                    kafkaHost: process.env.KAFKA_IP_HOST ? process.env.KAFKA_IP_HOST  : APP_CONFIG.KAFKA_URL, // connect directly to kafka broker (instantiates a KafkaClient)
                     batch: undefined, // put client batch settings if you need them
                     ssl: true, // optional (defaults to false) or tls options hash
                     sessionTimeout: 15000,
@@ -31,7 +31,7 @@ var KafkaConsumer = (function () {
                     onRebalance: (isAlreadyMember, callback) => { callback(); } // or null
                 };
 
-                var consumerGroup = new kafka.ConsumerGroup(options, 'token_ext');
+                var consumerGroup = new kafka.ConsumerGroup(options, 'tokenprocessed');
                 cb(null, consumerGroup)
             }
         }

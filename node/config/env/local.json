@@ -5,6 +5,6 @@
         "LOG_DIRECTORY": "../app_log/aidemo-dev",
         "MONGO_URL":"mongodb://localhost/preprocessing",
         "ELASTIC_URL":"http://52.88.54.220:9200",
-        "KAFKA_URL":"ec2-52-88-54-220.us-west-2.compute.amazonaws.com:9092"
+        "KAFKA_URL":"172.17.18.200:9092"
     }
 }

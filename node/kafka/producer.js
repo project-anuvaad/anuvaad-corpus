@@ -17,7 +17,7 @@ var Producer = (function () {
                 // }]
                 var kafka = require('kafka-node'),
                     Producer = kafka.Producer,
-                    client = new kafka.KafkaClient({ kafkaHost: APP_CONFIG.KAFKA_URL }),
+                    client = new kafka.KafkaClient({ kafkaHost: process.env.KAFKA_IP_HOST ? process.env.KAFKA_IP_HOST  : APP_CONFIG.KAFKA_URL }),
                     producer = new Producer(client);
                 // client.createTopics(topicsToCreate, (error, result) => {
                 //     LOG.error(error)
