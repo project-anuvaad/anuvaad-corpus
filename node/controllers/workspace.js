@@ -8,6 +8,9 @@ var fs = require('fs');
 var UUIDV4 = require('uuid/v4')
 var COMPONENT = "workspace";
 const BASE_PATH_PIPELINE_1 = 'corpusfiles/processing/pipeline_stage_1/'
+const STATUS_PROCESSING = 'PROCESSING'
+const STEP_UPLOAD_PRAGRAPH = 'UPLOAD_PRAGRAPH'
+
 
 exports.saveParagraphWorkspace = function (req, res) {
     if (!req || !req.body || !req.body.paragraph_workspaces || !Array.isArray(req.body.paragraph_workspaces) || req.body.paragraph_workspaces.length <= 0) {
@@ -17,7 +20,7 @@ exports.saveParagraphWorkspace = function (req, res) {
     req.body.paragraph_workspaces.map((workspace) => {
         workspace.session_id = UUIDV4()
         fs.mkdir(BASE_PATH_PIPELINE_1 + workspace.session_id, function (e) {
-            fs.mkdir( BASE_PATH_PIPELINE_1 + workspace.session_id, function (e) {
+            fs.mkdir(BASE_PATH_PIPELINE_1 + workspace.session_id, function (e) {
                 fs.copyFile('nginx/' + workspace.config_file_location, BASE_PATH_PIPELINE_1 + workspace.session_id + '/' + workspace.config_file_location, function (err) {
                     if (err) {
                         LOG.error(err)
@@ -31,6 +34,11 @@ exports.saveParagraphWorkspace = function (req, res) {
                                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                                 return res.status(apistatus.http.status).json(apistatus);
                             }
+                            req.body.paragraph_workspaces.map((workspace) => {
+                                workspace.status = STATUS_PROCESSING
+                                workspace.stage = 1
+                                workspace.step = STEP_UPLOAD_PRAGRAPH
+                            })
                             ParagraphWorkspace.save(req.body.paragraph_workspaces, function (err, models) {
                                 if (err) {
                                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
