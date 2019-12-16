@@ -4,12 +4,14 @@
 **/node_modules
 **/upload
 /node/package-lock.json
+/node/nginx
 /node/app_log
 /node/corpusfiles/processing/*
 /python/env
 /python/upload/*
 /node/processing/*
 !/python/upload/.gitkeep
+!/node/nginx/.gitkeep
 !/node/corpusfiles/processing/.gitkeep
 **__pycache__
 **.vscode
