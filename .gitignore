@@ -6,13 +6,13 @@
 /node/package-lock.json
 /node/nginx
 /node/app_log
-/node/corpusfiles/processing/*
+/node/corpusfiles/processing/pipeline_stage_1/*
 /python/env
 /python/upload/*
 /node/processing/*
 !/python/upload/.gitkeep
+!/node/corpusfiles/processing/pipeline_stage_1/.gitkeep
 !/node/nginx/.gitkeep
-!/node/corpusfiles/processing/.gitkeep
 **__pycache__
 **.vscode
 
