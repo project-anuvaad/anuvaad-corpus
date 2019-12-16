@@ -12,4 +12,8 @@ module.exports = function (router) {
     router.route('/save-paragraph-workspace')
         .post(workspaceController.saveParagraphWorkspace);
 
+
+    router.route('/fetch-paragraph-workspace')
+        .get(workspaceController.fetchParagraphWorkspace);
+
 }
