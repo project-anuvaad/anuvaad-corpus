@@ -7,6 +7,7 @@ var KafkaProducer = require('../kafka/producer');
 var fs = require('fs');
 var UUIDV4 = require('uuid/v4')
 var COMPONENT = "workspace";
+const BASE_PATH_PIPELINE_1 = 'corpusfiles/processing/pipeline_stage_1/'
 
 exports.saveParagraphWorkspace = function (req, res) {
     if (!req || !req.body || !req.body.paragraph_workspaces || !Array.isArray(req.body.paragraph_workspaces) || req.body.paragraph_workspaces.length <= 0) {
@@ -15,16 +16,16 @@ exports.saveParagraphWorkspace = function (req, res) {
     }
     req.body.paragraph_workspaces.map((workspace) => {
         workspace.session_id = UUIDV4()
-        fs.mkdir('corpusfiles/processing/' + workspace.session_id, function (e) {
-            fs.mkdir('corpusfiles/processing/pipeline_stage_1/' + workspace.session_id, function (e) {
-                fs.copyFile('nginx/' + workspace.config_file_location, 'corpusfiles/processing/pipeline_stage_1/' + workspace.session_id + '/' + workspace.config_file_location, function (err) {
+        fs.mkdir(BASE_PATH_PIPELINE_1 + workspace.session_id, function (e) {
+            fs.mkdir( BASE_PATH_PIPELINE_1 + workspace.session_id, function (e) {
+                fs.copyFile('nginx/' + workspace.config_file_location, BASE_PATH_PIPELINE_1 + workspace.session_id + '/' + workspace.config_file_location, function (err) {
                     if (err) {
                         LOG.error(err)
                         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                         return res.status(apistatus.http.status).json(apistatus);
                     }
                     else {
-                        fs.copyFile('nginx/' + workspace.csv_file_location, 'corpusfiles/processing/pipeline_stage_1/' + workspace.session_id + '/' + workspace.csv_file_location, function (err) {
+                        fs.copyFile('nginx/' + workspace.csv_file_location, BASE_PATH_PIPELINE_1 + workspace.session_id + '/' + workspace.csv_file_location, function (err) {
                             if (err) {
                                 LOG.error(err)
                                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
@@ -35,7 +36,6 @@ exports.saveParagraphWorkspace = function (req, res) {
                                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                                     return res.status(apistatus.http.status).json(apistatus);
                                 }
-                                LOG.info(models.ops)
                                 models.ops.map((data) => {
                                     KafkaProducer.getInstance().getProducer((err, producer) => {
                                         if (err) {
