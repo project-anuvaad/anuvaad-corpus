@@ -10,8 +10,44 @@ var COMPONENT = "workspace";
 const BASE_PATH_PIPELINE_1 = 'corpusfiles/processing/pipeline_stage_1/'
 const STATUS_PROCESSING = 'PROCESSING'
 const STATUS_PROCESSED = 'PROCESSED'
-const STEP_UPLOAD_PRAGRAPH = 'IN-PROGRESS'
+const STEP_IN_PROGRESS = 'IN-PROGRESS'
 const STEP_TOKENIZE = 'At Step1'
+const STEP_SENTENCE = 'At Step2'
+
+exports.handleSentenceRequest = function(req){
+    if (!req || !req.data || !req.data.processId) {
+        LOG.error('Data missing for [%s]', JSON.stringify(req))
+    } else {
+        ParagraphWorkspace.findOne({ session_id: req.data.processId }, function (error, workspace) {
+            if (error) {
+                LOG.error(error)
+            }
+            else if (!workspace) {
+                LOG.error('ParagraphWorkspace not found [%s]', req)
+            } else {
+                workspace._doc.step = STEP_SENTENCE
+                workspace._doc.status = STATUS_PROCESSED
+                workspace._doc.sentence_file = req.data.sentencesFile
+                workspace._doc.sentence_count = req.data.sentencesCount
+                fs.copyFile(BASE_PATH_PIPELINE_1 + workspace._doc.session_id + '/' + req.data.sentencesFile, 'nginx/' + req.data.sentencesFile, function (err) {
+                    if (err) {
+                        LOG.error(err)
+                    } else {
+                        LOG.info('File transfered [%s]', req.data.negativeTokenFile)
+                    }
+                })
+                ParagraphWorkspace.updateParagraphWorkspace(workspace._doc, (error, results) => {
+                    if (error) {
+                        LOG.error(error)
+                    }
+                    else {
+                        LOG.info('Data updated successfully [%s]', JSON.stringify(req))
+                    }
+                })
+            }
+        })
+    }
+}
 
 exports.handleTokenizeRequest = function (req) {
     if (!req || !req.data || !req.data.processId) {
@@ -29,6 +65,20 @@ exports.handleTokenizeRequest = function (req) {
                 workspace._doc.token_count = req.data.tokenCount
                 workspace._doc.negative_token_file = req.data.negativeTokenFile
                 workspace._doc.negative_token_count = req.data.negativeTokenCount
+                fs.copyFile(BASE_PATH_PIPELINE_1 + workspace._doc.session_id + '/' + req.data.tokenFile, 'nginx/' + req.data.tokenFile, function (err) {
+                    if (err) {
+                        LOG.error(err)
+                    } else {
+                        LOG.info('File transfered [%s]', req.data.tokenFile)
+                    }
+                })
+                fs.copyFile(BASE_PATH_PIPELINE_1 + workspace._doc.session_id + '/' + req.data.negativeTokenFile, 'nginx/' + req.data.negativeTokenFile, function (err) {
+                    if (err) {
+                        LOG.error(err)
+                    } else {
+                        LOG.info('File transfered [%s]', req.data.negativeTokenFile)
+                    }
+                })
                 ParagraphWorkspace.updateParagraphWorkspace(workspace._doc, (error, results) => {
                     if (error) {
                         LOG.error(error)
@@ -47,6 +97,7 @@ exports.fetchParagraphWorkspaceDetail = function (req, res) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
+    LOG.info('Request came for fetchParagraphWorkspaceDetail [%s]', req.query.session_id)
     let session_id = req.query.session_id
     ParagraphWorkspace.findOne({ session_id: session_id }, function (error, workspace) {
         if (error) {
@@ -87,6 +138,66 @@ exports.fetchParagraphWorkspace = function (req, res) {
     })
 }
 
+exports.startTokenization = function (req, res) {
+    if (!req || !req.body || !req.body.paragraph_workspace) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    ParagraphWorkspace.findOne({ session_id: req.body.paragraph_workspace.session_id }, function (error, workspace) {
+        if (error) {
+            LOG.error(error)
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        } else if (!workspace) {
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_NOTFOUND, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+        workspace._doc.token_file = req.body.paragraph_workspace.token_file
+        workspace._doc.negative_token_file = req.body.paragraph_workspace.negative_token_file
+        workspace._doc.step = STEP_IN_PROGRESS
+        fs.copyFile('nginx/' + req.body.paragraph_workspace.token_file, BASE_PATH_PIPELINE_1 + workspace._doc.session_id + '/' + req.body.paragraph_workspace.token_file, function (err) {
+            if (err) {
+                LOG.error(err)
+            } else {
+                LOG.info('File transfered [%s]', req.body.paragraph_workspace.token_file)
+            }
+        })
+        fs.copyFile('nginx/' + req.body.paragraph_workspace.negative_token_file, BASE_PATH_PIPELINE_1 + workspace._doc.session_id + '/' + req.body.paragraph_workspace.negative_token_file, function (err) {
+            if (err) {
+                LOG.error(err)
+            } else {
+                LOG.info('File transfered [%s]', req.body.paragraph_workspace.negative_token_file)
+            }
+        })
+        ParagraphWorkspace.updateParagraphWorkspace(workspace._doc, (error, results) => {
+            if (error) {
+                LOG.error(error)
+            }
+            else {
+                KafkaProducer.getInstance().getProducer((err, producer) => {
+                    if (err) {
+                        LOG.error("Unable to connect to KafkaProducer");
+                    } else {
+                        LOG.info("KafkaProducer connected")
+                        let payloads = [
+                            {
+                                topic: 'sentencesext', messages: JSON.stringify({ data: workspace._doc }), partition: 0
+                            }
+                        ]
+                        producer.send(payloads, function (err, data) {
+                            LOG.info('Produced')
+                        });
+                    }
+                })
+                LOG.info('Data updated successfully [%s]', JSON.stringify(req.body.paragraph_workspace))
+                let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                return res.status(response.http.status).json(response);
+            }
+        })
+
+    })
+}
+
 exports.saveParagraphWorkspace = function (req, res) {
     if (!req || !req.body || !req.body.paragraph_workspace) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
@@ -111,7 +222,7 @@ exports.saveParagraphWorkspace = function (req, res) {
                         }
                         workspace.status = STATUS_PROCESSING
                         workspace.stage = 1
-                        workspace.step = STEP_UPLOAD_PRAGRAPH
+                        workspace.step = STEP_IN_PROGRESS
                         ParagraphWorkspace.save([workspace], function (err, models) {
                             if (err) {
                                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
