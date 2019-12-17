@@ -40,7 +40,7 @@ ParagraphWorkspace.findByCondition = function (condition, pagesize, pageno, cb) 
 }
 
 ParagraphWorkspace.updateParagraphWorkspace = function (paragraphWorkspace, cb) {
-    ParagraphWorkspace.collection.updateOne({ _id: mongoose.Types.ObjectId(paragraphWorkspace._id) }, { $set: { step: paragraphWorkspace.step, token_file: paragraphWorkspace.token_file, token_count: paragraphWorkspace.token_count, negative_token_file: paragraphWorkspace.negative_token_file, negative_token_count: paragraphWorkspace.negative_token_count } }, { upsert: false }, function (err, doc) {
+    ParagraphWorkspace.collection.updateOne({ _id: mongoose.Types.ObjectId(paragraphWorkspace._id) }, { $set: { status: paragraphWorkspace.status,sentence_count: paragraphWorkspace.sentence_count, sentence_file: paragraphWorkspace.sentence_file, step: paragraphWorkspace.step, token_file: paragraphWorkspace.token_file, token_count: paragraphWorkspace.token_count, negative_token_file: paragraphWorkspace.negative_token_file, negative_token_count: paragraphWorkspace.negative_token_count } }, { upsert: false }, function (err, doc) {
         if (err) {
             LOG.error(err)
             cb(err, null)

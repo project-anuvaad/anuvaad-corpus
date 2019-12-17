@@ -12,6 +12,8 @@ module.exports = function (router) {
     router.route('/save-paragraph-workspace')
         .post(workspaceController.saveParagraphWorkspace);
 
+    router.route('/start-tokenization')
+        .post(workspaceController.startTokenization);
 
     router.route('/fetch-paragraph-workspace')
         .get(workspaceController.fetchParagraphWorkspace);

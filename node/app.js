@@ -61,8 +61,24 @@ KafkaConsumer.getInstance().getConsumer((err, consumer) => {
     LOG.info("KafkaConsumer connected")
     consumer.on('message', function (message) {
       LOG.info('Received')
-      LOG.info(message.value);
-      WorkspaceController.handleTokenizeRequest(JSON.parse(message.value))
+      LOG.info(message.value)
+      let data = JSON.parse(message.value)
+      if(!data || !data.path){
+        LOG.error('Path missing for [%s]', message.value)
+      }else{
+        switch(data.path){
+          case 'tokenize':
+            WorkspaceController.handleTokenizeRequest(data)
+            break;
+          case 'sentences':
+            WorkspaceController.handleSentenceRequest(data)
+            break;
+          default:
+            LOG.info('Path not found')
+            break
+        }
+      }
+      
     });
     consumer.on('offsetOutOfRange', function (err) {
       LOG.error(err)
