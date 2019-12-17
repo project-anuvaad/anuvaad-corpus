@@ -12,8 +12,6 @@ var Response = require('./models/response')
 var daemon = require('./controllers/daemon/daemon');
 var KafkaConsumer = require('./kafka/consumer');
 var StatusCode = require('./errors/statuscodes').StatusCode
-var multer = require('multer');
-var upload = multer({ dest: 'upload/' });
 // Imports the Google Cloud client library
 const { Storage } = require('@google-cloud/storage');
 
