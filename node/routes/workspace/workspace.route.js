@@ -16,4 +16,7 @@ module.exports = function (router) {
     router.route('/fetch-paragraph-workspace')
         .get(workspaceController.fetchParagraphWorkspace);
 
+    router.route('/fetch-paragraph-workspace-detail')
+        .get(workspaceController.fetchParagraphWorkspaceDetail);
+
 }
