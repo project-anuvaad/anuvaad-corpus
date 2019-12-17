@@ -139,7 +139,7 @@ exports.fetchParagraphWorkspace = function (req, res) {
 }
 
 exports.startTokenization = function (req, res) {
-    if (!req || !req.body || !req.body.paragraph_workspace) {
+    if (!req || !req.body || !req.body.paragraph_workspace || !req.body.paragraph_workspace.negative_token_file || !req.body.paragraph_workspace.token_file) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
