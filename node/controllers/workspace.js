@@ -214,7 +214,7 @@ exports.saveParagraphWorkspace = function (req, res) {
                     return res.status(apistatus.http.status).json(apistatus);
                 }
                 else {
-                    fs.copyFile('nginx/' + workspace.csv_file_location, BASE_PATH_PIPELINE_1 + workspace.session_id + '/' + workspace.csv_file_location, function (err) {
+                    fs.copyFile('nginx/' + workspace.paragraph_file_location, BASE_PATH_PIPELINE_1 + workspace.session_id + '/' + workspace.paragraph_file_location, function (err) {
                         if (err) {
                             LOG.error(err)
                             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
