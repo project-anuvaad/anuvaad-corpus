@@ -12,7 +12,7 @@ var LOG = require('../logger/logger').logger
 var ParagraphWorkspaceSchema = new Schema({
     title: { type: String },
     config_file_location: { type: String },
-    csv_file_location: { type: String },
+    paragraph_file_location: { type: String },
 
 }, { strict: false });
 var ParagraphWorkspace = mongoose.model('paragraph_workspace', ParagraphWorkspaceSchema);
