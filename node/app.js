@@ -7,15 +7,11 @@ var methodOverride = require('method-override');
 var LOG = require('./logger/logger').logger
 var APP_CONFIG = require('./config/config').config
 var APIStatus = require('./errors/apistatus')
+var WorkspaceController = require('./controllers/workspace')
+var Response = require('./models/response')
 var daemon = require('./controllers/daemon/daemon');
-var mongo = require('./db/mongoose')
-var elastic = require('./db/elastic')
+var KafkaConsumer = require('./kafka/consumer');
 var StatusCode = require('./errors/statuscodes').StatusCode
-var multer = require('multer');
-var upload = multer({ dest: 'upload/' });
-var async = require('async')
-var _ = require('lodash');
-var fs = require("fs");
 // Imports the Google Cloud client library
 const { Storage } = require('@google-cloud/storage');
 
@@ -34,7 +30,7 @@ const clientPred = new automl.PredictionServiceClient();
 /**
  * TODO(developer): Uncomment the following line before running the sample.
  */
-const projectId = "translate-1552888031121";
+const projectId = "anuvaad";
 const computeRegion = "us-central1";
 const modelId = "TRL3776294168538164590";
 const translationAllowFallback = "False";
@@ -55,6 +51,42 @@ process.on('SIGINT', function () {
   LOG.info("stopping the application")
   process.exit(0);
 });
+
+KafkaConsumer.getInstance().getConsumer((err, consumer) => {
+  if (err) {
+    LOG.error("Unable to connect to KafkaConsumer");
+  } else {
+    LOG.info("KafkaConsumer connected")
+    consumer.on('message', function (message) {
+      LOG.info('Received')
+      LOG.info(message.value)
+      let data = JSON.parse(message.value)
+      if(!data || !data.path){
+        LOG.error('Path missing for [%s]', message.value)
+      }else{
+        switch(data.path){
+          case 'tokenize':
+            WorkspaceController.handleTokenizeRequest(data)
+            break;
+          case 'sentences':
+            WorkspaceController.handleSentenceRequest(data)
+            break;
+          default:
+            LOG.info('Path not found')
+            break
+        }
+      }
+      
+    });
+    consumer.on('offsetOutOfRange', function (err) {
+      LOG.error(err)
+    })
+    consumer.on('error', function (err) {
+      LOG.error(err)
+    })
+  }
+})
+
 startApp()
 
 daemon.start();
@@ -68,7 +100,6 @@ function startApp() {
     extended: false
   }));
   app.use(methodOverride());
-  app.use(upload.any());
   app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -89,9 +120,15 @@ function startApp() {
   require('./routes/reports/report.route')(router);
   require('./routes/language/language.route')(router);
   require('./routes/nmt/nmt.route')(router);
+  require('./routes/workspace/workspace.route')(router);
 
   app.get('/test', function (req, res) {
     res.send("Hello world!");
+  });
+
+  app.post('/uploadfile', function (req, res) {
+    let response = new Response(StatusCode.SUCCESS, { filepath: req.headers['x-file'].split('/')[req.headers['x-file'].split('/').length - 1] }).getRsp()
+    return res.status(response.http.status).json(response);
   });
 
   app.post('/translate', async (req, res) => {
