@@ -15,7 +15,7 @@ var async = require('async')
 var COMPONENT = "benchmark";
 var NMT = require('../models/nmt');
 const { Translate } = require('@google-cloud/translate');
-const projectId = "translate-1552888031121";
+const projectId = "anuvaad";
 
 const NAMES_BENCHMARK = "1570785751"
 const ANUVAAD_URL = process.env.ANUVAAD_URL ? process.env.ANUVAAD_URL : 'http://52.40.71.62:3003'
