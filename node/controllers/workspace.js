@@ -199,6 +199,7 @@ exports.startTokenization = function (req, res) {
 }
 
 exports.saveParagraphWorkspace = function (req, res) {
+    let userId = req.headers['ad-userid']
     if (!req || !req.body || !req.body.paragraph_workspace) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
@@ -223,6 +224,8 @@ exports.saveParagraphWorkspace = function (req, res) {
                         workspace.status = STATUS_PROCESSING
                         workspace.stage = 1
                         workspace.step = STEP_IN_PROGRESS
+                        workspace.created_at = new Date()
+                        workspace.created_by = userId
                         ParagraphWorkspace.save([workspace], function (err, models) {
                             if (err) {
                                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
