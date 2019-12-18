@@ -29,7 +29,7 @@ ParagraphWorkspace.save = function (paragraphWorkspaces, cb) {
 }
 
 ParagraphWorkspace.findByCondition = function (condition, pagesize, pageno, cb) {
-    ParagraphWorkspace.find(condition, {}, (pagesize && pageno ? { skip: (pageno - 1) * pagesize, limit: parseInt(pagesize) } : {}), function (err, data) {
+    ParagraphWorkspace.find(condition, {}, (pagesize && pageno ? { skip: (pageno - 1) * pagesize, limit: parseInt(pagesize), sort: {'_id': -1} } : {sort: {'_id': -1}}), function (err, data) {
         if (err) {
             LOG.error("Unable to find ParagraphWorkspace due to [%s]", JSON.stringify(err));
             return cb(err, null);
