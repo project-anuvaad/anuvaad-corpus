@@ -116,6 +116,7 @@ function startApp() {
   var router = express.Router();
   require('./routes/user/user.route')(router);
   require('./routes/corpus/corpus.route')(router);
+  require('./routes/configs/config.route')(router);
   require('./routes/benchmark/benchmark.route')(router);
   require('./routes/reports/report.route')(router);
   require('./routes/language/language.route')(router);
