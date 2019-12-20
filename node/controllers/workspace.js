@@ -13,6 +13,32 @@ const STATUS_PROCESSED = 'PROCESSED'
 const STEP_IN_PROGRESS = 'IN-PROGRESS'
 const STEP_TOKENIZE = 'At Step1'
 const STEP_SENTENCE = 'At Step2'
+const STEP_ERROR = 'FAILED'
+
+exports.updateError = function(req){
+    if (!req || !req.session_id) {
+        LOG.error('Data missing for [%s]', JSON.stringify(req))
+    } else {
+        ParagraphWorkspace.findOne({ session_id: req.session_id }, function (error, workspace) {
+            if (error) {
+                LOG.error(error)
+            }
+            else if (!workspace) {
+                LOG.error('ParagraphWorkspace not found [%s]', req)
+            } else {
+                workspace._doc.step = STEP_ERROR
+                ParagraphWorkspace.updateParagraphWorkspace(workspace._doc, (error, results) => {
+                    if (error) {
+                        LOG.error(error)
+                    }
+                    else {
+                        LOG.info('Data updated successfully [%s]', JSON.stringify(req))
+                    }
+                })
+            }
+        })
+    }
+}
 
 exports.handleSentenceRequest = function(req){
     if (!req || !req.data || !req.data.processId) {

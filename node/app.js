@@ -58,13 +58,11 @@ KafkaConsumer.getInstance().getConsumer((err, consumer) => {
   } else {
     LOG.info("KafkaConsumer connected")
     consumer.on('message', function (message) {
-      LOG.info('Received')
-      LOG.info(message.value)
       let data = JSON.parse(message.value)
-      if(!data || !data.path){
+      if (!data || !data.path) {
         LOG.error('Path missing for [%s]', message.value)
-      }else{
-        switch(data.path){
+      } else {
+        switch (data.path) {
           case 'tokenize':
             WorkspaceController.handleTokenizeRequest(data)
             break;
@@ -76,7 +74,29 @@ KafkaConsumer.getInstance().getConsumer((err, consumer) => {
             break
         }
       }
-      
+
+    });
+    consumer.on('offsetOutOfRange', function (err) {
+      LOG.error(err)
+    })
+    consumer.on('error', function (err) {
+      LOG.error(err)
+    })
+  }
+})
+
+KafkaConsumer.getInstance().getErrorConsumer((err, consumer) => {
+  if (err) {
+    LOG.error("Unable to connect to KafkaErrorConsumer");
+  } else {
+    LOG.info("KafkaErrorConsumer connected")
+    consumer.on('message', function (message) {
+      let data = JSON.parse(message.value)
+      if (!data) {
+        LOG.error('Data missing for [%s]', message.value)
+      } else {
+        WorkspaceController.updateError(data)
+      }
     });
     consumer.on('offsetOutOfRange', function (err) {
       LOG.error(err)
