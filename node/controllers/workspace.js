@@ -114,11 +114,15 @@ exports.fetchParagraphWorkspace = function (req, res) {
     let status = req.query.status
     var pagesize = req.query.pagesize
     var pageno = req.query.pageno
+    var search_param = req.query.search_param
     let condition = {}
     if (status === STATUS_PROCESSING) {
         condition = { status: STATUS_PROCESSING, stage: 1 }
     } else {
         condition = { status: STATUS_PROCESSED, stage: 1 }
+    }
+    if(search_param){
+        condition['title'] = new RegExp(search_param, "i")
     }
     ParagraphWorkspace.countDocuments(condition, function (err, count) {
         if (err) {
