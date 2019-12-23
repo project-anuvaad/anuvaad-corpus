@@ -67,6 +67,10 @@ def download_docx():
 def saveTranslateDocx():
     start_time = int(round(time.time() * 1000))
     log.info('uploadTranslateDocx: started at ' + str(start_time))
+    if (request.form.getlist('basename') is None or not isinstance(request.form.getlist('basename'), list)):
+        res = CustomResponse(
+            Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
+        return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
     basename = request.form.getlist('basename')[0]
     current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
     f = request.files['file']
