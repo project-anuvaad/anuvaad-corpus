@@ -63,6 +63,28 @@ def download_docx():
     except Exception as e:
         return CustomResponse(Status.DATA_NOT_FOUND.value, 'file not found').getres()
 
+@document_api.route('/upload-translated-docx', methods=['POST'])
+def uploadTranslateDocx():
+    start_time = int(round(time.time() * 1000))
+    log.info('uploadTranslateDocx: started at ' + str(start_time))
+    basename = request.form.getlist('basename')[0]
+    current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+    f = request.files['file']
+    filepath = os.path.join(
+        app.config['UPLOAD_FOLDER'], basename + '_u.docx')
+    index = 0
+    while(os.path.exists(filepath)):
+        filepath = os.path.join(
+        app.config['UPLOAD_FOLDER'], basename + '_'+str(index)+'_u.docx')
+        index = index + 1
+    f.save(filepath)    
+    res = CustomResponse(Status.SUCCESS.value, basename + '_' + str(index) + '_u' + '.docx')
+    translationProcess = TranslationProcess.objects(basename=basename)
+    translationProcess.update(set__translate_uploaded=True)
+
+    log.info('uploadTranslateDocx: ended at ' + str(getcurrenttime()) + 'total time elapsed : ' + str(
+        getcurrenttime() - start_time))
+    return res.getres()
 
 @document_api.route('/translate-docx', methods=['POST'])
 def translateDocx():
