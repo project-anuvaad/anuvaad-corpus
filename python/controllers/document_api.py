@@ -63,8 +63,8 @@ def download_docx():
     except Exception as e:
         return CustomResponse(Status.DATA_NOT_FOUND.value, 'file not found').getres()
 
-@document_api.route('/upload-translated-docx', methods=['POST'])
-def uploadTranslateDocx():
+@document_api.route('/save-translated-docx', methods=['POST'])
+def saveTranslateDocx():
     start_time = int(round(time.time() * 1000))
     log.info('uploadTranslateDocx: started at ' + str(start_time))
     basename = request.form.getlist('basename')[0]
