@@ -634,7 +634,7 @@ def remove_junk():
     res = CustomResponse(Status.SUCCESS.value, None)
     return res.getres()
 
-@app.route('/upload-benchmark', methods=['POST'])
+@app.route('/save-benchmark', methods=['POST'])
 def upload_benchmark_file():
     basename = str(int(time.time()))
     assign_to = ''
