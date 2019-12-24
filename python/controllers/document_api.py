@@ -20,6 +20,7 @@ import nltk
 nltk.download('punkt')
 from models.text_nodes import TextNode
 from models.Document_nodes import DocumentNodes
+import utils.custom_nltk_tokenizer as CNT
 import json
 import uuid
 from datetime import datetime
@@ -286,14 +287,22 @@ def send_nodes(nodes, basename, model_id, url_end_point):
     doc_nodes_dict = json.loads(doc_nodes.to_json())
     node_count = doc_nodes_dict[0]['nodes_sent']
     doc_nodes.update(nodes_sent=node_count + node_sent_count)
-
+    custom_nltk_tokenizer = CNT.create_custom_nltk_tokenizer(nodes)
     for node in nodes:
         messages = []
         text = node.text
         if text is not None and text.strip() is not '':
             n_id = node.attrib['id']
             _id = model_id
-            tokens = sent_tokenize(node.text)
+            tokens = []
+            if custom_nltk_tokenizer is not None:
+                log.info(
+                    ' send_nodes : using custom_nltk_tokenizer for sentences tokenization for text == '+str(text))
+                tokens = custom_nltk_tokenizer.tokenize(text)
+            else:
+                log.info(
+                    'send_nodes : using default_nltk_tokenizer for sentences tokenization for text == ' + str(text))
+                tokens = default_nltk_tokenizer(text)
             token_len = len(tokens)
             created_date = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
             log.info('send_nodes : text in a node == ' + node.text)
@@ -329,3 +338,7 @@ def get_total_number_of_nodes_with_text(nodes):
         return count
     else:
         return 0
+
+
+def default_nltk_tokenizer(text):
+    return sent_tokenize(text)

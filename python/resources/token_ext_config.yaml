@@ -1,0 +1,47 @@
+# Sample YAML config file for sentences extraction from given paragraphs
+# Please note this is a demo file, things can be added or removed as per requirements.
+# Config will be always having this set of properties
+# All the properties mentioned in the config file will be verified before processing.
+
+config_name: "Default-Config"
+
+#If want to include specific header in the file name(file will contain sentences).
+specific_file_header: "Default_header"
+
+#Character to be consider as sentence terminator.
+sentence_end_characters:
+
+  - '.'
+  - '?'
+  - '!'
+  - ';'
+
+regex_rules_for_token_extraction:
+
+  - (?:([a-z0-9]*\.)[a-z0-9]+(\.)*)+             # regex pattern to exclusively search for pattern like  "c.r.p.c..........."
+  - (?:([a-z0-9]*\.)([a-z0-9]+(\.))([a-z0-9]+))  #  regex pattern to exclusively search for pattern like  "a.b.c"
+  - (?:([a-z0-9]*\.)([a-z0-9]+(\.))+)            #  regex pattern to exclusively search for pattern like  "a.b.c. , 12.02.2019"
+  - (?:([a-z]{0-4}\.)+)                          #  regex pattern to exclusively search for pattern like  "it. , mr. , dr. " of length in between 1-4.
+  - (?:([a-z0-9]*\.)+)                           #  regex pattern to exclusively search for pattern like  "5. , 63. 23. "
+
+
+token_length_max: 50
+
+token_length_min: 3
+
+use_tokens_from_db: True
+
+remove_negative_tokens: True
+
+# externally exclude some token
+add_negative_tokens:
+
+  - it. # example of a token
+  - him. # example of a token
+  - adv. # example of a token
+
+# Insertion order of token length : asc.(True), desc.(False), random (None)
+token_insertion_order: True
+
+
+
