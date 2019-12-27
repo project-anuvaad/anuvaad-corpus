@@ -1,6 +1,7 @@
 var Response = require('../models/response')
 var APIStatus = require('../errors/apistatus')
 var ParagraphWorkspace = require('../models/paragraph_workspace');
+var MTWorkspace = require('../models/mt_workspace');
 var StatusCode = require('../errors/statuscodes').StatusCode
 var LOG = require('../logger/logger').logger
 var KafkaProducer = require('../kafka/producer');
@@ -232,6 +233,37 @@ exports.startTokenization = function (req, res) {
             }
         })
 
+    })
+}
+
+exports.saveMTWorkspace = function (req, res) {
+    let userId = req.headers['ad-userid']
+    if (!req || !req.body || !req.body.mt_workspace) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let workspace = req.body.mt_workspace
+    workspace.session_id = UUIDV4()
+    axios.get(USER_INFO_URL + '/' + userId).then((api_res) => {
+        workspace.status = STATUS_PROCESSING
+        workspace.step = STEP_IN_PROGRESS
+        workspace.created_at = new Date()
+        workspace.created_by = userId
+        if (api_res.data) {
+            workspace.username = api_res.data.username
+        }
+        MTWorkspace.save([workspace], function (err, models) {
+            if (err) {
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+            let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+            return res.status(response.http.status).json(response);
+        })
+    }).catch((e) => {
+        LOG.error(e)
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
     })
 }
 

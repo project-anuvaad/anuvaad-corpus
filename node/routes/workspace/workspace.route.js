@@ -12,6 +12,9 @@ module.exports = function (router) {
     router.route('/save-paragraph-workspace')
         .post(workspaceController.saveParagraphWorkspace);
 
+    router.route('/save-mt-workspace')
+        .post(workspaceController.saveMTWorkspace);
+
     router.route('/start-tokenization')
         .post(workspaceController.startTokenization);
 
