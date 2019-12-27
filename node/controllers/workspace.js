@@ -184,7 +184,7 @@ exports.startTokenization = function (req, res) {
         }
         workspace._doc.token_file = req.body.paragraph_workspace.token_file
         workspace._doc.negative_token_file = req.body.paragraph_workspace.negative_token_file
-        workspace._doc.step = STEP_IN_PROGRESS
+        workspace._doc.step = STEP_SENTENCE
         fs.copyFile('nginx/' + req.body.paragraph_workspace.token_file, BASE_PATH_PIPELINE_1 + workspace._doc.session_id + '/' + req.body.paragraph_workspace.token_file, function (err) {
             if (err) {
                 LOG.error(err)
