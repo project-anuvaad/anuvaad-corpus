@@ -7,6 +7,9 @@ var KafkaProducer = require('../kafka/producer');
 var fs = require('fs');
 var UUIDV4 = require('uuid/v4')
 var COMPONENT = "workspace";
+var axios = require('axios');
+
+
 const BASE_PATH_PIPELINE_1 = 'corpusfiles/processing/pipeline_stage_1/'
 const STATUS_PROCESSING = 'PROCESSING'
 const STATUS_PROCESSED = 'PROCESSED'
@@ -14,8 +17,10 @@ const STEP_IN_PROGRESS = 'IN-PROGRESS'
 const STEP_TOKENIZE = 'At Step1'
 const STEP_SENTENCE = 'At Step2'
 const STEP_ERROR = 'FAILED'
+const ES_SERVER_URL = process.env.GATEWAY_URL ? process.env.GATEWAY_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/admin/'
+const USER_INFO_URL = ES_SERVER_URL + 'users'
 
-exports.updateError = function(req){
+exports.updateError = function (req) {
     if (!req || !req.session_id) {
         LOG.error('Data missing for [%s]', JSON.stringify(req))
     } else {
@@ -40,7 +45,7 @@ exports.updateError = function(req){
     }
 }
 
-exports.handleSentenceRequest = function(req){
+exports.handleSentenceRequest = function (req) {
     if (!req || !req.data || !req.data.processId) {
         LOG.error('Data missing for [%s]', JSON.stringify(req))
     } else {
@@ -143,15 +148,13 @@ exports.fetchParagraphWorkspace = function (req, res) {
     var pageno = req.query.pageno
     var search_param = req.query.search_param
     let condition = {}
-    if (status === STATUS_PROCESSING) {
-        condition = { status: STATUS_PROCESSING, stage: 1 }
-    } else {
-        condition = { status: STATUS_PROCESSED, stage: 1 }
+    if (status) {
+        condition = { status: status, stage: 1 }
     }
-    if(search_param){
+    if (search_param) {
         condition['title'] = new RegExp(search_param, "i")
     }
-    if(step){
+    if (step) {
         condition['step'] = step
     }
     ParagraphWorkspace.countDocuments(condition, function (err, count) {
@@ -255,36 +258,41 @@ exports.saveParagraphWorkspace = function (req, res) {
                             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                             return res.status(apistatus.http.status).json(apistatus);
                         }
-                        workspace.status = STATUS_PROCESSING
-                        workspace.stage = 1
-                        workspace.step = STEP_IN_PROGRESS
-                        workspace.created_at = new Date()
-                        workspace.created_by = userId
-                        ParagraphWorkspace.save([workspace], function (err, models) {
-                            if (err) {
-                                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                                return res.status(apistatus.http.status).json(apistatus);
+                        axios.get(USER_INFO_URL + '/' + userId).then((api_res) => {
+                            workspace.status = STATUS_PROCESSING
+                            workspace.stage = 1
+                            workspace.step = STEP_IN_PROGRESS
+                            workspace.created_at = new Date()
+                            workspace.created_by = userId
+                            if (api_res.data) {
+                                workspace.username = api_res.data.username
                             }
-                            models.ops.map((data) => {
-                                KafkaProducer.getInstance().getProducer((err, producer) => {
-                                    if (err) {
-                                        LOG.error("Unable to connect to KafkaProducer");
-                                    } else {
-                                        LOG.info("KafkaProducer connected")
-                                        let payloads = [
-                                            {
-                                                topic: 'tokenext', messages: JSON.stringify({ data: data }), partition: 0
-                                            }
-                                        ]
-                                        producer.send(payloads, function (err, data) {
-                                            LOG.info('Produced')
-                                        });
-                                    }
+                            ParagraphWorkspace.save([workspace], function (err, models) {
+                                if (err) {
+                                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                    return res.status(apistatus.http.status).json(apistatus);
+                                }
+                                models.ops.map((data) => {
+                                    KafkaProducer.getInstance().getProducer((err, producer) => {
+                                        if (err) {
+                                            LOG.error("Unable to connect to KafkaProducer");
+                                        } else {
+                                            LOG.info("KafkaProducer connected")
+                                            let payloads = [
+                                                {
+                                                    topic: 'tokenext', messages: JSON.stringify({ data: data }), partition: 0
+                                                }
+                                            ]
+                                            producer.send(payloads, function (err, data) {
+                                                LOG.info('Produced')
+                                            });
+                                        }
+                                    })
                                 })
-                            })
 
-                            let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
-                            return res.status(response.http.status).json(response);
+                                let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                                return res.status(response.http.status).json(response);
+                            })
                         })
                     });
                 }
