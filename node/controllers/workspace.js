@@ -138,6 +138,7 @@ exports.fetchParagraphWorkspaceDetail = function (req, res) {
 
 exports.fetchParagraphWorkspace = function (req, res) {
     let status = req.query.status
+    let step = req.query.step
     var pagesize = req.query.pagesize
     var pageno = req.query.pageno
     var search_param = req.query.search_param
@@ -149,6 +150,9 @@ exports.fetchParagraphWorkspace = function (req, res) {
     }
     if(search_param){
         condition['title'] = new RegExp(search_param, "i")
+    }
+    if(step){
+        condition['step'] = step
     }
     ParagraphWorkspace.countDocuments(condition, function (err, count) {
         if (err) {
