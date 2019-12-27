@@ -63,7 +63,6 @@ exports.fetchBenchmarkAnalyzerReports = function (req, res) {
                         LOG.error(err)
                     }
                     let word_count = 0
-                    let record_unique = []
                     let parent_ids = []
                     if (res.record && Array.isArray(res.record)) {
                         let records_db = []
@@ -114,7 +113,6 @@ exports.fetchBenchmarkAnalyzerReports = function (req, res) {
                                     name_accuracy_rating = name_accuracy_rating + (record._doc.name_accuracy_rating ? record._doc.name_accuracy_rating : 0)
                                     rating = rating + (record._doc.rating ? record._doc.rating : 0)
                                     spelling_rating = spelling_rating + (record._doc.spelling_rating ? record._doc.spelling_rating : 0)
-                                    record_unique.push(record)
                                     parent_ids.push(record._doc._id + '')
                                     if (res.categories && Array.isArray(res.categories)) {
                                         let found = false
@@ -154,7 +152,6 @@ exports.fetchBenchmarkAnalyzerReports = function (req, res) {
                             })
                             res.word_count = word_count
                             res.sentence_count = res.parent_id.length
-                            res.record_unique = record_unique
                             res.context_rating = context_rating
                             res.rating = rating
                             res.spelling_rating = spelling_rating
@@ -218,7 +215,6 @@ exports.fetchBenchmarkReports = function (req, res) {
                     if (api_res.data) {
                         res.username = api_res.data.username
                         let word_count = 0
-                        let record_unique = []
                         let parent_ids = []
                         let categoriesdb = {}
                         if (res.record && Array.isArray(res.record)) {
@@ -316,13 +312,11 @@ exports.fetchBenchmarkReports = function (req, res) {
                                                 }
                                             })
                                             word_count += record._doc.source.split(' ').length
-                                            record_unique.push(record)
                                             parent_ids.push(record._doc._id + '' + record._doc.model_id + '')
                                         }
                                     })
                                     res.word_count = word_count
                                     res.sentence_count = res.parent_id.length
-                                    res.record_unique = record_unique
                                     results_out.push(res)
                                     callback()
                                 })
