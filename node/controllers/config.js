@@ -17,7 +17,7 @@ exports.fetchDefaultConfigs = function (req, res) {
             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_NOTFOUND, COMPONENT).getRspStatus()
             return res.status(apistatus.http.status).json(apistatus);
         }
-        let response = new Response(StatusCode.SUCCESS, configs[0]).getRsp()
+        let response = new Response(StatusCode.SUCCESS, configs).getRsp()
         return res.status(response.http.status).json(response);
     })
 
