@@ -15,11 +15,17 @@ module.exports = function (router) {
     router.route('/save-mt-workspace')
         .post(workspaceController.saveMTWorkspace);
 
+    router.route('/start-mt-process')
+        .post(workspaceController.startMTProcess);
+
     router.route('/start-tokenization')
         .post(workspaceController.startTokenization);
 
     router.route('/fetch-paragraph-workspace')
         .get(workspaceController.fetchParagraphWorkspace);
+
+    router.route('/fetch-mt-workspace')
+        .get(workspaceController.fetchMTWorkspace);
 
     router.route('/fetch-paragraph-workspace-detail')
         .get(workspaceController.fetchParagraphWorkspaceDetail);
