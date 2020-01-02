@@ -247,7 +247,7 @@ def pre_process_text(xmltree):
                             if not prev_text_node == None:
                                 log.debug("FOR PREV === " + sentence)
 
-                                prev_text_node.text = sentence
+                                prev_text_node.text = ' ' + sentence
                                 sentence = ''
 
                         log.debug('SENTENCE IS === ' + sentence)
@@ -258,13 +258,13 @@ def pre_process_text(xmltree):
                                 log.debug("x.text is null")
                             else:
                                 log.debug("x.text is not null, text is == " + x.text)
-                                sentence = sentence + x.text
-                                prev_text_node = x
 
+                                sentence = sentence + x.text
+                                prev_text_node = ' ' + x
                                 x.text = ''
 
                         if para_child_count == elements:
-                            x.text = sentence
+                            x.text = sentence + ' '
                             sentence = ''
                             prev_text_node = None
                             log.info("final text === " + x.text)
