@@ -251,7 +251,7 @@ def pre_process_text(xmltree):
                                 sentence = ''
 
                         log.debug('SENTENCE IS === ' + sentence)
-                        if not x.text == None:
+                        if not x.text.strip() == None:
                             if x.text == '':
                                 prev_text_node = None
                                 prev_prop_node = None
