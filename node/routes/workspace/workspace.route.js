@@ -27,6 +27,9 @@ module.exports = function (router) {
     router.route('/fetch-mt-workspace')
         .get(workspaceController.fetchMTWorkspace);
 
+    router.route('/fetch-mt-workspace-detail')
+        .get(workspaceController.fetchMTWorkspaceDetail);
+
     router.route('/fetch-paragraph-workspace-detail')
         .get(workspaceController.fetchParagraphWorkspaceDetail);
 
