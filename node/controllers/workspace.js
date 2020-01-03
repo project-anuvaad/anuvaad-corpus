@@ -124,6 +124,24 @@ exports.handleTokenizeRequest = function (req) {
     }
 }
 
+exports.fetchMTWorkspaceDetail = function (req, res) {
+    if (!req || !req.query || !req.query.session_id) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    LOG.info('Request came for fetchMTWorkspaceDetail [%s]', req.query.session_id)
+    let session_id = req.query.session_id
+    MTWorkspace.findOne({ session_id: session_id }, function (error, workspace) {
+        if (error) {
+            LOG.error(error)
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+        let response = new Response(StatusCode.SUCCESS, workspace).getRsp()
+        return res.status(response.http.status).json(response);
+    })
+}
+
 exports.fetchParagraphWorkspaceDetail = function (req, res) {
     if (!req || !req.query || !req.query.session_id) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
@@ -142,7 +160,7 @@ exports.fetchParagraphWorkspaceDetail = function (req, res) {
     })
 }
 
-exports.fetchMTWorkspace = function (req, res){
+exports.fetchMTWorkspace = function (req, res) {
     let status = req.query.status
     let step = req.query.step
     var pagesize = req.query.pagesize
@@ -270,7 +288,7 @@ exports.startTokenization = function (req, res) {
     })
 }
 
-exports.startMTProcess = function (req, res){
+exports.startMTProcess = function (req, res) {
 
 }
 
