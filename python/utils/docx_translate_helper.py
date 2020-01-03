@@ -268,12 +268,12 @@ def pre_process_text(xmltree):
                             sentence = ''
                             prev_text_node = None
                             log.info("final text === " + x.text)
-                    elif x.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tab':
-                        if not prev_text_node == None:
-                            prev_text_node.text = sentence
-                        sentence = ''
-                        prev_text_node = None
-                        prev_prop_node = None
+                    # elif x.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tab':
+                    #     if not prev_text_node == None:
+                    #         prev_text_node.text = sentence
+                    #     sentence = ''
+                    #     prev_text_node = None
+                    #     prev_prop_node = None
 
 
 def modify_text_with_tokenization(nodes, url, model_id, url_end_point):
