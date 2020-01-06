@@ -171,21 +171,20 @@ def count_iterable(i):
 def pre_process_text(xmltree):
     num_nodes = 0
     for para in iter_para(xmltree):
-        prev_text_node = None
+
         num_nodes = num_nodes + 1
-        arr = []
         log.info(" NEW PARA == " + str(num_nodes))
 
         elements = 0
-
-        prev_prop_node = None
         para_child_count = count_iterable(para.iterchildren())
         log.info("Paragraph children == " + str(para_child_count))
-        contains_text = False
+
         sentence = ''
-        low_text =''
+        para_text = None
+        prev_run_text = ''
         for r in para.iterchildren():
             elements = elements + 1
+
             if r.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}r':
                 children = 0
                 is_same = False
@@ -205,7 +204,34 @@ def pre_process_text(xmltree):
                 log.info('RUN LEVEL TEXT IS =='+str(run_text))
                 if prev_node_c is not None:
                     prev_node_c.text = run_text
+                    sentence = sentence + run_text
+        para_text = ''
+        prev_run = None
+
+        for r in para.iterchildren():
+            elements = elements + 1
+
+            if r.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}r':
+
                 run_text = ''
+                prev_node_c = None
+                for x in ((r.iterchildren())):
+                    if x.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t':
+
+                        log.info('TAG text is == ' + str(x.text))
+                        if x is not None and x.text is not '':
+                            para_text = para_text + ' ' + x.text
+                            x.text = ''
+                            prev_run = x
+
+        log.info('RUN LEVEL TEXT IS ==' + str(run_text))
+        if prev_run is not None:
+            prev_run.text = para_text
+            sentence = sentence + para_text
+            log.info('sentence is == '+str(sentence))
+
+
+
 
 def modify_text_with_tokenization(nodes, url, model_id, url_end_point):
     log.info('model id' + str(model_id))
