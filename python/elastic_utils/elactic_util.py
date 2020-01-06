@@ -31,7 +31,7 @@ def create_dashboard_report(report, report_index):
     try:
         result = client.index(index=report_index,
                               body=report)
-        log.info('create_sentence : sentence create with id = ' + result['_id'] + ' at index = ' + sentence_index)
+        log.info('create_sentence : sentence create with id = ' + result['_id'] + ' at index = ' + report_index)
         return result['_id']
     except Exception as e:
         log.error('create_dashboard_report: ERROR OCCURRED WHILE CREATING REPORT: for doc : ' +
