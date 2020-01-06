@@ -45,6 +45,7 @@ def create_user_basic_auth():
     lastname = body['lastname']
     password = body['password']
     scope = body['roles']
+    high_court_code = body['high_court_code']
 
     try:
         profile = requests.get(PROFILE_REQ_URL + user_name)
@@ -70,6 +71,9 @@ def create_user_basic_auth():
         scope_response = shell.scope_add(user['id'], scope)
         time.sleep(3)
         log.info('scope added')
+        if high_court_code is not None:
+            user_high_court = UserHighCourt(high_court_code=high_court_code, user_id=user['id'])
+            user_high_court.save()
         res = CustomResponse(Status.SUCCESS.value, response)
         return res.getres()
 
