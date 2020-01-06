@@ -140,6 +140,7 @@ function startApp() {
   require('./routes/benchmark/benchmark.route')(router);
   require('./routes/reports/report.route')(router);
   require('./routes/language/language.route')(router);
+  require('./routes/high_court/high_court.route')(router);
   require('./routes/nmt/nmt.route')(router);
   require('./routes/workspace/workspace.route')(router);
 
