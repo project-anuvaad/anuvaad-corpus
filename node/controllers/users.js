@@ -36,8 +36,25 @@ exports.listUsers = function (req, res) {
             axios.post(PROFILE_REQ_URL, { userids: userIds }).then((api_res) => {
                 if (api_res.data) {
                     if (api_res.data.data && Array.isArray(api_res.data.data)) {
-                        let response = new Response(StatusCode.SUCCESS, api_res.data.data).getRsp()
-                        return res.status(response.http.status).json(response);
+                        let res_array = []
+                        async.each(api_res.data.data, function (data, callback) {
+                            let condition = { user_id: data.id }
+                            UserHighCourt.findByCondition(condition, function (err, results) {
+                                if (results && results.length > 0) {
+                                    let user_court = results[0]._doc
+                                    if (user_court) {
+                                        data.high_court_code = user_court.high_court_code
+                                    }
+                                }
+                                res_array.push(data)
+                                callback()
+                            })
+
+                        }, function (err) {
+                            let response = new Response(StatusCode.SUCCESS, res_array).getRsp()
+                            return res.status(response.http.status).json(response);
+                        });
+
                     }
                 }
             }).catch((e) => {
