@@ -11,6 +11,8 @@ from models.status import Status
 from models.response import CustomResponse
 import utils.docx_translate_helper as docx_helper
 from models.translation_process import TranslationProcess
+from models.user_high_court import Userhighcourt
+from models.high_court import Highcourt
 import utils.modify_first_page as modify_first_page
 import utils.translate_footnote as translate_footer
 from kafka_utils.producer import get_producer
@@ -246,7 +248,16 @@ def translate_docx_v2():
     doc_report = {}
     doc_report['word_count'] = word_count
     doc_report['user_id'] = request.headers.get('ad-userid')
-    doc_report['high_court_code'] = 'jb'
+    userhighcourt_obj = Userhighcourt.objects(user_id=request.headers.get('ad-userid'))
+    if userhighcourt_obj and len(userhighcourt_obj) > 0:
+        userhighcourt_dict = json.loads(userhighcourt_obj.to_json())
+        if 'high_court_code' in userhighcourt_dict[0]:
+            high_court_obj = Highcourt.objects(high_court_code=userhighcourt_dict[0]['high_court_code'])
+            if high_court_obj and len(high_court_obj) > 0 :
+                highcourt_dict = json.loads(high_court_obj.to_json())
+                if 'high_court_name' in highcourt_dict:
+                    doc_report['high_court_name'] = highcourt_dict[0]['high_court_name']
+            doc_report['high_court_code'] = userhighcourt_dict[0]['high_court_code']
     doc_report['document_id'] = basename
     doc_report['created_on'] = current_time
     log.info('sending data to elasticsearch =='+str(doc_report))
