@@ -5,6 +5,7 @@
  * @Last Modified time: 2018-05-11 14:22:51
  */
 var Users = require('../models/users');
+var UserHighCourt = require('../models/user_high_court');
 var Response = require('../models/response')
 var APIStatus = require('../errors/apistatus')
 var StatusCode = require('../errors/statuscodes').StatusCode
@@ -61,8 +62,8 @@ exports.listRoles = function (req, res) {
     axios.get(SCOPE_URL).then((api_res) => {
         if (api_res.data && api_res.data.scopes && Array.isArray(api_res.data.scopes)) {
             let roles = []
-            api_res.data.scopes.map((res)=>{
-                if(res !== 'admin'){
+            api_res.data.scopes.map((res) => {
+                if (res !== 'admin') {
                     roles.push(res)
                 }
             })
@@ -87,7 +88,7 @@ exports.updateUserStatus = function (req, res) {
     }
     let api_req = {}
     api_req.status = req.body.status == 'DELETE' ? false : true
-    axios.put(USERS_REQ_URL + '/' + req.body.username+'/status', api_req).then((api_res) => {
+    axios.put(USERS_REQ_URL + '/' + req.body.username + '/status', api_req).then((api_res) => {
         let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
         return res.status(response.http.status).json(response);
     }).catch((e) => {
@@ -123,9 +124,20 @@ exports.createUser = function (req, res) {
             base_auth.consumerId = id
             base_auth.type = 'basic-auth'
             axios.post(CREDENTIALS_URL, base_auth).then((api_res) => {
-                LOG.info(api_res)
-                let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
-                return res.status(response.http.status).json(response);
+                if (high_court_code) {
+                    let user_high_court_obj = { high_court_code: high_court_code, user_id: id }
+                    UserHighCourt.saveUserHighCourt(user_high_court_obj, function (error, results) {
+                        if (error) {
+                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                            return res.status(apistatus.http.status).json(apistatus);
+                        }
+                        let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                        return res.status(response.http.status).json(response);
+                    })
+                } else {
+                    let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                    return res.status(response.http.status).json(response);
+                }
             }).catch((e) => {
                 let apistatus = new APIStatus(e.response.status == 409 ? StatusCode.ERR_DATA_EXIST : StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
