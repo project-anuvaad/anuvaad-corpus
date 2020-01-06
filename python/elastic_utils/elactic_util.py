@@ -30,7 +30,7 @@ def create_index(index_name, request_body):
 def create_dashboard_report(report, report_index):
     try:
         result = client.index(index=report_index,
-                              body={word_count: report['word_count'], created_by: report['user_id'], high_court_code: report['high_court_code'], document_id: report['document_id'], created_on: report['created_on']})
+                              body=report)
         log.info('create_sentence : sentence create with id = ' + result['_id'] + ' at index = ' + sentence_index)
         return result['_id']
     except Exception as e:
