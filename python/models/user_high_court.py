@@ -8,7 +8,7 @@
  
 from mongoengine import *
 
-class UserHighCourt(DynamicDocument):
+class Userhighcourt(DynamicDocument):
     high_court_code = StringField(required=True)
     user_id = StringField(required=True)
 

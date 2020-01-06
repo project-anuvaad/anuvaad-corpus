@@ -3,7 +3,7 @@ import logging
 import requests
 import time
 from models.status import Status
-from models.user_high_court import UserHighCourt
+from models.user_high_court import Userhighcourt
 from models.response import CustomResponse
 from db.redis_client import get_user_roles_basic_auth
 import json
@@ -72,7 +72,7 @@ def create_user_basic_auth():
         time.sleep(3)
         log.info('scope added')
         if high_court_code is not None:
-            user_high_court = UserHighCourt(high_court_code=high_court_code, user_id=user['id'])
+            user_high_court = Userhighcourt(high_court_code=high_court_code, user_id=user['id'])
             user_high_court.save()
         res = CustomResponse(Status.SUCCESS.value, response)
         return res.getres()
@@ -139,12 +139,13 @@ def update_password_admin():
         log.info('update_password : password is too weak, at least provide 6 characters')
         res = CustomResponse(Status.ERROR_WEAK_PASSWORD.value, None)
         return res.getres()
+    log.info("high_court_code == " + high_court_code)
     if high_court_code is not None:
-        userHighCourt = UserHighCourt.objects(user_id=user_id)
+        userHighCourt = Userhighcourt.objects(user_id=user_id)
         if userHighCourt is not None:
             userHighCourt.update(set__high_court_code=high_court_code)
         else:
-            user_high_court = UserHighCourt(high_court_code=high_court_code, user_id=user_id)
+            user_high_court = Userhighcourt(high_court_code=high_court_code, user_id=user_id)
             user_high_court.save()
     profile = requests.get(PROFILE_REQ_URL + user_id).content
     profile = json.loads(profile)
