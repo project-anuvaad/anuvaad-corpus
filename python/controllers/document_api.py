@@ -15,6 +15,7 @@ import utils.modify_first_page as modify_first_page
 import utils.translate_footnote as translate_footer
 from kafka_utils.producer import get_producer
 from nltk.tokenize import sent_tokenize
+from elastic_utils.elactic_util import create_dashboard_report
 import nltk
 
 nltk.download('punkt')
@@ -235,10 +236,23 @@ def translate_docx_v2():
         log.error('translate_docx_v2 : error occureed for pre-processing document. Error is ' + str(e))
         log.info('translate_docx_v2 : not pre-processing document')
     docx_helper.warp_original_with_identification_tags(filepath, xmltree, filepath_processed_src_with_ids)
-
+    
+    word_count = 0
     for node, text in docx_helper.itertext_old(xmltree):
         nodes.append(node)
         texts.append(text)
+        word_count = word_count + len(text.split(' '))
+
+    doc_report = {}
+    doc_report['word_count'] = word_count
+    doc_report['user_id'] = request.headers.get('ad-userid')
+    doc_report['high_court_code'] = 'jb'
+    doc_report['document_id'] = basename
+    doc_report['created_on'] = current_time
+    try:
+        create_dashboard_report(doc_report, 'doc_report')
+    except Exception as e:
+        log.error('translate_docx_v2 : error occurred for report saving, error is = ' + str(e))
 
     log.info('translate_docx_v2 : number of nodes = ' + str(len(nodes)) + ' and text are : ' + str(len(texts)))
     translationProcess = TranslationProcess.objects(basename=basename)
