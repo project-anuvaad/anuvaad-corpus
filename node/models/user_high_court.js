@@ -20,15 +20,15 @@ UserHighCourt.saveUserHighCourt = function(user_high_court, cb){
 }
 
 
-HighCourt.findByCondition = function(condition, cb){
-    HighCourt.find(condition, function (err, high_courts) {
+UserHighCourt.findByCondition = function(condition, cb){
+    UserHighCourt.find(condition, function (err, user_high_courts) {
         if (err) {
-            LOG.error("Unable to find high_courts due to [%s]", JSON.stringify(err));
+            LOG.error("Unable to find user_high_courts due to [%s]", JSON.stringify(err));
             return cb(err, null);
         }
-        LOG.info("[%s] high_courts found",high_courts);
-        return cb(null, high_courts);
+        LOG.info("[%s] user_high_courts found",user_high_courts);
+        return cb(null, user_high_courts);
     })
 }
 
-module.exports = HighCourt;
+module.exports = UserHighCourt;
