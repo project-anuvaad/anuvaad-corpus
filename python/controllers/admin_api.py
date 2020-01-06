@@ -143,8 +143,10 @@ def update_password_admin():
     if high_court_code is not None:
         userHighCourt = Userhighcourt.objects(user_id=user_id)
         if userHighCourt is not None:
+            log.info('high court with user exist')
             userHighCourt.update(set__high_court_code=high_court_code)
         else:
+            log.info('saving high court with user')
             user_high_court = Userhighcourt(high_court_code=high_court_code, user_id=user_id)
             user_high_court.save()
     profile = requests.get(PROFILE_REQ_URL + user_id).content
