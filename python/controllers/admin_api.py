@@ -142,8 +142,8 @@ def update_password_admin():
     log.info("high_court_code == " + high_court_code)
     if high_court_code is not None:
         userHighCourt = Userhighcourt.objects(user_id=user_id)
-        if userHighCourt is not None:
-            log.info('high court with user exist')
+        if userHighCourt is not None  and len(userHighCourt) > 0:
+            log.info('high court with user exist '+str(len(userHighCourt)))
             userHighCourt.update(set__high_court_code=high_court_code)
         else:
             log.info('saving high court with user')

@@ -105,6 +105,7 @@ exports.createUser = function (req, res) {
     let user = req.body
     let roles = req.body.roles
     let user_to_be_saved = {}
+    let high_court_code = req.body.high_court_code
     user_to_be_saved.username = user.username
     user_to_be_saved.firstname = user.firstname
     user_to_be_saved.lastname = user.lastname
