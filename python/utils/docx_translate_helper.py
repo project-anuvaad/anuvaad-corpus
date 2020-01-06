@@ -183,98 +183,29 @@ def pre_process_text(xmltree):
         log.info("Paragraph children == " + str(para_child_count))
         contains_text = False
         sentence = ''
+        low_text =''
         for r in para.iterchildren():
             elements = elements + 1
             if r.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}r':
                 children = 0
                 is_same = False
-
+                run_text = ''
+                prev_node_c = None
                 for x in ((r.iterchildren())):
                     children = children + 1
-                    if x.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}rPr':
-                        log.info('TAG is: rPr ' + str(children))
-                        x.attrib['i'] = "None"
-                        x.attrib['u'] = "None"
-                        x.attrib['color'] = "None"
-                        x.attrib['b'] = "None"
 
-                        for cv in x.iter():
-                            if cv.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}i':
-                                try:
+                    if x.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t':
+                        log.info('TAG is: text ' + str(children))
+                        log.info('TAG text is == '+str(x.text))
+                        if x is not None:
+                            run_text = run_text + ' ' + x.text
+                            x.text = ''
+                            prev_node_c = x
 
-                                    log.debug(cv.values())
-                                    x.attrib['i'] = cv.values()[0]
-                                    log.debug(x.attrib['i'])
-                                except:
-                                    x.attrib['i'] = "None"
-                                continue
-                            elif cv.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}color':
-                                try:
-                                    log.debug(cv.values())
-                                    x.attrib['color'] = cv.values()[0]
-                                    log.debug(x.attrib['color'])
-                                except:
-                                    x.attrib['color'] = "None"
-                                continue
-                            elif cv.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}u':
-                                try:
-                                    log.debug(cv.values())
-                                    x.attrib['u'] = cv.values()[0]
-                                    log.debug(x.attrib['u'])
-                                except:
-                                    x.attrib['u'] = "None"
-                                    continue
-                            elif cv.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}b':
-                                log.info(cv.values())
-
-                                try:
-                                    if cv.values() == None and not cv.values().__len__ == 0:
-                                        x.attrib['b'] = cv.values()[0]
-                                except:
-                                    x.attrib['b'] = "None"
-                                log.debug(x.attrib['b'])
-                                continue
-
-                        is_same = check_difference(x, prev_prop_node)
-                        prev_prop_node = x
-
-
-                    elif x.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t':
-                        log.debug('TAG is: text ' + str(children))
-
-                        if not (is_same):
-                            log.info(' TEXT TILL NOW ==== ' + sentence)
-                            if not prev_text_node == None:
-                                log.debug("FOR PREV === " + sentence)
-
-                                prev_text_node.text = ' ' + sentence
-                                sentence = ''
-
-                        log.debug('SENTENCE IS === ' + sentence)
-                        if not x.text == None:
-                            if x.text.strip() == '':
-                                prev_text_node = None
-                                prev_prop_node = None
-                                log.debug("x.text is null")
-                            else:
-                                log.debug("x.text is not null, text is == " + x.text)
-
-                                sentence = sentence + x.text
-                                prev_text_node = ' ' + x
-                                x.text = ''
-
-                        if para_child_count == elements:
-                            x.text = sentence + ' '
-                            sentence = ''
-                            prev_text_node = None
-                            log.info("final text === " + x.text)
-                    elif x.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tab':
-                        if not prev_text_node == None:
-                            prev_text_node.text = sentence
-                        sentence = ''
-                        prev_text_node = None
-                        prev_prop_node = None
-
+                log.info('RUN LEVEL TEXT IS =='+str(run_text))
+                if prev_node_c is not None:
+                    prev_node_c.text = run_text
+                run_text = ''
 
 def modify_text_with_tokenization(nodes, url, model_id, url_end_point):
     log.info('model id' + str(model_id))
