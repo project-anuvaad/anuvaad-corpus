@@ -249,6 +249,7 @@ def translate_docx_v2():
     doc_report['high_court_code'] = 'jb'
     doc_report['document_id'] = basename
     doc_report['created_on'] = current_time
+    log.info('sending data to elasticsearch =='+str(doc_report))
     try:
         create_dashboard_report(doc_report, 'doc_report')
     except Exception as e:
