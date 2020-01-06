@@ -77,8 +77,8 @@ def write_document():
 
 
 def get_tgt_text(text_node):
-    log.info('get_tgt_text : text_node = ' + str(text_node))
     text_node_dict = json.loads(text_node.to_json())
+    log.info('get_tgt_text : text_node = ' + str(text_node_dict))
     sentences = text_node_dict[0]['sentences']
     sorted_sentences = sorted(sentences, key=lambda i: i['s_id'])
     log.info('get_tgt_text : sorted text = ' + str(sorted_sentences))
