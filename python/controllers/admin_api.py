@@ -135,10 +135,6 @@ def update_password_admin():
     user_id = body['user_id']
     high_court_code = body['high_court_code']
     new_password = body['new_password']
-    if new_password is None or new_password.__len__() < 6:
-        log.info('update_password : password is too weak, at least provide 6 characters')
-        res = CustomResponse(Status.ERROR_WEAK_PASSWORD.value, None)
-        return res.getres()
     log.info("high_court_code == " + high_court_code)
     if high_court_code is not None:
         userHighCourt = Userhighcourt.objects(user_id=user_id)
@@ -164,8 +160,14 @@ def update_password_admin():
         return res.getres()
     
     data = {"credential": {"password":new_password,"scopes":roles_},"consumerId":user_id,"type":"basic-auth"}
-    req = GATEWAY_SERVER_URL + 'credentials'
-    response = requests.post(req, json=data)
+    if new_password is not None:
+        if new_password.__len__() < 6:
+            log.info('update_password : password is too weak, at least provide 6 characters')
+            res = CustomResponse(Status.ERROR_WEAK_PASSWORD.value, None)
+            return res.getres()
+        else:
+            req = GATEWAY_SERVER_URL + 'credentials'
+            response = requests.post(req, json=data)
     res = CustomResponse(Status.SUCCESS.value, None)
     return res.getres()
 
