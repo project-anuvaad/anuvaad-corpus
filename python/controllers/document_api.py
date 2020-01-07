@@ -251,6 +251,8 @@ def translate_docx_v2():
 
     doc_report = {}
     doc_report['word_count'] = word_count
+    doc_report['source_lang'] = sourceLang
+    doc_report['target_lang'] = targetLang
     doc_report['user_id'] = request.headers.get('ad-userid')
     userhighcourt_obj = Userhighcourt.objects(user_id=request.headers.get('ad-userid'))
     if userhighcourt_obj and len(userhighcourt_obj) > 0:
