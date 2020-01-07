@@ -21,6 +21,7 @@ const STEP_SENTENCE = 'At Step2'
 const STEP_ERROR = 'FAILED'
 const ES_SERVER_URL = process.env.GATEWAY_URL ? process.env.GATEWAY_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/admin/'
 const USER_INFO_URL = ES_SERVER_URL + 'users'
+var async = require('async');
 
 exports.updateError = function (req) {
     if (!req || !req.session_id) {
@@ -315,32 +316,35 @@ exports.saveMTWorkspace = function (req, res) {
                 return res.status(apistatus.http.status).json(apistatus);
             }
             fs.mkdir(BASE_PATH_PIPELINE_2 + workspace.session_id, function (e) {
-                req.body.mt_workspace.selected_workspaces.map((selected_workspace) => {
+                async.each(req.body.mt_workspace.selected_workspaces, function (selected_workspace, callback) {
                     fs.copyFile(BASE_PATH_PIPELINE_1 + selected_workspace.session_id + '/' + selected_workspace.sentence_file, BASE_PATH_PIPELINE_2 + workspace.session_id + '/' + selected_workspace.sentence_file, function (err) {
                         if (err) {
                             LOG.error(err)
                         } else {
                             LOG.info('File transfered [%s]', selected_workspace.sentence_file)
                         }
+                        callback()
                     })
-                })
+
+                }, function (err) {
+                    KafkaProducer.getInstance().getProducer((err, producer) => {
+                        if (err) {
+                            LOG.error("Unable to connect to KafkaProducer");
+                        } else {
+                            LOG.info("KafkaProducer connected")
+                            let payloads = [
+                                {
+                                    topic: 'sentencesmt', messages: JSON.stringify({ data: workspace }), partition: 0
+                                }
+                            ]
+                            producer.send(payloads, function (err, data) {
+                                LOG.info('Produced')
+                            });
+                        }
+                    })
+                });
             })
 
-            KafkaProducer.getInstance().getProducer((err, producer) => {
-                if (err) {
-                    LOG.error("Unable to connect to KafkaProducer");
-                } else {
-                    LOG.info("KafkaProducer connected")
-                    let payloads = [
-                        {
-                            topic: 'sentencesmt', messages: JSON.stringify({ data: workspace }), partition: 0
-                        }
-                    ]
-                    producer.send(payloads, function (err, data) {
-                        LOG.info('Produced')
-                    });
-                }
-            })
             let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
             return res.status(response.http.status).json(response);
         })
