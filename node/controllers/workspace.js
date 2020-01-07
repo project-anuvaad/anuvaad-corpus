@@ -307,6 +307,7 @@ exports.saveMTWorkspace = function (req, res) {
         workspace.step = STEP_IN_PROGRESS
         workspace.created_at = new Date()
         workspace.created_by = userId
+        workspace.selected_files = []
         if (api_res.data) {
             workspace.username = api_res.data.username
         }
@@ -320,6 +321,7 @@ exports.saveMTWorkspace = function (req, res) {
                     LOG.error(e)
                 }
                 async.each(req.body.mt_workspace.selected_workspaces, function (selected_workspace, callback) {
+                    workspace.selected_files.push(selected_workspace.sentence_file)
                     fs.copyFile(BASE_PATH_PIPELINE_1 + selected_workspace.session_id + '/' + selected_workspace.sentence_file, BASE_PATH_PIPELINE_2 + workspace.session_id + '/' + selected_workspace.sentence_file, function (err) {
                         if (err) {
                             LOG.error(err)
@@ -342,6 +344,7 @@ exports.saveMTWorkspace = function (req, res) {
                                     topic: 'sentencesmt', messages: JSON.stringify({ data: workspace }), partition: 0
                                 }
                             ]
+                            LOG.info('Sending message', payloads)
                             producer.send(payloads, function (err, data) {
                                 let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
                                 return res.status(response.http.status).json(response);
