@@ -330,6 +330,8 @@ exports.saveMTWorkspace = function (req, res) {
                     KafkaProducer.getInstance().getProducer((err, producer) => {
                         if (err) {
                             LOG.error("Unable to connect to KafkaProducer");
+                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                            return res.status(apistatus.http.status).json(apistatus);
                         } else {
                             LOG.info("KafkaProducer connected")
                             let payloads = [
@@ -338,15 +340,13 @@ exports.saveMTWorkspace = function (req, res) {
                                 }
                             ]
                             producer.send(payloads, function (err, data) {
-                                LOG.info('Produced')
+                                let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                                return res.status(response.http.status).json(response);
                             });
                         }
                     })
                 });
             })
-
-            let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
-            return res.status(response.http.status).json(response);
         })
     }).catch((e) => {
         LOG.error(e)
