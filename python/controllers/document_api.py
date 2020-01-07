@@ -252,6 +252,11 @@ def translate_docx_v2():
     if userhighcourt_obj and len(userhighcourt_obj) > 0:
         userhighcourt_dict = json.loads(userhighcourt_obj.to_json())
         if 'high_court_code' in userhighcourt_dict[0]:
+            high_court_obj = Highcourt.objects(high_court_code=userhighcourt_dict[0]['high_court_code'])
+            if high_court_obj and len(high_court_obj) > 0 :
+                highcourt_dict = json.loads(high_court_obj.to_json())
+                if 'high_court_name' in highcourt_dict[0]:
+                    doc_report['high_court_name'] = highcourt_dict[0]['high_court_name']
             doc_report['high_court_code'] = userhighcourt_dict[0]['high_court_code']
     doc_report['document_id'] = basename
     doc_report['created_on'] = current_time
