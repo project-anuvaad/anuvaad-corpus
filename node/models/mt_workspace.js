@@ -32,7 +32,6 @@ MTWorkspace.findByCondition = function (condition, pagesize, pageno, cb) {
             LOG.error("Unable to find MTWorkspace due to [%s]", JSON.stringify(err));
             return cb(err, null);
         }
-        LOG.info("[%s] MTWorkspace found", data);
         return cb(null, data);
     })
 }
