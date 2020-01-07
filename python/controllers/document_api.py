@@ -4,6 +4,7 @@
 
 from flask import Blueprint, request, current_app as app
 import flask
+import requests
 import time
 import os
 import logging
@@ -38,6 +39,9 @@ STATUS_PROCESSED = 'COMPLETED'
 producer = get_producer()
 TOPIC = "to-nmt"
 TEXT_PROCESSING_TIME = 40
+
+GATEWAY_SERVER_URL = os.environ.get('GATEWAY_URL', 'http://localhost:9876/')
+PROFILE_REQ_URL = GATEWAY_SERVER_URL + 'users/'
 
 
 @document_api.route('/download-docx', methods=['GET'])
@@ -258,6 +262,12 @@ def translate_docx_v2():
                 if 'high_court_name' in highcourt_dict[0]:
                     doc_report['high_court_name'] = highcourt_dict[0]['high_court_name']
             doc_report['high_court_code'] = userhighcourt_dict[0]['high_court_code']
+    try:
+        profile = requests.get(PROFILE_REQ_URL + request.headers.get('ad-userid')).content
+        profile = json.loads(profile)
+        doc_report['username'] = profile['username']
+    except Exception as e:
+        log.error('translate_docx_v2 : error occurred for profile fetching, error is = ' + str(e))
     doc_report['document_id'] = basename
     doc_report['created_on'] = current_time
     log.info('sending data to elasticsearch =='+str(doc_report))
