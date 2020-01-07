@@ -160,7 +160,7 @@ def update_password_admin():
         return res.getres()
     
     data = {"credential": {"password":new_password,"scopes":roles_},"consumerId":user_id,"type":"basic-auth"}
-    if new_password is not None:
+    if new_password is not None or new_password.__len__() == 0:
         if new_password.__len__() < 6:
             log.info('update_password : password is too weak, at least provide 6 characters')
             res = CustomResponse(Status.ERROR_WEAK_PASSWORD.value, None)
