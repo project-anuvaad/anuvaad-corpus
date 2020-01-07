@@ -12,6 +12,7 @@ var axios = require('axios');
 
 
 const BASE_PATH_PIPELINE_1 = 'corpusfiles/processing/pipeline_stage_1/'
+const BASE_PATH_PIPELINE_2 = 'corpusfiles/processing/pipeline_stage_2/'
 const STATUS_PROCESSING = 'PROCESSING'
 const STATUS_PROCESSED = 'PROCESSED'
 const STEP_IN_PROGRESS = 'IN-PROGRESS'
@@ -294,7 +295,7 @@ exports.startMTProcess = function (req, res) {
 
 exports.saveMTWorkspace = function (req, res) {
     let userId = req.headers['ad-userid']
-    if (!req || !req.body || !req.body.mt_workspace) {
+    if (!req || !req.body || !req.body.mt_workspace || !req.body.mt_workspace.selected_workspaces) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
@@ -313,6 +314,33 @@ exports.saveMTWorkspace = function (req, res) {
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
+            fs.mkdir(BASE_PATH_PIPELINE_2 + workspace.session_id, function (e) {
+                req.body.mt_workspace.selected_workspaces.map((selected_workspace) => {
+                    fs.copyFile(BASE_PATH_PIPELINE_1 + selected_workspace.session_id + '/' + selected_workspace.sentence_file, BASE_PATH_PIPELINE_2 + workspace.session_id + '/' + selected_workspace.sentence_file, function (err) {
+                        if (err) {
+                            LOG.error(err)
+                        } else {
+                            LOG.info('File transfered [%s]', selected_workspace.sentence_file)
+                        }
+                    })
+                })
+            })
+
+            KafkaProducer.getInstance().getProducer((err, producer) => {
+                if (err) {
+                    LOG.error("Unable to connect to KafkaProducer");
+                } else {
+                    LOG.info("KafkaProducer connected")
+                    let payloads = [
+                        {
+                            topic: 'sentencesmt', messages: JSON.stringify({ data: workspace }), partition: 0
+                        }
+                    ]
+                    producer.send(payloads, function (err, data) {
+                        LOG.info('Produced')
+                    });
+                }
+            })
             let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
             return res.status(response.http.status).json(response);
         })
@@ -332,61 +360,59 @@ exports.saveParagraphWorkspace = function (req, res) {
     let workspace = req.body.paragraph_workspace
     workspace.session_id = UUIDV4()
     fs.mkdir(BASE_PATH_PIPELINE_1 + workspace.session_id, function (e) {
-        fs.mkdir(BASE_PATH_PIPELINE_1 + workspace.session_id, function (e) {
-            fs.copyFile('nginx/' + workspace.config_file_location, BASE_PATH_PIPELINE_1 + workspace.session_id + '/' + workspace.config_file_location, function (err) {
-                if (err) {
-                    LOG.error(err)
-                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                    return res.status(apistatus.http.status).json(apistatus);
-                }
-                else {
-                    fs.copyFile('nginx/' + workspace.paragraph_file_location, BASE_PATH_PIPELINE_1 + workspace.session_id + '/' + workspace.paragraph_file_location, function (err) {
-                        if (err) {
-                            LOG.error(err)
-                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                            return res.status(apistatus.http.status).json(apistatus);
+        fs.copyFile('nginx/' + workspace.config_file_location, BASE_PATH_PIPELINE_1 + workspace.session_id + '/' + workspace.config_file_location, function (err) {
+            if (err) {
+                LOG.error(err)
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+            else {
+                fs.copyFile('nginx/' + workspace.paragraph_file_location, BASE_PATH_PIPELINE_1 + workspace.session_id + '/' + workspace.paragraph_file_location, function (err) {
+                    if (err) {
+                        LOG.error(err)
+                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                        return res.status(apistatus.http.status).json(apistatus);
+                    }
+                    axios.get(USER_INFO_URL + '/' + userId).then((api_res) => {
+                        workspace.status = STATUS_PROCESSING
+                        workspace.stage = 1
+                        workspace.step = STEP_IN_PROGRESS
+                        workspace.created_at = new Date()
+                        workspace.created_by = userId
+                        if (api_res.data) {
+                            workspace.username = api_res.data.username
                         }
-                        axios.get(USER_INFO_URL + '/' + userId).then((api_res) => {
-                            workspace.status = STATUS_PROCESSING
-                            workspace.stage = 1
-                            workspace.step = STEP_IN_PROGRESS
-                            workspace.created_at = new Date()
-                            workspace.created_by = userId
-                            if (api_res.data) {
-                                workspace.username = api_res.data.username
+                        ParagraphWorkspace.save([workspace], function (err, models) {
+                            if (err) {
+                                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                return res.status(apistatus.http.status).json(apistatus);
                             }
-                            ParagraphWorkspace.save([workspace], function (err, models) {
-                                if (err) {
-                                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                                    return res.status(apistatus.http.status).json(apistatus);
-                                }
-                                models.ops.map((data) => {
-                                    KafkaProducer.getInstance().getProducer((err, producer) => {
-                                        if (err) {
-                                            LOG.error("Unable to connect to KafkaProducer");
-                                        } else {
-                                            LOG.info("KafkaProducer connected")
-                                            let payloads = [
-                                                {
-                                                    topic: 'tokenext', messages: JSON.stringify({ data: data }), partition: 0
-                                                }
-                                            ]
-                                            producer.send(payloads, function (err, data) {
-                                                LOG.info('Produced')
-                                            });
-                                        }
-                                    })
+                            models.ops.map((data) => {
+                                KafkaProducer.getInstance().getProducer((err, producer) => {
+                                    if (err) {
+                                        LOG.error("Unable to connect to KafkaProducer");
+                                    } else {
+                                        LOG.info("KafkaProducer connected")
+                                        let payloads = [
+                                            {
+                                                topic: 'tokenext', messages: JSON.stringify({ data: data }), partition: 0
+                                            }
+                                        ]
+                                        producer.send(payloads, function (err, data) {
+                                            LOG.info('Produced')
+                                        });
+                                    }
                                 })
-
-                                let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
-                                return res.status(response.http.status).json(response);
                             })
+
+                            let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                            return res.status(response.http.status).json(response);
                         })
-                    });
-                }
-            });
-        })
-    });
+                    })
+                });
+            }
+        });
+    })
 
 
 }
