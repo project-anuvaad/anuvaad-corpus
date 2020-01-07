@@ -316,6 +316,9 @@ exports.saveMTWorkspace = function (req, res) {
                 return res.status(apistatus.http.status).json(apistatus);
             }
             fs.mkdir(BASE_PATH_PIPELINE_2 + workspace.session_id, function (e) {
+                if(e){
+                    LOG.error(e)
+                }
                 async.each(req.body.mt_workspace.selected_workspaces, function (selected_workspace, callback) {
                     fs.copyFile(BASE_PATH_PIPELINE_1 + selected_workspace.session_id + '/' + selected_workspace.sentence_file, BASE_PATH_PIPELINE_2 + workspace.session_id + '/' + selected_workspace.sentence_file, function (err) {
                         if (err) {
