@@ -49,10 +49,10 @@ exports.updateError = function (req) {
 }
 
 exports.handleMTRequest = function (req) {
-    if (!req || !req.data || !req.data.processId) {
+    if (!req || !req.data || !req.data.process_id) {
         LOG.error('Data missing for [%s]', JSON.stringify(req))
     } else {
-        MTWorkspace.findOne({ session_id: req.data.processId }, function (error, workspace) {
+        MTWorkspace.findOne({ session_id: req.data.process_id }, function (error, workspace) {
             if (error) {
                 LOG.error(error)
             }
