@@ -170,7 +170,7 @@ exports.fetchMTWorkspace = function (req, res) {
     var search_param = req.query.search_param
     let condition = {}
     if (status) {
-        condition = { status: status, stage: 1 }
+        condition = { status: status }
     }
     if (search_param) {
         condition['title'] = new RegExp(search_param, "i")
@@ -317,7 +317,7 @@ exports.saveMTWorkspace = function (req, res) {
                 return res.status(apistatus.http.status).json(apistatus);
             }
             fs.mkdir(BASE_PATH_PIPELINE_2 + workspace.session_id, function (e) {
-                if(e){
+                if (e) {
                     LOG.error(e)
                 }
                 async.each(req.body.mt_workspace.selected_workspaces, function (selected_workspace, callback) {
