@@ -63,8 +63,8 @@ exports.handleMTRequest = function (req) {
                     workspace._doc.step = STEP_ERROR
                 } else {
                     workspace._doc.status = STATUS_PROCESSED
-                    workspace._doc.sentence_file = req.data.files
-                    workspace._doc.sentence_count = req.data.sentencesCount
+                    workspace._doc.sentence_file = req.data.file_name
+                    workspace._doc.sentence_count = req.data.sentence_count
                     fs.copyFile(BASE_PATH_PIPELINE_2 + workspace._doc.session_id + '/' + req.data.sentencesFile, 'nginx/' + req.data.sentencesFile, function (err) {
                         if (err) {
                             LOG.error(err)
