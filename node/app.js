@@ -69,6 +69,9 @@ KafkaConsumer.getInstance().getConsumer((err, consumer) => {
           case 'sentences':
             WorkspaceController.handleSentenceRequest(data)
             break;
+          case 'mt':
+            WorkspaceController.handleMTRequest(data)
+            break;
           default:
             LOG.info('Path not found')
             break

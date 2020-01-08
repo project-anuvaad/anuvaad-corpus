@@ -37,7 +37,7 @@ MTWorkspace.findByCondition = function (condition, pagesize, pageno, cb) {
 }
 
 MTWorkspace.updateMTWorkspace = function (mtWorkspace, cb) {
-    MTWorkspace.collection.updateOne({ _id: mongoose.Types.ObjectId(mtWorkspace._id) }, { $set: { status: mtWorkspace.status } }, { upsert: false }, function (err, doc) {
+    MTWorkspace.collection.updateOne({ _id: mongoose.Types.ObjectId(mtWorkspace._id) }, { $set: { status: mtWorkspace.status,sentence_count: mtWorkspace.sentence_count, sentence_file: mtWorkspace.sentence_file, step: mtWorkspace.step } }, { upsert: false }, function (err, doc) {
         if (err) {
             LOG.error(err)
             cb(err, null)

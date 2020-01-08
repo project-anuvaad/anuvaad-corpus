@@ -48,6 +48,44 @@ exports.updateError = function (req) {
     }
 }
 
+exports.handleMTRequest = function (req) {
+    if (!req || !req.data || !req.data.processId) {
+        LOG.error('Data missing for [%s]', JSON.stringify(req))
+    } else {
+        MTWorkspace.findOne({ session_id: req.data.processId }, function (error, workspace) {
+            if (error) {
+                LOG.error(error)
+            }
+            else if (!workspace) {
+                LOG.error('MTWorkspace not found [%s]', req)
+            } else {
+                if (req.data.status === STEP_ERROR) {
+                    workspace._doc.step = STEP_ERROR
+                } else {
+                    workspace._doc.status = STATUS_PROCESSED
+                    workspace._doc.sentence_file = req.data.files
+                    workspace._doc.sentence_count = req.data.sentencesCount
+                    fs.copyFile(BASE_PATH_PIPELINE_2 + workspace._doc.session_id + '/' + req.data.sentencesFile, 'nginx/' + req.data.sentencesFile, function (err) {
+                        if (err) {
+                            LOG.error(err)
+                        } else {
+                            LOG.info('File transfered [%s]', req.data.negativeTokenFile)
+                        }
+                    })
+                }
+                MTWorkspace.updateMTWorkspace(workspace._doc, (error, results) => {
+                    if (error) {
+                        LOG.error(error)
+                    }
+                    else {
+                        LOG.info('Data updated successfully [%s]', JSON.stringify(req))
+                    }
+                })
+            }
+        })
+    }
+}
+
 exports.handleSentenceRequest = function (req) {
     if (!req || !req.data || !req.data.processId) {
         LOG.error('Data missing for [%s]', JSON.stringify(req))
