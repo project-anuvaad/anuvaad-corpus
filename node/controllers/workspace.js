@@ -377,6 +377,7 @@ exports.saveMTWorkspace = function (req, res) {
                             return res.status(apistatus.http.status).json(apistatus);
                         } else {
                             LOG.info("KafkaProducer connected")
+                            workspace.use_latest = false
                             let payloads = [
                                 {
                                     topic: 'sentencesmt', messages: JSON.stringify({ data: workspace }), partition: 0
