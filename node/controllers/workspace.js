@@ -203,6 +203,7 @@ exports.fetchParagraphWorkspaceDetail = function (req, res) {
 exports.fetchMTWorkspace = function (req, res) {
     let status = req.query.status
     let step = req.query.step
+    let target_language = req.query.target_language
     var pagesize = req.query.pagesize
     var pageno = req.query.pageno
     var search_param = req.query.search_param
@@ -212,6 +213,9 @@ exports.fetchMTWorkspace = function (req, res) {
     }
     if (search_param) {
         condition['title'] = new RegExp(search_param, "i")
+    }
+    if(target_language){
+        condition['target_language'] = target_language
     }
     if (step) {
         condition['step'] = step
