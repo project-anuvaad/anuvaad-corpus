@@ -190,7 +190,7 @@ exports.migrateOldData = function (req, res) {
         if (translation_process) {
             async.each(translation_process, function (translation, callback) {
                 if (translation._doc.created_by) {
-                    UserHighCourt.findByCondition({ user_id: doc_report['user_id'] }, function (err, docs) {
+                    UserHighCourt.findByCondition({ user_id: translation._doc.created_by }, function (err, docs) {
                         if (docs && Array.isArray(docs) && docs.length > 0) {
                             let user_high_court = docs[0]['_doc']
                             HighCourt.findByCondition({ high_court_code: user_high_court.high_court_code }, function (err, high_courts) {
