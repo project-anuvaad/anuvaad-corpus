@@ -2,6 +2,9 @@ var Response = require('../models/response')
 var APIStatus = require('../errors/apistatus')
 var ParagraphWorkspace = require('../models/paragraph_workspace');
 var MTWorkspace = require('../models/mt_workspace');
+var TranslationProcess = require('../models/translation_process');
+var UserHighCourt = require('../models/user_high_court');
+var HighCourt = require('../models/high_courts');
 var StatusCode = require('../errors/statuscodes').StatusCode
 var LOG = require('../logger/logger').logger
 var KafkaProducer = require('../kafka/producer');
@@ -9,7 +12,7 @@ var fs = require('fs');
 var UUIDV4 = require('uuid/v4')
 var COMPONENT = "workspace";
 var axios = require('axios');
-
+var es = require('../db/elastic');
 
 const BASE_PATH_PIPELINE_1 = 'corpusfiles/processing/pipeline_stage_1/'
 const BASE_PATH_PIPELINE_2 = 'corpusfiles/processing/pipeline_stage_2/'
@@ -182,6 +185,42 @@ exports.fetchMTWorkspaceDetail = function (req, res) {
     })
 }
 
+exports.migrateOldData = function (req, res) {
+    TranslationProcess.findByCondition({ "basename": { "$lt": '1578421800' } }, function (err, translation_process) {
+        if (translation_process) {
+            async.each(translation_process, function (translation, callback) {
+                if (translation._doc.created_by) {
+                    UserHighCourt.findByCondition({ user_id: doc_report['user_id'] }, function (err, docs) {
+                        if (docs && Array.isArray(docs) && docs.length > 0) {
+                            let user_high_court = docs[0]['_doc']
+                            HighCourt.findByCondition({ high_court_code: user_high_court.high_court_code }, function (err, high_courts) {
+                                if (high_courts && Array.isArray(high_courts) && high_courts.length > 0) {
+                                    let doc_report = {}
+                                    doc_report['source_lang'] = translation._doc.sourceLang
+                                    doc_report['target_lang'] = translation._doc.targetLang
+                                    doc_report['user_id'] = translation._doc.created_by
+                                    doc_report['high_court_code'] = high_courts[0]._doc.high_court_code
+                                    doc_report['high_court_name'] = high_courts[0]._doc.high_court_name
+                                    LOG.info(doc_report)
+                                }
+                                callback()
+                            })
+                        } else {
+                            callback()
+                        }
+                    })
+                }
+                else {
+                    callback()
+                }
+            })
+        }
+        // LOG.info(translation_process)
+        let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+        return res.status(response.http.status).json(response);
+    })
+}
+
 exports.fetchParagraphWorkspaceDetail = function (req, res) {
     if (!req || !req.query || !req.query.session_id) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
@@ -214,7 +253,7 @@ exports.fetchMTWorkspace = function (req, res) {
     if (search_param) {
         condition['title'] = new RegExp(search_param, "i")
     }
-    if(target_language){
+    if (target_language) {
         condition['target_language'] = target_language
     }
     if (step) {
