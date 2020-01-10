@@ -186,22 +186,24 @@ exports.fetchMTWorkspaceDetail = function (req, res) {
 }
 
 exports.migrateOldData = function (req, res) {
-    axios.get('http://'+process.env.ES_HOSTS+':9200/doc_report/_search?pretty=true&size=1000').then(function (response) {
+    axios.get('http://' + process.env.ES_HOSTS + ':9200/doc_report/_search?pretty=true&size=1000').then(function (response) {
         // handle success
         let data = response.data;
         let hits = data.hits
         hits.hits.map((h) => {
-            axios.post('http://'+process.env.ES_HOSTS+':9200/doc_report/_update/'+h._id, {
-                "script" : {
-                    "source": "ctx._source.created_on_iso = params.created_on_iso",
-                    "lang": "painless",
-                    "params" : {
-                        "created_on_iso" : new Date(h._source.created_on).toISOString()
+            if (!h.created_on_iso) {
+                axios.post('http://' + process.env.ES_HOSTS + ':9200/doc_report/_update/' + h._id, {
+                    "script": {
+                        "source": "ctx._source.created_on_iso = params.created_on_iso",
+                        "lang": "painless",
+                        "params": {
+                            "created_on_iso": new Date(h._source.created_on).toISOString()
+                        }
                     }
-                }
-            }).then(function (response) {
-                LOG.info(response.data)
-            })
+                }).then(function (response) {
+                    LOG.info(response.data)
+                })
+            }
         })
     })
     // LOG.info(translation_process)
