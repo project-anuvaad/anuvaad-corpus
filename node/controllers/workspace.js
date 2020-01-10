@@ -201,9 +201,9 @@ exports.migrateOldData = function (req, res) {
                                     doc_report['user_id'] = translation._doc.created_by
                                     doc_report['high_court_code'] = high_courts[0]._doc.high_court_code
                                     doc_report['high_court_name'] = high_courts[0]._doc.high_court_name
-                                    LOG.info(doc_report)
                                     es.create({
                                         index: 'doc_report_migrate',
+                                        id: translation._doc._id,
                                         body: doc_report
                                       });
                                 }
