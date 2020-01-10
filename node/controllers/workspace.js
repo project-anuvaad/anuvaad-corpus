@@ -186,44 +186,27 @@ exports.fetchMTWorkspaceDetail = function (req, res) {
 }
 
 exports.migrateOldData = function (req, res) {
-    TranslationProcess.findByCondition({ "basename": { "$lt": '1578421800' } }, function (err, translation_process) {
-        if (translation_process) {
-            async.each(translation_process, function (translation, callback) {
-                if (translation._doc.created_by) {
-                    UserHighCourt.findByCondition({ user_id: translation._doc.created_by }, function (err, docs) {
-                        if (docs && Array.isArray(docs) && docs.length > 0) {
-                            let user_high_court = docs[0]['_doc']
-                            HighCourt.findByCondition({ high_court_code: user_high_court.high_court_code }, function (err, high_courts) {
-                                if (high_courts && Array.isArray(high_courts) && high_courts.length > 0) {
-                                    let doc_report = {}
-                                    doc_report['source_lang'] = translation._doc.sourceLang
-                                    doc_report['target_lang'] = translation._doc.targetLang
-                                    doc_report['user_id'] = translation._doc.created_by
-                                    doc_report['created_on'] = translation._doc.created_on
-                                    doc_report['high_court_code'] = high_courts[0]._doc.high_court_code
-                                    doc_report['high_court_name'] = high_courts[0]._doc.high_court_name
-                                    es.create({
-                                        index: 'doc_report',
-                                        id: translation._doc._id,
-                                        body: doc_report
-                                      });
-                                }
-                                callback()
-                            })
-                        } else {
-                            callback()
-                        }
-                    })
+    axios.get('http://'+process.env.ES_HOSTS+':9200/doc_report/_search?pretty=true').then(function (response) {
+        // handle success
+        let data = response.data;
+        let hits = data.hits
+        hits.hits.map((h) => {
+            axios.post('http://'+process.env.ES_HOSTS+':9200/doc_report/_update/'+h._id, {
+                "script" : {
+                    "source": "ctx._source.created_on_iso = params.created_on_iso",
+                    "lang": "painless",
+                    "params" : {
+                        "created_on_iso" : new Date(h._source.created_on).toISOString()
+                    }
                 }
-                else {
-                    callback()
-                }
+            }).then(function (response) {
+                LOG.info(response)
             })
-        }
-        // LOG.info(translation_process)
-        let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
-        return res.status(response.http.status).json(response);
+        })
     })
+    // LOG.info(translation_process)
+    let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+    return res.status(response.http.status).json(response);
 }
 
 exports.fetchParagraphWorkspaceDetail = function (req, res) {
