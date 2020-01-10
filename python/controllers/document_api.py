@@ -175,7 +175,7 @@ def translate_docx_v2():
     log.info('translate_docx_v2: started at ' + str(start_time))
     basename = str(int(time.time()))
     current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-
+    iso_date = datetime.now().isoformat()
     f = request.files['file']
     filepath = os.path.join(
         app.config['UPLOAD_FOLDER'], basename + '.docx')
@@ -273,6 +273,7 @@ def translate_docx_v2():
         log.error('translate_docx_v2 : error occurred for profile fetching, error is = ' + str(e))
     doc_report['document_id'] = basename
     doc_report['created_on'] = current_time
+    doc_report['created_on_iso'] = iso_date
     log.info('sending data to elasticsearch =='+str(doc_report))
     try:
         create_dashboard_report(doc_report, 'doc_report')
