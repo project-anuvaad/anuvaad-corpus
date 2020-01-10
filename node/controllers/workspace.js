@@ -186,7 +186,7 @@ exports.fetchMTWorkspaceDetail = function (req, res) {
 }
 
 exports.migrateOldData = function (req, res) {
-    axios.get('http://'+process.env.ES_HOSTS+':9200/doc_report/_search?pretty=true').then(function (response) {
+    axios.get('http://'+process.env.ES_HOSTS+':9200/doc_report/_search?pretty=true&size=1000').then(function (response) {
         // handle success
         let data = response.data;
         let hits = data.hits
@@ -200,7 +200,7 @@ exports.migrateOldData = function (req, res) {
                     }
                 }
             }).then(function (response) {
-                LOG.info(response)
+                LOG.info(response.data)
             })
         })
     })
