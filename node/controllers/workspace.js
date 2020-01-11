@@ -191,9 +191,57 @@ exports.migrateOldData = function (req, res) {
         let data = response.data;
         let hits = data.hits
         async.each(hits.hits, function (h, callback) {
-            let source  = h._source
-            if (!source.word_count || !source.sentence_count) {
-                axios.get(PYTHON_URL + 'get-sentence-word-count?basename='+source.document_id).then(function (res) {
+            let source = h._source
+            if (!source.document_id) {
+                TranslationProcess.findByCondition({ "created_on": source.created_on }, function (err, translation_process) {
+                    if (translation_process && Array.isArray(translation_process) && translation_process.length > 0) {
+                        let translation_process_obj = translation_process[0]._doc
+                        axios.post('http://' + process.env.ES_HOSTS + ':9200/doc_report/_update/' + h._id, {
+                            "script": {
+                                "source": "ctx._source.document_id = params.document_id",
+                                "lang": "painless",
+                                "params": {
+                                    "document_id": translation_process_obj.basename
+                                }
+                            }
+                        }).then(function (response) {
+                            axios.get(PYTHON_URL + 'get-sentence-word-count?basename=' + translation_process_obj.basename).then(function (res) {
+                                let data = res.data
+                                if (data && data.data) {
+                                    axios.post('http://' + process.env.ES_HOSTS + ':9200/doc_report/_update/' + h._id, {
+                                        "script": {
+                                            "source": "ctx._source.word_count = params.word_count",
+                                            "lang": "painless",
+                                            "params": {
+                                                "word_count": data.data.word_count
+                                            }
+                                        }
+                                    }).then(function (response) {
+                                        axios.post('http://' + process.env.ES_HOSTS + ':9200/doc_report/_update/' + h._id, {
+                                            "script": {
+                                                "source": "ctx._source.sentence_count = params.sentence_count",
+                                                "lang": "painless",
+                                                "params": {
+                                                    "sentence_count": data.data.sentence_count
+                                                }
+                                            }
+                                        }).then(function (response) {
+                                            LOG.info(response.data)
+                                            callback()
+                                        })
+                                    })
+                                }
+                                else {
+                                    callback()
+                                }
+                            })
+                        })
+
+                    }
+                })
+            }
+            else if (!source.word_count || !source.sentence_count) {
+                axios.get(PYTHON_URL + 'get-sentence-word-count?basename=' + source.document_id).then(function (res) {
                     let data = res.data
                     if (data && data.data) {
                         axios.post('http://' + process.env.ES_HOSTS + ':9200/doc_report/_update/' + h._id, {
@@ -219,12 +267,12 @@ exports.migrateOldData = function (req, res) {
                             })
                         })
                     }
-                    else{
+                    else {
                         callback()
                     }
                 })
             }
-            else{
+            else {
                 callback()
             }
         })
