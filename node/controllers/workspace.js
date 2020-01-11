@@ -191,6 +191,7 @@ exports.migrateOldData = function (req, res) {
         let data = response.data;
         let hits = data.hits
         async.each(hits.hits, function (h, callback) {
+            LOG.info(h)
             if (!h.word_count || !h.sentence_count) {
                 axios.get(PYTHON_URL + 'get-sentence-word-count?basename='+h.document_id).then(function (res) {
                     let data = res.data
