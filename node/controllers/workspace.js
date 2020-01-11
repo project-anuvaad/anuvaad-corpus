@@ -191,9 +191,9 @@ exports.migrateOldData = function (req, res) {
         let data = response.data;
         let hits = data.hits
         async.each(hits.hits, function (h, callback) {
-            LOG.info(h)
-            if (!h._source.word_count || !h._source.sentence_count) {
-                axios.get(PYTHON_URL + 'get-sentence-word-count?basename='+h._source.document_id).then(function (res) {
+            let source  = h._source
+            if (!source.word_count || !source.sentence_count) {
+                axios.get(PYTHON_URL + 'get-sentence-word-count?basename='+source.document_id).then(function (res) {
                     let data = res.data
                     if (data && data.data) {
                         axios.post('http://' + process.env.ES_HOSTS + ':9200/doc_report/_update/' + h._id, {
