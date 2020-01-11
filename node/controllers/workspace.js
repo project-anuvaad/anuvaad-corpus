@@ -22,6 +22,7 @@ const STEP_IN_PROGRESS = 'IN-PROGRESS'
 const STEP_TOKENIZE = 'At Step1'
 const STEP_SENTENCE = 'At Step2'
 const STEP_ERROR = 'FAILED'
+const PYTHON_URL = process.env.PYTHON_URL ? process.env.PYTHON_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/corpus/'
 const ES_SERVER_URL = process.env.GATEWAY_URL ? process.env.GATEWAY_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/admin/'
 const USER_INFO_URL = ES_SERVER_URL + 'users'
 var async = require('async');
@@ -187,22 +188,43 @@ exports.fetchMTWorkspaceDetail = function (req, res) {
 
 exports.migrateOldData = function (req, res) {
     axios.get('http://' + process.env.ES_HOSTS + ':9200/doc_report/_search?pretty=true&size=1000').then(function (response) {
-        // handle success
         let data = response.data;
         let hits = data.hits
-        hits.hits.map((h) => {
-            if (!h.created_on_iso) {
-                axios.post('http://' + process.env.ES_HOSTS + ':9200/doc_report/_update/' + h._id, {
-                    "script": {
-                        "source": "ctx._source.created_on_iso = params.created_on_iso",
-                        "lang": "painless",
-                        "params": {
-                            "created_on_iso": new Date(h._source.created_on).toISOString()
-                        }
+        async.each(hits.hits, function (h, callback) {
+            if (!h.word_count || !h.sentence_count) {
+                axios.get(PYTHON_URL + 'get-sentence-word-count').then(function (res) {
+                    let data = res.data
+                    if (data && data.data) {
+                        axios.post('http://' + process.env.ES_HOSTS + ':9200/doc_report/_update/' + h._id, {
+                            "script": {
+                                "source": "ctx._source.word_count = params.word_count",
+                                "lang": "painless",
+                                "params": {
+                                    "word_count": data.data.word_count
+                                }
+                            }
+                        }).then(function (response) {
+                            axios.post('http://' + process.env.ES_HOSTS + ':9200/doc_report/_update/' + h._id, {
+                                "script": {
+                                    "source": "ctx._source.sentence_count = params.sentence_count",
+                                    "lang": "painless",
+                                    "params": {
+                                        "sentence_count": data.data.sentence_count
+                                    }
+                                }
+                            }).then(function (response) {
+                                LOG.info(response.data)
+                                callback()
+                            })
+                        })
                     }
-                }).then(function (response) {
-                    LOG.info(response.data)
+                    else{
+                        callback()
+                    }
                 })
+            }
+            else{
+                callback()
             }
         })
     })
