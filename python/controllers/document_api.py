@@ -168,6 +168,56 @@ def translateDocx():
         getcurrenttime() - start_time))
     return res.getres()
 
+@document_api.route('/get-sentence-word-count', methods=['GET'])
+def get_sentence_word_count():
+    start_time = int(round(time.time() * 1000))
+    log.info('get_sentence_word_count: started at ' + str(start_time))
+    basename = request.args.get('basename')
+    filepath = os.path.join(
+        app.config['UPLOAD_FOLDER'], basename + '.docx')
+    xmltree = None
+    try:
+        xml_content = docx_helper.get_document_xml(filepath)
+        xmltree = docx_helper.get_xml_tree(xml_content)
+    except Exception as e:
+        log.info('get_sentence_word_count : Error while extracting docx, trying to convert it to docx from doc')
+        try:
+            log.info('here === 1  ==  '+ filepath)
+            docx_helper.convert_DOC_to_DOCX(filepath)
+            log.info('here === 2  ==  '+ filepath)
+            xml_content = docx_helper.get_document_xml(filepath)
+            log.info('here === 3  ==  '+ str(xml_content))
+
+            xmltree = docx_helper.get_xml_tree(xml_content)
+            log.info('get_sentence_word_count : doc to docx conversion successful')
+        except Exception as e:
+            log.error('get_sentence_word_count : Error while extracting docx files. error is = ' + str(e))
+            log.error('get_sentence_word_count : Error while extracting docx files. uploaded file is corrupt')
+            res = CustomResponse(Status.FAILURE.value, ' uploaded file is corrupt')
+            log.info('get_sentence_word_count: ended at ' + str(getcurrenttime()) + 'total time elapsed : ' + str(
+                getcurrenttime() - start_time))
+            return res.getres()
+    nodes = []
+    texts = []
+    if xmltree is None:
+        res = CustomResponse(Status.FAILURE.value, ' uploaded file is corrupt')
+        log.info('translate_docx_v2: ended at ' + str(getcurrenttime()) + 'total time elapsed : ' + str(
+            getcurrenttime() - start_time))
+        return res.getres()
+
+    try:
+        docx_helper.add_identification_tag(xmltree, basename)
+        docx_helper.pre_process_text(xmltree)
+    except Exception as e:
+        log.error('translate_docx_v2 : error occureed for pre-processing document. Error is ' + str(e))
+        log.info('translate_docx_v2 : not pre-processing document')
+    word_count = 0
+    for node, text in docx_helper.itertext_old(xmltree):
+        nodes.append(node)
+        texts.append(text)
+        word_count = word_count + len(text.split(' '))
+    res = CustomResponse(Status.SUCCESS.value, {'sentence_count':len(texts), 'word_count': word_count})
+    return res.getres()
 
 @document_api.route('/v2/translate-docx', methods=['POST'])
 def translate_docx_v2():
