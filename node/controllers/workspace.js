@@ -237,6 +237,9 @@ exports.migrateOldData = function (req, res) {
                             })
                         })
 
+                    }else{
+                        LOG.info('Data not found')
+                        callback()
                     }
                 })
             }
