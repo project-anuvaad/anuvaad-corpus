@@ -64,8 +64,10 @@ def write_document():
                     node_id = node.attrib['id']
                     if node.text is not None and node.text.strip() is not '':
                         text_node = TextNode.objects(node_id=node_id, basename=basename)
-
-                        if text_node is not None and not get_text_node_len(text_node) == 0:
+                        log.info('write_document : text_node object is == ' + str(json.loads(text_node.to_json())))
+                        text_node_len = get_text_node_len(text_node)
+                        log.info('write_document : text_node object len is == ' + str(text_node_len))
+                        if text_node is not None and not text_node_len == 0:
                             tgt_text = get_tgt_text(text_node)
                             node.text = tgt_text
                 docx_helper.save_docx(filepath, xmltree, filepath_processed, None)
