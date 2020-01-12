@@ -3,6 +3,7 @@ import logging
 import requests
 import time
 from models.status import Status
+from models.user_high_court import Userhighcourt
 from models.response import CustomResponse
 from db.redis_client import get_user_roles_basic_auth
 import json
@@ -44,6 +45,7 @@ def create_user_basic_auth():
     lastname = body['lastname']
     password = body['password']
     scope = body['roles']
+    high_court_code = body['high_court_code']
 
     try:
         profile = requests.get(PROFILE_REQ_URL + user_name)
@@ -69,6 +71,9 @@ def create_user_basic_auth():
         scope_response = shell.scope_add(user['id'], scope)
         time.sleep(3)
         log.info('scope added')
+        if high_court_code is not None:
+            user_high_court = Userhighcourt(high_court_code=high_court_code, user_id=user['id'])
+            user_high_court.save()
         res = CustomResponse(Status.SUCCESS.value, response)
         return res.getres()
 
@@ -128,12 +133,18 @@ def update_password_admin():
     log.info('update_password : started')
     body = request.get_json()
     user_id = body['user_id']
+    high_court_code = body['high_court_code']
     new_password = body['new_password']
-    if new_password is None or new_password.__len__() < 6:
-        log.info('update_password : password is too weak, at least provide 6 characters')
-        res = CustomResponse(Status.ERROR_WEAK_PASSWORD.value, None)
-        return res.getres()
-    
+    log.info("high_court_code == " + high_court_code)
+    if high_court_code is not None:
+        userHighCourt = Userhighcourt.objects(user_id=user_id)
+        if userHighCourt is not None  and len(userHighCourt) > 0:
+            log.info('high court with user exist '+str(len(userHighCourt)))
+            userHighCourt.update(set__high_court_code=high_court_code)
+        else:
+            log.info('saving high court with user')
+            user_high_court = Userhighcourt(high_court_code=high_court_code, user_id=user_id)
+            user_high_court.save()
     profile = requests.get(PROFILE_REQ_URL + user_id).content
     profile = json.loads(profile)
     roles_ = get_user_roles_basic_auth(user_id)
@@ -149,8 +160,14 @@ def update_password_admin():
         return res.getres()
     
     data = {"credential": {"password":new_password,"scopes":roles_},"consumerId":user_id,"type":"basic-auth"}
-    req = GATEWAY_SERVER_URL + 'credentials'
-    response = requests.post(req, json=data)
+    if new_password is not None or new_password.__len__() == 0:
+        if new_password.__len__() < 6:
+            log.info('update_password : password is too weak, at least provide 6 characters')
+            res = CustomResponse(Status.ERROR_WEAK_PASSWORD.value, None)
+            return res.getres()
+        else:
+            req = GATEWAY_SERVER_URL + 'credentials'
+            response = requests.post(req, json=data)
     res = CustomResponse(Status.SUCCESS.value, None)
     return res.getres()
 
