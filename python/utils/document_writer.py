@@ -64,7 +64,8 @@ def write_document():
                     node_id = node.attrib['id']
                     if node.text is not None and node.text.strip() is not '':
                         text_node = TextNode.objects(node_id=node_id, basename=basename)
-                        if text_node is not None and not len(text_node) == 0:
+
+                        if text_node is not None and not get_text_node_len(text_node) == 0:
                             tgt_text = get_tgt_text(text_node)
                             node.text = tgt_text
                 docx_helper.save_docx(filepath, xmltree, filepath_processed, None)
@@ -74,6 +75,11 @@ def write_document():
     except Exception as e:
         log.error('write_document : ERROR OCCURRED : NMT SERVER ERROR '+str(e))
         write_document()
+
+
+def get_text_node_len(text_node):
+    text_node_dict = json.loads(text_node.to_json())
+    return len(text_node_dict)
 
 
 def get_tgt_text(text_node):
