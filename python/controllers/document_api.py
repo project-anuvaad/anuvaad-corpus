@@ -265,12 +265,8 @@ def translate_docx_v2():
     except Exception as e:
         log.info('translate_docx_v2 : Error while extracting docx, trying to convert it to docx from doc')
         try:
-            log.info('here === 1  ==  ' + filepath)
             docx_helper.convert_DOC_to_DOCX(filepath)
-            log.info('here === 2  ==  ' + filepath)
             xml_content = docx_helper.get_document_xml(filepath)
-            log.info('here === 3  ==  ' + str(xml_content))
-
             xmltree = docx_helper.get_xml_tree(xml_content)
             log.info('translate_docx_v2 : doc to docx conversion successful')
         except Exception as e:
