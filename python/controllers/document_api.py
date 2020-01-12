@@ -5,6 +5,7 @@
 
 from flask import Blueprint, request, current_app as app
 import flask
+import requests
 import time
 import os
 import logging
@@ -12,10 +13,13 @@ from models.status import Status
 from models.response import CustomResponse
 import utils.docx_translate_helper as docx_helper
 from models.translation_process import TranslationProcess
+from models.user_high_court import Userhighcourt
+from models.high_court import Highcourt
 import utils.modify_first_page as modify_first_page
 import utils.translate_footnote as translate_footer
 from kafka_utils.producer import get_producer
 from nltk.tokenize import sent_tokenize
+from elastic_utils.elactic_util import create_dashboard_report
 import nltk
 
 nltk.download('punkt')
@@ -36,6 +40,9 @@ STATUS_PROCESSED = 'COMPLETED'
 producer = get_producer()
 TOPIC = "to-nmt"
 TEXT_PROCESSING_TIME = 40
+
+GATEWAY_SERVER_URL = os.environ.get('GATEWAY_URL', 'http://localhost:9876/')
+PROFILE_REQ_URL = GATEWAY_SERVER_URL + 'users/'
 
 
 @document_api.route('/download-docx', methods=['GET'])
@@ -164,6 +171,56 @@ def translateDocx():
         getcurrenttime() - start_time))
     return res.getres()
 
+@document_api.route('/get-sentence-word-count', methods=['GET'])
+def get_sentence_word_count():
+    start_time = int(round(time.time() * 1000))
+    log.info('get_sentence_word_count: started at ' + str(start_time))
+    basename = request.args.get('basename')
+    filepath = os.path.join(
+        app.config['UPLOAD_FOLDER'], basename + '.docx')
+    xmltree = None
+    try:
+        xml_content = docx_helper.get_document_xml(filepath)
+        xmltree = docx_helper.get_xml_tree(xml_content)
+    except Exception as e:
+        log.info('get_sentence_word_count : Error while extracting docx, trying to convert it to docx from doc')
+        try:
+            log.info('here === 1  ==  '+ filepath)
+            docx_helper.convert_DOC_to_DOCX(filepath)
+            log.info('here === 2  ==  '+ filepath)
+            xml_content = docx_helper.get_document_xml(filepath)
+            log.info('here === 3  ==  '+ str(xml_content))
+
+            xmltree = docx_helper.get_xml_tree(xml_content)
+            log.info('get_sentence_word_count : doc to docx conversion successful')
+        except Exception as e:
+            log.error('get_sentence_word_count : Error while extracting docx files. error is = ' + str(e))
+            log.error('get_sentence_word_count : Error while extracting docx files. uploaded file is corrupt')
+            res = CustomResponse(Status.FAILURE.value, ' uploaded file is corrupt')
+            log.info('get_sentence_word_count: ended at ' + str(getcurrenttime()) + 'total time elapsed : ' + str(
+                getcurrenttime() - start_time))
+            return res.getres()
+    nodes = []
+    texts = []
+    if xmltree is None:
+        res = CustomResponse(Status.FAILURE.value, ' uploaded file is corrupt')
+        log.info('translate_docx_v2: ended at ' + str(getcurrenttime()) + 'total time elapsed : ' + str(
+            getcurrenttime() - start_time))
+        return res.getres()
+
+    try:
+        docx_helper.add_identification_tag(xmltree, basename)
+        docx_helper.pre_process_text(xmltree)
+    except Exception as e:
+        log.error('translate_docx_v2 : error occureed for pre-processing document. Error is ' + str(e))
+        log.info('translate_docx_v2 : not pre-processing document')
+    word_count = 0
+    for node, text in docx_helper.itertext_old(xmltree):
+        nodes.append(node)
+        texts.append(text)
+        word_count = word_count + len(text.split(' '))
+    res = CustomResponse(Status.SUCCESS.value, {'sentence_count':len(texts), 'word_count': word_count})
+    return res.getres()
 
 @document_api.route('/v2/translate-docx', methods=['POST'])
 def translate_docx_v2():
@@ -171,7 +228,7 @@ def translate_docx_v2():
     log.info('translate_docx_v2: started at ' + str(start_time))
     basename = str(int(time.time()))
     current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-
+    iso_date = datetime.now().isoformat()
     f = request.files['file']
     filepath = os.path.join(
         app.config['UPLOAD_FOLDER'], basename + '.docx')
@@ -239,10 +296,43 @@ def translate_docx_v2():
         log.error('translate_docx_v2 : error occureed for pre-processing document. Error is ' + str(e))
         log.info('translate_docx_v2 : not pre-processing document')
     docx_helper.warp_original_with_identification_tags(filepath, xmltree, filepath_processed_src_with_ids)
-
+    
+    word_count = 0
     for node, text in docx_helper.itertext_old(xmltree):
         nodes.append(node)
         texts.append(text)
+        word_count = word_count + len(text.split(' '))
+
+    doc_report = {}
+    doc_report['word_count'] = word_count
+    doc_report['sentence_count'] = len(texts)
+    doc_report['source_lang'] = sourceLang
+    doc_report['target_lang'] = targetLang
+    doc_report['user_id'] = request.headers.get('ad-userid')
+    userhighcourt_obj = Userhighcourt.objects(user_id=request.headers.get('ad-userid'))
+    if userhighcourt_obj and len(userhighcourt_obj) > 0:
+        userhighcourt_dict = json.loads(userhighcourt_obj.to_json())
+        if 'high_court_code' in userhighcourt_dict[0]:
+            high_court_obj = Highcourt.objects(high_court_code=userhighcourt_dict[0]['high_court_code'])
+            if high_court_obj and len(high_court_obj) > 0 :
+                highcourt_dict = json.loads(high_court_obj.to_json())
+                if 'high_court_name' in highcourt_dict[0]:
+                    doc_report['high_court_name'] = highcourt_dict[0]['high_court_name']
+            doc_report['high_court_code'] = userhighcourt_dict[0]['high_court_code']
+    try:
+        profile = requests.get(PROFILE_REQ_URL + request.headers.get('ad-userid')).content
+        profile = json.loads(profile)
+        doc_report['username'] = profile['username']
+    except Exception as e:
+        log.error('translate_docx_v2 : error occurred for profile fetching, error is = ' + str(e))
+    doc_report['document_id'] = basename
+    doc_report['created_on'] = current_time
+    doc_report['created_on_iso'] = iso_date
+    log.info('sending data to elasticsearch =='+str(doc_report))
+    try:
+        create_dashboard_report(doc_report, 'doc_report')
+    except Exception as e:
+        log.error('translate_docx_v2 : error occurred for report saving, error is = ' + str(e))
 
     log.info('translate_docx_v2 : number of nodes = ' + str(len(nodes)) + ' and text are : ' + str(len(texts)))
     translationProcess = TranslationProcess.objects(basename=basename)

@@ -33,4 +33,7 @@ module.exports = function (router) {
     router.route('/fetch-paragraph-workspace-detail')
         .get(workspaceController.fetchParagraphWorkspaceDetail);
 
+    router.route('/migrate-old-data')
+        .get(workspaceController.migrateOldData);
+
 }

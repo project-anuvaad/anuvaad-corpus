@@ -2,6 +2,9 @@ var Response = require('../models/response')
 var APIStatus = require('../errors/apistatus')
 var ParagraphWorkspace = require('../models/paragraph_workspace');
 var MTWorkspace = require('../models/mt_workspace');
+var TranslationProcess = require('../models/translation_process');
+var UserHighCourt = require('../models/user_high_court');
+var HighCourt = require('../models/high_courts');
 var StatusCode = require('../errors/statuscodes').StatusCode
 var LOG = require('../logger/logger').logger
 var KafkaProducer = require('../kafka/producer');
@@ -9,17 +12,20 @@ var fs = require('fs');
 var UUIDV4 = require('uuid/v4')
 var COMPONENT = "workspace";
 var axios = require('axios');
-
+var es = require('../db/elastic');
 
 const BASE_PATH_PIPELINE_1 = 'corpusfiles/processing/pipeline_stage_1/'
+const BASE_PATH_PIPELINE_2 = 'corpusfiles/processing/pipeline_stage_2/'
 const STATUS_PROCESSING = 'PROCESSING'
 const STATUS_PROCESSED = 'PROCESSED'
 const STEP_IN_PROGRESS = 'IN-PROGRESS'
 const STEP_TOKENIZE = 'At Step1'
 const STEP_SENTENCE = 'At Step2'
 const STEP_ERROR = 'FAILED'
+const PYTHON_URL = process.env.PYTHON_URL ? process.env.PYTHON_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/corpus/'
 const ES_SERVER_URL = process.env.GATEWAY_URL ? process.env.GATEWAY_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/admin/'
 const USER_INFO_URL = ES_SERVER_URL + 'users'
+var async = require('async');
 
 exports.updateError = function (req) {
     if (!req || !req.session_id) {
@@ -34,6 +40,44 @@ exports.updateError = function (req) {
             } else {
                 workspace._doc.step = STEP_ERROR
                 ParagraphWorkspace.updateParagraphWorkspace(workspace._doc, (error, results) => {
+                    if (error) {
+                        LOG.error(error)
+                    }
+                    else {
+                        LOG.info('Data updated successfully [%s]', JSON.stringify(req))
+                    }
+                })
+            }
+        })
+    }
+}
+
+exports.handleMTRequest = function (req) {
+    if (!req || !req.data || !req.data.process_id) {
+        LOG.error('Data missing for [%s]', JSON.stringify(req))
+    } else {
+        MTWorkspace.findOne({ session_id: req.data.process_id }, function (error, workspace) {
+            if (error) {
+                LOG.error(error)
+            }
+            else if (!workspace) {
+                LOG.error('MTWorkspace not found [%s]', req)
+            } else {
+                if (req.data.status === STEP_ERROR) {
+                    workspace._doc.step = STEP_ERROR
+                } else {
+                    workspace._doc.status = STATUS_PROCESSED
+                    workspace._doc.sentence_file = req.data.file_name
+                    workspace._doc.sentence_count = req.data.sentence_count
+                    fs.copyFile(BASE_PATH_PIPELINE_2 + workspace._doc.session_id + '/' + req.data.file_name, 'nginx/' + req.data.file_name, function (err) {
+                        if (err) {
+                            LOG.error(err)
+                        } else {
+                            LOG.info('File transfered [%s]', req.data.file_name)
+                        }
+                    })
+                }
+                MTWorkspace.updateMTWorkspace(workspace._doc, (error, results) => {
                     if (error) {
                         LOG.error(error)
                     }
@@ -142,6 +186,105 @@ exports.fetchMTWorkspaceDetail = function (req, res) {
     })
 }
 
+exports.migrateOldData = function (req, res) {
+    axios.get('http://' + process.env.ES_HOSTS + ':9200/doc_report/_search?pretty=true&size=1000').then(function (response) {
+        let data = response.data;
+        let hits = data.hits
+        async.each(hits.hits, function (h, callback) {
+            let source = h._source
+            if (!source.document_id) {
+                TranslationProcess.findByCondition({ "created_on": source.created_on }, function (err, translation_process) {
+                    if (translation_process && Array.isArray(translation_process) && translation_process.length > 0) {
+                        let translation_process_obj = translation_process[0]._doc
+                        axios.post('http://' + process.env.ES_HOSTS + ':9200/doc_report/_update/' + h._id, {
+                            "script": {
+                                "source": "ctx._source.document_id = params.document_id",
+                                "lang": "painless",
+                                "params": {
+                                    "document_id": translation_process_obj.basename
+                                }
+                            }
+                        }).then(function (response) {
+                            axios.get(PYTHON_URL + 'get-sentence-word-count?basename=' + translation_process_obj.basename).then(function (res) {
+                                let data = res.data
+                                if (data && data.data) {
+                                    axios.post('http://' + process.env.ES_HOSTS + ':9200/doc_report/_update/' + h._id, {
+                                        "script": {
+                                            "source": "ctx._source.word_count = params.word_count",
+                                            "lang": "painless",
+                                            "params": {
+                                                "word_count": data.data.word_count
+                                            }
+                                        }
+                                    }).then(function (response) {
+                                        axios.post('http://' + process.env.ES_HOSTS + ':9200/doc_report/_update/' + h._id, {
+                                            "script": {
+                                                "source": "ctx._source.sentence_count = params.sentence_count",
+                                                "lang": "painless",
+                                                "params": {
+                                                    "sentence_count": data.data.sentence_count
+                                                }
+                                            }
+                                        }).then(function (response) {
+                                            LOG.info(response.data)
+                                            callback()
+                                        })
+                                    })
+                                }
+                                else {
+                                    callback()
+                                }
+                            })
+                        })
+
+                    }else{
+                        LOG.info('Data not found')
+                        callback()
+                    }
+                })
+            }
+            else if (!source.word_count || !source.sentence_count) {
+                axios.get(PYTHON_URL + 'get-sentence-word-count?basename=' + source.document_id).then(function (res) {
+                    let data = res.data
+                    if (data && data.data) {
+                        axios.post('http://' + process.env.ES_HOSTS + ':9200/doc_report/_update/' + h._id, {
+                            "script": {
+                                "source": "ctx._source.word_count = params.word_count",
+                                "lang": "painless",
+                                "params": {
+                                    "word_count": data.data.word_count
+                                }
+                            }
+                        }).then(function (response) {
+                            axios.post('http://' + process.env.ES_HOSTS + ':9200/doc_report/_update/' + h._id, {
+                                "script": {
+                                    "source": "ctx._source.sentence_count = params.sentence_count",
+                                    "lang": "painless",
+                                    "params": {
+                                        "sentence_count": data.data.sentence_count
+                                    }
+                                }
+                            }).then(function (response) {
+                                LOG.info(response.data)
+                                callback()
+                            })
+                        })
+                    }
+                    else {
+                        callback()
+                    }
+                })
+            }
+            else {
+                callback()
+            }
+        })
+    })
+    // LOG.info(translation_process)
+    let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+    return res.status(response.http.status).json(response);
+}
+
 exports.fetchParagraphWorkspaceDetail = function (req, res) {
     if (!req || !req.query || !req.query.session_id) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
@@ -163,15 +306,19 @@ exports.fetchParagraphWorkspaceDetail = function (req, res) {
 exports.fetchMTWorkspace = function (req, res) {
     let status = req.query.status
     let step = req.query.step
+    let target_language = req.query.target_language
     var pagesize = req.query.pagesize
     var pageno = req.query.pageno
     var search_param = req.query.search_param
     let condition = {}
     if (status) {
-        condition = { status: status, stage: 1 }
+        condition = { status: status }
     }
     if (search_param) {
         condition['title'] = new RegExp(search_param, "i")
+    }
+    if (target_language) {
+        condition['target_language'] = target_language
     }
     if (step) {
         condition['step'] = step
@@ -294,7 +441,7 @@ exports.startMTProcess = function (req, res) {
 
 exports.saveMTWorkspace = function (req, res) {
     let userId = req.headers['ad-userid']
-    if (!req || !req.body || !req.body.mt_workspace) {
+    if (!req || !req.body || !req.body.mt_workspace || !req.body.mt_workspace.selected_workspaces) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
@@ -305,6 +452,7 @@ exports.saveMTWorkspace = function (req, res) {
         workspace.step = STEP_IN_PROGRESS
         workspace.created_at = new Date()
         workspace.created_by = userId
+        workspace.selected_files = []
         if (api_res.data) {
             workspace.username = api_res.data.username
         }
@@ -313,8 +461,44 @@ exports.saveMTWorkspace = function (req, res) {
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
-            let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
-            return res.status(response.http.status).json(response);
+            fs.mkdir(BASE_PATH_PIPELINE_2 + workspace.session_id, function (e) {
+                if (e) {
+                    LOG.error(e)
+                }
+                async.each(req.body.mt_workspace.selected_workspaces, function (selected_workspace, callback) {
+                    workspace.selected_files.push(selected_workspace.sentence_file)
+                    fs.copyFile(BASE_PATH_PIPELINE_1 + selected_workspace.session_id + '/' + selected_workspace.sentence_file, BASE_PATH_PIPELINE_2 + workspace.session_id + '/' + selected_workspace.sentence_file, function (err) {
+                        if (err) {
+                            LOG.error(err)
+                        } else {
+                            LOG.info('File transfered [%s]', selected_workspace.sentence_file)
+                        }
+                        callback()
+                    })
+
+                }, function (err) {
+                    KafkaProducer.getInstance().getProducer((err, producer) => {
+                        if (err) {
+                            LOG.error("Unable to connect to KafkaProducer");
+                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                            return res.status(apistatus.http.status).json(apistatus);
+                        } else {
+                            LOG.info("KafkaProducer connected")
+                            workspace.use_latest = false
+                            let payloads = [
+                                {
+                                    topic: 'sentencesmt', messages: JSON.stringify({ data: workspace }), partition: 0
+                                }
+                            ]
+                            LOG.info('Sending message', payloads)
+                            producer.send(payloads, function (err, data) {
+                                let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                                return res.status(response.http.status).json(response);
+                            });
+                        }
+                    })
+                });
+            })
         })
     }).catch((e) => {
         LOG.error(e)
@@ -332,61 +516,59 @@ exports.saveParagraphWorkspace = function (req, res) {
     let workspace = req.body.paragraph_workspace
     workspace.session_id = UUIDV4()
     fs.mkdir(BASE_PATH_PIPELINE_1 + workspace.session_id, function (e) {
-        fs.mkdir(BASE_PATH_PIPELINE_1 + workspace.session_id, function (e) {
-            fs.copyFile('nginx/' + workspace.config_file_location, BASE_PATH_PIPELINE_1 + workspace.session_id + '/' + workspace.config_file_location, function (err) {
-                if (err) {
-                    LOG.error(err)
-                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                    return res.status(apistatus.http.status).json(apistatus);
-                }
-                else {
-                    fs.copyFile('nginx/' + workspace.paragraph_file_location, BASE_PATH_PIPELINE_1 + workspace.session_id + '/' + workspace.paragraph_file_location, function (err) {
-                        if (err) {
-                            LOG.error(err)
-                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                            return res.status(apistatus.http.status).json(apistatus);
+        fs.copyFile('nginx/' + workspace.config_file_location, BASE_PATH_PIPELINE_1 + workspace.session_id + '/' + workspace.config_file_location, function (err) {
+            if (err) {
+                LOG.error(err)
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+            else {
+                fs.copyFile('nginx/' + workspace.paragraph_file_location, BASE_PATH_PIPELINE_1 + workspace.session_id + '/' + workspace.paragraph_file_location, function (err) {
+                    if (err) {
+                        LOG.error(err)
+                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                        return res.status(apistatus.http.status).json(apistatus);
+                    }
+                    axios.get(USER_INFO_URL + '/' + userId).then((api_res) => {
+                        workspace.status = STATUS_PROCESSING
+                        workspace.stage = 1
+                        workspace.step = STEP_IN_PROGRESS
+                        workspace.created_at = new Date()
+                        workspace.created_by = userId
+                        if (api_res.data) {
+                            workspace.username = api_res.data.username
                         }
-                        axios.get(USER_INFO_URL + '/' + userId).then((api_res) => {
-                            workspace.status = STATUS_PROCESSING
-                            workspace.stage = 1
-                            workspace.step = STEP_IN_PROGRESS
-                            workspace.created_at = new Date()
-                            workspace.created_by = userId
-                            if (api_res.data) {
-                                workspace.username = api_res.data.username
+                        ParagraphWorkspace.save([workspace], function (err, models) {
+                            if (err) {
+                                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                return res.status(apistatus.http.status).json(apistatus);
                             }
-                            ParagraphWorkspace.save([workspace], function (err, models) {
-                                if (err) {
-                                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                                    return res.status(apistatus.http.status).json(apistatus);
-                                }
-                                models.ops.map((data) => {
-                                    KafkaProducer.getInstance().getProducer((err, producer) => {
-                                        if (err) {
-                                            LOG.error("Unable to connect to KafkaProducer");
-                                        } else {
-                                            LOG.info("KafkaProducer connected")
-                                            let payloads = [
-                                                {
-                                                    topic: 'tokenext', messages: JSON.stringify({ data: data }), partition: 0
-                                                }
-                                            ]
-                                            producer.send(payloads, function (err, data) {
-                                                LOG.info('Produced')
-                                            });
-                                        }
-                                    })
+                            models.ops.map((data) => {
+                                KafkaProducer.getInstance().getProducer((err, producer) => {
+                                    if (err) {
+                                        LOG.error("Unable to connect to KafkaProducer");
+                                    } else {
+                                        LOG.info("KafkaProducer connected")
+                                        let payloads = [
+                                            {
+                                                topic: 'tokenext', messages: JSON.stringify({ data: data }), partition: 0
+                                            }
+                                        ]
+                                        producer.send(payloads, function (err, data) {
+                                            LOG.info('Produced')
+                                        });
+                                    }
                                 })
-
-                                let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
-                                return res.status(response.http.status).json(response);
                             })
+
+                            let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                            return res.status(response.http.status).json(response);
                         })
-                    });
-                }
-            });
-        })
-    });
+                    })
+                });
+            }
+        });
+    })
 
 
 }
