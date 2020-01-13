@@ -479,7 +479,7 @@ exports.saveSearchReplaceWorkspace = function (req, res) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
-    let workspace = req.body.mt_workspace
+    let workspace = req.body.search_replace_workspace
     workspace.session_id = UUIDV4()
     axios.get(USER_INFO_URL + '/' + userId).then((api_res) => {
         workspace.status = STATUS_PROCESSING
