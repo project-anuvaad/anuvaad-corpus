@@ -28,6 +28,7 @@ from models.Document_nodes import DocumentNodes
 import json
 import uuid
 from datetime import datetime
+from indicnlp.tokenize import sentence_tokenize
 
 log = logging.getLogger('file')
 
@@ -222,6 +223,7 @@ def get_sentence_word_count():
     res = CustomResponse(Status.SUCCESS.value, {'sentence_count':len(texts), 'word_count': word_count})
     return res.getres()
 
+
 @document_api.route('/v2/translate-docx', methods=['POST'])
 def translate_docx_v2():
     start_time = int(round(time.time() * 1000))
@@ -243,6 +245,7 @@ def translate_docx_v2():
     if 'url_end_point' in model_obj:
         url_end_point = model_obj['url_end_point']
         targetLang = model_obj['target_language_code']
+        sourceLang = model_obj['source_language_code']
     log.info('translate_docx_v2: started at ' + str(start_time))
 
     translationProcess = TranslationProcess(created_by=request.headers.get('ad-userid'),
@@ -297,7 +300,8 @@ def translate_docx_v2():
     for node, text in docx_helper.itertext_old(xmltree):
         nodes.append(node)
         texts.append(text)
-        word_count = word_count + len(text.split(' '))
+        if text is not None:
+            word_count = word_count + len(text.split(' '))
 
     doc_report = {}
     doc_report['word_count'] = word_count
@@ -338,7 +342,7 @@ def translate_docx_v2():
         doc_nodes = DocumentNodes(basename=basename, created_date=current_time, total_nodes=total_nodes, nodes_sent=0,
                                   nodes_received=0, is_complete=False)
         doc_nodes.save()
-        send_nodes(nodes, basename, model_id, url_end_point, targetLang)
+        send_nodes(nodes, basename, model_id, url_end_point, targetLang, sourceLang)
         res = CustomResponse(Status.SUCCESS.value, 'file has been queued')
         translationProcess = TranslationProcess.objects(basename=basename)
         translationProcess.update(set__status=STATUS_PROCESSING)
@@ -370,7 +374,6 @@ def get_pending_nodes():
                     'basename'] + ' with error ' + str(e))
                 pass
         log.info(
-
             'get_pending_nodes : nodes details == total_nodes : ' + str(no_of_nodes) + ', node_completed : ' + str(
                 node_received))
         return no_of_nodes - node_received
@@ -394,7 +397,7 @@ def get_lang(model):
         return 'hi'
 
 
-def send_nodes(nodes, basename, model_id, url_end_point, targetLang):
+def send_nodes(nodes, basename, model_id, url_end_point, targetLang, sourceLang):
     log.info('send_nodes : started')
     if producer is None:
         raise Exception('Kafka Producer not available, aborting process')
@@ -417,10 +420,9 @@ def send_nodes(nodes, basename, model_id, url_end_point, targetLang):
                 log.info('send_nodes : Not sending particular node, because it already contains english, '
                          + ' Text in node is == ' + str(text))
             else:
-
                 n_id = node.attrib['id']
                 _id = model_id
-                tokens = sent_tokenize(node.text)
+                tokens = tokenize(node.text, sourceLang)
                 token_len = len(tokens)
                 created_date = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
                 log.info('send_nodes : text in a node == ' + node.text)
@@ -443,6 +445,13 @@ def send_nodes(nodes, basename, model_id, url_end_point, targetLang):
                     producer.send(TOPIC, value=msg)
                     producer.flush()
                     log.info('send_nodes : flushed')
+
+
+def tokenize(text, lang):
+    if lang == 'en':
+        return sent_tokenize(text)
+    else:
+        return sentence_tokenize.sentence_split(text, lang=lang)
 
 
 def get_total_number_of_nodes_with_text(nodes):
