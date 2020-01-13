@@ -9,6 +9,7 @@
 /node/corpusfiles/configs/*
 /node/corpusfiles/processing/pipeline_stage_1/*
 /node/corpusfiles/processing/pipeline_stage_2/*
+/node/corpusfiles/processing/pipeline_stage_3/*
 /python/env
 /python/upload/*
 /node/processing/*
@@ -16,6 +17,7 @@
 !/node/corpusfiles/configs/.gitkeep
 !/node/corpusfiles/processing/pipeline_stage_1/.gitkeep
 !/node/corpusfiles/processing/pipeline_stage_2/.gitkeep
+!/node/corpusfiles/processing/pipeline_stage_3/.gitkeep
 !/node/nginx/.gitkeep
 **__pycache__
 **.vscode
