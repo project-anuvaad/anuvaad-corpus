@@ -483,9 +483,15 @@ def get_total_count_excluding_english(nodes):
 
 
 def isEnglish(text):
+    text = replace_special(text)
     try:
         text.encode(encoding='utf-8').decode('ascii')
     except UnicodeDecodeError:
         return False
     else:
         return True
+
+
+def replace_special(text):
+    text = text.replace('—', '-')
+    return text
