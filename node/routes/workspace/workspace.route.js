@@ -15,8 +15,8 @@ module.exports = function (router) {
     router.route('/save-mt-workspace')
         .post(workspaceController.saveMTWorkspace);
 
-    router.route('/start-mt-process')
-        .post(workspaceController.startMTProcess);
+    router.route('/save-search-replace-workspace')
+        .post(workspaceController.saveSearchReplaceWorkspace);
 
     router.route('/start-tokenization')
         .post(workspaceController.startTokenization);
@@ -26,6 +26,9 @@ module.exports = function (router) {
 
     router.route('/fetch-mt-workspace')
         .get(workspaceController.fetchMTWorkspace);
+
+    router.route('/fetch-search-replace-workspace')
+        .get(workspaceController.fetchSearchReplaceWorkspace);
 
     router.route('/fetch-mt-workspace-detail')
         .get(workspaceController.fetchMTWorkspaceDetail);
