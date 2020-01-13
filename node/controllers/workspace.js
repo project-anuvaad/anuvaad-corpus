@@ -2,9 +2,8 @@ var Response = require('../models/response')
 var APIStatus = require('../errors/apistatus')
 var ParagraphWorkspace = require('../models/paragraph_workspace');
 var MTWorkspace = require('../models/mt_workspace');
+var SearchReplaceWorkspace = require('../models/search_replace_workspace');
 var TranslationProcess = require('../models/translation_process');
-var UserHighCourt = require('../models/user_high_court');
-var HighCourt = require('../models/high_courts');
 var StatusCode = require('../errors/statuscodes').StatusCode
 var LOG = require('../logger/logger').logger
 var KafkaProducer = require('../kafka/producer');
@@ -16,6 +15,7 @@ var es = require('../db/elastic');
 
 const BASE_PATH_PIPELINE_1 = 'corpusfiles/processing/pipeline_stage_1/'
 const BASE_PATH_PIPELINE_2 = 'corpusfiles/processing/pipeline_stage_2/'
+const BASE_PATH_PIPELINE_3 = 'corpusfiles/processing/pipeline_stage_3/'
 const STATUS_PROCESSING = 'PROCESSING'
 const STATUS_PROCESSED = 'PROCESSED'
 const STEP_IN_PROGRESS = 'IN-PROGRESS'
@@ -237,7 +237,7 @@ exports.migrateOldData = function (req, res) {
                             })
                         })
 
-                    }else{
+                    } else {
                         LOG.info('Data not found')
                         callback()
                     }
@@ -300,6 +300,44 @@ exports.fetchParagraphWorkspaceDetail = function (req, res) {
         }
         let response = new Response(StatusCode.SUCCESS, workspace).getRsp()
         return res.status(response.http.status).json(response);
+    })
+}
+
+exports.fetchSearchReplaceWorkspace = function (req, res) {
+    let status = req.query.status
+    let step = req.query.step
+    let target_language = req.query.target_language
+    var pagesize = req.query.pagesize
+    var pageno = req.query.pageno
+    var search_param = req.query.search_param
+    let condition = {}
+    if (status) {
+        condition = { status: status }
+    }
+    if (search_param) {
+        condition['title'] = new RegExp(search_param, "i")
+    }
+    if (target_language) {
+        condition['target_language'] = target_language
+    }
+    if (step) {
+        condition['step'] = step
+    }
+    SearchReplaceWorkspace.countDocuments(condition, function (err, count) {
+        if (err) {
+            LOG.error(err)
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+        SearchReplaceWorkspace.findByCondition(condition, pagesize, pageno, function (err, models) {
+            if (err) {
+                LOG.error(err)
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+            let response = new Response(StatusCode.SUCCESS, models, count).getRsp()
+            return res.status(response.http.status).json(response);
+        })
     })
 }
 
@@ -435,9 +473,56 @@ exports.startTokenization = function (req, res) {
     })
 }
 
-exports.startMTProcess = function (req, res) {
+exports.saveSearchReplaceWorkspace = function (req, res) {
+    let userId = req.headers['ad-userid']
+    if (!req || !req.body || !req.body.search_replace_workspace || !req.body.search_replace_workspace.selected_mt_workspaces) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let workspace = req.body.mt_workspace
+    workspace.session_id = UUIDV4()
+    axios.get(USER_INFO_URL + '/' + userId).then((api_res) => {
+        workspace.status = STATUS_PROCESSING
+        workspace.step = STEP_IN_PROGRESS
+        workspace.created_at = new Date()
+        workspace.created_by = userId
+        workspace.selected_files = []
+        if (api_res.data) {
+            workspace.username = api_res.data.username
+        }
+        fs.mkdir(BASE_PATH_PIPELINE_3 + workspace.session_id, function (e) {
+            fs.copyFile('nginx/' + workspace.config_file_location, BASE_PATH_PIPELINE_3 + workspace.session_id + '/' + workspace.config_file_location, function (err) {
+                if (err) {
+                    LOG.error(err)
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
+                SearchReplaceWorkspace.save([workspace], function (err, models) {
+                    if (err) {
+                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                        return res.status(apistatus.http.status).json(apistatus);
+                    }
+                    async.each(req.body.search_replace_workspace.selected_mt_workspaces, function (selected_workspace, callback) {
+                        workspace.selected_files.push(selected_workspace.sentence_file)
+                        fs.copyFile(BASE_PATH_PIPELINE_2 + selected_workspace.session_id + '/' + selected_workspace.sentence_file, BASE_PATH_PIPELINE_3 + workspace.session_id + '/' + selected_workspace.sentence_file, function (err) {
+                            if (err) {
+                                LOG.error(err)
+                            } else {
+                                LOG.info('File transfered [%s]', selected_workspace.sentence_file)
+                            }
+                            callback()
+                        })
 
+                    }, function (err) {
+                        let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                        return res.status(response.http.status).json(response);
+                    });
+                })
+            })
+        })
+    })
 }
+
 
 exports.saveMTWorkspace = function (req, res) {
     let userId = req.headers['ad-userid']
