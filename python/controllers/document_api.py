@@ -1,6 +1,7 @@
 """
  * @author ['iostream04']
 """
+# -*- coding: utf-8 -*-
 
 from flask import Blueprint, request, current_app as app
 import flask
@@ -70,6 +71,7 @@ def download_docx():
     except Exception as e:
         return CustomResponse(Status.DATA_NOT_FOUND.value, 'file not found').getres()
 
+
 @document_api.route('/save-translated-docx', methods=['POST'])
 def saveTranslateDocx():
     start_time = int(round(time.time() * 1000))
@@ -84,11 +86,11 @@ def saveTranslateDocx():
     filepath = os.path.join(
         app.config['UPLOAD_FOLDER'], basename + '_u.docx')
     index = 0
-    while(os.path.exists(filepath)):
+    while (os.path.exists(filepath)):
         filepath = os.path.join(
-        app.config['UPLOAD_FOLDER'], basename + '_'+str(index)+'_u.docx')
+            app.config['UPLOAD_FOLDER'], basename + '_' + str(index) + '_u.docx')
         index = index + 1
-    f.save(filepath)    
+    f.save(filepath)
     res = CustomResponse(Status.SUCCESS.value, basename + '_' + str(index) + '_u' + '.docx')
     translationProcess = TranslationProcess.objects(basename=basename)
     translationProcess.update(set__translate_uploaded=True)
@@ -96,6 +98,7 @@ def saveTranslateDocx():
     log.info('uploadTranslateDocx: ended at ' + str(getcurrenttime()) + 'total time elapsed : ' + str(
         getcurrenttime() - start_time))
     return res.getres()
+
 
 @document_api.route('/translate-docx', methods=['POST'])
 def translateDocx():
@@ -145,7 +148,7 @@ def translateDocx():
 
     log.info('translateDocx: number of nodes ' + str(len(nodes)) + ' and text are : ' + str(len(texts)))
     translationProcess = TranslationProcess.objects(basename=basename)
-    translationProcess.update(set__eta=(TEXT_PROCESSING_TIME)*(len(texts)+get_pending_nodes())/25)
+    translationProcess.update(set__eta=(TEXT_PROCESSING_TIME) * (len(texts) + get_pending_nodes()) / 25)
     """  method which don't use tokenization  """
     # docx_helper.modify_text(nodes)
 
@@ -239,6 +242,7 @@ def translate_docx_v2():
     url_end_point = 'translation_en'
     if 'url_end_point' in model_obj:
         url_end_point = model_obj['url_end_point']
+        targetLang = model_obj['target_language_code']
     log.info('translate_docx_v2: started at ' + str(start_time))
 
     translationProcess = TranslationProcess(created_by=request.headers.get('ad-userid'),
@@ -261,12 +265,8 @@ def translate_docx_v2():
     except Exception as e:
         log.info('translate_docx_v2 : Error while extracting docx, trying to convert it to docx from doc')
         try:
-            log.info('here === 1  ==  '+ filepath)
             docx_helper.convert_DOC_to_DOCX(filepath)
-            log.info('here === 2  ==  '+ filepath)
             xml_content = docx_helper.get_document_xml(filepath)
-            log.info('here === 3  ==  '+ str(xml_content))
-
             xmltree = docx_helper.get_xml_tree(xml_content)
             log.info('translate_docx_v2 : doc to docx conversion successful')
         except Exception as e:
@@ -332,13 +332,13 @@ def translate_docx_v2():
 
     log.info('translate_docx_v2 : number of nodes = ' + str(len(nodes)) + ' and text are : ' + str(len(texts)))
     translationProcess = TranslationProcess.objects(basename=basename)
-    translationProcess.update(set__eta=(TEXT_PROCESSING_TIME)*(len(texts)+get_pending_nodes())/25)
+    translationProcess.update(set__eta=(TEXT_PROCESSING_TIME) * (len(texts) + get_pending_nodes()) / 25)
     total_nodes = get_total_number_of_nodes_with_text(nodes)
     try:
         doc_nodes = DocumentNodes(basename=basename, created_date=current_time, total_nodes=total_nodes, nodes_sent=0,
                                   nodes_received=0, is_complete=False)
         doc_nodes.save()
-        send_nodes(nodes, basename, model_id, url_end_point)
+        send_nodes(nodes, basename, model_id, url_end_point, targetLang)
         res = CustomResponse(Status.SUCCESS.value, 'file has been queued')
         translationProcess = TranslationProcess.objects(basename=basename)
         translationProcess.update(set__status=STATUS_PROCESSING)
@@ -371,7 +371,8 @@ def get_pending_nodes():
                 pass
         log.info(
 
-            'get_pending_nodes : nodes details == total_nodes : ' + str(no_of_nodes) + ', node_completed : ' + str(node_received))
+            'get_pending_nodes : nodes details == total_nodes : ' + str(no_of_nodes) + ', node_completed : ' + str(
+                node_received))
         return no_of_nodes - node_received
 
     except Exception as e:
@@ -393,11 +394,14 @@ def get_lang(model):
         return 'hi'
 
 
-def send_nodes(nodes, basename, model_id, url_end_point):
+def send_nodes(nodes, basename, model_id, url_end_point, targetLang):
     log.info('send_nodes : started')
     if producer is None:
         raise Exception('Kafka Producer not available, aborting process')
     node_sent_count = get_total_number_of_nodes_with_text(nodes)
+    if url_end_point == 'translate-anuvaad' and targetLang == 'en':
+        node_sent_count = get_total_count_excluding_english(nodes)
+
     doc_nodes = DocumentNodes.objects(basename=basename)
     doc_nodes_dict = json.loads(doc_nodes.to_json())
     node_count = doc_nodes_dict[0]['nodes_sent']
@@ -407,31 +411,38 @@ def send_nodes(nodes, basename, model_id, url_end_point):
         messages = []
         text = node.text
         if text is not None and text.strip() is not '':
-            n_id = node.attrib['id']
-            _id = model_id
-            tokens = sent_tokenize(node.text)
-            token_len = len(tokens)
-            created_date = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-            log.info('send_nodes : text in a node == ' + node.text)
-            if not token_len == 0:
-                text_node = TextNode(node_id=n_id, sentences=messages, created_date=created_date,
-                                     tokens_sent=token_len, is_complete=False, tokens_received=0, basename=basename)
-                text_node.save()
-                i = 0
-                for token in tokens:
-                    if i == 25:
-                        producer.send(TOPIC, value=json.dumps(messages))
-                        producer.flush()
-                        messages = []
-                        i = 0
-                    msg = {'src': token.strip(), 'id': _id, 'n_id': n_id, 's_id': i}
-                    log.info('send_nodes : message is = ' + str(msg))
-                    messages.append(msg)
-                    i = i + 1
-                msg = {'url_end_point': url_end_point, 'message': messages}
-                producer.send(TOPIC, value=msg)
-                producer.flush()
-                log.info('send_nodes : flushed')
+
+            if url_end_point == 'translate-anuvaad' and targetLang == 'en' and isEnglish(text):
+
+                log.info('send_nodes : Not sending particular node, because it already contains english, '
+                         + ' Text in node is == ' + str(text))
+            else:
+
+                n_id = node.attrib['id']
+                _id = model_id
+                tokens = sent_tokenize(node.text)
+                token_len = len(tokens)
+                created_date = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+                log.info('send_nodes : text in a node == ' + node.text)
+                if not token_len == 0:
+                    text_node = TextNode(node_id=n_id, sentences=messages, created_date=created_date,
+                                         tokens_sent=token_len, is_complete=False, tokens_received=0, basename=basename)
+                    text_node.save()
+                    i = 0
+                    for token in tokens:
+                        if i == 25:
+                            producer.send(TOPIC, value=json.dumps(messages))
+                            producer.flush()
+                            messages = []
+                            i = 0
+                        msg = {'src': token.strip(), 'id': _id, 'n_id': n_id, 's_id': i}
+                        log.info('send_nodes : message is = ' + str(msg))
+                        messages.append(msg)
+                        i = i + 1
+                    msg = {'url_end_point': url_end_point, 'message': messages}
+                    producer.send(TOPIC, value=msg)
+                    producer.flush()
+                    log.info('send_nodes : flushed')
 
 
 def get_total_number_of_nodes_with_text(nodes):
@@ -444,3 +455,25 @@ def get_total_number_of_nodes_with_text(nodes):
         return count
     else:
         return 0
+
+
+def get_total_count_excluding_english(nodes):
+    count = 0
+    if nodes is not None:
+        for node in nodes:
+            text = node.text
+            if text is not None and text.strip() is not '':
+                if not isEnglish(text):
+                    count = count + 1
+        return count
+    else:
+        return 0
+
+
+def isEnglish(text):
+    try:
+        text.encode(encoding='utf-8').decode('ascii')
+    except UnicodeDecodeError:
+        return False
+    else:
+        return True

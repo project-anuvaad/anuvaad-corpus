@@ -14,7 +14,7 @@ STATUS_PROCESSED = 'COMPLETED'
 app.config['UPLOAD_FOLDER'] = 'upload'
 
 def write_document_basename(basename):
-    log.info('write_document : started for ' + basename)
+    log.info('write_document_basename : started for ' + basename)
     with app.app_context():
         filepath = os.path.join(
                     app.config['UPLOAD_FOLDER'], basename + '_s.docx')
@@ -31,13 +31,14 @@ def write_document_basename(basename):
             node_id = node.attrib['id']
             if node.text is not None and node.text.strip() is not '':
                 text_node = TextNode.objects(node_id=node_id, basename=basename)
-                if text_node is not None:
+                text_node_len = get_text_node_len(text_node)
+                if text_node is not None and not text_node_len == 0:
                     tgt_text = get_tgt_text(text_node)
                     node.text = tgt_text
         docx_helper.save_docx(filepath, xmltree, filepath_processed, None)
         translationProcess = TranslationProcess.objects(basename=basename)
         translationProcess.update(set__status=STATUS_PROCESSED)
-        log.info('write_document : ended for ' + basename)
+        log.info('write_document_basename : ended for ' + basename)
 
 
 def write_document():
@@ -64,7 +65,10 @@ def write_document():
                     node_id = node.attrib['id']
                     if node.text is not None and node.text.strip() is not '':
                         text_node = TextNode.objects(node_id=node_id, basename=basename)
-                        if text_node is not None:
+                        log.info('write_document : text_node object is == ' + str(json.loads(text_node.to_json())))
+                        text_node_len = get_text_node_len(text_node)
+                        log.info('write_document : text_node object len is == ' + str(text_node_len))
+                        if text_node is not None and not text_node_len == 0:
                             tgt_text = get_tgt_text(text_node)
                             node.text = tgt_text
                 docx_helper.save_docx(filepath, xmltree, filepath_processed, None)
@@ -74,6 +78,11 @@ def write_document():
     except Exception as e:
         log.error('write_document : ERROR OCCURRED : NMT SERVER ERROR '+str(e))
         write_document()
+
+
+def get_text_node_len(text_node):
+    text_node_dict = json.loads(text_node.to_json())
+    return len(text_node_dict)
 
 
 def get_tgt_text(text_node):
