@@ -433,7 +433,9 @@ def send_nodes(nodes, basename, model_id, url_end_point, targetLang, sourceLang)
                     i = 0
                     for token in tokens:
                         if i == 25:
-                            producer.send(TOPIC, value=json.dumps(messages))
+                            log.info('send_nodes : in 25 final msg is == ' + str(msg))
+                            msg_ = {'url_end_point': url_end_point, 'message': messages}
+                            producer.send(TOPIC, value=msg_)
                             producer.flush()
                             messages = []
                             i = 0
@@ -442,6 +444,7 @@ def send_nodes(nodes, basename, model_id, url_end_point, targetLang, sourceLang)
                         messages.append(msg)
                         i = i + 1
                     msg = {'url_end_point': url_end_point, 'message': messages}
+                    log.info('send_nodes : final msg is == '+str(msg))
                     producer.send(TOPIC, value=msg)
                     producer.flush()
                     log.info('send_nodes : flushed')
