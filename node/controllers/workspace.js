@@ -25,6 +25,12 @@ const STEP_ERROR = 'FAILED'
 const PYTHON_URL = process.env.PYTHON_URL ? process.env.PYTHON_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/corpus/'
 const ES_SERVER_URL = process.env.GATEWAY_URL ? process.env.GATEWAY_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/admin/'
 const USER_INFO_URL = ES_SERVER_URL + 'users'
+
+const TOPIC_STAGE_1 = 'tokenext'
+const TOPIC_STAGE_1_STEP_2 = 'sentencesext'
+const TOPIC_STAGE_2 = 'sentencesmt'
+const TOPIC_STAGE_3 = 'searchreplace'
+
 var async = require('async');
 
 exports.updateError = function (req) {
@@ -481,7 +487,7 @@ exports.startTokenization = function (req, res) {
                         LOG.info("KafkaProducer connected")
                         let payloads = [
                             {
-                                topic: 'sentencesext', messages: JSON.stringify({ data: workspace._doc }), partition: 0
+                                topic: TOPIC_STAGE_1_STEP_2, messages: JSON.stringify({ data: workspace._doc }), partition: 0
                             }
                         ]
                         producer.send(payloads, function (err, data) {
@@ -535,6 +541,21 @@ exports.saveSearchReplaceWorkspace = function (req, res) {
                             } else {
                                 LOG.info('File transfered [%s]', selected_workspace.sentence_file)
                             }
+                            KafkaProducer.getInstance().getProducer((err, producer) => {
+                                if (err) {
+                                    LOG.error("Unable to connect to KafkaProducer");
+                                } else {
+                                    LOG.info("KafkaProducer connected")
+                                    let payloads = [
+                                        {
+                                            topic: TOPIC_STAGE_3, messages: JSON.stringify({ data: workspace }), partition: 0
+                                        }
+                                    ]
+                                    producer.send(payloads, function (err, data) {
+                                        LOG.info('Produced')
+                                    });
+                                }
+                            })
                             callback()
                         })
 
@@ -597,7 +618,7 @@ exports.saveMTWorkspace = function (req, res) {
                             workspace.use_latest = false
                             let payloads = [
                                 {
-                                    topic: 'sentencesmt', messages: JSON.stringify({ data: workspace }), partition: 0
+                                    topic: TOPIC_STAGE_2, messages: JSON.stringify({ data: workspace }), partition: 0
                                 }
                             ]
                             LOG.info('Sending message', payloads)
@@ -661,7 +682,7 @@ exports.saveParagraphWorkspace = function (req, res) {
                                         LOG.info("KafkaProducer connected")
                                         let payloads = [
                                             {
-                                                topic: 'tokenext', messages: JSON.stringify({ data: data }), partition: 0
+                                                topic: TOPIC_STAGE_1, messages: JSON.stringify({ data: data }), partition: 0
                                             }
                                         ]
                                         producer.send(payloads, function (err, data) {
