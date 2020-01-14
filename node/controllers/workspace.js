@@ -52,6 +52,31 @@ exports.updateError = function (req) {
     }
 }
 
+exports.handleMTErrorRequest = function (req) {
+    if (!req || !req.data || !req.data.processId) {
+        LOG.error('Data missing for [%s]', JSON.stringify(req))
+    } else {
+        MTWorkspace.findOne({ session_id: req.data.processId }, function (error, workspace) {
+            if (error) {
+                LOG.error(error)
+            }
+            else if (!workspace) {
+                LOG.error('MTWorkspace not found [%s]', req)
+            } else {
+                workspace._doc.step = STEP_ERROR
+                MTWorkspace.updateMTWorkspace(workspace._doc, (error, results) => {
+                    if (error) {
+                        LOG.error(error)
+                    }
+                    else {
+                        LOG.info('Data updated successfully [%s]', JSON.stringify(req))
+                    }
+                })
+            }
+        })
+    }
+}
+
 exports.handleMTRequest = function (req) {
     if (!req || !req.data || !req.data.process_id) {
         LOG.error('Data missing for [%s]', JSON.stringify(req))

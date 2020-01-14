@@ -98,7 +98,18 @@ KafkaConsumer.getInstance().getErrorConsumer((err, consumer) => {
       if (!data) {
         LOG.error('Data missing for [%s]', message.value)
       } else {
-        WorkspaceController.updateError(data)
+        if(data.path){
+          switch (data.path) {
+            case 'mt':
+              WorkspaceController.handleMTErrorRequest(data)
+              break;
+            default:
+              LOG.info('Path not found')
+              break
+          }
+        }else{
+          WorkspaceController.updateError(data)
+        }
       }
     });
     consumer.on('offsetOutOfRange', function (err) {
