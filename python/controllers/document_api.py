@@ -275,10 +275,12 @@ def translate_docx_v2():
         except Exception as e:
             log.error('translate_docx_v2 : Error while extracting docx files. error is = ' + str(e))
             log.error('translate_docx_v2 : Error while extracting docx files. uploaded file is corrupt')
+            translationProcess = TranslationProcess.objects(basename=basename)
+            translationProcess.update(set__status=STATUS_FAILED)
             res = CustomResponse(Status.FAILURE.value, ' uploaded file is corrupt')
             log.info('translate_docx_v2: ended at ' + str(getcurrenttime()) + 'total time elapsed : ' + str(
                 getcurrenttime() - start_time))
-            return res.getres()
+            return res.getres(),500
 
     nodes = []
     texts = []
@@ -356,7 +358,7 @@ def translate_docx_v2():
         res = CustomResponse(Status.FAILURE.value, 'something went wrong')
         log.info('translate_docx_v2: ended at ' + str(getcurrenttime()) + 'total time elapsed : ' + str(
             getcurrenttime() - start_time))
-        return res.getres()
+        return res.getres(),500
 
 
 def get_pending_nodes():
