@@ -277,7 +277,7 @@ def translate_docx_v2():
             log.error('translate_docx_v2 : Error while extracting docx files. uploaded file is corrupt')
             translationProcess = TranslationProcess.objects(basename=basename)
             translationProcess.update(set__status=STATUS_FAILED)
-            res = CustomResponse(Status.FAILURE.value, ' uploaded file is corrupt')
+            res = CustomResponse(Status.CORRUPT_FILE.value, 'uploaded file is corrupt')
             log.info('translate_docx_v2: ended at ' + str(getcurrenttime()) + 'total time elapsed : ' + str(
                 getcurrenttime() - start_time))
             return res.getres(),500
@@ -285,10 +285,10 @@ def translate_docx_v2():
     nodes = []
     texts = []
     if xmltree is None:
-        res = CustomResponse(Status.FAILURE.value, ' uploaded file is corrupt')
+        res = CustomResponse(Status.CORRUPT_FILE.value, 'uploaded file is corrupt')
         log.info('translate_docx_v2: ended at ' + str(getcurrenttime()) + 'total time elapsed : ' + str(
             getcurrenttime() - start_time))
-        return res.getres()
+        return res.getres(),500
 
     try:
         docx_helper.add_identification_tag(xmltree, basename)
