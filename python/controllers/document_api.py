@@ -237,6 +237,8 @@ def translate_docx_v2():
 
     sourceLang = request.form.getlist('sourceLang')[0]
     targetLang = request.form.getlist('targetLang')[0]
+    sourceLang_code = request.form.getlist('sourceLangCode')[0]
+    targetLang_code = request.form.getlist('targetLangCode')[0]
     model_meta_data = request.form.getlist('model')[0]
     log.info('model meta data' + model_meta_data)
     model_obj = json.loads(model_meta_data)
@@ -244,8 +246,8 @@ def translate_docx_v2():
     url_end_point = 'translation_en'
     if 'url_end_point' in model_obj:
         url_end_point = model_obj['url_end_point']
-        targetLang = model_obj['target_language_code']
-        sourceLang = model_obj['source_language_code']
+        targetLang_code = model_obj['target_language_code']
+        sourceLang_code = model_obj['source_language_code']
     log.info('translate_docx_v2: started at ' + str(start_time))
 
     translationProcess = TranslationProcess(created_by=request.headers.get('ad-userid'),
@@ -344,7 +346,7 @@ def translate_docx_v2():
         doc_nodes = DocumentNodes(basename=basename, created_date=current_time, total_nodes=total_nodes, nodes_sent=0,
                                   nodes_received=0, is_complete=False)
         doc_nodes.save()
-        send_nodes(nodes, basename, model_id, url_end_point, targetLang, sourceLang)
+        send_nodes(nodes, basename, model_id, url_end_point, targetLang_code, sourceLang_code)
         res = CustomResponse(Status.SUCCESS.value, 'file has been queued')
         translationProcess = TranslationProcess.objects(basename=basename)
         translationProcess.update(set__status=STATUS_PROCESSING)
