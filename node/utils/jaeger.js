@@ -1,4 +1,6 @@
 const initJaegerTracer = require("jaeger-client").initTracer;
+var LOG = require('../logger/logger').logger
+
 
 function initTracer(serviceName) {
     const config = {
@@ -20,14 +22,7 @@ function initTracer(serviceName) {
         },
     };
     const options = {
-        logger: {
-            info(msg) {
-                console.log("INFO ", msg);
-            },
-            error(msg) {
-                console.log("ERROR", msg);
-            },
-        },
+        logger: LOG,
     };
     return initJaegerTracer(config, options);
 }
