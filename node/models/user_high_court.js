@@ -13,7 +13,7 @@ UserHighCourt.saveUserHighCourt = function(user_high_court, cb){
         if (err) {
             return cb(err, null);
         } else {
-            LOG.info('%s user_high_court was successfully stored.', JSON.stringify(docs));
+            LOG.debug('%s user_high_court was successfully stored.', JSON.stringify(docs));
             return cb(null, docs);
         }
     })
@@ -26,7 +26,7 @@ UserHighCourt.findByCondition = function(condition, cb){
             LOG.error("Unable to find user_high_courts due to [%s]", JSON.stringify(err));
             return cb(err, null);
         }
-        LOG.info("[%s] user_high_courts found",user_high_courts);
+        LOG.debug("[%s] user_high_courts found",user_high_courts);
         return cb(null, user_high_courts);
     })
 }

@@ -27,17 +27,17 @@ def get_xml_tree(xml_string):
 def get_file_info(filename):
     if zipfile.is_zipfile(filename):
         with zipfile.ZipFile(filename) as file:
-            log.info(file.printdir())
+            LOG.debug(file.printdir())
     else:
-        log.info('get_file_info: filename ' + str(filename) + ' is not a zip file')
+        LOG.debug('get_file_info: filename ' + str(filename) + ' is not a zip file')
 
 
 def get_document_xml(filename):
     if zipfile.is_zipfile(filename):
         with zipfile.ZipFile(filename) as file:
-            log.info('get_document_xml: Extracting all files...')
+            LOG.debug('get_document_xml: Extracting all files...')
             file.extractall()
-            log.info('Done!')
+            LOG.debug('Done!')
             xml_content = file.read('word/document.xml')
             return xml_content
     else:
@@ -48,9 +48,9 @@ def get_endnote_xml(filename):
     try:
         if zipfile.is_zipfile(filename):
             with zipfile.ZipFile(filename) as file:
-                log.info('get_endnote_xml: Extracting all files...')
+                LOG.debug('get_endnote_xml: Extracting all files...')
                 file.extractall()
-                log.info('Done!')
+                LOG.debug('Done!')
                 xml_content = file.read('word/endnotes.xml')
                 return xml_content
         else:
@@ -76,8 +76,8 @@ def itertext(xmltree):
         #     if previous_node is not None:
         #         previous_node.getparent().remove(previous_node)
         if check_element_is(node, 'r'):
-            log.info('node is')
-            log.info(etree.tostring(node, pretty_print=True))
+            LOG.debug('node is')
+            LOG.debug(etree.tostring(node, pretty_print=True))
             text_node_found = False
             start_node = None
             text = ''
@@ -91,7 +91,7 @@ def itertext(xmltree):
                     else:
                         n.text = ''
             if text_node_found is True:
-                log.info("text is " + text)
+                LOG.debug("text is " + text)
                 start_node.text = text
                 yield (start_node, text)
         # if check_element_is(node, 'p'):
@@ -117,8 +117,8 @@ def itertext_1(xmltree):
         if check_element_is(node, 'bookmarkStart') or check_element_is(node, 'bookmarkEnd'):
             node.getparent().remove(node)
         if check_element_is(node, 'r'):
-            log.info('node is')
-            log.info(etree.tostring(node, pretty_print=True))
+            LOG.debug('node is')
+            LOG.debug(etree.tostring(node, pretty_print=True))
             text_node_found = False
             start_node = None
             text = ''
@@ -131,7 +131,7 @@ def itertext_1(xmltree):
                     else:
                         node2.text = ''
             if text_node_found is True:
-                log.info("text is " + text)
+                LOG.debug("text is " + text)
                 start_node.text = text
                 yield (start_node, text)
 
@@ -149,7 +149,7 @@ def add_identification_tag(xmltree, identifier):
 
 def check_difference(x, prev):
     if prev == None:
-        log.info("PREV IS NULL")
+        LOG.debug("PREV IS NULL")
         return False
     else:
         if not prev.attrib['i'] == x.attrib['i']:
@@ -160,7 +160,7 @@ def check_difference(x, prev):
             return False
         if not prev.attrib['b'] == x.attrib['b']:
             return False
-        log.info(" SAME ")
+        LOG.debug(" SAME ")
     return True
 
 
@@ -173,11 +173,11 @@ def pre_process_text(xmltree):
     for para in iter_para(xmltree):
 
         num_nodes = num_nodes + 1
-        log.info(" NEW PARA == " + str(num_nodes))
+        LOG.debug(" NEW PARA == " + str(num_nodes))
 
         elements = 0
         para_child_count = count_iterable(para.iterchildren())
-        log.info("Paragraph children == " + str(para_child_count))
+        LOG.debug("Paragraph children == " + str(para_child_count))
 
         sentence = ''
         para_text = None
@@ -194,14 +194,14 @@ def pre_process_text(xmltree):
                     children = children + 1
 
                     if x.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t':
-                        log.info('TAG is: text ' + str(children))
-                        log.info('TAG text is == '+str(x.text))
+                        LOG.debug('TAG is: text ' + str(children))
+                        LOG.debug('TAG text is == '+str(x.text))
                         if x is not None:
                             run_text = run_text + ' ' + x.text
                             x.text = ''
                             prev_node_c = x
 
-                log.info('RUN LEVEL TEXT IS =='+str(run_text))
+                LOG.debug('RUN LEVEL TEXT IS =='+str(run_text))
                 if prev_node_c is not None:
                     prev_node_c.text = run_text
                     sentence = sentence + run_text
@@ -218,24 +218,24 @@ def pre_process_text(xmltree):
                 for x in ((r.iterchildren())):
                     if x.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t':
 
-                        log.info('TAG text is == ' + str(x.text))
+                        LOG.debug('TAG text is == ' + str(x.text))
                         if x is not None and x.text is not '':
                             para_text = para_text + ' ' + x.text
                             x.text = ''
                             prev_run = x
 
-        log.info('RUN LEVEL TEXT IS ==' + str(run_text))
+        LOG.debug('RUN LEVEL TEXT IS ==' + str(run_text))
         if prev_run is not None:
             prev_run.text = para_text
             sentence = sentence + para_text
-            log.info('sentence is == '+str(sentence))
+            LOG.debug('sentence is == '+str(sentence))
 
 
 
 
 def modify_text_with_tokenization(nodes, url, model_id, url_end_point):
-    log.info('model id' + str(model_id))
-    log.info('url_end_point' + url_end_point)
+    LOG.debug('model id' + str(model_id))
+    LOG.debug('url_end_point' + url_end_point)
     _url = NMT_BASE_URL + url_end_point
     if not url == None:
         _url = url
@@ -249,11 +249,11 @@ def modify_text_with_tokenization(nodes, url, model_id, url_end_point):
             if not tokens.__len__ == 0:
 
                 for text_ in tokens:
-                    log.info('modify_text_with_tokenization : TEXT SENT ==  ' + text_)
+                    LOG.debug('modify_text_with_tokenization : TEXT SENT ==  ' + text_)
                     N_T = Text_Object(text_, str(node_id))
                     Q.put(N_T)
 
-            log.info('****************** : ' + node.attrib['id'] + '   ==  ' + node.text)
+            LOG.debug('****************** : ' + node.attrib['id'] + '   ==  ' + node.text)
         node.attrib['node_id'] = str(node_id)
         node_id = node_id + 1
 
@@ -276,8 +276,8 @@ def modify_text_with_tokenization(nodes, url, model_id, url_end_point):
                 res = requests.post(_url, json=arr)
                 dictFromServer = res.json()
                 if dictFromServer['response_body'] is not None:
-                    log.info('modify_text_with_tokenization: ')
-                    log.info(dictFromServer['response_body'])
+                    LOG.debug('modify_text_with_tokenization: ')
+                    LOG.debug(dictFromServer['response_body'])
                     for translation in dictFromServer['response_body']:
                         try:
 
@@ -297,8 +297,8 @@ def modify_text_with_tokenization(nodes, url, model_id, url_end_point):
             res = requests.post(_url, json=arr)
             dictFromServer = res.json()
             if dictFromServer['response_body'] is not None:
-                log.info('modify_text_with_tokenization: LAST: ')
-                log.info(dictFromServer['response_body'])
+                LOG.debug('modify_text_with_tokenization: LAST: ')
+                LOG.debug(dictFromServer['response_body'])
                 for translation in dictFromServer['response_body']:
                     try:
 
@@ -319,7 +319,7 @@ def modify_text_with_tokenization(nodes, url, model_id, url_end_point):
     prev = None
     for node in nodes:
         node_id_ = node.attrib['node_id']
-        log.info(node_id_)
+        LOG.debug(node_id_)
         text = ''
         while not Q_response.qsize() == 0:
             T_S = None
@@ -334,26 +334,26 @@ def modify_text_with_tokenization(nodes, url, model_id, url_end_point):
                 prev = None
             else:
                 prev = T_S
-                log.info('modify_text_with_tokenization: node text before == ' + node.text)
+                LOG.debug('modify_text_with_tokenization: node text before == ' + node.text)
                 node.text = text
-                log.info('modify_text_with_tokenization: node text after = ' + node.text)
+                LOG.debug('modify_text_with_tokenization: node text after = ' + node.text)
                 break
 
         if Q_response.qsize() == 0 and text == '' and prev is not None:
-            log.info('modify_text_with_tokenization **: node text before == ' + node.text)
+            LOG.debug('modify_text_with_tokenization **: node text before == ' + node.text)
             node.text = prev.text
-            log.info('modify_text_with_tokenization **: node text after == ' + node.text)
+            LOG.debug('modify_text_with_tokenization **: node text after == ' + node.text)
 
 
 def warp_original_with_identification_tags(input_docx_file_path, xml_tree, output_docx_filepath):
-    log.info('warp_original_with_identification_tags : started')
+    LOG.debug('warp_original_with_identification_tags : started')
     none = []
     save_docx(input_docx_file_path, xml_tree, output_docx_filepath, none)
 
 
 def save_docx(input_docx_filepath, xmltree, output_docx_filepath, xml_tree_footer_list=None):
     tmp_dir = tempfile.mkdtemp()
-    log.info('save_docx: Extracting ' + str(input_docx_filepath) + ' in temp directory ' + tmp_dir)
+    LOG.debug('save_docx: Extracting ' + str(input_docx_filepath) + ' in temp directory ' + tmp_dir)
     if not zipfile.is_zipfile(input_docx_filepath):
         log.error('save_docx: ' + str(input_docx_filepath) + ' is not valid filepath')
         return None
@@ -370,26 +370,26 @@ def save_docx(input_docx_filepath, xmltree, output_docx_filepath, xml_tree_foote
                 i = 1
                 file_name_xml = 'footer'
                 for footer in xml_tree_footer_list:
-                    log.info("save_docx: opening:" + file_name_xml + str(i) + '.xml')
+                    LOG.debug("save_docx: opening:" + file_name_xml + str(i) + '.xml')
                     with open(os.path.join(tmp_dir, 'word/' + file_name_xml + str(i) + '.xml'), 'w') as f1:
                         xmlstr = etree.tostring(footer, encoding='unicode')
                         f1.write(xmlstr)
                         i = i + 1
                         f1.close()
-                        log.info("save_docx: closing:" + file_name_xml + str(i) + '.xml')
+                        LOG.debug("save_docx: closing:" + file_name_xml + str(i) + '.xml')
         except Exception as e:
             log.error("save_docx: ERROR while writing footers == " + str(e))
 
             i = 1
             file_name_xml = 'footer'
             for footer in xml_tree_footer_list:
-                log.info("save_docx: opening:" + file_name_xml + str(i) + '.xml')
+                LOG.debug("save_docx: opening:" + file_name_xml + str(i) + '.xml')
                 with open(os.path.join(tmp_dir, 'word/' + file_name_xml + str(i) + '.xml'), 'w') as f1:
                     xmlstr = etree.tostring(footer, encoding='unicode')
                     f1.write(xmlstr)
                     i = i + 1
                     f1.close()
-                    log.info("save_docx: closing:" + file_name_xml + str(i) + '.xml')
+                    LOG.debug("save_docx: closing:" + file_name_xml + str(i) + '.xml')
         except:
             log.error("save_docx: ERROR while writing footers")
 
@@ -399,7 +399,7 @@ def save_docx(input_docx_filepath, xmltree, output_docx_filepath, xml_tree_foote
         for filename in filenames:
             docx.write(os.path.join(tmp_dir, filename), filename)
 
-    log.info('save_docx: saving modified document at ' + str(output_docx_filepath))
+    LOG.debug('save_docx: saving modified document at ' + str(output_docx_filepath))
 
 
 def modify_text__2(nodes):
@@ -412,7 +412,7 @@ def modify_text__2(nodes):
     for node in nodes:
         arr.append(node.text)
 
-        log.info('modify_text: node text before translation:' + node.text)
+        LOG.debug('modify_text: node text before translation:' + node.text)
 
         if (arr.__len__ == max_calls):
             try:
@@ -421,15 +421,15 @@ def modify_text__2(nodes):
                     arr,
                     target_language='hin')
                 if translationarray is not None:
-                    log.info('modify_text: ')
-                    log.info(translationarray)
+                    LOG.debug('modify_text: ')
+                    LOG.debug(translationarray)
                     for translation in translationarray:
                         try:
-                            # log.info('modify_text: recieved translating from server: ')
-                            # log.info(translation)
+                            # LOG.debug('modify_text: recieved translating from server: ')
+                            # LOG.debug(translation)
                             results.append(translation['translatedText'])
                         except:
-                            log.info("modify_text: ERROR: while adding to the results list")
+                            LOG.debug("modify_text: ERROR: while adding to the results list")
                             results.append({'text': None})
 
             except:
@@ -443,12 +443,12 @@ def modify_text__2(nodes):
                 arr,
                 target_language='hin')
             if translationarray is not None:
-                log.info('modify_text: ')
-                log.info(translationarray)
+                LOG.debug('modify_text: ')
+                LOG.debug(translationarray)
                 for translation in translationarray:
                     try:
-                        # log.info('modify_text: recieved translating from server: ')
-                        # log.info(translation)
+                        # LOG.debug('modify_text: recieved translating from server: ')
+                        # LOG.debug(translation)
                         results.append(translation['translatedText'])
                     except:
                         log.error("modify_text: ERROR: while adding to the results list")
@@ -457,25 +457,25 @@ def modify_text__2(nodes):
         except:
             log.error('modify_text: ERROR: while getting data from translating server for less than 25 batch size ')
     i = 0
-    log.info('modify_text: following are the text and its translation')
+    LOG.debug('modify_text: following are the text and its translation')
     for node in nodes:
-        log.info(node.text + '\n')
+        LOG.debug(node.text + '\n')
         try:
             node.text = results[i]['tgt']
-            log.info(node.text + '\n')
+            LOG.debug(node.text + '\n')
         except Exception as e:
-            log.info('*****: ' + str(results[i]))
+            LOG.debug('*****: ' + str(results[i]))
             pass
         i = i + 1
 
 
 def convert_DOC_to_DOCX(filename):
-    log.info('convert_DOC_to_DOCX : filename is == '+filename)
+    LOG.debug('convert_DOC_to_DOCX : filename is == '+filename)
     try:
         name = filename.split('/')
         command = DOCX_CONVERTOR + filename + ' --outdir upload'
         os.system(command)
     except Exception as e:
-        log.info('convert_DOC_to_DOCX : Error Occured == '+str(e))
+        LOG.debug('convert_DOC_to_DOCX : Error Occured == '+str(e))
         pass
-    log.info('convert_DOC_to_DOCX : completed')
+    LOG.debug('convert_DOC_to_DOCX : completed')

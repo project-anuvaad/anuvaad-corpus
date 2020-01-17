@@ -15,7 +15,7 @@ Corpus.fetchAll = function (id, cb) {
             LOG.error("Unable to find corpus due to [%s]", JSON.stringify(err));
             return cb(err, null);
         }
-        // LOG.info("[%s] Corpus found",corpus);
+        // LOG.debug("[%s] Corpus found",corpus);
         async.each(corpus, function (c, callback) {
             let source = c._doc.source_edited.split('\n').join('')
             let target = c._doc.target_edited.split('\n').join('')

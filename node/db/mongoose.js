@@ -21,5 +21,5 @@ mongoose.connect(process.env.MONGO_URL ? process.env.MONGO_URL : config.MONGO_UR
 module.exports = mongoose;
 
 mongoose.connection.on('connected', function () {
-    LOG.info('Mongoose connected to ' + (process.env.MONGO_URL ? process.env.MONGO_URL : config.MONGO_URL));
+    LOG.debug('Mongoose connected to ' + (process.env.MONGO_URL ? process.env.MONGO_URL : config.MONGO_URL));
 });

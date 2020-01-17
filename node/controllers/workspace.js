@@ -50,7 +50,7 @@ exports.updateError = function (req) {
                         LOG.error(error)
                     }
                     else {
-                        LOG.info('Data updated successfully [%s]', JSON.stringify(req))
+                        LOG.debug('Data updated successfully [%s]', JSON.stringify(req))
                     }
                 })
             }
@@ -75,7 +75,7 @@ exports.handleMTErrorRequest = function (req) {
                         LOG.error(error)
                     }
                     else {
-                        LOG.info('Data updated successfully [%s]', JSON.stringify(req))
+                        LOG.debug('Data updated successfully [%s]', JSON.stringify(req))
                     }
                 })
             }
@@ -104,7 +104,7 @@ exports.handleMTRequest = function (req) {
                         if (err) {
                             LOG.error(err)
                         } else {
-                            LOG.info('File transfered [%s]', req.data.file_name)
+                            LOG.debug('File transfered [%s]', req.data.file_name)
                         }
                     })
                 }
@@ -113,7 +113,7 @@ exports.handleMTRequest = function (req) {
                         LOG.error(error)
                     }
                     else {
-                        LOG.info('Data updated successfully [%s]', JSON.stringify(req))
+                        LOG.debug('Data updated successfully [%s]', JSON.stringify(req))
                     }
                 })
             }
@@ -140,7 +140,7 @@ exports.handleSentenceRequest = function (req) {
                     if (err) {
                         LOG.error(err)
                     } else {
-                        LOG.info('File transfered [%s]', req.data.negativeTokenFile)
+                        LOG.debug('File transfered [%s]', req.data.negativeTokenFile)
                     }
                 })
                 ParagraphWorkspace.updateParagraphWorkspace(workspace._doc, (error, results) => {
@@ -148,7 +148,7 @@ exports.handleSentenceRequest = function (req) {
                         LOG.error(error)
                     }
                     else {
-                        LOG.info('Data updated successfully [%s]', JSON.stringify(req))
+                        LOG.debug('Data updated successfully [%s]', JSON.stringify(req))
                     }
                 })
             }
@@ -176,14 +176,14 @@ exports.handleTokenizeRequest = function (req) {
                     if (err) {
                         LOG.error(err)
                     } else {
-                        LOG.info('File transfered [%s]', req.data.tokenFile)
+                        LOG.debug('File transfered [%s]', req.data.tokenFile)
                     }
                 })
                 fs.copyFile(BASE_PATH_PIPELINE_1 + workspace._doc.session_id + '/' + req.data.negativeTokenFile, 'nginx/' + req.data.negativeTokenFile, function (err) {
                     if (err) {
                         LOG.error(err)
                     } else {
-                        LOG.info('File transfered [%s]', req.data.negativeTokenFile)
+                        LOG.debug('File transfered [%s]', req.data.negativeTokenFile)
                     }
                 })
                 ParagraphWorkspace.updateParagraphWorkspace(workspace._doc, (error, results) => {
@@ -191,7 +191,7 @@ exports.handleTokenizeRequest = function (req) {
                         LOG.error(error)
                     }
                     else {
-                        LOG.info('Data updated successfully [%s]', JSON.stringify(req))
+                        LOG.debug('Data updated successfully [%s]', JSON.stringify(req))
                     }
                 })
             }
@@ -204,7 +204,7 @@ exports.fetchMTWorkspaceDetail = function (req, res) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
-    LOG.info('Request came for fetchMTWorkspaceDetail [%s]', req.query.session_id)
+    LOG.debug('Request came for fetchMTWorkspaceDetail [%s]', req.query.session_id)
     let session_id = req.query.session_id
     MTWorkspace.findOne({ session_id: session_id }, function (error, workspace) {
         if (error) {
@@ -257,7 +257,7 @@ exports.migrateOldData = function (req, res) {
                                                 }
                                             }
                                         }).then(function (response) {
-                                            LOG.info(response.data)
+                                            LOG.debug(response.data)
                                             callback()
                                         })
                                     })
@@ -269,7 +269,7 @@ exports.migrateOldData = function (req, res) {
                         })
 
                     } else {
-                        LOG.info('Data not found')
+                        LOG.debug('Data not found')
                         callback()
                     }
                 })
@@ -296,7 +296,7 @@ exports.migrateOldData = function (req, res) {
                                     }
                                 }
                             }).then(function (response) {
-                                LOG.info(response.data)
+                                LOG.debug(response.data)
                                 callback()
                             })
                         })
@@ -311,7 +311,7 @@ exports.migrateOldData = function (req, res) {
             }
         })
     })
-    // LOG.info(translation_process)
+    // LOG.debug(translation_process)
     let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
     return res.status(response.http.status).json(response);
 }
@@ -321,7 +321,7 @@ exports.fetchParagraphWorkspaceDetail = function (req, res) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
-    LOG.info('Request came for fetchParagraphWorkspaceDetail [%s]', req.query.session_id)
+    LOG.debug('Request came for fetchParagraphWorkspaceDetail [%s]', req.query.session_id)
     let session_id = req.query.session_id
     ParagraphWorkspace.findOne({ session_id: session_id }, function (error, workspace) {
         if (error) {
@@ -465,14 +465,14 @@ exports.startTokenization = function (req, res) {
             if (err) {
                 LOG.error(err)
             } else {
-                LOG.info('File transfered [%s]', req.body.paragraph_workspace.token_file)
+                LOG.debug('File transfered [%s]', req.body.paragraph_workspace.token_file)
             }
         })
         fs.copyFile('nginx/' + req.body.paragraph_workspace.negative_token_file, BASE_PATH_PIPELINE_1 + workspace._doc.session_id + '/' + req.body.paragraph_workspace.negative_token_file, function (err) {
             if (err) {
                 LOG.error(err)
             } else {
-                LOG.info('File transfered [%s]', req.body.paragraph_workspace.negative_token_file)
+                LOG.debug('File transfered [%s]', req.body.paragraph_workspace.negative_token_file)
             }
         })
         ParagraphWorkspace.updateParagraphWorkspace(workspace._doc, (error, results) => {
@@ -484,18 +484,18 @@ exports.startTokenization = function (req, res) {
                     if (err) {
                         LOG.error("Unable to connect to KafkaProducer");
                     } else {
-                        LOG.info("KafkaProducer connected")
+                        LOG.debug("KafkaProducer connected")
                         let payloads = [
                             {
                                 topic: TOPIC_STAGE_1_STEP_2, messages: JSON.stringify({ data: workspace._doc }), partition: 0
                             }
                         ]
                         producer.send(payloads, function (err, data) {
-                            LOG.info('Produced')
+                            LOG.debug('Produced')
                         });
                     }
                 })
-                LOG.info('Data updated successfully [%s]', JSON.stringify(req.body.paragraph_workspace))
+                LOG.debug('Data updated successfully [%s]', JSON.stringify(req.body.paragraph_workspace))
                 let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
                 return res.status(response.http.status).json(response);
             }
@@ -539,20 +539,20 @@ exports.saveSearchReplaceWorkspace = function (req, res) {
                             if (err) {
                                 LOG.error(err)
                             } else {
-                                LOG.info('File transfered [%s]', selected_workspace.sentence_file)
+                                LOG.debug('File transfered [%s]', selected_workspace.sentence_file)
                             }
                             KafkaProducer.getInstance().getProducer((err, producer) => {
                                 if (err) {
                                     LOG.error("Unable to connect to KafkaProducer");
                                 } else {
-                                    LOG.info("KafkaProducer connected")
+                                    LOG.debug("KafkaProducer connected")
                                     let payloads = [
                                         {
                                             topic: TOPIC_STAGE_3, messages: JSON.stringify({ data: workspace }), partition: 0
                                         }
                                     ]
                                     producer.send(payloads, function (err, data) {
-                                        LOG.info('Produced')
+                                        LOG.debug('Produced')
                                     });
                                 }
                             })
@@ -602,7 +602,7 @@ exports.saveMTWorkspace = function (req, res) {
                         if (err) {
                             LOG.error(err)
                         } else {
-                            LOG.info('File transfered [%s]', selected_workspace.sentence_file)
+                            LOG.debug('File transfered [%s]', selected_workspace.sentence_file)
                         }
                         callback()
                     })
@@ -614,14 +614,14 @@ exports.saveMTWorkspace = function (req, res) {
                             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                             return res.status(apistatus.http.status).json(apistatus);
                         } else {
-                            LOG.info("KafkaProducer connected")
+                            LOG.debug("KafkaProducer connected")
                             workspace.use_latest = false
                             let payloads = [
                                 {
                                     topic: TOPIC_STAGE_2, messages: JSON.stringify({ data: workspace }), partition: 0
                                 }
                             ]
-                            LOG.info('Sending message', payloads)
+                            LOG.debug('Sending message', payloads)
                             producer.send(payloads, function (err, data) {
                                 let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
                                 return res.status(response.http.status).json(response);
@@ -679,14 +679,14 @@ exports.saveParagraphWorkspace = function (req, res) {
                                     if (err) {
                                         LOG.error("Unable to connect to KafkaProducer");
                                     } else {
-                                        LOG.info("KafkaProducer connected")
+                                        LOG.debug("KafkaProducer connected")
                                         let payloads = [
                                             {
                                                 topic: TOPIC_STAGE_1, messages: JSON.stringify({ data: data }), partition: 0
                                             }
                                         ]
                                         producer.send(payloads, function (err, data) {
-                                            LOG.info('Produced')
+                                            LOG.debug('Produced')
                                         });
                                     }
                                 })

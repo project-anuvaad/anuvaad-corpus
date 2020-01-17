@@ -14,7 +14,7 @@ TranslationProcess.findByCondition = function(condition, cb){
             LOG.error("Unable to find translation_process due to [%s]", JSON.stringify(err));
             return cb(err, null);
         }
-        LOG.info("[%s] translation_process found",translation_process);
+        LOG.debug("[%s] translation_process found",translation_process);
         return cb(null, translation_process);
     })
 }

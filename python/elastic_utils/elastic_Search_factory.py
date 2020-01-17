@@ -12,11 +12,11 @@ def get_elastic_search_client():
     es_hosts = None
     try:
         es_hosts = os.environ.get(elastic_search_hosts, default_value)
-        log.info('get_elastic_search_client elastic url == '+es_hosts)
+        LOG.debug('get_elastic_search_client elastic url == '+es_hosts)
         # if es_hosts is not None:
         #     es_hosts = es_hosts.spilit(',')
     except Exception as e:
-        log.info('get_elastic_search_client : creating connection to localhost')
+        LOG.debug('get_elastic_search_client : creating connection to localhost')
         es_hosts = ['localhost']
         pass
     try:

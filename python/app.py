@@ -141,12 +141,12 @@ try:
 
     if app_debug_logs == 'False':
         logging.disable(logging.DEBUG)
-        log.info("DEBUG LOGS InACTIVE")
+        LOG.debug("DEBUG LOGS InACTIVE")
     else:
-        log.info("DEBUG LOGS ACTIVE")
+        LOG.debug("DEBUG LOGS ACTIVE")
 except:
     logging.disable(logging.DEBUG)
-    log.info("DEBUG LOGS InACTIVE")
+    LOG.debug("DEBUG LOGS InACTIVE")
 
 try:
     t1 = threading.Thread(target=keep_on_running, name='keep_on_running')
@@ -157,12 +157,12 @@ try:
     # t3.setDaemon(True)
     # t3.start()
 except Exception as e:
-    log.info('ERROR WHILE RUNNING CUSTOM THREADS '+str(e))
+    LOG.debug('ERROR WHILE RUNNING CUSTOM THREADS '+str(e))
 
 
 @app.route('/hello', methods=['GET'])
 def hello_():
-    log.info('testing info log')
+    LOG.debug('testing info log')
     log.debug('testing debug logs')
     log.error('test error logs')
     return "hello"
@@ -174,9 +174,9 @@ def hello_():
 @app.route('/fetch-corpus', methods=['GET'])
 def fetch_corpus():
     if request.headers.get('ad-userid') is not None:
-        log.info('fetch_corpus: initiated by ' + request.headers.get('ad-userid'))
+        LOG.debug('fetch_corpus: initiated by ' + request.headers.get('ad-userid'))
     else:
-        log.info('fetch_corpus: initiated by anonymous user')
+        LOG.debug('fetch_corpus: initiated by anonymous user')
     corpus = Corpus.objects.to_json()
     res = CustomResponse(Status.SUCCESS.value, json.loads(corpus))
     return res.getres()
@@ -187,15 +187,15 @@ def fetch_corpus():
 
 @app.route('/fetch-translation-process', methods=['GET'])
 def fetch_translation_process():
-    log.info('fetch_translation_process : started at ' + str(getcurrenttime()))
+    LOG.debug('fetch_translation_process : started at ' + str(getcurrenttime()))
     try:
         transalationProcess = TranslationProcess.objects(created_by=request.headers.get('ad-userid')).order_by(
             '-basename').to_json()
         res = CustomResponse(Status.SUCCESS.value, json.loads(transalationProcess))
     except:
-        log.info('fetch-translation-process : ERROR occured')
+        LOG.debug('fetch-translation-process : ERROR occured')
         pass
-    log.info('fetch_translation_process : ended at ' + str(getcurrenttime()))
+    LOG.debug('fetch_translation_process : ended at ' + str(getcurrenttime()))
     return res.getres()
 
 
@@ -504,15 +504,15 @@ def batchsentences():
 
 @app.route('/remove-process', methods=['POST'])
 def delete_process():
-    log.info('delete_process: started at ' + str(getcurrenttime()))
+    LOG.debug('delete_process: started at ' + str(getcurrenttime()))
     try:
         basename = request.form.getlist('processname')[0]
-        log.info('delte_process : requested basename is : ' + basename)
+        LOG.debug('delte_process : requested basename is : ' + basename)
         translationProcess = TranslationProcess.objects(basename=basename).delete()
-        log.info('delete_process: ended at ' + str(getcurrenttime()))
+        LOG.debug('delete_process: ended at ' + str(getcurrenttime()))
         res = CustomResponse(Status.SUCCESS.value, basename)
     except:
-        log.info('delte_process : ERROR while processing  basename  : ' + basename)
+        LOG.debug('delte_process : ERROR while processing  basename  : ' + basename)
         res = CustomResponse(Status.FAILURE.value, basename)
     return res.getres()
 
@@ -711,7 +711,7 @@ def upload_benchmark_file():
             for f in glob.glob(app.config['UPLOAD_FOLDER'] + '/' + basename + '*'):
                 os.remove(f)
             res = None
-            log.info(error)
+            LOG.debug(error)
             if error:
                 res = {}
                 res = Status.ERR_GLOBAL_SYSTEM.value
