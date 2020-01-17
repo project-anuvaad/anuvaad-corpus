@@ -57,14 +57,14 @@ exports.assignBatch = function () {
 }
 
 var checkForEditor = function (id, username) {
-    LOG.info('Checking for [%s]', username)
+    LOG.debug('Checking for [%s]', username)
     Sentence.fetchByAssignedTo({ $ne: STATUS_ACCEPTED }, id, (err, sentences) => {
         if (err) {
             LOG.error(err)
         } else {
-            LOG.info('Sentences found [%d]', sentences.length)
+            LOG.debug('Sentences found [%d]', sentences.length)
             if (sentences.length < MIN_LIMIT) {
-                LOG.info('Syncing with data lake for %s', username)
+                LOG.debug('Syncing with data lake for %s', username)
                 Sentence.fetchByAssignedTo(STATUS_ACCEPTED, id, (err, sentences) => {
                     //Todo: send sentences to data lake before deleting
                     if (sentences && Array.isArray(sentences) && sentences.length > 0) {
@@ -72,7 +72,7 @@ var checkForEditor = function (id, username) {
                             if (err) {
                                 LOG.error(err)
                             } else {
-                                LOG.info('Sentences deleted for %s', username)
+                                LOG.debug('Sentences deleted for %s', username)
                             }
                         })
                     }
@@ -89,7 +89,7 @@ exports.saveSentences = function () {
             LOG.error(err)
         } else {
             if (!files.length) {
-                LOG.info('no files exist')
+                LOG.debug('no files exist')
             }
             else {
                 files.map((f) => {
@@ -109,7 +109,7 @@ exports.saveSentences = function () {
                                                     LOG.error(err)
                                                     callback(err)
                                                 }
-                                                LOG.info('Successfully moved [%s]', f)
+                                                LOG.debug('Successfully moved [%s]', f)
                                                 callback(null)
                                             })
                                         },
@@ -119,7 +119,7 @@ exports.saveSentences = function () {
                                                     LOG.error(err)
                                                     callback(err)
                                                 }
-                                                LOG.info('Successfully moved [%s]', target_file_name)
+                                                LOG.debug('Successfully moved [%s]', target_file_name)
                                             })
                                             callback(null)
                                         }
@@ -163,7 +163,7 @@ var saveMetaDataForSentences = function (source, target) {
             LOG.error(err)
         }
         else {
-            LOG.info(doc)
+            LOG.debug(doc)
         }
     })
 

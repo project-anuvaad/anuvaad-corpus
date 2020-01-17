@@ -21,7 +21,7 @@ admin_api = Blueprint('admin_api', __name__)
 
 @admin_api.route("/create-user-oauth", methods=['POST'])
 def create_user_oauth():
-    log.info('create_user_oauth : started')
+    LOG.debug('create_user_oauth : started')
     body = request.get_json()
     user_name = body['username']
 
@@ -31,14 +31,14 @@ def create_user_oauth():
         res = CustomResponse(Status.SUCCESS.value, response)
         return res.getres()
     except Exception as e:
-        log.info('create_user_oauth : error ' + str(e))
+        LOG.debug('create_user_oauth : error ' + str(e))
         res = CustomResponse(Status.ERROR_GATEWAY.value, None)
         return res.getres()
 
 
 @admin_api.route("/create-user", methods=['POST'])
 def create_user_basic_auth():
-    log.info('create_user_basic_auth : started')
+    LOG.debug('create_user_basic_auth : started')
     body = request.get_json()
     user_name = body['username']
     firstname = body['firstname']
@@ -53,24 +53,24 @@ def create_user_basic_auth():
             profile = profile.json()
             if profile['isActive']:
                 # _id = profile['']
-                log.info('create_user_oauth : profile is = : ' + str(profile))
+                LOG.debug('create_user_oauth : profile is = : ' + str(profile))
                 res = CustomResponse(Status.USER_ALREADY_EXISTS.value, None)
                 return res.getres()
         except:
             pass
 
-        log.info('here')
+        LOG.debug('here')
         create_response = shell.create_user(user_name, firstname, lastname)
-        log.info('user created')
+        LOG.debug('user created')
         shell_response = shell.create_basic_auth_credentials(user_name, password)
-        log.info('basic auth created')
+        LOG.debug('basic auth created')
         response = shell.create_oauth(user_name)
-        log.info('oauth created')
+        LOG.debug('oauth created')
         user = shell.get_user_info(user_name)
-        log.info(str(user))
+        LOG.debug(str(user))
         scope_response = shell.scope_add(user['id'], scope)
         time.sleep(3)
-        log.info('scope added')
+        LOG.debug('scope added')
         if high_court_code is not None:
             user_high_court = Userhighcourt(high_court_code=high_court_code, user_id=user['id'])
             user_high_court.save()
@@ -78,14 +78,14 @@ def create_user_basic_auth():
         return res.getres()
 
     except Exception as e:
-        log.info(' create_user : error ' + str(e))
+        LOG.debug(' create_user : error ' + str(e))
         res = CustomResponse(Status.ERROR_GATEWAY.value, None)
         return res.getres()
 
 
 @admin_api.route("/update-password", methods=['POST'])
 def update_password():
-    log.info('update_password : started')
+    LOG.debug('update_password : started')
     body = request.get_json()
     user_id = body['user_id']
     user_name = body['user_name']
@@ -98,7 +98,7 @@ def update_password():
         return res.getres()
 
     if new_password is None or new_password.__len__() < 6:
-        log.info('update_password : password is too weak, at least provide 6 characters')
+        LOG.debug('update_password : password is too weak, at least provide 6 characters')
         res = CustomResponse(Status.ERROR_WEAK_PASSWORD.value, None)
         return res.getres()
     
@@ -112,7 +112,7 @@ def update_password():
     response = requests.put(req, json=data)
     res = response.json()
     status = res['status']
-    log.info("status == " + status)
+    LOG.debug("status == " + status)
     if not status == 'Deactivated':
         res = CustomResponse(Status.ERROR_GATEWAY.value, None)
         return res.getres()
@@ -130,19 +130,19 @@ def update_password():
 
 @admin_api.route("/update-password-admin", methods=['POST'])
 def update_password_admin():
-    log.info('update_password : started')
+    LOG.debug('update_password : started')
     body = request.get_json()
     user_id = body['user_id']
     high_court_code = body['high_court_code']
     new_password = body['new_password']
-    log.info("high_court_code == " + high_court_code)
+    LOG.debug("high_court_code == " + high_court_code)
     if high_court_code is not None:
         userHighCourt = Userhighcourt.objects(user_id=user_id)
         if userHighCourt is not None  and len(userHighCourt) > 0:
-            log.info('high court with user exist '+str(len(userHighCourt)))
+            LOG.debug('high court with user exist '+str(len(userHighCourt)))
             userHighCourt.update(set__high_court_code=high_court_code)
         else:
-            log.info('saving high court with user')
+            LOG.debug('saving high court with user')
             user_high_court = Userhighcourt(high_court_code=high_court_code, user_id=user_id)
             user_high_court.save()
     profile = requests.get(PROFILE_REQ_URL + user_id).content
@@ -154,7 +154,7 @@ def update_password_admin():
     response = requests.put(req, json=data)
     res = response.json()
     status = res['status']
-    log.info("status == " + status)
+    LOG.debug("status == " + status)
     if not status == 'Deactivated':
         res = CustomResponse(Status.ERROR_GATEWAY.value, None)
         return res.getres()
@@ -162,7 +162,7 @@ def update_password_admin():
     data = {"credential": {"password":new_password,"scopes":roles_},"consumerId":user_id,"type":"basic-auth"}
     if new_password is not None or new_password.__len__() == 0:
         if new_password.__len__() < 6:
-            log.info('update_password : password is too weak, at least provide 6 characters')
+            LOG.debug('update_password : password is too weak, at least provide 6 characters')
             res = CustomResponse(Status.ERROR_WEAK_PASSWORD.value, None)
             return res.getres()
         else:
@@ -202,10 +202,10 @@ def roles():
 
 @admin_api.route('/get-profile', methods=['GET'])
 def get_user_profile():
-    log.info('get_user_profile : started at ' + str(getcurrenttime()))
+    LOG.debug('get_user_profile : started at ' + str(getcurrenttime()))
     if request.headers.get('ad-userid') is not None:
         user_id = request.headers.get('ad-userid')
-        log.info('get_user_profile : userid = ' + user_id)
+        LOG.debug('get_user_profile : userid = ' + user_id)
         res = None
         try:
             profile = requests.get(PROFILE_REQ_URL + request.headers.get('ad-userid')).content
@@ -218,7 +218,7 @@ def get_user_profile():
             log.error(e)
             res = CustomResponse(Status.FAILURE.value,
                                  'user does not exists with user-id :' + request.headers.get('ad-userid'))
-        log.info('get_user_profile : ended at ' + str(getcurrenttime()))
+        LOG.debug('get_user_profile : ended at ' + str(getcurrenttime()))
         return res.getres()
     log.error('get_user_profile : Error : userid not provided')
     res = CustomResponse(Status.FAILURE.value, 'please provide valid userid ')
@@ -227,7 +227,7 @@ def get_user_profile():
 
 @admin_api.route('/get-profiles', methods=['POST'])
 def get_user_profiles():
-    log.info('get_user_profile : started at ' + str(getcurrenttime()))
+    LOG.debug('get_user_profile : started at ' + str(getcurrenttime()))
     body = request.get_json()
     if body['userids'] is None or not isinstance(body['userids'], list):
         res = CustomResponse(
@@ -235,7 +235,7 @@ def get_user_profiles():
         return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
     user_profiles = []
     for user_id in body['userids']:
-        log.info('get_user_profile : userid = ' + user_id)
+        LOG.debug('get_user_profile : userid = ' + user_id)
         res = None
         try:
             profile = requests.get(PROFILE_REQ_URL + user_id).content
@@ -263,8 +263,8 @@ def check_password(username, password):
     headers = {"Authorization": "Basic %s" % encodedStr}
     response = requests.get('http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/app/hello', headers=headers)
 
-    log.info('check_password: response is ')
-    log.info(response.__dict__)
+    LOG.debug('check_password: response is ')
+    LOG.debug(response.__dict__)
     try:
         if response.__dict__['status_code'] == 200:
             return True

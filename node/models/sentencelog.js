@@ -16,7 +16,7 @@ SentenceLog.save = function(sentencelogs, cb){
         if (err) {
             return cb(err, null)
         } else {
-            LOG.info('%s sentencelogs was successfully stored.', JSON.stringify(docs));
+            LOG.debug('%s sentencelogs was successfully stored.', JSON.stringify(docs));
             return cb(null, docs)
         }
     })

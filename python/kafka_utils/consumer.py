@@ -16,7 +16,7 @@ def get_consumer(topic):
             bootstrap_servers=[bootstrap_server],
             value_deserializer=lambda x: handle_json(x))
 
-        log.info('get_consumer : consumer returned for topic = ' + topic)
+        LOG.debug('get_consumer : consumer returned for topic = ' + topic)
         return consumer
     except Exception as e:
         log.error('get_consumer : ERROR OCCURRED for getting consumer with topic = ' + topic)

@@ -88,7 +88,7 @@ exports.translateWithHemat = function (req, res) {
                         Sentence.saveSentences([doc_nmt], function (err, sentences_nmt) {
                             Sentence.saveSentences([doc], function (err, sentences_hemat) {
                                 if (err) {
-                                    LOG.info(err)
+                                    LOG.debug(err)
                                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                                     return res.status(apistatus.http.status).json(apistatus);
                                 }
@@ -193,7 +193,7 @@ exports.fetchBenchmarkCompareSentences = function (req, res) {
                                             })
                                             Sentence.saveSentences(sentences_arr, function (err, sentences) {
                                                 if (err) {
-                                                    LOG.info(err)
+                                                    LOG.debug(err)
                                                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                                                     return res.status(apistatus.http.status).json(apistatus);
                                                 }
@@ -215,7 +215,7 @@ exports.fetchBenchmarkCompareSentences = function (req, res) {
                             })
                         }
                         else {
-                            LOG.info('Model not found for benchmark ', benchmark.name)
+                            LOG.debug('Model not found for benchmark ', benchmark.name)
                             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_NOTFOUND, COMPONENT).getRspStatus()
                             return res.status(apistatus.http.status).json(apistatus);
                         }
@@ -297,7 +297,7 @@ var translateByAnuvaadHemat = function (basename, sentences, sentences_hemat, mo
 var callTranslationApi = function (sentences, endpoint, is_hemat, req_arr, res, cb) {
     let data_arr = []
     let req_start_time = new Date().getTime()
-    LOG.info('Calling api', endpoint)
+    LOG.debug('Calling api', endpoint)
     axios
         .post(endpoint, req_arr)
         .then(res_anuvaad => {
@@ -489,7 +489,7 @@ var translateByAnuvaad = function (basename, sentences, modelid, totalcount, res
                     function (callback) {
                         async.each(data_arr, function (d, callback) {
                             Sentence.updateSentenceData(d, function (err, doc) {
-                                LOG.info(err)
+                                LOG.debug(err)
                                 callback()
                             })
 
@@ -573,7 +573,7 @@ var translateByGoogle = function (basename, sentences, modelid, totalcount, res)
                     function (callback) {
                         async.each(data_arr, function (d, callback) {
                             Sentence.updateSentenceData(d, function (err, doc) {
-                                LOG.info(err)
+                                LOG.debug(err)
                                 callback()
                             })
 

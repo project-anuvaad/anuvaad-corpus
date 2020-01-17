@@ -19,7 +19,7 @@ def create_index(index_name, request_body):
         }
     try:
         res = client.indices.create(index=index_name, body=request_body)
-        log.info('create_index : index name = ' + index_name + ' and requestBody = '
+        LOG.debug('create_index : index name = ' + index_name + ' and requestBody = '
                  + str(request_body) + 'acknowledged ' + str(res['acknowledged']))
         return res['acknowledged']
     except Exception as e:
@@ -31,7 +31,7 @@ def create_dashboard_report(report, report_index):
     try:
         result = client.index(index=report_index,
                               body=report)
-        log.info('create_sentence : sentence create with id = ' + result['_id'] + ' at index = ' + report_index)
+        LOG.debug('create_sentence : sentence create with id = ' + result['_id'] + ' at index = ' + report_index)
         return result['_id']
     except Exception as e:
         log.error('create_dashboard_report: ERROR OCCURRED WHILE CREATING REPORT: for doc : ' +
@@ -47,7 +47,7 @@ def create_sentence(sentence, sentence_index):
                                     parallel_corpus_id: sentence[parallel_corpus_id],
                                     lang_1: sentence[lang_1], created_date: sentence[created_date],
                                     lang_2: sentence[lang_2], created_by: sentence[created_by], DOMAIN: sentence[DOMAIN]})
-        log.info('create_sentence : sentence create with id = ' + result['_id'] + ' at index = ' + sentence_index)
+        LOG.debug('create_sentence : sentence create with id = ' + result['_id'] + ' at index = ' + sentence_index)
         return result['_id']
     except Exception as e:
         log.error('create_sentence: ERROR OCCURRED WHILE CREATING SENTENCE: for sentence : ' +
@@ -56,7 +56,7 @@ def create_sentence(sentence, sentence_index):
 
 
 def update_sentence(_id, sentence, sentence_index):
-    log.info('update_sentence : _id = ' + _id + ' update_data = ' + sentence)
+    LOG.debug('update_sentence : _id = ' + _id + ' update_data = ' + sentence)
     sen = validate_update_sentence(sentence)
     try:
         result = client.update(index=sentence_index, id=_id, body={'doc': sen})
@@ -122,7 +122,7 @@ def validate_update_sentence(sentence):
         raise Exception('{} must be a dict, but was: {}'.format('sentence', type(sentence[metadata])))
 
     validate_pc_id(sentence[parallel_corpus_id])
-    log.info('validate_update_sentence : sentence received :' + str(sentence))
+    LOG.debug('validate_update_sentence : sentence received :' + str(sentence))
     sen = Sentence(sentence)
     sen[metadata] = sentence[metadata]
     return sen
@@ -139,7 +139,7 @@ def validate_create_sentence(sentence):
     validate_is_str(sentence[created_by], created_by)
     validate_is_str(sentence[DOMAIN], DOMAIN)
     validate_pc_id(sentence[parallel_corpus_id])
-    log.info('validate_create_sentence : sentence received :' + str(sentence))
+    LOG.debug('validate_create_sentence : sentence received :' + str(sentence))
     return Sentence(sentence)
 
 

@@ -20,7 +20,7 @@ MTWorkspace.save = function (mtWorkspaces, cb) {
         if (err) {
             return cb(err, null)
         } else {
-            LOG.info('%s MTWorkspace was successfully stored.', JSON.stringify(docs));
+            LOG.debug('%s MTWorkspace was successfully stored.', JSON.stringify(docs));
             return cb(null, docs)
         }
     })

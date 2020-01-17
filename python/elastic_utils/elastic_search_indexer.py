@@ -15,7 +15,7 @@ def sentence_creator():
     for msg in consumer:
         try:
             data = msg.value['data']
-            log.info('sentence_creator : message received = ' + str(data))
+            LOG.debug('sentence_creator : message received = ' + str(data))
             if data is not None:
                 index = get_index_for_sentence(data)
                 create_sentence(data, index)
