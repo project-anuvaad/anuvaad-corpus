@@ -3,6 +3,7 @@ var LOG = require('../logger/logger').logger
 
 
 function initTracer(serviceName) {
+    LOG.info(process.env.JAEGER_SERVICE)
     const config = {
         serviceName: serviceName,
         reporter: {
