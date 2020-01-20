@@ -27,19 +27,19 @@ def modify_text_on_first_page_using_model(nodes):
     if not nodes == None:
         for node in nodes:
             if not node.text == '':
-                LOG.debug('modify_text_on_first_page_using_model : id == '+node.attrib['id'])
-                LOG.debug('modify_text_on_first_page_using_model : text before translation == ' + node.text)
+                log.info('modify_text_on_first_page_using_model : id == '+node.attrib['id'])
+                log.info('modify_text_on_first_page_using_model : text before translation == ' + node.text)
                 node.text = call_translate(node.text)
-                LOG.debug('modify_text_on_first_page_using_model : text after translation == ' + node.text)
+                log.info('modify_text_on_first_page_using_model : text after translation == ' + node.text)
 
      
 def modify_text_on_first_page_using_model(nodes, modelid, endpoint):
     if not nodes == None:
         for node in nodes:
             if not node.text == '':
-                LOG.debug('modify_text_on_first_page_using_model : text before translation == '+node.text)
+                log.info('modify_text_on_first_page_using_model : text before translation == '+node.text)
                 node.text = call_translate(node.text, modelid, endpoint)
-                LOG.debug('modify_text_on_first_page_using_model : text after translation == '+node.text)
+                log.info('modify_text_on_first_page_using_model : text after translation == '+node.text)
 
 
 def modify_text_on_first_page(nodes):
@@ -51,7 +51,7 @@ def modify_text_on_first_page(nodes):
             if not node.text.strip() == '':
                 index = node.text.rfind(')')
                 index_c_a_n = node.text.lower().find('civil appeal no')
-                LOG.debug('text before lookup ' + node.text.lower())
+                log.info('text before lookup ' + node.text.lower())
                 if not index == -1:
                     text = node.text
                     node.text = text[:index + 1]
@@ -70,7 +70,7 @@ def modify_text_on_first_page(nodes):
 
                 else:
                     node.text = get_from_lookup(node.text)
-                LOG.debug('text after lookup ' + node.text)
+                log.info('text after lookup ' + node.text)
 
 
 def get_numeric_translation(text):
@@ -90,17 +90,17 @@ def get_numeric_translation(text):
 def call_translate(text_):
     try:
         arr = []
-        LOG.debug(text_)
+        log.info(text_)
         arr.append({'src': text_, 'id': 8, 's_id': '1'})
         res = requests.post('http://18.236.30.130:3003/translator/translation_en', json=arr)
         dictFromServer = res.json()
         if dictFromServer['response_body'] is not None:
-            LOG.debug('call_translate : ')
-            LOG.debug(dictFromServer['response_body'])
+            log.info('call_translate : ')
+            log.info(dictFromServer['response_body'])
             for translation in dictFromServer['response_body']:
                 try:
-                    # LOG.debug('docx_translate_helper:modify_text : recieved translating from server : ')
-                    LOG.debug(translation)
+                    # log.info('docx_translate_helper:modify_text : recieved translating from server : ')
+                    log.info(translation)
                     return (translation['tgt'])
                 except:
                     log.error("call_translate : ERROR : while adding to the results list")
@@ -113,17 +113,17 @@ def call_translate(text_):
 def call_translate(text_, modelid, endpoint):
     try :       
                 arr = []
-                LOG.debug(text_)
+                log.info(text_)
                 arr.append({'src': text_, 'id': modelid,'s_id':'1'})
                 res = requests.post('http://18.236.30.130:3003/translator/'+endpoint, json=arr)
                 dictFromServer = res.json()
                 if dictFromServer['response_body'] is not None:
-                    LOG.debug('call_translate : ') 
-                    LOG.debug( dictFromServer['response_body'])
+                    log.info('call_translate : ') 
+                    log.info( dictFromServer['response_body'])
                     for translation in dictFromServer['response_body']:
                         try : 
-                            # LOG.debug('docx_translate_helper:modify_text : recieved translating from server : ') 
-                            LOG.debug(translation)
+                            # log.info('docx_translate_helper:modify_text : recieved translating from server : ') 
+                            log.info(translation)
                             return (translation['tgt'])
                         except:
                             log.error("call_translate : ERROR : while adding to the results list")
@@ -137,7 +137,7 @@ def get_from_lookup(text_):
     lookup_data = update_lookup_data()
 
     try:
-        LOG.debug("get_from_lookup : data is " + lookup_data[text_.strip().lower()])
+        log.info("get_from_lookup : data is " + lookup_data[text_.strip().lower()])
         lookup = lookup_data[text_.strip().lower()]
     except:
         lookup = None
@@ -160,7 +160,7 @@ def get_first_page_nodes(nodes):
         first_page.append(node)
         if i is False:
             return first_page
-        LOG.debug("get_first_page_nodes: text == " + node.text)
+        log.info("get_first_page_nodes: text == " + node.text)
         if not (node.text.strip()) == '':
             if node.text.strip().lower() == 'judgment' or node.text.strip().lower() == 'j u d g m e n t':
                 i = False
@@ -169,7 +169,7 @@ def get_first_page_nodes(nodes):
 
 
 def get_nodes_after_f_page(nodes, fpage_len):
-    LOG.debug("get_nodes_after_f_page: started")
+    log.info("get_nodes_after_f_page: started")
     node_list = []
     i = 0
     for node in nodes:

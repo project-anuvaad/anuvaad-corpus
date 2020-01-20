@@ -24,6 +24,9 @@ from db.conmgr import getinstance
 from db.conmgr_mongo import connectmongo
 from utils.pdftoimage import converttoimage
 from utils.imagetotext import convertimagetotext
+
+from jaeger.middleware import LoggerMiddleware
+
 from utils.imagetoalto import convertimagetoalto
 from utils.removetextv2 import removetext
 from utils.imagetopdf import converttopdf
@@ -53,6 +56,8 @@ import threading
 import atexit
 from utils.thread_manager import thread_manager
 from apscheduler.schedulers.background import BackgroundScheduler
+# from jaeger_client import Config
+
 
 
 """ Logging Config, for debug logs please set env 'app_debug_logs' to True  """
@@ -106,6 +111,7 @@ LANGUAGES = {
 }
 
 app = Flask(__name__)
+# app.wsgi_app = LoggerMiddleware(app.wsgi_app)
 
 CORS(app)
 
@@ -126,6 +132,40 @@ es = getinstance()
 words = []
 connectmongo()
 
+# config = Config(
+#         config={ # usually read from some yaml config
+#             'sampler': {
+#                 'type': 'const',
+#                 'param': 1,
+#             },
+#             'logging': True,
+#         },
+#         service_name='python-test',
+#         validate=True,
+#     )
+#     # this call also sets opentracing.tracer
+# tracer = config.initialize_tracer()
+
+
+# @app.before_request
+# def before():
+#     global tracer
+#     print("Printing request")
+#     print(request.headers)
+#     with tracer.start_span('TestSpan') as span:
+#         span.log_kv({'event': 'test message', 'life': 42})
+#     pass
+
+# @app.after_request
+# def after(response):
+#     global tracer
+#     print("Printing response")
+#     print(response.status)
+#     print(response.headers)
+#     print(response.get_data())
+#     tracer.close() 
+#     return response
+
 # scheduler = BackgroundScheduler()
 # scheduler.add_job(func=thread_manager, trigger="interval", minutes=2)
 # scheduler.start()
@@ -141,12 +181,12 @@ try:
 
     if app_debug_logs == 'False':
         logging.disable(logging.DEBUG)
-        LOG.debug("DEBUG LOGS InACTIVE")
+        log.info("DEBUG LOGS InACTIVE")
     else:
-        LOG.debug("DEBUG LOGS ACTIVE")
+        log.info("DEBUG LOGS ACTIVE")
 except:
     logging.disable(logging.DEBUG)
-    LOG.debug("DEBUG LOGS InACTIVE")
+    log.info("DEBUG LOGS InACTIVE")
 
 try:
     t1 = threading.Thread(target=keep_on_running, name='keep_on_running')
@@ -157,13 +197,13 @@ try:
     # t3.setDaemon(True)
     # t3.start()
 except Exception as e:
-    LOG.debug('ERROR WHILE RUNNING CUSTOM THREADS '+str(e))
+    log.info('ERROR WHILE RUNNING CUSTOM THREADS '+str(e))
 
 
 @app.route('/hello', methods=['GET'])
 def hello_():
-    LOG.debug('testing info log')
-    log.debug('testing debug logs')
+    log.info('testing info log')
+    log.info('testing debug logs')
     log.error('test error logs')
     return "hello"
 
@@ -174,9 +214,9 @@ def hello_():
 @app.route('/fetch-corpus', methods=['GET'])
 def fetch_corpus():
     if request.headers.get('ad-userid') is not None:
-        LOG.debug('fetch_corpus: initiated by ' + request.headers.get('ad-userid'))
+        log.info('fetch_corpus: initiated by ' + request.headers.get('ad-userid'))
     else:
-        LOG.debug('fetch_corpus: initiated by anonymous user')
+        log.info('fetch_corpus: initiated by anonymous user')
     corpus = Corpus.objects.to_json()
     res = CustomResponse(Status.SUCCESS.value, json.loads(corpus))
     return res.getres()
@@ -187,15 +227,15 @@ def fetch_corpus():
 
 @app.route('/fetch-translation-process', methods=['GET'])
 def fetch_translation_process():
-    LOG.debug('fetch_translation_process : started at ' + str(getcurrenttime()))
+    log.info('fetch_translation_process : started at ' + str(getcurrenttime()))
     try:
         transalationProcess = TranslationProcess.objects(created_by=request.headers.get('ad-userid')).order_by(
             '-basename').to_json()
         res = CustomResponse(Status.SUCCESS.value, json.loads(transalationProcess))
     except:
-        LOG.debug('fetch-translation-process : ERROR occured')
+        log.info('fetch-translation-process : ERROR occured')
         pass
-    LOG.debug('fetch_translation_process : ended at ' + str(getcurrenttime()))
+    log.info('fetch_translation_process : ended at ' + str(getcurrenttime()))
     return res.getres()
 
 
@@ -504,15 +544,15 @@ def batchsentences():
 
 @app.route('/remove-process', methods=['POST'])
 def delete_process():
-    LOG.debug('delete_process: started at ' + str(getcurrenttime()))
+    log.info('delete_process: started at ' + str(getcurrenttime()))
     try:
         basename = request.form.getlist('processname')[0]
-        LOG.debug('delte_process : requested basename is : ' + basename)
+        log.info('delte_process : requested basename is : ' + basename)
         translationProcess = TranslationProcess.objects(basename=basename).delete()
-        LOG.debug('delete_process: ended at ' + str(getcurrenttime()))
+        log.info('delete_process: ended at ' + str(getcurrenttime()))
         res = CustomResponse(Status.SUCCESS.value, basename)
     except:
-        LOG.debug('delte_process : ERROR while processing  basename  : ' + basename)
+        log.info('delte_process : ERROR while processing  basename  : ' + basename)
         res = CustomResponse(Status.FAILURE.value, basename)
     return res.getres()
 
@@ -711,7 +751,7 @@ def upload_benchmark_file():
             for f in glob.glob(app.config['UPLOAD_FOLDER'] + '/' + basename + '*'):
                 os.remove(f)
             res = None
-            LOG.debug(error)
+            log.info(error)
             if error:
                 res = {}
                 res = Status.ERR_GLOBAL_SYSTEM.value

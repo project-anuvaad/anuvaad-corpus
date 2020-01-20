@@ -19,12 +19,12 @@ def create_basic_auth_credentials(username, password):
         (output, err) = p.communicate()
         data = json.loads(output.decode('utf-8'))
         return data
-        # LOG.debug(p)
+        # log.info(p)
         # (output, err) = p.communicate()
         # data = json.loads(output.decode('utf-8'))
         # return 'success'
     except Exception as e:
-        LOG.debug(e)
+        log.info(e)
         return None
 
 
@@ -32,10 +32,10 @@ def create_user(username, firstname, lastname):
     try:
         command = CREATE_USER_BASE + '\'username=' + username + \
             '\' -p \'firstname=' + firstname + '\' -p \'lastname=' + lastname + '\' '
-        LOG.debug(command)
+        log.info(command)
         os.system(command)
         # (output, err) = p.communicate()
-        # LOG.debug(str(output))
+        # log.info(str(output))
         # log.error(str(err))
         # data = json.loads(output.decode('utf-8'))
         return 'success'
@@ -48,13 +48,13 @@ def scope_add(username, scopes):
         scope = ''
         for s in scopes:
             scope = scope + s + ' '
-        LOG.debug('scope is ' + scope)
+        log.info('scope is ' + scope)
         command = 'eg credential:scopes add -t basic-auth --id ' + username + ' ' + scope
-        LOG.debug(command)
+        log.info(command)
         os.system(command)
         # (output, err) = p.communicate()
         # data = json.loads(output.decode('utf-8'))
-        # LOG.debug(' scope_add : response for username = ' + username + ', scope = ' + str(data))
+        # log.info(' scope_add : response for username = ' + username + ', scope = ' + str(data))
         return 'success'
     except Exception as e:
         return None
@@ -63,7 +63,7 @@ def scope_add(username, scopes):
 def create_oauth(user_name):
     try:
         command = 'eg credentials create -c ' + user_name + ' -t oauth2'
-        LOG.debug(command)
+        log.info(command)
         os.system(command)
         # (output, err) = p.communicate()
         # data = json.loads(output.decode('utf-8'))
