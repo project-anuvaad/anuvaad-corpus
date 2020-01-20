@@ -35,7 +35,7 @@ supported_source_languages = ['en']
 @indexer_api.route('/upload-corpus', methods=['POST'])
 def upload_corpus():
     start_time = int(round(time.time() * 1000))
-    LOG.debug('upload_corpus: started at ' + str(start_time))
+    log.info('upload_corpus: started at ' + str(start_time))
     current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
     req_data = request.get_json()
     validate_upload_corpus_request(req_data)
@@ -53,7 +53,7 @@ def upload_corpus():
     try:
         parallel_corpus_id = req_data[constants.parallel_corpus_id]
     except Exception as e:
-        LOG.debug('upload_corpus :  parallel corpus id is NOT present')
+        log.info('upload_corpus :  parallel corpus id is NOT present')
 
     for sen in sentences:
         data = {constants.text_lang_1: sen['src'], constants.text_lang_2: sen['tar'],
@@ -67,20 +67,20 @@ def upload_corpus():
 
     res = CustomResponse(Status.SUCCESS.value, 'no. of sentences are ' + str(no_of_sentences))
     end_time = int(round(time.time() * 1000))
-    LOG.debug('upload_corpus: ended at ' + str(end_time) + 'total time elapsed = ' + str(end_time - start_time))
+    log.info('upload_corpus: ended at ' + str(end_time) + 'total time elapsed = ' + str(end_time - start_time))
     return res.getres()
 
 
 @indexer_api.route('/update-corpus', methods=['POST'])
 def update_corpus():
     start_time = int(round(time.time() * 1000))
-    LOG.debug('update_corpus: started at ' + str(start_time))
+    log.info('update_corpus: started at ' + str(start_time))
     current_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
     req_data = request.get_json()
     validate_upload_corpus_request(req_data)
     res = CustomResponse(Status.SUCCESS.value, 'no. of sentences are ')
     end_time = int(round(time.time() * 1000))
-    LOG.debug('upload_corpus: ended at ' + str(end_time) + 'total time elapsed = ' + str(end_time - start_time))
+    log.info('upload_corpus: ended at ' + str(end_time) + 'total time elapsed = ' + str(end_time - start_time))
     return res.getres()
 
 
@@ -128,7 +128,7 @@ def validate_mandatory_parameter(data, key, type_):
         if not isinstance(value, type_):
             raise Exception('{} must be a {}, but was: {}'.format(key, type_, type(value)))
     except Exception as e:
-        LOG.debug('validate_mandatory_parameter : error occurred for ' + key + ', error is ' + str(e))
+        log.info('validate_mandatory_parameter : error occurred for ' + key + ', error is ' + str(e))
         raise Exception('{} must be a {}, but was: {}, please provide a valid value '.format(key, type_, None))
 
 
@@ -140,5 +140,5 @@ def validate_parameter(data, key, type_):
         if type_ is str and value is '':
             raise Exception('{} must be a valid string, but was empty'.format(key))
     except Exception as e:
-        LOG.debug('validate_parameter : error occurred for ' + key + ', error is ' + str(e))
+        log.info('validate_parameter : error occurred for ' + key + ', error is ' + str(e))
         pass

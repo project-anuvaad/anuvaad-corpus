@@ -13,7 +13,7 @@ def thread_manager():
     thread_set = set()
 
     for t in threading.enumerate():
-        LOG.debug('thread_manager : active threads are : ' + str(t.getName()))
+        log.info('thread_manager : active threads are : ' + str(t.getName()))
         thread_set.add(t.getName())
 
     for thread in MUST_RUNNING_THREADS:
@@ -28,21 +28,21 @@ def thread_manager():
 
 
 def run_sentence_creator():
-    LOG.debug('run_sentence_creator : starting sentence_creator thread')
+    log.info('run_sentence_creator : starting sentence_creator thread')
     t1 = threading.Thread(target=sentence_creator, name='sentence_creator')
     # t1.setDaemon(True)
     t1.start()
 
 
 def run_write_document():
-    LOG.debug('run_write_document : starting write_document thread')
+    log.info('run_write_document : starting write_document thread')
     t1 = threading.Thread(target=write_document, name='write_document')
     # t1.setDaemon(True)
     t1.start()
 
 
 def run_keep_on_running():
-    LOG.debug('run_keep_on_running : starting keep_on_running thread')
+    log.info('run_keep_on_running : starting keep_on_running thread')
     t1 = threading.Thread(target=keep_on_running, name='keep_on_running')
     # t1.setDaemon(True)
     t1.start()

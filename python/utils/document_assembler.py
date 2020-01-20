@@ -18,7 +18,7 @@ def keep_on_running():
         for msg in consumer:
             try:
                 message = msg.value['out']
-                LOG.debug('keep_on_running : message received = ' + str(message))
+                log.info('keep_on_running : message received = ' + str(message))
                 sentences = message['response_body']
                 status = message['status']
                 if status['statusCode'] == 200:
@@ -35,19 +35,19 @@ def keep_on_running():
 
 
 def process_sentence(sentences):
-    LOG.debug('process_sentence : started')
+    log.info('process_sentence : started')
     sentence = sentences[0]
     node_id = sentence['n_id']
     text_node = TextNode.objects(node_id=node_id)
     if text_node is not None:
         text_node_dict = json.loads(text_node.to_json())
-        LOG.debug('process_sentence : text_node is ==' + str(text_node_dict))
+        log.info('process_sentence : text_node is ==' + str(text_node_dict))
         for sentence in sentences:
-            LOG.debug('process_sentence : sentence is =='+str(sentence))
+            log.info('process_sentence : sentence is =='+str(sentence))
             s_id = sentence['s_id']
             text = sentence['tgt']
             sen = {'tgt': text, 's_id': s_id}
-            LOG.debug('process_sentence : sen objects is = '+str(sen))
+            log.info('process_sentence : sen objects is = '+str(sen))
 
             text_node_dict[0]['sentences'].append(sen)
         ttl_sentences = len(sentences)
@@ -60,11 +60,11 @@ def process_sentence(sentences):
             doc_nodes_dict = json.loads(doc_nodes.to_json())
             nodes_received = doc_nodes_dict[0]['nodes_received']
             nodes_sent = doc_nodes_dict[0]['nodes_sent']
-            LOG.debug('process_sentence : nodes sent ='+str(nodes_sent))
+            log.info('process_sentence : nodes sent ='+str(nodes_sent))
             nodes_received = nodes_received + 1
-            LOG.debug('process_sentence : nodes_received ='+str(nodes_received))
+            log.info('process_sentence : nodes_received ='+str(nodes_received))
             if nodes_received == nodes_sent:
-                LOG.debug('process_sentence : producing nodes for writing')
+                log.info('process_sentence : producing nodes for writing')
                 doc_nodes.update(set__nodes_received=nodes_received, is_complete=True)
                 write_document_basename(basename)
                 # producer = get_producer()

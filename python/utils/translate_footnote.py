@@ -22,13 +22,13 @@ def translate_footer(filename, model_id, url_end_point):
     try:    
         if zipfile.is_zipfile(filename):
             with zipfile.ZipFile(filename) as file:
-                LOG.debug('translate_footnote:get_footer_xml_list : Extracting all files...')
+                log.info('translate_footnote:get_footer_xml_list : Extracting all files...')
                 file.extractall()
-                LOG.debug('Done!')
+                log.info('Done!')
                 i = 1
                 while has_more :    
                     try :    
-                        LOG.debug('translate_footnote:get_footer_xml_list : reading file :'+'word/'+footer_file_name +str(i) + '.xml' )
+                        log.info('translate_footnote:get_footer_xml_list : reading file :'+'word/'+footer_file_name +str(i) + '.xml' )
                         xml_content = file.read('word/'+footer_file_name + str(i)+ '.xml')
                         footer = get_xml_tree(xml_content)
                         footers.append(footer)
