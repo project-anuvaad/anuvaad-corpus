@@ -83,7 +83,7 @@ KafkaConsumer.getInstance().getConsumer((err, consumer) => {
             WorkspaceController.handleWriteToFileRequest(data)
             break;
           default:
-            LOG.debug('Path not found',data.path)
+            LOG.debug('Path not found', data.path)
             break
         }
       }
@@ -114,7 +114,7 @@ KafkaConsumer.getInstance().getErrorConsumer((err, consumer) => {
               WorkspaceController.handleMTErrorRequest(data)
               break;
             default:
-              LOG.debug('Path not found')
+              LOG.debug('Path not found', data.path)
               break
           }
         } else {
