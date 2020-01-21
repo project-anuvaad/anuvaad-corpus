@@ -2,6 +2,8 @@ var Response = require('../models/response')
 var APIStatus = require('../errors/apistatus')
 var ParagraphWorkspace = require('../models/paragraph_workspace');
 var MTWorkspace = require('../models/mt_workspace');
+var SentencePair = require('../models/sentence_pair');
+var SentencePairUnchecked = require('../models/sentence_pair_unchecked');
 var SearchReplaceWorkspace = require('../models/search_replace_workspace');
 var TranslationProcess = require('../models/translation_process');
 var StatusCode = require('../errors/statuscodes').StatusCode
@@ -440,6 +442,41 @@ exports.fetchMTWorkspace = function (req, res) {
             }
             let response = new Response(StatusCode.SUCCESS, models, count).getRsp()
             return res.status(response.http.status).json(response);
+        })
+    })
+}
+
+exports.fetchSearchReplaceSentence = function (req, res) {
+    SentencePair.countDocuments({}, function (err, availablecount) {
+        if (err) {
+            LOG.error(err)
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+        SentencePairUnchecked.countDocuments({}, function (err, count) {
+            if (err) {
+                LOG.error(err)
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+            SentencePair.findByCondition({ accepted: false }, function (err, models) {
+                if (err) {
+                    LOG.error(err)
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
+                if (models && models.length > 0) {
+                    let data = models[0]._doc
+                    data.total_sentences = count
+                    data.found_sentences = availablecount
+                    let response = new Response(StatusCode.SUCCESS, data).getRsp()
+                    return res.status(response.http.status).json(response);
+                } else {
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_NOTFOUND, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
+
+            })
         })
     })
 }
