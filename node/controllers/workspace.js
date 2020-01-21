@@ -24,6 +24,7 @@ const STEP_IN_PROGRESS = 'IN-PROGRESS'
 const STEP_TOKENIZE = 'At Step1'
 const STEP_SENTENCE = 'At Step2'
 const STEP_ERROR = 'FAILED'
+const STEP_COMPLETED = 'COMPLETED'
 const PYTHON_URL = process.env.PYTHON_URL ? process.env.PYTHON_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/corpus/'
 const ES_SERVER_URL = process.env.GATEWAY_URL ? process.env.GATEWAY_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/admin/'
 const USER_INFO_URL = ES_SERVER_URL + 'users'
@@ -141,6 +142,8 @@ exports.handleWriteToFileRequest = function (req) {
                     workspace._doc.step = STEP_ERROR
                 } else {
                     workspace._doc.status = STATUS_PROCESSED
+                    workspace._doc.step = STEP_COMPLETED
+                    workspace._doc.sentence_file = req.data.files
                 }
                 fs.copyFile(BASE_PATH_PIPELINE_3 + req.data.process_id + '/' + req.data.files, 'nginx/' + req.data.files, function (err) {
                     if (err) {
