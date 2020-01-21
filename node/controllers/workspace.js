@@ -502,6 +502,7 @@ exports.updateSearchReplaceSentence = function (req, res) {
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
+            LOG.debug('Sentence pair remaining for process', count)
             if (count == 0) {
                 KafkaProducer.getInstance().getProducer((err, producer) => {
                     if (err) {
