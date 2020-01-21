@@ -509,12 +509,11 @@ exports.updateSearchReplaceSentence = function (req, res) {
                         LOG.error("Unable to connect to KafkaProducer");
                     } else {
                         LOG.debug("KafkaProducer connected")
-                        let data = {}
-                        data.session_id = sentence_pair.processId
-                        data.path = PATH_WRITE_TO_FILE
+                        sentence_pair.session_id = sentence_pair.processId
+                        sentence_pair.path = PATH_WRITE_TO_FILE
                         let payloads = [
                             {
-                                topic: TOPIC_STAGE_3, messages: JSON.stringify({ data: data }), partition: 0
+                                topic: TOPIC_STAGE_3, messages: JSON.stringify({ data: sentence_pair }), partition: 0
                             }
                         ]
                         producer.send(payloads, function (err, data) {
