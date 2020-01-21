@@ -24,6 +24,9 @@ module.exports = function (router) {
     router.route('/fetch-paragraph-workspace')
         .get(workspaceController.fetchParagraphWorkspace);
 
+    router.route('/fetch-search-replace-sentence')
+        .get(workspaceController.fetchSearchReplaceSentence);
+
     router.route('/fetch-mt-workspace')
         .get(workspaceController.fetchMTWorkspace);
 
