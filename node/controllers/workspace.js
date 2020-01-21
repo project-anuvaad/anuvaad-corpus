@@ -511,7 +511,7 @@ exports.updateSearchReplaceSentence = function (req, res) {
                         LOG.debug("KafkaProducer connected")
                         let data = {}
                         data.session_id = sentence_pair.processId
-                        data.path = sentence_pair.PATH_WRITE_TO_FILE
+                        data.path = PATH_WRITE_TO_FILE
                         let payloads = [
                             {
                                 topic: TOPIC_STAGE_3, messages: JSON.stringify({ data: data }), partition: 0
