@@ -115,6 +115,7 @@ KafkaConsumer.getInstance().getErrorConsumer((err, consumer) => {
               break;
             default:
               LOG.debug('Path not found', data.path)
+              LOG.debug('message is', data)
               break
           }
         } else {
