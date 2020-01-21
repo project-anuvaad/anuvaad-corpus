@@ -11,9 +11,9 @@ var LOG = require('../logger/logger').logger
 
 var SentencePairSchema = new Schema({
     processId: { type: String },
-
 }, { strict: false });
-var SentencePair = mongoose.model('sentence_pair', SentencePairSchema);
+
+var SentencePair = mongoose.model('sentence_pair', SentencePairSchema, 'sentence_pair');
 
 SentencePair.findByCondition = function (condition, cb) {
     SentencePair.find(condition, {}, { sort: { 'serial_no': -1 } }, function (err, data) {
