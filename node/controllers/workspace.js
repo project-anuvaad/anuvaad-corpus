@@ -126,7 +126,7 @@ exports.handleMTRequest = function (req) {
     }
 }
 
-exports.handleWriteToFileRequest = function (req){
+exports.handleWriteToFileRequest = function (req) {
     if (!req || !req.data || !req.data.process_id) {
         LOG.error('Data missing for [%s]', JSON.stringify(req))
     } else {
@@ -504,24 +504,34 @@ exports.updateSearchReplaceSentence = function (req, res) {
             }
             LOG.debug('Sentence pair remaining for process', count)
             if (count == 0) {
-                KafkaProducer.getInstance().getProducer((err, producer) => {
+                SearchReplaceWorkspace.findByCondition({ session_id: sentence_pair.processId }, null, null, function (err, models) {
                     if (err) {
-                        LOG.error("Unable to connect to KafkaProducer");
-                    } else {
-                        LOG.debug("KafkaProducer connected")
-                        sentence_pair.session_id = sentence_pair.processId
-                        sentence_pair.path = PATH_WRITE_TO_FILE
-                        let payloads = [
-                            {
-                                topic: TOPIC_STAGE_3, messages: JSON.stringify({ data: sentence_pair }), partition: 0
-                            }
-                        ]
-                        producer.send(payloads, function (err, data) {
-                            LOG.debug('Produced')
-                            let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
-                            return res.status(response.http.status).json(response);
-                        });
+                        LOG.error(err)
+                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                        return res.status(apistatus.http.status).json(apistatus);
+                    } else if (!models || models.length == 0) {
+                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_INVALID_PARAMETERS, COMPONENT).getRspStatus()
+                        return res.status(apistatus.http.status).json(apistatus);
                     }
+                    KafkaProducer.getInstance().getProducer((err, producer) => {
+                        if (err) {
+                            LOG.error("Unable to connect to KafkaProducer");
+                        } else {
+                            LOG.debug("KafkaProducer connected")
+                            let data = models[0]._doc
+                            data.path = PATH_WRITE_TO_FILE
+                            let payloads = [
+                                {
+                                    topic: TOPIC_STAGE_3, messages: JSON.stringify({ data: data }), partition: 0
+                                }
+                            ]
+                            producer.send(payloads, function (err, data) {
+                                LOG.debug('Produced')
+                                let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                                return res.status(response.http.status).json(response);
+                            });
+                        }
+                    })
                 })
             } else {
                 let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
