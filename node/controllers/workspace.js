@@ -447,19 +447,25 @@ exports.fetchMTWorkspace = function (req, res) {
 }
 
 exports.fetchSearchReplaceSentence = function (req, res) {
-    SentencePair.countDocuments({}, function (err, availablecount) {
+    if (!req || !req.query || !req.query.process_id) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let process_id = req.query.session_id
+    let condition = { processId: process_id }
+    SentencePair.countDocuments(condition, function (err, availablecount) {
         if (err) {
             LOG.error(err)
             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
             return res.status(apistatus.http.status).json(apistatus);
         }
-        SentencePairUnchecked.countDocuments({}, function (err, count) {
+        SentencePairUnchecked.countDocuments(condition, function (err, count) {
             if (err) {
                 LOG.error(err)
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
-            SentencePair.findByCondition({ accepted: false }, function (err, models) {
+            SentencePair.findByCondition({ processId: process_id, accepted: false }, function (err, models) {
                 if (err) {
                     LOG.error(err)
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
