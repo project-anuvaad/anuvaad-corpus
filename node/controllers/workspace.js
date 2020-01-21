@@ -466,7 +466,7 @@ exports.fetchSearchReplaceSentence = function (req, res) {
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
-            SentencePair.findByCondition({}, function (err, models) {
+            SentencePair.findByCondition({ processId: process_id, accepted: false, viewed: { $exists: false } }, function (err, models) {
                 if (err) {
                     LOG.error(err)
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
