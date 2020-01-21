@@ -123,7 +123,7 @@ exports.handleMTRequest = function (req) {
     }
 }
 
-exports.handleSearchReplaceRequest = function (req){
+exports.handleSearchReplaceRequest = function (req) {
     if (!req || !req.data || !req.data.process_id) {
         LOG.error('Data missing for [%s]', JSON.stringify(req))
     } else {
@@ -374,7 +374,10 @@ exports.fetchSearchReplaceWorkspace = function (req, res) {
     var search_param = req.query.search_param
     let condition = {}
     if (status) {
-        condition = { status: status }
+        if (status === STATUS_PROCESSING) {
+            condition = { $or: [{ status: status }, { status: STATUS_EDITING }] }
+        }
+
     }
     if (search_param) {
         condition['title'] = new RegExp(search_param, "i")
