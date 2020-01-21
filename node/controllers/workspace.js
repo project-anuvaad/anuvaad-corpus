@@ -452,6 +452,7 @@ exports.fetchSearchReplaceSentence = function (req, res) {
         return res.status(apistatus.http.status).json(apistatus);
     }
     let process_id = req.query.session_id
+    LOG.info(process_id)
     let condition = { processId: process_id }
     SentencePair.countDocuments(condition, function (err, availablecount) {
         if (err) {
@@ -465,7 +466,7 @@ exports.fetchSearchReplaceSentence = function (req, res) {
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
-            SentencePair.findByCondition({ processId: process_id, accepted: false }, function (err, models) {
+            SentencePair.findByCondition({ accepted: false }, function (err, models) {
                 if (err) {
                     LOG.error(err)
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
