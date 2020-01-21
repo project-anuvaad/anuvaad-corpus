@@ -79,6 +79,9 @@ KafkaConsumer.getInstance().getConsumer((err, consumer) => {
           case 'search_replace':
             WorkspaceController.handleSearchReplaceRequest(data)
             break;
+          case 'write_to_file':
+            WorkspaceController.handleWriteToFileRequest(data)
+            break;
           default:
             LOG.debug('Path not found')
             break

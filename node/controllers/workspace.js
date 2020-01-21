@@ -33,6 +33,7 @@ const TOPIC_STAGE_1_STEP_2 = 'sentencesext'
 const TOPIC_STAGE_2 = 'sentencesmt'
 const TOPIC_STAGE_3 = 'searchreplace'
 const PATH_SEARCH_REPLACE = 'search_replace'
+const PATH_WRITE_TO_FILE = 'write_to_file'
 const STATUS_EDITING = 'EDITING'
 
 var async = require('async');
@@ -113,6 +114,42 @@ exports.handleMTRequest = function (req) {
                     })
                 }
                 MTWorkspace.updateMTWorkspace(workspace._doc, (error, results) => {
+                    if (error) {
+                        LOG.error(error)
+                    }
+                    else {
+                        LOG.debug('Data updated successfully [%s]', JSON.stringify(req))
+                    }
+                })
+            }
+        })
+    }
+}
+
+exports.handleWriteToFileRequest = function (req){
+    if (!req || !req.data || !req.data.process_id) {
+        LOG.error('Data missing for [%s]', JSON.stringify(req))
+    } else {
+        SearchReplaceWorkspace.findOne({ session_id: req.data.process_id }, function (error, workspace) {
+            if (error) {
+                LOG.error(error)
+            }
+            else if (!workspace) {
+                LOG.error('SearchReplaceWorkspace not found [%s]', req)
+            } else {
+                if (req.data.status === STEP_ERROR) {
+                    workspace._doc.step = STEP_ERROR
+                } else {
+                    workspace._doc.status = STATUS_PROCESSED
+                }
+                fs.copyFile(BASE_PATH_PIPELINE_3 + req.data.process_id + '/' + req.data.files, 'nginx/' + req.data.files, function (err) {
+                    if (err) {
+                        LOG.error(err)
+                    } else {
+                        LOG.debug('File transfered [%s]', req.data.files)
+                    }
+                })
+                SearchReplaceWorkspace.updateSearchReplaceWorkspace(workspace._doc, (error, results) => {
                     if (error) {
                         LOG.error(error)
                     }
@@ -446,6 +483,55 @@ exports.fetchMTWorkspace = function (req, res) {
     })
 }
 
+exports.updateSearchReplaceSentence = function (req, res) {
+    if (!req || !req.body || !req.body.sentence_pair) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let sentence_pair = req.body.sentence_pair
+    sentence_pair.viewed = true
+    SentencePair.updateSentencePair(sentence_pair, function (err, models) {
+        if (err) {
+            LOG.error(err)
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+        SentencePair.countDocuments({ processId: sentence_pair.processId, viewed: { $exists: false } }, function (err, count) {
+            if (err) {
+                LOG.error(err)
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+            if (count == 0) {
+                KafkaProducer.getInstance().getProducer((err, producer) => {
+                    if (err) {
+                        LOG.error("Unable to connect to KafkaProducer");
+                    } else {
+                        LOG.debug("KafkaProducer connected")
+                        let data = {}
+                        data.session_id = sentence_pair.processId
+                        data.path = sentence_pair.PATH_WRITE_TO_FILE
+                        let payloads = [
+                            {
+                                topic: TOPIC_STAGE_3, messages: JSON.stringify({ data: workspace._doc }), partition: 0
+                            }
+                        ]
+                        producer.send(payloads, function (err, data) {
+                            LOG.debug('Produced')
+                            let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                            return res.status(response.http.status).json(response);
+                        });
+                    }
+                })
+            } else {
+                let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                return res.status(response.http.status).json(response);
+            }
+
+        })
+    })
+}
+
 exports.fetchSearchReplaceSentence = function (req, res) {
     if (!req || !req.query || !req.query.session_id) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
@@ -466,7 +552,7 @@ exports.fetchSearchReplaceSentence = function (req, res) {
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
-            SentencePair.findByCondition({ processId: process_id, accepted: false, viewed: { $exists: false } }, function (err, models) {
+            SentencePair.findByCondition({ processId: process_id, viewed: { $exists: false } }, function (err, models) {
                 if (err) {
                     LOG.error(err)
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
@@ -479,7 +565,6 @@ exports.fetchSearchReplaceSentence = function (req, res) {
                     let response = new Response(StatusCode.SUCCESS, data).getRsp()
                     return res.status(response.http.status).json(response);
                 } else {
-                    LOG.error(models)
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_NOTFOUND, COMPONENT).getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);
                 }
