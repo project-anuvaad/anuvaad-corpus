@@ -447,7 +447,7 @@ exports.fetchMTWorkspace = function (req, res) {
 }
 
 exports.fetchSearchReplaceSentence = function (req, res) {
-    if (!req || !req.query || !req.query.process_id) {
+    if (!req || !req.query || !req.query.session_id) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
