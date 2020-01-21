@@ -13,7 +13,7 @@ var SentencePairUncheckedSchema = new Schema({
     processId: { type: String },
 
 }, { strict: false });
-var SentencePairUnchecked = mongoose.model('sentence_pair_unchecked', SentencePairUncheckedSchema);
+var SentencePairUnchecked = mongoose.model('sentence_pair_unchecked', SentencePairUncheckedSchema, 'sentence_pair_unchecked');
 
 
 module.exports = SentencePairUnchecked;
