@@ -76,6 +76,9 @@ KafkaConsumer.getInstance().getConsumer((err, consumer) => {
           case 'mt':
             WorkspaceController.handleMTRequest(data)
             break;
+          case 'search_replace':
+            WorkspaceController.handleSearchReplaceRequest(data)
+            break;
           default:
             LOG.debug('Path not found')
             break

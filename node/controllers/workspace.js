@@ -122,6 +122,35 @@ exports.handleMTRequest = function (req) {
     }
 }
 
+exports.handleSearchReplaceRequest = function (req){
+    if (!req || !req.data || !req.data.process_id) {
+        LOG.error('Data missing for [%s]', JSON.stringify(req))
+    } else {
+        SearchReplaceWorkspace.findOne({ session_id: req.data.process_id }, function (error, workspace) {
+            if (error) {
+                LOG.error(error)
+            }
+            else if (!workspace) {
+                LOG.error('SearchReplaceWorkspace not found [%s]', req)
+            } else {
+                if (req.data.status === STEP_ERROR) {
+                    workspace._doc.step = STEP_ERROR
+                } else {
+                    workspace._doc.status = STATUS_EDITING
+                }
+                SearchReplaceWorkspace.updateSearchReplaceWorkspace(workspace._doc, (error, results) => {
+                    if (error) {
+                        LOG.error(error)
+                    }
+                    else {
+                        LOG.debug('Data updated successfully [%s]', JSON.stringify(req))
+                    }
+                })
+            }
+        })
+    }
+}
+
 exports.handleSentenceRequest = function (req) {
     if (!req || !req.data || !req.data.processId) {
         LOG.error('Data missing for [%s]', JSON.stringify(req))

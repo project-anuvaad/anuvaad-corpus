@@ -36,7 +36,7 @@ SearchReplaceWorkspace.findByCondition = function (condition, pagesize, pageno, 
     })
 }
 
-SearchReplaceWorkspace.updateMTWorkspace = function (searchReplaceWorkspace, cb) {
+SearchReplaceWorkspace.updateSearchReplaceWorkspace = function (searchReplaceWorkspace, cb) {
     SearchReplaceWorkspace.collection.updateOne({ _id: mongoose.Types.ObjectId(searchReplaceWorkspace._id) }, { $set: { status: searchReplaceWorkspace.status,sentence_count: searchReplaceWorkspace.sentence_count, sentence_file: searchReplaceWorkspace.sentence_file, step: searchReplaceWorkspace.step } }, { upsert: false }, function (err, doc) {
         if (err) {
             LOG.error(err)
