@@ -31,6 +31,7 @@ const TOPIC_STAGE_1_STEP_2 = 'sentencesext'
 const TOPIC_STAGE_2 = 'sentencesmt'
 const TOPIC_STAGE_3 = 'searchreplace'
 const PATH_SEARCH_REPLACE = 'search_replace'
+const STATUS_EDITING = 'EDITING'
 
 var async = require('async');
 
