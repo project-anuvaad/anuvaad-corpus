@@ -466,7 +466,7 @@ exports.fetchSearchReplaceSentence = function (req, res) {
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
-            SentencePair.findByCondition({ accepted: false }, function (err, models) {
+            SentencePair.findByCondition({}, function (err, models) {
                 if (err) {
                     LOG.error(err)
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
