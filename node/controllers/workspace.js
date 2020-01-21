@@ -514,7 +514,7 @@ exports.updateSearchReplaceSentence = function (req, res) {
                         data.path = sentence_pair.PATH_WRITE_TO_FILE
                         let payloads = [
                             {
-                                topic: TOPIC_STAGE_3, messages: JSON.stringify({ data: workspace._doc }), partition: 0
+                                topic: TOPIC_STAGE_3, messages: JSON.stringify({ data: data }), partition: 0
                             }
                         ]
                         producer.send(payloads, function (err, data) {
