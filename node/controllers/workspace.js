@@ -478,6 +478,7 @@ exports.fetchSearchReplaceSentence = function (req, res) {
                     let response = new Response(StatusCode.SUCCESS, data).getRsp()
                     return res.status(response.http.status).json(response);
                 } else {
+                    LOG.error(models)
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_NOTFOUND, COMPONENT).getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);
                 }
