@@ -440,10 +440,7 @@ exports.fetchSearchReplaceWorkspace = function (req, res) {
     var search_param = req.query.search_param
     let condition = {}
     if (status) {
-        if (status === STATUS_PROCESSING) {
-            condition = { status: status } 
-        }
-
+        condition = { status: status }
     }
     if (search_param) {
         condition['title'] = new RegExp(search_param, "i")
