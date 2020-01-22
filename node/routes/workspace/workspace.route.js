@@ -36,6 +36,9 @@ module.exports = function (router) {
     router.route('/fetch-search-replace-workspace')
         .get(workspaceController.fetchSearchReplaceWorkspace);
 
+    router.route('/fetch-search-replace-workspace-detail')
+        .get(workspaceController.fetchSearchReplaceWorkspaceDetail);
+
     router.route('/fetch-mt-workspace-detail')
         .get(workspaceController.fetchMTWorkspaceDetail);
 
