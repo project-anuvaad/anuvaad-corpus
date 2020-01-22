@@ -64,6 +64,30 @@ exports.updateError = function (req) {
     }
 }
 
+exports.handleSearchReplaceErrorRequest = function (req) {
+    if (!req || !req.data || !req.data.processId) {
+        LOG.error('Data missing for [%s]', JSON.stringify(req))
+    } else {
+        SearchReplaceWorkspace.findOne({ session_id: req.data.processId }, function (error, workspace) {
+            if (error) {
+                LOG.error(error)
+            }
+            else if (!workspace) {
+                LOG.error('SearchReplaceWorkspace not found [%s]', req)
+            } else {
+                workspace._doc.step = STEP_ERROR
+                SearchReplaceWorkspace.updateSearchReplaceWorkspace(workspace._doc, (error, results) => {
+                    if (error) {
+                        LOG.error(error)
+                    }
+                    else {
+                        LOG.debug('Data updated successfully [%s]', JSON.stringify(req))
+                    }
+                })
+            }
+        })
+    }
+}
 exports.handleMTErrorRequest = function (req) {
     if (!req || !req.data || !req.data.processId) {
         LOG.error('Data missing for [%s]', JSON.stringify(req))
@@ -179,7 +203,7 @@ exports.handleSearchReplaceRequest = function (req) {
                 if (req.data.status === STEP_ERROR) {
                     workspace._doc.step = STEP_ERROR
                 } else {
-                    workspace._doc.status = STATUS_EDITING
+                    workspace._doc.step = STATUS_EDITING
                 }
                 SearchReplaceWorkspace.updateSearchReplaceWorkspace(workspace._doc, (error, results) => {
                     if (error) {
@@ -417,7 +441,7 @@ exports.fetchSearchReplaceWorkspace = function (req, res) {
     let condition = {}
     if (status) {
         if (status === STATUS_PROCESSING) {
-            condition = { $or: [{ status: status }, { status: STATUS_EDITING }] }
+            condition = { status: status } 
         }
 
     }
@@ -516,25 +540,34 @@ exports.updateSearchReplaceSentence = function (req, res) {
                         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_INVALID_PARAMETERS, COMPONENT).getRspStatus()
                         return res.status(apistatus.http.status).json(apistatus);
                     }
-                    KafkaProducer.getInstance().getProducer((err, producer) => {
+                    models[0]._doc.step = STEP_IN_PROGRESS
+                    SearchReplaceWorkspace.updateSearchReplaceWorkspace(models[0]._doc, function (err, doc) {
                         if (err) {
-                            LOG.error("Unable to connect to KafkaProducer");
-                        } else {
-                            LOG.debug("KafkaProducer connected")
-                            let data = models[0]._doc
-                            data.path = PATH_WRITE_TO_FILE
-                            let payloads = [
-                                {
-                                    topic: TOPIC_STAGE_3, messages: JSON.stringify({ data: data }), partition: 0
-                                }
-                            ]
-                            producer.send(payloads, function (err, data) {
-                                LOG.debug('Produced')
-                                let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
-                                return res.status(response.http.status).json(response);
-                            });
+                            LOG.error(err);
+                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                            return res.status(apistatus.http.status).json(apistatus);
                         }
+                        KafkaProducer.getInstance().getProducer((err, producer) => {
+                            if (err) {
+                                LOG.error("Unable to connect to KafkaProducer");
+                            } else {
+                                LOG.debug("KafkaProducer connected")
+                                let data = models[0]._doc
+                                data.path = PATH_WRITE_TO_FILE
+                                let payloads = [
+                                    {
+                                        topic: TOPIC_STAGE_3, messages: JSON.stringify({ data: data }), partition: 0
+                                    }
+                                ]
+                                producer.send(payloads, function (err, data) {
+                                    LOG.debug('Produced')
+                                    let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                                    return res.status(response.http.status).json(response);
+                                });
+                            }
+                        })
                     })
+
                 })
             } else {
                 let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
@@ -551,7 +584,6 @@ exports.fetchSearchReplaceSentence = function (req, res) {
         return res.status(apistatus.http.status).json(apistatus);
     }
     let process_id = req.query.session_id
-    LOG.info(process_id)
     let condition = { processId: process_id }
     SentencePair.countDocuments(condition, function (err, availablecount) {
         if (err) {
@@ -578,7 +610,7 @@ exports.fetchSearchReplaceSentence = function (req, res) {
                     let response = new Response(StatusCode.SUCCESS, data).getRsp()
                     return res.status(response.http.status).json(response);
                 } else {
-                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_NOTFOUND, COMPONENT).getRspStatus()
+                    let apistatus = new APIStatus(StatusCode.ERR_DATA_NOT_FOUND, COMPONENT).getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);
                 }
 

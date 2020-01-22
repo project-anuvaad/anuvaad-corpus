@@ -28,4 +28,5 @@ exports.StatusCode = {
     ERR_GLOBAL_UNAUTHORIZED: { ok: false, http: { status: 401 }, why: "unauthorized request" },
     ERR_GLOBAL_NOTFOUND: { ok: false, http: { status: 404 }, why: "requested information doesn't exist" },
     ERR_GLOBAL_LANG_NOTFOUND: { ok: false, http: { status: 404 }, why: "requested language doesn't exist" },
+    ERR_DATA_NOT_FOUND: { ok: false, http: { status: 501 }, why: "requested data doesn't exist" },
 }
