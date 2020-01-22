@@ -583,34 +583,38 @@ exports.fetchSearchReplaceSentence = function (req, res) {
     let process_id = req.query.session_id
     let condition = { processId: process_id }
     SentencePair.countDocuments(condition, function (err, availablecount) {
-        if (err) {
-            LOG.error(err)
-            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-            return res.status(apistatus.http.status).json(apistatus);
-        }
-        SentencePairUnchecked.countDocuments(condition, function (err, count) {
-            if (err) {
-                LOG.error(err)
-                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                return res.status(apistatus.http.status).json(apistatus);
-            }
-            SentencePair.findByCondition({ processId: process_id, viewed: { $exists: false } }, function (err, models) {
+        SentencePair.countDocuments({ processId: process_id, viewed: true }, function (err, viewedcount) {
+            SentencePair.countDocuments({ processId: process_id, accepted: true }, function (err, acceptedcount) {
                 if (err) {
                     LOG.error(err)
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);
                 }
-                if (models && models.length > 0) {
-                    let data = models[0]._doc
-                    data.total_sentences = count
-                    data.found_sentences = availablecount
-                    let response = new Response(StatusCode.SUCCESS, data).getRsp()
-                    return res.status(response.http.status).json(response);
-                } else {
-                    let apistatus = new APIStatus(StatusCode.ERR_DATA_NOT_FOUND, COMPONENT).getRspStatus()
-                    return res.status(apistatus.http.status).json(apistatus);
-                }
+                SentencePairUnchecked.countDocuments(condition, function (err, count) {
+                    if (err) {
+                        LOG.error(err)
+                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                        return res.status(apistatus.http.status).json(apistatus);
+                    }
+                    SentencePair.findByCondition({ processId: process_id, viewed: { $exists: false } }, function (err, models) {
+                        if (err) {
+                            LOG.error(err)
+                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                            return res.status(apistatus.http.status).json(apistatus);
+                        }
+                        if (models && models.length > 0) {
+                            let data = models[0]._doc
+                            data.total_sentences = count + availablecount
+                            data.found_sentences = availablecount - acceptedcount
+                            let response = new Response(StatusCode.SUCCESS, data, availablecount - viewedcount).getRsp()
+                            return res.status(response.http.status).json(response);
+                        } else {
+                            let apistatus = new APIStatus(StatusCode.ERR_DATA_NOT_FOUND, COMPONENT).getRspStatus()
+                            return res.status(apistatus.http.status).json(apistatus);
+                        }
 
+                    })
+                })
             })
         })
     })
