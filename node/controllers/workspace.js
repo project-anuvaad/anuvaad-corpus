@@ -167,6 +167,7 @@ exports.handleWriteToFileRequest = function (req) {
                 } else {
                     workspace._doc.status = STATUS_PROCESSED
                     workspace._doc.step = STEP_COMPLETED
+                    workspace._doc.sentence_file_full_path = BASE_PATH_PIPELINE_3 + req.data.process_id + '/' + req.data.files
                     workspace._doc.sentence_file = req.data.files
                 }
                 fs.copyFile(BASE_PATH_PIPELINE_3 + req.data.process_id + '/' + req.data.files, 'nginx/' + req.data.files, function (err) {
