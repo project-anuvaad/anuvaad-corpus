@@ -627,7 +627,7 @@ exports.fetchSearchReplaceSentence = function (req, res) {
                             let response = new Response(StatusCode.SUCCESS, data, availablecount - viewedcount).getRsp()
                             return res.status(response.http.status).json(response);
                         } else {
-                            let apistatus = new APIStatus(StatusCode.ERR_DATA_NOT_FOUND, COMPONENT).getRspStatus()
+                            let apistatus = new APIStatus(StatusCode.ERR_ALREADY_PROCESSED, COMPONENT).getRspStatus()
                             return res.status(apistatus.http.status).json(apistatus);
                         }
 
