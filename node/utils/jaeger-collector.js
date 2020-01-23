@@ -1,8 +1,10 @@
 var jaeger = require('./jaeger')
 const tracer = jaeger("anuvaad");
+var LOG = require('../logger/logger').logger
 
 
 function jaegerCollector(req, res, next) {
+    LOG.debug('rootspan', req.rootSpan)
     if (req.rootSpan) {
         var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
         var method = req.method;
