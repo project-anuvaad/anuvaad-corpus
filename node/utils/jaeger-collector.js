@@ -4,7 +4,7 @@ var LOG = require('../logger/logger').logger
 
 
 function jaegerCollector(req, res, next) {
-    LOG.debug('rootspan', req)
+    LOG.debug('rootspan', req.body)
     if (req.headers['ad-rootSpan']) {
         var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
         var method = req.method;
