@@ -154,7 +154,7 @@ function startApp() {
     extended: false
   }));
   app.use(methodOverride());
-  // app.use(jaeger_collector);
+  app.use(jaeger_collector);
   app.use(require('express-request-response-logger')(reqResLog));
   app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
