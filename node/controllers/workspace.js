@@ -168,6 +168,8 @@ exports.handleWriteToFileRequest = function (req) {
                     workspace._doc.status = STATUS_PROCESSED
                     workspace._doc.step = STEP_COMPLETED
                     workspace._doc.sentence_file_full_path = BASE_PATH_PIPELINE_3 + req.data.process_id + '/' + req.data.files
+                    workspace._doc.source_file_full_path = BASE_PATH_PIPELINE_3 + req.data.process_id + '/' + req.data.source_file
+                    workspace._doc.target_file_full_path = BASE_PATH_PIPELINE_3 + req.data.process_id + '/' + req.data.target_file
                     workspace._doc.sentence_file = req.data.files
                 }
                 fs.copyFile(BASE_PATH_PIPELINE_3 + req.data.process_id + '/' + req.data.files, 'nginx/' + req.data.files, function (err) {
@@ -205,6 +207,7 @@ exports.handleSearchReplaceRequest = function (req) {
                     workspace._doc.step = STEP_ERROR
                 } else {
                     workspace._doc.step = STATUS_EDITING
+                    workspace._doc.sentence_count = req.data.sentence_count
                 }
                 SearchReplaceWorkspace.updateSearchReplaceWorkspace(workspace._doc, (error, results) => {
                     if (error) {
