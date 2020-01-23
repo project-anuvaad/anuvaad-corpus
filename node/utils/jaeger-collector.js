@@ -4,13 +4,13 @@ var LOG = require('../logger/logger').logger
 
 
 function jaegerCollector(req, res, next) {
-    LOG.debug('rootspan', req.rootSpan)
-    if (req.rootSpan) {
+    LOG.debug('rootspan', req.headers.rootSpan)
+    if (req.headers.rootSpan) {
         var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
         var method = req.method;
         var referer = req.headers.referer || "";
         var ua = req.headers['user-agent'];
-        let span = tracer.startSpan('node-app', { childOf: req.rootSpan })
+        let span = tracer.startSpan('node-app', { childOf: req.headers.rootSpan })
         span.setTag("http.method", method);
         span.setTag("http.referer", referer);
         span.setTag("http.user-agent", ua);
