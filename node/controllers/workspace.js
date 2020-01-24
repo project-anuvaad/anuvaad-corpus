@@ -18,6 +18,7 @@ var es = require('../db/elastic');
 const BASE_PATH_PIPELINE_1 = 'corpusfiles/processing/pipeline_stage_1/'
 const BASE_PATH_PIPELINE_2 = 'corpusfiles/processing/pipeline_stage_2/'
 const BASE_PATH_PIPELINE_3 = 'corpusfiles/processing/pipeline_stage_3/'
+const BASE_PATH_NGINX = 'nginx/'
 const STATUS_PROCESSING = 'PROCESSING'
 const STATUS_PROCESSED = 'PROCESSED'
 const STEP_IN_PROGRESS = 'IN-PROGRESS'
@@ -130,7 +131,7 @@ exports.handleMTRequest = function (req) {
                     workspace._doc.status = STATUS_PROCESSED
                     workspace._doc.sentence_file = req.data.file_name
                     workspace._doc.sentence_count = req.data.sentence_count
-                    fs.copyFile(BASE_PATH_PIPELINE_2 + workspace._doc.session_id + '/' + req.data.file_name, 'nginx/' + req.data.file_name, function (err) {
+                    fs.copyFile(BASE_PATH_PIPELINE_2 + workspace._doc.session_id + '/' + req.data.file_name, BASE_PATH_NGINX + req.data.file_name, function (err) {
                         if (err) {
                             LOG.error(err)
                         } else {
@@ -172,7 +173,7 @@ exports.handleWriteToFileRequest = function (req) {
                     workspace._doc.target_file_full_path = BASE_PATH_PIPELINE_3 + req.data.process_id + '/' + req.data.target_file
                     workspace._doc.sentence_file = req.data.files
                 }
-                fs.copyFile(BASE_PATH_PIPELINE_3 + req.data.process_id + '/' + req.data.files, 'nginx/' + req.data.files, function (err) {
+                fs.copyFile(BASE_PATH_PIPELINE_3 + req.data.process_id + '/' + req.data.files, BASE_PATH_NGINX + req.data.files, function (err) {
                     if (err) {
                         LOG.error(err)
                     } else {
@@ -237,7 +238,7 @@ exports.handleSentenceRequest = function (req) {
                 workspace._doc.status = STATUS_PROCESSED
                 workspace._doc.sentence_file = req.data.sentencesFile
                 workspace._doc.sentence_count = req.data.sentencesCount
-                fs.copyFile(BASE_PATH_PIPELINE_1 + workspace._doc.session_id + '/' + req.data.sentencesFile, 'nginx/' + req.data.sentencesFile, function (err) {
+                fs.copyFile(BASE_PATH_PIPELINE_1 + workspace._doc.session_id + '/' + req.data.sentencesFile, BASE_PATH_NGINX + req.data.sentencesFile, function (err) {
                     if (err) {
                         LOG.error(err)
                     } else {
@@ -273,14 +274,14 @@ exports.handleTokenizeRequest = function (req) {
                 workspace._doc.token_count = req.data.tokenCount
                 workspace._doc.negative_token_file = req.data.negativeTokenFile
                 workspace._doc.negative_token_count = req.data.negativeTokenCount
-                fs.copyFile(BASE_PATH_PIPELINE_1 + workspace._doc.session_id + '/' + req.data.tokenFile, 'nginx/' + req.data.tokenFile, function (err) {
+                fs.copyFile(BASE_PATH_PIPELINE_1 + workspace._doc.session_id + '/' + req.data.tokenFile, BASE_PATH_NGINX + req.data.tokenFile, function (err) {
                     if (err) {
                         LOG.error(err)
                     } else {
                         LOG.debug('File transfered [%s]', req.data.tokenFile)
                     }
                 })
-                fs.copyFile(BASE_PATH_PIPELINE_1 + workspace._doc.session_id + '/' + req.data.negativeTokenFile, 'nginx/' + req.data.negativeTokenFile, function (err) {
+                fs.copyFile(BASE_PATH_PIPELINE_1 + workspace._doc.session_id + '/' + req.data.negativeTokenFile, BASE_PATH_NGINX + req.data.negativeTokenFile, function (err) {
                     if (err) {
                         LOG.error(err)
                     } else {
@@ -300,7 +301,7 @@ exports.handleTokenizeRequest = function (req) {
     }
 }
 
-exports.fetchSearchReplaceWorkspaceDetail = function (req, res){
+exports.fetchSearchReplaceWorkspaceDetail = function (req, res) {
     if (!req || !req.query || !req.query.session_id) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
@@ -692,14 +693,14 @@ exports.startTokenization = function (req, res) {
         workspace._doc.token_file = req.body.paragraph_workspace.token_file
         workspace._doc.negative_token_file = req.body.paragraph_workspace.negative_token_file
         workspace._doc.step = STEP_SENTENCE
-        fs.copyFile('nginx/' + req.body.paragraph_workspace.token_file, BASE_PATH_PIPELINE_1 + workspace._doc.session_id + '/' + req.body.paragraph_workspace.token_file, function (err) {
+        fs.copyFile(BASE_PATH_NGINX + req.body.paragraph_workspace.token_file, BASE_PATH_PIPELINE_1 + workspace._doc.session_id + '/' + req.body.paragraph_workspace.token_file, function (err) {
             if (err) {
                 LOG.error(err)
             } else {
                 LOG.debug('File transfered [%s]', req.body.paragraph_workspace.token_file)
             }
         })
-        fs.copyFile('nginx/' + req.body.paragraph_workspace.negative_token_file, BASE_PATH_PIPELINE_1 + workspace._doc.session_id + '/' + req.body.paragraph_workspace.negative_token_file, function (err) {
+        fs.copyFile(BASE_PATH_NGINX + req.body.paragraph_workspace.negative_token_file, BASE_PATH_PIPELINE_1 + workspace._doc.session_id + '/' + req.body.paragraph_workspace.negative_token_file, function (err) {
             if (err) {
                 LOG.error(err)
             } else {
@@ -753,7 +754,7 @@ exports.saveSearchReplaceWorkspace = function (req, res) {
             workspace.username = api_res.data.username
         }
         fs.mkdir(BASE_PATH_PIPELINE_3 + workspace.session_id, function (e) {
-            fs.copyFile('nginx/' + workspace.config_file_location, BASE_PATH_PIPELINE_3 + workspace.session_id + '/' + workspace.config_file_location, function (err) {
+            fs.copyFile(BASE_PATH_NGINX + workspace.config_file_location, BASE_PATH_PIPELINE_3 + workspace.session_id + '/' + workspace.config_file_location, function (err) {
                 if (err) {
                     LOG.error(err)
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
@@ -796,6 +797,39 @@ exports.saveSearchReplaceWorkspace = function (req, res) {
                         return res.status(response.http.status).json(response);
                     });
                 })
+            })
+        })
+    })
+}
+
+exports.saveMTWorkspaceData = function (req, res) {
+    let userId = req.headers['ad-userid']
+    if (!req || !req.body || !req.body.mt_workspace || !req.body.mt_workspace.title || !req.body.mt_workspace.target_language || !req.body.mt_workspace.sentence_file) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let workspace = req.body.mt_workspace
+    workspace.session_id = UUIDV4()
+    workspace.status = STATUS_PROCESSED
+    fs.mkdir(BASE_PATH_PIPELINE_2 + workspace.session_id, function (e) {
+        if (e) {
+            LOG.error(e)
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+        fs.copyFile(BASE_PATH_NGINX + workspace.sentence_file, BASE_PATH_PIPELINE_2 + workspace.session_id + '/' + workspace.sentence_file, function (err) {
+            if (e) {
+                LOG.error(e)
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+            MTWorkspace.save([workspace], function (err, models) {
+                if (err) {
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
+                let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                return res.status(response.http.status).json(response);
             })
         })
     })
@@ -879,14 +913,14 @@ exports.saveParagraphWorkspace = function (req, res) {
     let workspace = req.body.paragraph_workspace
     workspace.session_id = UUIDV4()
     fs.mkdir(BASE_PATH_PIPELINE_1 + workspace.session_id, function (e) {
-        fs.copyFile('nginx/' + workspace.config_file_location, BASE_PATH_PIPELINE_1 + workspace.session_id + '/' + workspace.config_file_location, function (err) {
+        fs.copyFile(BASE_PATH_NGINX + workspace.config_file_location, BASE_PATH_PIPELINE_1 + workspace.session_id + '/' + workspace.config_file_location, function (err) {
             if (err) {
                 LOG.error(err)
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
             else {
-                fs.copyFile('nginx/' + workspace.paragraph_file_location, BASE_PATH_PIPELINE_1 + workspace.session_id + '/' + workspace.paragraph_file_location, function (err) {
+                fs.copyFile(BASE_PATH_NGINX + workspace.paragraph_file_location, BASE_PATH_PIPELINE_1 + workspace.session_id + '/' + workspace.paragraph_file_location, function (err) {
                     if (err) {
                         LOG.error(err)
                         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()

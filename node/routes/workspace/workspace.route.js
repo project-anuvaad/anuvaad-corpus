@@ -15,6 +15,9 @@ module.exports = function (router) {
     router.route('/save-mt-workspace')
         .post(workspaceController.saveMTWorkspace);
 
+    router.route('/save-mt-workspace-data')
+        .post(workspaceController.saveMTWorkspaceData);
+
     router.route('/save-search-replace-workspace')
         .post(workspaceController.saveSearchReplaceWorkspace);
 
