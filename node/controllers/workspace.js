@@ -812,6 +812,7 @@ exports.saveMTWorkspaceData = function (req, res) {
     workspace.session_id = UUIDV4()
     workspace.status = STATUS_PROCESSED
     workspace.step = STEP_COMPLETED
+    workspace.created_by = userId
     fs.mkdir(BASE_PATH_PIPELINE_2 + workspace.session_id, function (e) {
         if (e) {
             LOG.error(e)
