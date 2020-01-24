@@ -813,25 +813,34 @@ exports.saveMTWorkspaceData = function (req, res) {
     workspace.status = STATUS_PROCESSED
     workspace.step = STEP_COMPLETED
     workspace.created_by = userId
+    let file_name = workspace.title + workspace.session_id + '.csv'
     fs.mkdir(BASE_PATH_PIPELINE_2 + workspace.session_id, function (e) {
         if (e) {
             LOG.error(e)
             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
             return res.status(apistatus.http.status).json(apistatus);
         }
-        fs.copyFile(BASE_PATH_NGINX + workspace.sentence_file, BASE_PATH_PIPELINE_2 + workspace.session_id + '/' + workspace.sentence_file, function (err) {
+        fs.copyFile(BASE_PATH_NGINX + workspace.sentence_file, BASE_PATH_PIPELINE_2 + workspace.session_id + '/' + file_name, function (err) {
             if (e) {
                 LOG.error(e)
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
-            MTWorkspace.save([workspace], function (err, models) {
-                if (err) {
+            fs.copyFile(BASE_PATH_NGINX + workspace.sentence_file, BASE_PATH_NGINX + file_name, function (err) {
+                if (e) {
+                    LOG.error(e)
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);
                 }
-                let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
-                return res.status(response.http.status).json(response);
+                workspace.sentence_file = file_name
+                MTWorkspace.save([workspace], function (err, models) {
+                    if (err) {
+                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                        return res.status(apistatus.http.status).json(apistatus);
+                    }
+                    let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                    return res.status(response.http.status).json(response);
+                })
             })
         })
     })
