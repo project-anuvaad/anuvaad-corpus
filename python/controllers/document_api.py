@@ -43,7 +43,7 @@ TOPIC = "to-nmt"
 TEXT_PROCESSING_TIME = 40
 
 GATEWAY_SERVER_URL = os.environ.get('GATEWAY_URL', 'http://localhost:9876/')
-ELASTIC_INDEX = os.environ.get('ELASTIC_INDEX', 'doc_report_test')
+ELASTIC_INDEX = os.environ.get('DOC_REPORT_ELASTIC_INDEX', 'doc_report_test')
 
 PROFILE_REQ_URL = GATEWAY_SERVER_URL + 'users/'
 
