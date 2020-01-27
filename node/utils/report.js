@@ -16,7 +16,7 @@ Corpus.fetchAll = function(id, cb){
             LOG.error("Unable to find corpus due to [%s]", JSON.stringify(err));
             return cb(err, null);
         }
-        // LOG.info("[%s] Corpus found",corpus);
+        // LOG.debug("[%s] Corpus found",corpus);
         var valuearr = []
         corpus.map((c)=>{
             var value = 0

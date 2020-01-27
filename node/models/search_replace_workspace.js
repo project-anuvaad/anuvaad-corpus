@@ -36,8 +36,8 @@ SearchReplaceWorkspace.findByCondition = function (condition, pagesize, pageno, 
     })
 }
 
-SearchReplaceWorkspace.updateMTWorkspace = function (searchReplaceWorkspace, cb) {
-    SearchReplaceWorkspace.collection.updateOne({ _id: mongoose.Types.ObjectId(searchReplaceWorkspace._id) }, { $set: { status: searchReplaceWorkspace.status,sentence_count: searchReplaceWorkspace.sentence_count, sentence_file: searchReplaceWorkspace.sentence_file, step: searchReplaceWorkspace.step } }, { upsert: false }, function (err, doc) {
+SearchReplaceWorkspace.updateSearchReplaceWorkspace = function (searchReplaceWorkspace, cb) {
+    SearchReplaceWorkspace.collection.updateOne({ _id: mongoose.Types.ObjectId(searchReplaceWorkspace._id) }, { $set: { source_file_full_path: searchReplaceWorkspace.source_file_full_path, target_file_full_path: searchReplaceWorkspace.target_file_full_path, status: searchReplaceWorkspace.status,sentence_count: searchReplaceWorkspace.sentence_count, sentence_file: searchReplaceWorkspace.sentence_file, step: searchReplaceWorkspace.step, sentence_file_full_path: searchReplaceWorkspace.sentence_file_full_path } }, { upsert: false }, function (err, doc) {
         if (err) {
             LOG.error(err)
             cb(err, null)

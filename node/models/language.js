@@ -14,7 +14,7 @@ Language.saveLanguage = function(language, cb){
             // TODO: handle error
             return cb(err, null);
         } else {
-            LOG.info('%s language was successfully stored.', JSON.stringify(docs));
+            LOG.debug('%s language was successfully stored.', JSON.stringify(docs));
             return cb(null, docs);
         }
     })
@@ -26,7 +26,7 @@ Language.updateLanguage = function (language, cb) {
             LOG.error(err)
             cb(err, null)
         }
-        LOG.info(doc)
+        LOG.debug(doc)
         cb(null, doc)
     });
 }
@@ -37,7 +37,7 @@ Language.findByCondition = function(condition, cb){
             LOG.error("Unable to find languages due to [%s]", JSON.stringify(err));
             return cb(err, null);
         }
-        LOG.info("[%s] languages found",languages);
+        LOG.debug("[%s] languages found",languages);
         return cb(null, languages);
     })
 }

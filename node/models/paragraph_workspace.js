@@ -22,7 +22,7 @@ ParagraphWorkspace.save = function (paragraphWorkspaces, cb) {
         if (err) {
             return cb(err, null)
         } else {
-            LOG.info('%s paragraphWorkspaces was successfully stored.', JSON.stringify(docs));
+            LOG.debug('%s paragraphWorkspaces was successfully stored.', JSON.stringify(docs));
             return cb(null, docs)
         }
     })
@@ -34,7 +34,7 @@ ParagraphWorkspace.findByCondition = function (condition, pagesize, pageno, cb) 
             LOG.error("Unable to find ParagraphWorkspace due to [%s]", JSON.stringify(err));
             return cb(err, null);
         }
-        LOG.info("[%s] ParagraphWorkspace found", data);
+        LOG.debug("[%s] ParagraphWorkspace found", data);
         return cb(null, data);
     })
 }

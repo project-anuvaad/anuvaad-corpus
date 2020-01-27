@@ -13,7 +13,7 @@ Config.findByCondition = function (condition, cb) {
             LOG.error("Unable to find configs due to [%s]", JSON.stringify(err));
             return cb(err, null);
         }
-        LOG.info("[%s] configs found", configs);
+        LOG.debug("[%s] configs found", configs);
         return cb(null, configs);
     })
 }

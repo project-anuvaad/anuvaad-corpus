@@ -14,7 +14,7 @@ Nmtmodels.saveModel = function(model, cb){
             // TODO: handle error
             return cb(err, null);
         } else {
-            LOG.info('%s model was successfully stored.', JSON.stringify(docs));
+            LOG.debug('%s model was successfully stored.', JSON.stringify(docs));
             return cb(null, docs);
         }
     })
@@ -32,7 +32,7 @@ Nmtmodels.updateModel = function (model, cb) {
             LOG.error(err)
             cb(err, null)
         }
-        LOG.info(doc)
+        LOG.debug(doc)
         cb(null, doc)
     });
 }
@@ -43,7 +43,7 @@ Nmtmodels.findByCondition = function(condition, cb){
             LOG.error("Unable to find models due to [%s]", JSON.stringify(err));
             return cb(err, null);
         }
-        LOG.info("[%s] models found",models);
+        LOG.debug("[%s] models found",models);
         return cb(null, models);
     })
 }

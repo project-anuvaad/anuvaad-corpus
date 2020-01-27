@@ -5,6 +5,8 @@ var bodyParser = require('body-parser');
 var methodOverride = require('method-override');
 
 var LOG = require('./logger/logger').logger
+var jaeger_collector = require('./utils/jaeger-collector')
+
 var APP_CONFIG = require('./config/config').config
 var APIStatus = require('./errors/apistatus')
 var WorkspaceController = require('./controllers/workspace')
@@ -12,6 +14,8 @@ var Response = require('./models/response')
 var daemon = require('./controllers/daemon/daemon');
 var KafkaConsumer = require('./kafka/consumer');
 var StatusCode = require('./errors/statuscodes').StatusCode
+
+
 // Imports the Google Cloud client library
 const { Storage } = require('@google-cloud/storage');
 
@@ -48,7 +52,7 @@ const LANG_CODES = {
 const client = new vision.ImageAnnotatorClient();
 
 process.on('SIGINT', function () {
-  LOG.info("stopping the application")
+  LOG.debug("stopping the application")
   process.exit(0);
 });
 
@@ -56,7 +60,7 @@ KafkaConsumer.getInstance().getConsumer((err, consumer) => {
   if (err) {
     LOG.error("Unable to connect to KafkaConsumer");
   } else {
-    LOG.info("KafkaConsumer connected")
+    LOG.debug("KafkaConsumer connected")
     consumer.on('message', function (message) {
       let data = JSON.parse(message.value)
       if (!data || !data.path) {
@@ -72,8 +76,14 @@ KafkaConsumer.getInstance().getConsumer((err, consumer) => {
           case 'mt':
             WorkspaceController.handleMTRequest(data)
             break;
+          case 'search_replace':
+            WorkspaceController.handleSearchReplaceRequest(data)
+            break;
+          case 'write_to_file':
+            WorkspaceController.handleWriteToFileRequest(data)
+            break;
           default:
-            LOG.info('Path not found')
+            LOG.debug('Path not found', data.path)
             break
         }
       }
@@ -92,13 +102,28 @@ KafkaConsumer.getInstance().getErrorConsumer((err, consumer) => {
   if (err) {
     LOG.error("Unable to connect to KafkaErrorConsumer");
   } else {
-    LOG.info("KafkaErrorConsumer connected")
+    LOG.debug("KafkaErrorConsumer connected")
     consumer.on('message', function (message) {
       let data = JSON.parse(message.value)
       if (!data) {
         LOG.error('Data missing for [%s]', message.value)
       } else {
-        WorkspaceController.updateError(data)
+        if (data.path) {
+          switch (data.path) {
+            case 'mt':
+              WorkspaceController.handleMTErrorRequest(data)
+              break;
+            case 'search_replace':
+              WorkspaceController.handleSearchReplaceErrorRequest(data)
+              break;
+            default:
+              LOG.debug('Path not found', data.path)
+              LOG.debug('message is', data)
+              break
+          }
+        } else {
+          WorkspaceController.updateError(data)
+        }
       }
     });
     consumer.on('offsetOutOfRange', function (err) {
@@ -109,6 +134,12 @@ KafkaConsumer.getInstance().getErrorConsumer((err, consumer) => {
     })
   }
 })
+
+
+
+function reqResLog(hash, ...args) {
+  LOG.info(hash, args.join(' '))
+}
 
 startApp()
 
@@ -123,6 +154,8 @@ function startApp() {
     extended: false
   }));
   app.use(methodOverride());
+  app.use(jaeger_collector);
+  app.use(require('express-request-response-logger')(reqResLog));
   app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -320,7 +353,7 @@ function startApp() {
   });
 
   var server = app.listen(APP_CONFIG.PORT, function () {
-    LOG.info('Listening on port %d', server.address().port);
+    LOG.debug('Listening on port %d', server.address().port);
   });
   server.timeout = 10000000;
 }

@@ -4,12 +4,12 @@ var LOG = require('../../logger/logger').logger
 var async = require('async')
 
 module.exports.saveWords = function (words) {
-    LOG.info('saving')
+    LOG.debug('saving')
     Words.insertMany(words, {
         upsert: true
     })
         .then(function (docs) {
-            LOG.info(docs)
+            LOG.debug(docs)
             /* ... */
         })
         .catch(function (err) {
