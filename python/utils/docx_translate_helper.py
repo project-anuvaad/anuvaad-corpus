@@ -20,6 +20,17 @@ log = logging.getLogger('file')
 DOCX_CONVERTOR = "soffice --headless --convert-to docx "
 
 
+RUN = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}r'
+TEXT = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t'
+RUN_PROP = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}rPr'
+R_FONTS = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}rFonts'
+FONTS_EAST_ASIA = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}eastAsia'
+FONTS_CS = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}cs'
+FONT_ASCII = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}ascii'
+FONT_HANSI = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}hAnsi'
+
+
+
 def get_xml_tree(xml_string):
     return etree.fromstring(xml_string)
 
@@ -182,6 +193,8 @@ def pre_process_text(xmltree):
         sentence = ''
         para_text = None
         prev_run_text = ''
+        run_font_prev = None
+        run_font_curr = None
         for r in para.iterchildren():
             elements = elements + 1
 
@@ -197,7 +210,7 @@ def pre_process_text(xmltree):
                         log.info('TAG is: text ' + str(children))
                         log.info('TAG text is == '+str(x.text))
                         if x is not None:
-                            run_text = run_text + ' ' + x.text
+                            run_text = run_text + x.text
                             x.text = ''
                             prev_node_c = x
 
@@ -220,7 +233,7 @@ def pre_process_text(xmltree):
 
                         log.info('TAG text is == ' + str(x.text))
                         if x is not None and x.text is not '':
-                            para_text = para_text + ' ' + x.text
+                            para_text = para_text + x.text
                             x.text = ''
                             prev_run = x
 
@@ -231,13 +244,11 @@ def pre_process_text(xmltree):
             log.info('sentence is == '+str(sentence))
 
 
-
-
 def modify_text_with_tokenization(nodes, url, model_id, url_end_point):
     log.info('model id' + str(model_id))
     log.info('url_end_point' + url_end_point)
     _url = NMT_BASE_URL + url_end_point
-    if not url == None:
+    if url is not None:
         _url = url
     arr = []
     Q = queue.Queue()
@@ -479,3 +490,8 @@ def convert_DOC_to_DOCX(filename):
         log.info('convert_DOC_to_DOCX : Error Occured == '+str(e))
         pass
     log.info('convert_DOC_to_DOCX : completed')
+
+
+def get_name_space(space_name):
+    base = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
+    return base + space_name
