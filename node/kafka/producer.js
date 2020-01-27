@@ -21,7 +21,7 @@ var Producer = (function () {
                     producer = new Producer(client);
                 // client.createTopics(topicsToCreate, (error, result) => {
                 //     LOG.error(error)
-                //     LOG.info(result)
+                //     LOG.debug(result)
                 // });
                 producer.on('ready', function () {
                     cb(null, producer)

@@ -43,6 +43,8 @@ TOPIC = "to-nmt"
 TEXT_PROCESSING_TIME = 40
 
 GATEWAY_SERVER_URL = os.environ.get('GATEWAY_URL', 'http://localhost:9876/')
+ELASTIC_INDEX = os.environ.get('DOC_REPORT_ELASTIC_INDEX', 'doc_report_test')
+
 PROFILE_REQ_URL = GATEWAY_SERVER_URL + 'users/'
 
 
@@ -237,6 +239,8 @@ def translate_docx_v2():
 
     sourceLang = request.form.getlist('sourceLang')[0]
     targetLang = request.form.getlist('targetLang')[0]
+    sourceLang_code = request.form.getlist('sourceLangCode')[0]
+    targetLang_code = request.form.getlist('targetLangCode')[0]
     model_meta_data = request.form.getlist('model')[0]
     log.info('model meta data' + model_meta_data)
     model_obj = json.loads(model_meta_data)
@@ -244,8 +248,8 @@ def translate_docx_v2():
     url_end_point = 'translation_en'
     if 'url_end_point' in model_obj:
         url_end_point = model_obj['url_end_point']
-        targetLang = model_obj['target_language_code']
-        sourceLang = model_obj['source_language_code']
+        targetLang_code = model_obj['target_language_code']
+        sourceLang_code = model_obj['source_language_code']
     log.info('translate_docx_v2: started at ' + str(start_time))
 
     translationProcess = TranslationProcess(created_by=request.headers.get('ad-userid'),
@@ -275,18 +279,20 @@ def translate_docx_v2():
         except Exception as e:
             log.error('translate_docx_v2 : Error while extracting docx files. error is = ' + str(e))
             log.error('translate_docx_v2 : Error while extracting docx files. uploaded file is corrupt')
-            res = CustomResponse(Status.FAILURE.value, ' uploaded file is corrupt')
+            translationProcess = TranslationProcess.objects(basename=basename)
+            translationProcess.update(set__status=STATUS_FAILED)
+            res = CustomResponse(Status.CORRUPT_FILE.value, 'uploaded file is corrupt')
             log.info('translate_docx_v2: ended at ' + str(getcurrenttime()) + 'total time elapsed : ' + str(
                 getcurrenttime() - start_time))
-            return res.getres()
+            return res.getres(),500
 
     nodes = []
     texts = []
     if xmltree is None:
-        res = CustomResponse(Status.FAILURE.value, ' uploaded file is corrupt')
+        res = CustomResponse(Status.CORRUPT_FILE.value, 'uploaded file is corrupt')
         log.info('translate_docx_v2: ended at ' + str(getcurrenttime()) + 'total time elapsed : ' + str(
             getcurrenttime() - start_time))
-        return res.getres()
+        return res.getres(),500
 
     try:
         docx_helper.add_identification_tag(xmltree, basename)
@@ -330,7 +336,7 @@ def translate_docx_v2():
     doc_report['created_on_iso'] = iso_date
     log.info('sending data to elasticsearch =='+str(doc_report))
     try:
-        create_dashboard_report(doc_report, 'doc_report')
+        create_dashboard_report(doc_report, ELASTIC_INDEX)
     except Exception as e:
         log.error('translate_docx_v2 : error occurred for report saving, error is = ' + str(e))
 
@@ -342,7 +348,7 @@ def translate_docx_v2():
         doc_nodes = DocumentNodes(basename=basename, created_date=current_time, total_nodes=total_nodes, nodes_sent=0,
                                   nodes_received=0, is_complete=False)
         doc_nodes.save()
-        send_nodes(nodes, basename, model_id, url_end_point, targetLang, sourceLang)
+        send_nodes(nodes, basename, model_id, url_end_point, targetLang_code, sourceLang_code)
         res = CustomResponse(Status.SUCCESS.value, 'file has been queued')
         translationProcess = TranslationProcess.objects(basename=basename)
         translationProcess.update(set__status=STATUS_PROCESSING)
@@ -356,7 +362,7 @@ def translate_docx_v2():
         res = CustomResponse(Status.FAILURE.value, 'something went wrong')
         log.info('translate_docx_v2: ended at ' + str(getcurrenttime()) + 'total time elapsed : ' + str(
             getcurrenttime() - start_time))
-        return res.getres()
+        return res.getres(),500
 
 
 def get_pending_nodes():

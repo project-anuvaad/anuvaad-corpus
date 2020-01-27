@@ -68,7 +68,7 @@ exports.listUsers = function (req, res) {
             return res.status(apistatus.http.status).json(apistatus);
         }
     }).catch((e) => {
-        LOG.info(e)
+        LOG.debug(e)
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     })

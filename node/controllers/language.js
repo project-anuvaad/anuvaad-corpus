@@ -42,7 +42,7 @@ exports.saveLanguages = function (req, res) {
     }
     let language = req.body.language
     Language.findByCondition({ language_code: language.language_code, status: SATUS_ACTIVE }, function (err, lang) {
-        LOG.info(lang.length)
+        LOG.debug(lang.length)
         if (lang && lang.length > 0) {
             let apistatus = new APIStatus(StatusCode.ERR_DATA_EXIST, COMPONENT).getRspStatus()
             return res.status(apistatus.http.status).json(apistatus);

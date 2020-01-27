@@ -60,7 +60,7 @@ exports.fetchCorpusSentences = function (req, res) {
     }
     Corpus.findOne({ basename: basename }, function (error, corpus) {
         Sentence.countDocuments({ basename: basename }, function (err, count) {
-            LOG.info(count)
+            LOG.debug(count)
             Sentence.fetch(basename, pagesize, pageno, status, null, function (err, sentences) {
                 if (err) {
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
@@ -115,7 +115,7 @@ exports.updateSentences = function (req, res) {
         return res.status(apistatus.http.status).json(apistatus);
     }
     async.each(req.body.sentences, function (sentence, callback) {
-        LOG.info("Updating sentence [%s]", JSON.stringify(sentence))
+        LOG.debug("Updating sentence [%s]", JSON.stringify(sentence))
         Sentence.find({ _id: sentence._id }, {}, function (err, results) {
             if (results && Array.isArray(results) && results.length > 0) {
                 var sentencedb = results[0]
@@ -131,7 +131,7 @@ exports.updateSentences = function (req, res) {
                             LOG.error(error)
                             callback()
                         }
-                        LOG.info("Sentence updated [%s]", JSON.stringify(sentence))
+                        LOG.debug("Sentence updated [%s]", JSON.stringify(sentence))
                         callback()
                     })
                 })
@@ -157,7 +157,7 @@ exports.updateSentencesStatus = function (req, res) {
         return res.status(apistatus.http.status).json(apistatus);
     }
     async.each(req.body.sentences, function (sentence, callback) {
-        LOG.info("Updating sentence status [%s]", JSON.stringify(sentence))
+        LOG.debug("Updating sentence status [%s]", JSON.stringify(sentence))
         Sentence.find({ _id: sentence._id }, {}, function (err, results) {
             if (results && Array.isArray(results) && results.length > 0) {
                 var sentencedb = results[0]
@@ -173,14 +173,14 @@ exports.updateSentencesStatus = function (req, res) {
                             LOG.error(error)
                             callback()
                         }
-                        LOG.info("Sentence updated [%s]", JSON.stringify(sentence))
+                        LOG.debug("Sentence updated [%s]", JSON.stringify(sentence))
                         callback()
                     })
                 })
 
             }
             else {
-                LOG.info('Data not found')
+                LOG.debug('Data not found')
                 callback('data not found')
             }
         })
@@ -234,7 +234,7 @@ exports.updateSentencesGrade = function (req, res) {
         return res.status(apistatus.http.status).json(apistatus);
     }
     async.each(req.body.sentences, function (sentence, callback) {
-        LOG.info("Updating sentence grade [%s]", JSON.stringify(sentence))
+        LOG.debug("Updating sentence grade [%s]", JSON.stringify(sentence))
         if (sentence.rating || sentence.spelling_rating || sentence.context_rating || sentence.name_accuracy_rating || sentence.comments) {
             Sentence.find({ _id: sentence._id }, {}, function (err, results) {
                 if (results && Array.isArray(results) && results.length > 0) {
@@ -257,12 +257,12 @@ exports.updateSentencesGrade = function (req, res) {
                         })
                     })
                 } else {
-                    LOG.info('Data not found')
+                    LOG.debug('Data not found')
                     callback('data not found')
                 }
             })
         } else {
-            LOG.info('Rating not specified')
+            LOG.debug('Rating not specified')
             callback()
         }
     }, function (err) {

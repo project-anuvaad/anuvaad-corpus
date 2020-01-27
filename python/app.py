@@ -24,6 +24,9 @@ from db.conmgr import getinstance
 from db.conmgr_mongo import connectmongo
 from utils.pdftoimage import converttoimage
 from utils.imagetotext import convertimagetotext
+
+from jaeger.middleware import LoggerMiddleware
+
 from utils.imagetoalto import convertimagetoalto
 from utils.removetextv2 import removetext
 from utils.imagetopdf import converttopdf
@@ -53,6 +56,8 @@ import threading
 import atexit
 from utils.thread_manager import thread_manager
 from apscheduler.schedulers.background import BackgroundScheduler
+# from jaeger_client import Config
+
 
 
 """ Logging Config, for debug logs please set env 'app_debug_logs' to True  """
@@ -106,6 +111,7 @@ LANGUAGES = {
 }
 
 app = Flask(__name__)
+# app.wsgi_app = LoggerMiddleware(app.wsgi_app)
 
 CORS(app)
 
@@ -125,6 +131,40 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 es = getinstance()
 words = []
 connectmongo()
+
+# config = Config(
+#         config={ # usually read from some yaml config
+#             'sampler': {
+#                 'type': 'const',
+#                 'param': 1,
+#             },
+#             'logging': True,
+#         },
+#         service_name='python-test',
+#         validate=True,
+#     )
+#     # this call also sets opentracing.tracer
+# tracer = config.initialize_tracer()
+
+
+# @app.before_request
+# def before():
+#     global tracer
+#     print("Printing request")
+#     print(request.headers)
+#     with tracer.start_span('TestSpan') as span:
+#         span.log_kv({'event': 'test message', 'life': 42})
+#     pass
+
+# @app.after_request
+# def after(response):
+#     global tracer
+#     print("Printing response")
+#     print(response.status)
+#     print(response.headers)
+#     print(response.get_data())
+#     tracer.close() 
+#     return response
 
 # scheduler = BackgroundScheduler()
 # scheduler.add_job(func=thread_manager, trigger="interval", minutes=2)
@@ -163,7 +203,7 @@ except Exception as e:
 @app.route('/hello', methods=['GET'])
 def hello_():
     log.info('testing info log')
-    log.debug('testing debug logs')
+    log.info('testing debug logs')
     log.error('test error logs')
     return "hello"
 

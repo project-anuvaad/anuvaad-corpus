@@ -15,6 +15,9 @@ module.exports = function (router) {
     router.route('/save-mt-workspace')
         .post(workspaceController.saveMTWorkspace);
 
+    router.route('/save-mt-workspace-data')
+        .post(workspaceController.saveMTWorkspaceData);
+
     router.route('/save-search-replace-workspace')
         .post(workspaceController.saveSearchReplaceWorkspace);
 
@@ -24,11 +27,20 @@ module.exports = function (router) {
     router.route('/fetch-paragraph-workspace')
         .get(workspaceController.fetchParagraphWorkspace);
 
+    router.route('/fetch-search-replace-sentence')
+        .get(workspaceController.fetchSearchReplaceSentence);
+
+    router.route('/update-search-replace-sentence')
+        .post(workspaceController.updateSearchReplaceSentence);
+
     router.route('/fetch-mt-workspace')
         .get(workspaceController.fetchMTWorkspace);
 
     router.route('/fetch-search-replace-workspace')
         .get(workspaceController.fetchSearchReplaceWorkspace);
+
+    router.route('/fetch-search-replace-workspace-detail')
+        .get(workspaceController.fetchSearchReplaceWorkspaceDetail);
 
     router.route('/fetch-mt-workspace-detail')
         .get(workspaceController.fetchMTWorkspaceDetail);

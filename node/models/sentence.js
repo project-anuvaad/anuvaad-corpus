@@ -15,7 +15,7 @@ Sentence.saveSentences = function (sentences, cb) {
         if (err) {
             return cb(err, null)
         } else {
-            LOG.info('%s sentences was successfully stored.', JSON.stringify(docs));
+            LOG.debug('%s sentences was successfully stored.', JSON.stringify(docs));
             return cb(null, docs)
         }
     })
@@ -27,7 +27,7 @@ Sentence.updateSentence = function (sentence, cb) {
             LOG.error(err)
             cb(err, null)
         }
-        LOG.info(doc)
+        LOG.debug(doc)
         cb(null, doc)
     });
 }
@@ -41,7 +41,7 @@ Sentence.sumRatings = function (basename, cb) {
             LOG.error(err)
             cb(err, null)
         }
-        LOG.info(doc)
+        LOG.debug(doc)
         cb(null, doc)
     })
 }
