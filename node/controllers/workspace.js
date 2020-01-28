@@ -9,7 +9,7 @@ var TranslationProcess = require('../models/translation_process');
 var StatusCode = require('../errors/statuscodes').StatusCode
 var LOG = require('../logger/logger').logger
 var KafkaProducer = require('../kafka/producer');
-var CountRows = require('../utils/csv-reader');
+var CSVReader = require('../utils/csv-reader');
 var fs = require('fs');
 var UUIDV4 = require('uuid/v4')
 var COMPONENT = "workspace";
@@ -839,7 +839,7 @@ exports.saveParagraphWorkspaceData = function (req, res) {
                         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                         return res.status(apistatus.http.status).json(apistatus);
                     }
-                    CountRows(BASE_PATH_NGINX + file_name, function (rowCount) {
+                    CSVReader.countSentence(BASE_PATH_NGINX + file_name, function (rowCount) {
                         workspace.sentence_file = file_name
                         workspace.sentence_count = rowCount
                         ParagraphWorkspace.save([workspace], function (err, models) {
@@ -892,14 +892,17 @@ exports.saveMTWorkspaceData = function (req, res) {
                         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                         return res.status(apistatus.http.status).json(apistatus);
                     }
-                    workspace.sentence_file = file_name
-                    MTWorkspace.save([workspace], function (err, models) {
-                        if (err) {
-                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                            return res.status(apistatus.http.status).json(apistatus);
-                        }
-                        let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
-                        return res.status(response.http.status).json(response);
+                    CSVReader.countSentence(BASE_PATH_NGINX + file_name, function (rowCount) {
+                        workspace.sentence_file = file_name
+                        workspace.sentence_count = rowCount
+                        MTWorkspace.save([workspace], function (err, models) {
+                            if (err) {
+                                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                return res.status(apistatus.http.status).json(apistatus);
+                            }
+                            let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                            return res.status(response.http.status).json(response);
+                        })
                     })
                 })
             })
