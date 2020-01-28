@@ -802,6 +802,56 @@ exports.saveSearchReplaceWorkspace = function (req, res) {
     })
 }
 
+exports.saveParagraphWorkspaceData = function (req, res) { 
+    let userId = req.headers['ad-userid']
+    if (!req || !req.body || !req.body.paragraph_workspace || !req.body.paragraph_workspace.title || !req.body.paragraph_workspace.sentence_file) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let workspace = req.body.paragraph_workspace
+    workspace.session_id = UUIDV4()
+    workspace.status = STATUS_PROCESSED
+    workspace.step = STEP_COMPLETED
+    workspace.created_at = new Date()
+    axios.get(USER_INFO_URL + '/' + userId).then((api_res) => {
+        workspace.created_by = userId
+        if (api_res.data) {
+            workspace.username = api_res.data.username
+        }
+        let file_name = workspace.title + workspace.session_id + '.csv'
+        fs.mkdir(BASE_PATH_PIPELINE_1 + workspace.session_id, function (e) {
+            if (e) {
+                LOG.error(e)
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+            fs.copyFile(BASE_PATH_NGINX + workspace.sentence_file, BASE_PATH_PIPELINE_1 + workspace.session_id + '/' + file_name, function (err) {
+                if (e) {
+                    LOG.error(e)
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
+                fs.copyFile(BASE_PATH_NGINX + workspace.sentence_file, BASE_PATH_NGINX + file_name, function (err) {
+                    if (e) {
+                        LOG.error(e)
+                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                        return res.status(apistatus.http.status).json(apistatus);
+                    }
+                    workspace.sentence_file = file_name
+                    ParagraphWorkspace.save([workspace], function (err, models) {
+                        if (err) {
+                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                            return res.status(apistatus.http.status).json(apistatus);
+                        }
+                        let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                        return res.status(response.http.status).json(response);
+                    })
+                })
+            })
+        })
+    })
+}
+
 exports.saveMTWorkspaceData = function (req, res) {
     let userId = req.headers['ad-userid']
     if (!req || !req.body || !req.body.mt_workspace || !req.body.mt_workspace.title || !req.body.mt_workspace.target_language || !req.body.mt_workspace.sentence_file) {
