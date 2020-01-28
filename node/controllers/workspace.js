@@ -9,6 +9,7 @@ var TranslationProcess = require('../models/translation_process');
 var StatusCode = require('../errors/statuscodes').StatusCode
 var LOG = require('../logger/logger').logger
 var KafkaProducer = require('../kafka/producer');
+var CountRows = require('../utils/csv-reader');
 var fs = require('fs');
 var UUIDV4 = require('uuid/v4')
 var COMPONENT = "workspace";
@@ -802,7 +803,7 @@ exports.saveSearchReplaceWorkspace = function (req, res) {
     })
 }
 
-exports.saveParagraphWorkspaceData = function (req, res) { 
+exports.saveParagraphWorkspaceData = function (req, res) {
     let userId = req.headers['ad-userid']
     if (!req || !req.body || !req.body.paragraph_workspace || !req.body.paragraph_workspace.title || !req.body.paragraph_workspace.sentence_file) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
@@ -832,19 +833,23 @@ exports.saveParagraphWorkspaceData = function (req, res) {
                     return res.status(apistatus.http.status).json(apistatus);
                 }
                 fs.copyFile(BASE_PATH_NGINX + workspace.sentence_file, BASE_PATH_NGINX + file_name, function (err) {
+
                     if (e) {
                         LOG.error(e)
                         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                         return res.status(apistatus.http.status).json(apistatus);
                     }
-                    workspace.sentence_file = file_name
-                    ParagraphWorkspace.save([workspace], function (err, models) {
-                        if (err) {
-                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                            return res.status(apistatus.http.status).json(apistatus);
-                        }
-                        let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
-                        return res.status(response.http.status).json(response);
+                    CountRows(BASE_PATH_NGINX + file_name, function (rowCount) {
+                        workspace.sentence_file = file_name
+                        workspace.sentence_count = rowCount
+                        ParagraphWorkspace.save([workspace], function (err, models) {
+                            if (err) {
+                                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                return res.status(apistatus.http.status).json(apistatus);
+                            }
+                            let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                            return res.status(response.http.status).json(response);
+                        })
                     })
                 })
             })
