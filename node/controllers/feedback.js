@@ -62,11 +62,8 @@ exports.checkFeedbackPending = function (req, res) {
                     return res.status(apistatus.http.status).json(apistatus);
                 }
                 let obj = {}
-                LOG.debug(translation_process)
-                LOG.debug(translation_process_obj)
-                obj.title = translation_process_obj.title
+                obj.title = translation_process_obj.name
                 obj.feedback_questions = feedback_questions
-                LOG.debug(obj)
                 let response = new Response(StatusCode.SUCCESS, obj).getRsp()
                 return res.status(response.http.status).json(response);
             })
