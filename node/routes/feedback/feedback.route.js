@@ -17,4 +17,7 @@ module.exports = function (router) {
     router.route('/check-feedback-pending')
         .get(feedbackController.checkFeedbackPending);
 
+    router.route('/save-captured-feedback')
+        .post(feedbackController.saveCapturedFeedback);
+
 }
