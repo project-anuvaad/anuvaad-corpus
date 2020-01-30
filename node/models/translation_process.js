@@ -19,4 +19,14 @@ TranslationProcess.findByCondition = function(condition, cb){
     })
 }
 
+TranslationProcess.updateTranslationProcess = function (translation_process, cb) {
+    TranslationProcess.collection.updateOne({ _id: mongoose.Types.ObjectId(translation_process._id) }, { $set: { feedback_pending: translation_process.feedback_pending } }, { upsert: false }, function (err, doc) {
+        if (err) {
+            LOG.error(err)
+            cb(err, null)
+        }
+        cb(null, doc)
+    });
+}
+
 module.exports = TranslationProcess;
