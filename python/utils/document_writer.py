@@ -37,7 +37,7 @@ def write_document_basename(basename):
                     node.text = tgt_text
         docx_helper.save_docx(filepath, xmltree, filepath_processed, None)
         translationProcess = TranslationProcess.objects(basename=basename)
-        translationProcess.update(set__status=STATUS_PROCESSED)
+        translationProcess.update(set__status=STATUS_PROCESSED,set__feedback_pending=True)
         log.info('write_document_basename : ended for ' + basename)
 
 

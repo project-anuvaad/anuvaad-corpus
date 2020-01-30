@@ -8,7 +8,7 @@
  
 from mongoengine import *
 
-class TranslationProcess(Document):
+class TranslationProcess(DynamicDocument):
     name = StringField(required=True)
     created_on = StringField()
     status = StringField()
@@ -18,3 +18,4 @@ class TranslationProcess(Document):
     created_by = StringField()
     translate_uploaded = BooleanField()
     eta = IntField()
+    feedback_pending = BooleanField()
