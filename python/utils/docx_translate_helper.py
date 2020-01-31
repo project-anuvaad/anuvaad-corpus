@@ -14,21 +14,25 @@ import logging
 from google.cloud import translate
 import subprocess
 
+
 NMT_BASE_URL = os.environ.get('NMT_BASE_URL', 'http://localhost:3003/translator/')
 max_calls = 25
 log = logging.getLogger('file')
 DOCX_CONVERTOR = "soffice --headless --convert-to docx "
 
-
 RUN = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}r'
 TEXT = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t'
+TAB = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tab'
 RUN_PROP = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}rPr'
 R_FONTS = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}rFonts'
 FONTS_EAST_ASIA = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}eastAsia'
 FONTS_CS = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}cs'
 FONT_ASCII = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}ascii'
 FONT_HANSI = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}hAnsi'
-
+EAST_ASIA = 'east_asia'
+CS = 'cs'
+ASCII = 'ascii'
+HANSI = 'hansi'
 
 
 def get_xml_tree(xml_string):
@@ -160,7 +164,7 @@ def add_identification_tag(xmltree, identifier):
 
 def check_difference(x, prev):
     if prev == None:
-        log.info("PREV IS NULL")
+        log.debug("check_difference : PREV IS NULL")
         return False
     else:
         if not prev.attrib['i'] == x.attrib['i']:
@@ -171,7 +175,7 @@ def check_difference(x, prev):
             return False
         if not prev.attrib['b'] == x.attrib['b']:
             return False
-        log.info(" SAME ")
+        log.debug("check_difference : SAME ")
     return True
 
 
@@ -179,69 +183,158 @@ def count_iterable(i):
     return sum(1 for e in i)
 
 
+def check_prop_difference(curr, prev):
+    log.info('check_prop_difference : started')
+    try:
+        prop_ascii = curr.attrib[ASCII]
+        prop_hansi = curr.attrib[HANSI]
+        prop_cs = curr.attrib[CS]
+        prop_east_asia = curr.attrib[EAST_ASIA]
+        prev_prop_ascii = prev.attrib[ASCII]
+        prev_prop_hansi = prev.attrib[HANSI]
+        prev_prop_cs = prev.attrib[CS]
+        prev_prop_east_asia = prev.attrib[EAST_ASIA]
+        if not prop_ascii == 'None' and not prev_prop_ascii == 'None':
+            if prop_ascii == prev_prop_ascii:
+                return True
+        if not prop_hansi == 'None' and not prev_prop_hansi == 'None':
+            if prop_hansi == prev_prop_hansi:
+                return True
+        if not prop_cs == 'None' and not prev_prop_cs == 'None':
+            if prop_cs == prev_prop_cs:
+                return True
+        if not prop_east_asia == 'None' and not prev_prop_east_asia == 'None':
+            if prop_east_asia == prev_prop_east_asia:
+                return True
+        log.info('check_prop_difference : ended')
+        return False
+    except Exception as e:
+        log.error('check_prop_difference : Error occurred, error is ' + str(e))
+        return False
+
+
 def pre_process_text(xmltree):
-    num_nodes = 0
+    log.info('pre_process_text: started ')
+    pre_process_properties(xmltree)
     for para in iter_para(xmltree):
 
-        num_nodes = num_nodes + 1
-        log.info(" NEW PARA == " + str(num_nodes))
-
-        elements = 0
         para_child_count = count_iterable(para.iterchildren())
-        log.info("Paragraph children == " + str(para_child_count))
+        log.debug('pre_process_text : Paragraph children == ' + str(para_child_count))
 
         sentence = ''
-        para_text = None
-        prev_run_text = ''
-        run_font_prev = None
-        run_font_curr = None
         for r in para.iterchildren():
-            elements = elements + 1
 
-            if r.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}r':
-                children = 0
-                is_same = False
+            if r.tag == RUN:
                 run_text = ''
                 prev_node_c = None
-                for x in ((r.iterchildren())):
-                    children = children + 1
-
-                    if x.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t':
-                        log.info('TAG is: text ' + str(children))
-                        log.info('TAG text is == '+str(x.text))
+                for x in r.iterchildren():
+                    log.info(str(x.tag))
+                    if x.tag == TEXT:
+                        log.info('TAG text is == ' + str(x.text))
                         if x is not None:
+                            log.info('x is not None ')
                             run_text = run_text + x.text
                             x.text = ''
                             prev_node_c = x
 
-                log.info('RUN LEVEL TEXT IS =='+str(run_text))
+                log.debug('pre_process_text : run level text is == ' + str(run_text))
                 if prev_node_c is not None:
                     prev_node_c.text = run_text
                     sentence = sentence + run_text
+
         para_text = ''
         prev_run = None
-
+        log.info('pre_process_text :  merging run')
         for r in para.iterchildren():
-            elements = elements + 1
 
-            if r.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}r':
+            if r.tag == RUN:
 
                 run_text = ''
-                prev_node_c = None
-                for x in ((r.iterchildren())):
-                    if x.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t':
+                for x in r.iterchildren():
+                    if x.tag == TEXT:
 
-                        log.info('TAG text is == ' + str(x.text))
+                        log.debug('pre_process_text : TAG text is  == ' + str(x.text))
                         if x is not None and x.text is not '':
-                            para_text = para_text + x.text
-                            x.text = ''
-                            prev_run = x
+                            if prev_run is None:
+                                log.debug('pre_process_text :TAG text is  == ' + str(x.text))
+                                para_text = para_text + x.text
+                                x.text = ''
+                                prev_run = x
+                            else:
+                                similar = check_prop_difference(x, prev_run)
+                                if similar:
 
-        log.info('RUN LEVEL TEXT IS ==' + str(run_text))
+                                    para_text = para_text + x.text
+                                    x.text = ''
+                                    prev_run = x
+                                else:
+
+                                    prev_run.text = para_text
+                                    prev_run = None
+                                    para_text = ''
+                                    para_text = para_text + x.text
+                                    x.text = ''
+                    if x.tag == TAB:
+                        para_text = para_text + ' '
+
+
+                log.debug('pre_process_text: RUN LEVEL TEXT IS ==' + str(run_text))
         if prev_run is not None:
             prev_run.text = para_text
             sentence = sentence + para_text
-            log.info('sentence is == '+str(sentence))
+            log.info('pre_process_text: sentence is == ' + str(sentence))
+
+
+def pre_process_properties(xmltree):
+    log.info('pre_process_properties : started')
+    for para in iter_para(xmltree):
+
+        para_child_count = count_iterable(para.iterchildren())
+        log.info('pre_process_properties : Paragraph children == ' + str(para_child_count))
+
+        for r in para.iterchildren():
+            if r.tag == RUN:
+                rp = get_run_font_props(r)
+                if rp is not None:
+                    prop_ascii = get_attrib(rp, FONT_ASCII)
+                    prop_hansi = get_attrib(rp, FONT_HANSI)
+                    prop_cs = get_attrib(rp, FONTS_CS)
+                    prop_east_asia = get_attrib(rp, FONTS_EAST_ASIA)
+                    text_node = get_text_node(r)
+
+                    if text_node is not None:
+
+                        text_node.attrib[ASCII] = prop_ascii
+                        text_node.attrib[HANSI] = prop_hansi
+                        text_node.attrib[CS] = prop_cs
+                        text_node.attrib[EAST_ASIA] = prop_east_asia
+
+
+def get_attrib(data, key):
+    try:
+        for k in data.keys():
+            if k == key:
+                attrib = data.get(key)
+        return attrib
+    except Exception as e:
+        log.error('get_attrib : No attrib present with key == ' + str(key))
+        return 'None'
+
+
+def get_text_node(node):
+    for x in node.iterchildren():
+        if x is not None and x.tag == TEXT:
+            return x
+    return None
+
+
+def get_run_font_props(node):
+    for x in node.iterchildren():
+        if x is not None and x.tag == RUN_PROP:
+            for rp in x.iterchildren():
+                if rp.tag == R_FONTS:
+                    return rp
+    return None
 
 
 def modify_text_with_tokenization(nodes, url, model_id, url_end_point):
@@ -481,13 +574,13 @@ def modify_text__2(nodes):
 
 
 def convert_DOC_to_DOCX(filename):
-    log.info('convert_DOC_to_DOCX : filename is == '+filename)
+    log.info('convert_DOC_to_DOCX : filename is == ' + filename)
     try:
         name = filename.split('/')
         command = DOCX_CONVERTOR + filename + ' --outdir upload'
         os.system(command)
     except Exception as e:
-        log.info('convert_DOC_to_DOCX : Error Occured == '+str(e))
+        log.info('convert_DOC_to_DOCX : Error Occured == ' + str(e))
         pass
     log.info('convert_DOC_to_DOCX : completed')
 
