@@ -179,6 +179,7 @@ function startApp() {
   require('./routes/high_court/high_court.route')(router);
   require('./routes/nmt/nmt.route')(router);
   require('./routes/workspace/workspace.route')(router);
+  require('./routes/feedback/feedback.route')(router);
 
   app.get('/test', function (req, res) {
     res.send("Hello world!");

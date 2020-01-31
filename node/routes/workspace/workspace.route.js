@@ -12,6 +12,9 @@ module.exports = function (router) {
     router.route('/save-paragraph-workspace')
         .post(workspaceController.saveParagraphWorkspace);
 
+    router.route('/save-paragraph-workspace-data')
+        .post(workspaceController.saveParagraphWorkspaceData);
+
     router.route('/save-mt-workspace')
         .post(workspaceController.saveMTWorkspace);
 
