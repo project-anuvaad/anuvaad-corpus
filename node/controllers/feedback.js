@@ -1,11 +1,16 @@
 var FeedbackQuestion = require('../models/feedback_questions');
 var TranslationProcess = require('../models/translation_process');
+var UserHighCourt = require('../models/user_high_court');
+var HighCourt = require('../models/high_courts');
 var Response = require('../models/response')
 var APIStatus = require('../errors/apistatus')
 var StatusCode = require('../errors/statuscodes').StatusCode
 var LOG = require('../logger/logger').logger
 var async = require('async')
 var axios = require('axios');
+
+const ES_SERVER_URL = process.env.GATEWAY_URL ? process.env.GATEWAY_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/admin/'
+const USER_INFO_URL = ES_SERVER_URL + 'users'
 
 var COMPONENT = "feedback";
 const SATUS_DELETED = 'DELETED'
@@ -79,34 +84,62 @@ exports.checkFeedbackPending = function (req, res) {
 
 
 exports.saveCapturedFeedback = async function (req, res) {
-    LOG.debug('1')
     let userId = req.headers['ad-userid']
+    let username = ''
     if (!req || !req.body || !req.body.captured_feedback || !req.body.captured_feedback.basename || !req.body.captured_feedback.questions) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
-    let captured_feedback = req.body.captured_feedback
-    TranslationProcess.findByCondition({ created_by: userId, basename: captured_feedback.basename }, function (err, translation_process) {
-        if (err) {
-            LOG.error(err)
-            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-            return res.status(apistatus.http.status).json(apistatus);
+    axios.get(USER_INFO_URL + '/' + userId).then((api_res) => {
+        if (api_res.data) {
+            username = api_res.data.username
         }
-        else if (!translation_process || translation_process.length == 0) {
-            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_INVALID_PARAMETERS, COMPONENT).getRspStatus()
-            return res.status(apistatus.http.status).json(apistatus);
-        }
-        let translation_process_obj = translation_process[0]._doc
-        const questions = captured_feedback.questions
-        async.each(questions, function (doc, callback) {
-            axios.post('http://' + (process.env.ES_HOSTS ? process.env.ES_HOSTS : 'localhost') + ':9200/' + FEEDBACK_INDEX + '/_doc/', { question: doc.question, answer: doc.answer, source_lang: translation_process_obj.sourceLang, target_lang: translation_process_obj.targetLang, given_by: userId, created_on: new Date().toISOString() }).then(function (response) {
-                callback()
-            })
-        }, function (err) {
-            translation_process_obj.feedback_pending = false
-            TranslationProcess.updateTranslationProcess(translation_process_obj, function (err, doc) {
-                let response = new Response(StatusCode.SUCCESS, {}).getRsp()
-                return res.status(response.http.status).json(response);
+        let captured_feedback = req.body.captured_feedback
+        TranslationProcess.findByCondition({ created_by: userId, basename: captured_feedback.basename }, function (err, translation_process) {
+            if (err) {
+                LOG.error(err)
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+            else if (!translation_process || translation_process.length == 0) {
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_INVALID_PARAMETERS, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+            UserHighCourt.findByCondition({ user_id: userId }, function (err, user_high_courts) {
+                if (err) {
+                    LOG.error(err)
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
+                let user_high_court_obj = user_high_courts[0]._doc
+                HighCourt.findByCondition({ high_court_code: user_high_court_obj.high_court_code }, function (err, high_courts) {
+                    let high_court_obj = high_courts[0]._doc
+                    let translation_process_obj = translation_process[0]._doc
+                    const questions = captured_feedback.questions
+                    async.each(questions, function (doc, callback) {
+                        axios.post('http://' + (process.env.ES_HOSTS ? process.env.ES_HOSTS : 'localhost') + ':9200/' + FEEDBACK_INDEX + '/_doc/',
+                            {
+                                question: doc.question,
+                                answer: doc.answer,
+                                source_lang: translation_process_obj.sourceLang,
+                                target_lang: translation_process_obj.targetLang,
+                                given_by: userId,
+                                high_court_name: high_court_obj.high_court_name,
+                                high_court_code: high_court_obj.high_court_code,
+                                given_by_username: username,
+                                created_on: new Date().toISOString()
+                            }
+                        ).then(function (response) {
+                            callback()
+                        })
+                    }, function (err) {
+                        translation_process_obj.feedback_pending = false
+                        TranslationProcess.updateTranslationProcess(translation_process_obj, function (err, doc) {
+                            let response = new Response(StatusCode.SUCCESS, {}).getRsp()
+                            return res.status(response.http.status).json(response);
+                        })
+                    })
+                })
             })
         })
     })
