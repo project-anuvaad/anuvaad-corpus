@@ -14,7 +14,7 @@ const USER_INFO_URL = ES_SERVER_URL + 'users'
 
 var COMPONENT = "feedback";
 const SATUS_DELETED = 'DELETED'
-const FEEDBACK_INDEX = 'feedback_report'
+const FEEDBACK_INDEX = process.env.FEEDBACK_REPORT_ELASTIC_INDEX ? process.env.FEEDBACK_REPORT_ELASTIC_INDEX : 'feedback_report'
 
 exports.fetchFeedbackQuestions = function (req, res) {
     FeedbackQuestion.findByCondition({ $or: [{ status: { $exists: false } }, { status: { $ne: SATUS_DELETED } }] }, function (err, feedback_questions) {
