@@ -111,9 +111,37 @@ exports.saveCapturedFeedback = async function (req, res) {
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);
                 }
-                let user_high_court_obj = user_high_courts[0]._doc
-                HighCourt.findByCondition({ high_court_code: user_high_court_obj.high_court_code }, function (err, high_courts) {
-                    let high_court_obj = high_courts[0]._doc
+                if (user_high_courts && user_high_courts.length > 0) {
+                    let user_high_court_obj = user_high_courts[0]._doc
+                    HighCourt.findByCondition({ high_court_code: user_high_court_obj.high_court_code }, function (err, high_courts) {
+                        let high_court_obj = high_courts[0]._doc
+                        let translation_process_obj = translation_process[0]._doc
+                        const questions = captured_feedback.questions
+                        async.each(questions, function (doc, callback) {
+                            axios.post('http://' + (process.env.ES_HOSTS ? process.env.ES_HOSTS : 'localhost') + ':9200/' + FEEDBACK_INDEX + '/_doc/',
+                                {
+                                    question: doc.question,
+                                    answer: doc.answer,
+                                    source_lang: translation_process_obj.sourceLang,
+                                    target_lang: translation_process_obj.targetLang,
+                                    given_by: userId,
+                                    high_court_name: high_court_obj.high_court_name,
+                                    high_court_code: high_court_obj.high_court_code,
+                                    given_by_username: username,
+                                    created_on: new Date().toISOString()
+                                }
+                            ).then(function (response) {
+                                callback()
+                            })
+                        }, function (err) {
+                            translation_process_obj.feedback_pending = false
+                            TranslationProcess.updateTranslationProcess(translation_process_obj, function (err, doc) {
+                                let response = new Response(StatusCode.SUCCESS, {}).getRsp()
+                                return res.status(response.http.status).json(response);
+                            })
+                        })
+                    })
+                } else {
                     let translation_process_obj = translation_process[0]._doc
                     const questions = captured_feedback.questions
                     async.each(questions, function (doc, callback) {
@@ -124,8 +152,8 @@ exports.saveCapturedFeedback = async function (req, res) {
                                 source_lang: translation_process_obj.sourceLang,
                                 target_lang: translation_process_obj.targetLang,
                                 given_by: userId,
-                                high_court_name: high_court_obj.high_court_name,
-                                high_court_code: high_court_obj.high_court_code,
+                                high_court_name: '',
+                                high_court_code: '',
                                 given_by_username: username,
                                 created_on: new Date().toISOString()
                             }
@@ -139,7 +167,7 @@ exports.saveCapturedFeedback = async function (req, res) {
                             return res.status(response.http.status).json(response);
                         })
                     })
-                })
+                }
             })
         })
     })
