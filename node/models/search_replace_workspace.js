@@ -27,7 +27,7 @@ SearchReplaceWorkspace.save = function (searchReplaceWorkspaces, cb) {
 }
 
 SearchReplaceWorkspace.findByCondition = function (condition, pagesize, pageno, cb) {
-    SearchReplaceWorkspace.find(condition, {}, (pagesize && pageno ? { skip: (pageno - 1) * pagesize, limit: parseInt(pagesize), sort: {'_id': -1} } : {sort: {'_id': -1}}), function (err, data) {
+    SearchReplaceWorkspace.find(condition, {}, (pagesize && pageno ? { skip: (pageno - 1) * pagesize, limit: parseInt(pagesize), sort: { '_id': -1 } } : { sort: { '_id': -1 } }), function (err, data) {
         if (err) {
             LOG.error("Unable to find MTWorkspace due to [%s]", JSON.stringify(err));
             return cb(err, null);
@@ -37,7 +37,7 @@ SearchReplaceWorkspace.findByCondition = function (condition, pagesize, pageno, 
 }
 
 SearchReplaceWorkspace.updateSearchReplaceWorkspace = function (searchReplaceWorkspace, cb) {
-    SearchReplaceWorkspace.collection.updateOne({ _id: mongoose.Types.ObjectId(searchReplaceWorkspace._id) }, { $set: { source_file_full_path: searchReplaceWorkspace.source_file_full_path, target_file_full_path: searchReplaceWorkspace.target_file_full_path, status: searchReplaceWorkspace.status,sentence_count: searchReplaceWorkspace.sentence_count, sentence_file: searchReplaceWorkspace.sentence_file, step: searchReplaceWorkspace.step, sentence_file_full_path: searchReplaceWorkspace.sentence_file_full_path } }, { upsert: false }, function (err, doc) {
+    SearchReplaceWorkspace.collection.updateOne({ _id: mongoose.Types.ObjectId(searchReplaceWorkspace._id) }, { $set: { sentence_count_rejected: searchReplaceWorkspace.sentence_count_rejected, source_file_full_path: searchReplaceWorkspace.source_file_full_path, target_file_full_path: searchReplaceWorkspace.target_file_full_path, status: searchReplaceWorkspace.status, sentence_count: searchReplaceWorkspace.sentence_count, sentence_file: searchReplaceWorkspace.sentence_file, step: searchReplaceWorkspace.step, sentence_file_full_path: searchReplaceWorkspace.sentence_file_full_path } }, { upsert: false }, function (err, doc) {
         if (err) {
             LOG.error(err)
             cb(err, null)
