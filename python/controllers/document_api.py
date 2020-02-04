@@ -68,7 +68,7 @@ def download_docx():
                 result.headers["x-suggested-filename"] = data
         except Exception as e:
             log.info('download-docx: error in finding process for basename : ' + str(n_filename))
-            result = flask.send_file(os.path.join('upload/', filename), as_attachment=True, attachment_filename="happy")
+            result = flask.send_file(os.path.join('upload/', filename), as_attachment=True, attachment_filename="default.docx")
             result.headers["x-suggested-filename"] = filename
         return result
     except Exception as e:
