@@ -1,16 +1,18 @@
 var jaeger = require('./jaeger')
+const { Tags, FORMAT_HTTP_HEADERS } = require('opentracing')
 const tracer = jaeger("anuvaad");
 var LOG = require('../logger/logger').logger
 
 
 function jaegerCollector(req, res, next) {
-    LOG.debug('rootspan', req.body)
-    if (req.headers['ad-rootSpan']) {
+    const parentSpanContext = tracer.extract(FORMAT_HTTP_HEADERS, req.headers)
+    LOG.debug('rootspan', parentSpanContext)
+    if (parentSpanContext) {
         var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
         var method = req.method;
         var referer = req.headers.referer || "";
         var ua = req.headers['user-agent'];
-        let span = tracer.startSpan('node-app', { childOf: req.headers['ad-rootSpan'] })
+        let span = tracer.startSpan('node-app', { childOf: parentSpanContext })
         span.setTag("http.method", method);
         span.setTag("http.referer", referer);
         span.setTag("http.user-agent", ua);
