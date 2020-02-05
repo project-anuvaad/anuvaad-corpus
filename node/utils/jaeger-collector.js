@@ -6,16 +6,17 @@ var LOG = require('../logger/logger').logger
 
 function jaegerCollector(req, res, next) {
     const parentSpanContext = tracer.extract(FORMAT_HTTP_HEADERS, req.headers)
-    LOG.debug('rootspan', parentSpanContext)
     if (parentSpanContext) {
         var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
         var method = req.method;
+        var url = req.url;
         var referer = req.headers.referer || "";
         var ua = req.headers['user-agent'];
         let span = tracer.startSpan('node-app', { childOf: parentSpanContext })
         span.setTag("http.method", method);
         span.setTag("http.referer", referer);
         span.setTag("http.user-agent", ua);
+        span.setTag("http.endpoint", url);
         span.setTag("http.ip", ip);
 
 
