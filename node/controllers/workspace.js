@@ -600,14 +600,18 @@ exports.updateSearchReplaceSentence = function (req, res) {
 }
 
 exports.acceptAllSearchReplaceSentence = function (req, res) {
-    if (!req || !req.body || !req.body.processId) {
+    if (!req || !req.body || !req.body.processId || !req.body.source_search) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
+    let source_search = req.body.source_search
     let process_id = req.body.processId
-    SentencePair.findByCondition({ processId: process_id, viewed: { $exists: false } }, function (err, models) {
-        if (err || !models || models.length == 0) {
+    SentencePair.findByCondition({ processId: process_id, viewed: { $exists: false }, 'changes.source_search': source_search }, function (err, models) {
+        if (err) {
             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }else if(!models || models.length == 0){
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
             return res.status(apistatus.http.status).json(apistatus);
         }
         async.each(models, function (sentence_pair_doc, callback) {
@@ -623,42 +627,54 @@ exports.acceptAllSearchReplaceSentence = function (req, res) {
                 callback()
             })
         }, function (err) {
-            SearchReplaceWorkspace.findByCondition({ session_id: process_id }, null, null, function (err, models) {
+            SentencePair.countDocuments({ processId: process_id, viewed: { $exists: false } }, function (err, count) {
                 if (err) {
                     LOG.error(err)
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);
-                } else if (!models || models.length == 0) {
-                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_INVALID_PARAMETERS, COMPONENT).getRspStatus()
-                    return res.status(apistatus.http.status).json(apistatus);
                 }
-                models[0]._doc.step = STEP_IN_PROGRESS
-                SearchReplaceWorkspace.updateSearchReplaceWorkspace(models[0]._doc, function (err, doc) {
-                    if (err) {
-                        LOG.error(err);
-                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                        return res.status(apistatus.http.status).json(apistatus);
-                    }
-                    KafkaProducer.getInstance().getProducer((err, producer) => {
+                LOG.debug('Sentence pair remaining for process', count)
+                if (count == 0) {
+                    SearchReplaceWorkspace.findByCondition({ session_id: process_id }, null, null, function (err, models) {
                         if (err) {
-                            LOG.error("Unable to connect to KafkaProducer");
-                        } else {
-                            LOG.debug("KafkaProducer connected")
-                            let data = models[0]._doc
-                            data.path = PATH_WRITE_TO_FILE
-                            let payloads = [
-                                {
-                                    topic: TOPIC_STAGE_3, messages: JSON.stringify({ data: data }), partition: 0
-                                }
-                            ]
-                            producer.send(payloads, function (err, data) {
-                                LOG.debug('Produced')
-                                let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
-                                return res.status(response.http.status).json(response);
-                            });
+                            LOG.error(err)
+                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                            return res.status(apistatus.http.status).json(apistatus);
+                        } else if (!models || models.length == 0) {
+                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_INVALID_PARAMETERS, COMPONENT).getRspStatus()
+                            return res.status(apistatus.http.status).json(apistatus);
                         }
+                        models[0]._doc.step = STEP_IN_PROGRESS
+                        SearchReplaceWorkspace.updateSearchReplaceWorkspace(models[0]._doc, function (err, doc) {
+                            if (err) {
+                                LOG.error(err);
+                                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                return res.status(apistatus.http.status).json(apistatus);
+                            }
+                            KafkaProducer.getInstance().getProducer((err, producer) => {
+                                if (err) {
+                                    LOG.error("Unable to connect to KafkaProducer");
+                                } else {
+                                    LOG.debug("KafkaProducer connected")
+                                    let data = models[0]._doc
+                                    data.path = PATH_WRITE_TO_FILE
+                                    let payloads = [
+                                        {
+                                            topic: TOPIC_STAGE_3, messages: JSON.stringify({ data: data }), partition: 0
+                                        }
+                                    ]
+                                    producer.send(payloads, function (err, data) {
+                                        let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                                        return res.status(response.http.status).json(response);
+                                    });
+                                }
+                            })
+                        })
                     })
-                })
+                } else {
+                    let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                    return res.status(response.http.status).json(response);
+                }
 
             })
         });

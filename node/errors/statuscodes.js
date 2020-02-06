@@ -25,6 +25,7 @@ exports.StatusCode = {
     ERR_GLOBAL_MAX_LIMIT_EXCEEDED: { ok: false, http: { status: 400 }, why: "max limit exceeded" },
     ERR_GLOBAL_INVALID_PARAMETERS: { ok: false, http: { status: 400 }, why: "invalid params passed" },
     ERR_DATA_EXIST: { ok: false, http: { status: 400 }, why: "requested data already exist" },
+    ERR_GLOBAL_DATA_NOTFOUND: { ok: false, http: { status: 400 }, why: "requested data not found" },
     ERR_GLOBAL_UNAUTHORIZED: { ok: false, http: { status: 401 }, why: "unauthorized request" },
     ERR_GLOBAL_NOTFOUND: { ok: false, http: { status: 404 }, why: "requested information doesn't exist" },
     ERR_GLOBAL_LANG_NOTFOUND: { ok: false, http: { status: 404 }, why: "requested language doesn't exist" },
