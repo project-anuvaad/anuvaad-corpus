@@ -620,6 +620,7 @@ exports.acceptAllSearchReplaceSentence = function (req, res) {
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);
                 }
+                callback()
             })
         }, function (err) {
             SearchReplaceWorkspace.findByCondition({ session_id: process_id }, null, null, function (err, models) {
