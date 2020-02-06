@@ -610,7 +610,7 @@ exports.acceptAllSearchReplaceSentence = function (req, res) {
         if (err) {
             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
             return res.status(apistatus.http.status).json(apistatus);
-        }else if(!models || models.length == 0){
+        } else if (!models || models.length == 0) {
             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
             return res.status(apistatus.http.status).json(apistatus);
         }
@@ -664,7 +664,7 @@ exports.acceptAllSearchReplaceSentence = function (req, res) {
                                         }
                                     ]
                                     producer.send(payloads, function (err, data) {
-                                        let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                                        let response = new Response(StatusCode.SUCCESS, COMPONENT, count).getRsp()
                                         return res.status(response.http.status).json(response);
                                     });
                                 }
@@ -672,7 +672,7 @@ exports.acceptAllSearchReplaceSentence = function (req, res) {
                         })
                     })
                 } else {
-                    let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                    let response = new Response(StatusCode.SUCCESS, COMPONENT, count).getRsp()
                     return res.status(response.http.status).json(response);
                 }
 
