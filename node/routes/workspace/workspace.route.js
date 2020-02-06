@@ -36,6 +36,9 @@ module.exports = function (router) {
     router.route('/update-search-replace-sentence')
         .post(workspaceController.updateSearchReplaceSentence);
 
+    router.route('/accept-all-search-replace-sentence')
+        .post(workspaceController.acceptAllSearchReplaceSentence);
+
     router.route('/fetch-mt-workspace')
         .get(workspaceController.fetchMTWorkspace);
 
