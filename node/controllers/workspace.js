@@ -851,7 +851,6 @@ exports.saveSearchReplaceWorkspace = function (req, res) {
                     }
                     async.each(req.body.search_replace_workspace.selected_mt_workspaces, function (selected_workspace, callback) {
                         workspace.selected_files.push(selected_workspace.sentence_file)
-                        workspace.path = PATH_SEARCH_REPLACE
                         fs.copyFile(BASE_PATH_PIPELINE_2 + selected_workspace.session_id + '/' + selected_workspace.sentence_file, BASE_PATH_PIPELINE_3 + workspace.session_id + '/' + selected_workspace.sentence_file, function (err) {
                             if (err) {
                                 LOG.error(err)
@@ -865,7 +864,7 @@ exports.saveSearchReplaceWorkspace = function (req, res) {
                                     LOG.debug("KafkaProducer connected")
                                     let payloads = [
                                         {
-                                            topic: TOPIC_STAGE_3, messages: JSON.stringify({ data: workspace }), partition: 0
+                                            topic: TOPIC_STAGE_3, messages: JSON.stringify({ data: workspace, path: PATH_SEARCH_REPLACE }), partition: 0
                                         }
                                     ]
                                     producer.send(payloads, function (err, data) {
