@@ -67,10 +67,11 @@ exports.updateError = function (req) {
 }
 
 exports.handleSearchReplaceErrorRequest = function (req) {
-    if (!req || !req.data || !req.data.processId) {
+    if (!req || !req.data || (!req.data.processId && !req.data.process_id)) {
         LOG.error('Data missing for [%s]', JSON.stringify(req))
     } else {
-        SearchReplaceWorkspace.findOne({ session_id: req.data.processId }, function (error, workspace) {
+        let process_id = req.data.processId ? req.data.processId : req.data.process_id
+        SearchReplaceWorkspace.findOne({ session_id: process_id }, function (error, workspace) {
             if (error) {
                 LOG.error(error)
             }
