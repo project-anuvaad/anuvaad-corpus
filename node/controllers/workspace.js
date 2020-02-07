@@ -169,6 +169,7 @@ exports.handleWriteToFileRequest = function (req) {
                 } else {
                     workspace._doc.status = STATUS_PROCESSED
                     workspace._doc.step = STEP_COMPLETED
+                    workspace._doc.sentence_count = req.data.sentence_count
                     workspace._doc.sentence_count_rejected = req.data.sentence_count_rejected
                     workspace._doc.sentence_file_full_path = BASE_PATH_PIPELINE_3 + req.data.process_id + '/' + req.data.files
                     workspace._doc.source_file_full_path = BASE_PATH_PIPELINE_3 + req.data.process_id + '/' + req.data.source_file
