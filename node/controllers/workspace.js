@@ -948,7 +948,11 @@ exports.saveMTWorkspaceData = function (req, res) {
         return res.status(apistatus.http.status).json(apistatus);
     }
     let workspace = req.body.mt_workspace
+    let source_lang = req.body.mt_workspace.source_language
+    let target_lang = req.body.mt_workspace.target_language
     workspace.session_id = UUIDV4()
+    workspace.source_language = source_lang.language_code
+    workspace.target_language = target_lang.language_code
     workspace.status = STATUS_PROCESSED
     workspace.step = STEP_COMPLETED
     workspace.created_at = new Date()
