@@ -125,6 +125,7 @@ exports.saveCapturedFeedback = async function (req, res) {
                                     source_lang: translation_process_obj.sourceLang,
                                     target_lang: translation_process_obj.targetLang,
                                     given_by: userId,
+                                    basename: translation_process_obj.basename,
                                     high_court_name: high_court_obj.high_court_name,
                                     high_court_code: high_court_obj.high_court_code,
                                     given_by_username: username,
