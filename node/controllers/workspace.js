@@ -662,7 +662,7 @@ exports.acceptAllSearchReplaceSentence = function (req, res) {
                                     data.path = PATH_WRITE_TO_FILE
                                     let payloads = [
                                         {
-                                            topic: TOPIC_STAGE_3, messages: JSON.stringify({ data: data }), partition: 0
+                                            topic: TOPIC_STAGE_3, messages: JSON.stringify({ data: data, path: PATH_WRITE_TO_FILE }), partition: 0
                                         }
                                     ]
                                     producer.send(payloads, function (err, data) {
