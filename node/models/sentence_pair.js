@@ -26,7 +26,7 @@ SentencePair.findByCondition = function (condition, cb) {
 }
 
 SentencePair.updateSentencePair = function (sentencePair, cb) {
-    SentencePair.collection.updateOne({ _id: mongoose.Types.ObjectId(sentencePair._id) }, { $set: { target: sentencePair.target, accepted: sentencePair.accepted, viewed: sentencePair.viewed } }, { upsert: false }, function (err, doc) {
+    SentencePair.collection.updateOne({ _id: mongoose.Types.ObjectId(sentencePair._id) }, { $set: { updated: sentencePair.updated, target: sentencePair.target, accepted: sentencePair.accepted, viewed: sentencePair.viewed } }, { upsert: false }, function (err, doc) {
         if (err) {
             LOG.error(err)
             cb(err, null)
