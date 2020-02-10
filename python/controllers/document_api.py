@@ -62,7 +62,7 @@ def download_docx():
             translationProcess = TranslationProcess.objects(basename=n_filename[0])
             if translationProcess is not None:
                 data = translationProcess[0]['name']
-                if len(n_filename) > 0:
+                if len(n_filename) > 1:
                     data = data.split('.docx')[0] + '_translated.docx'
                 log.info('download-docx: process found for basename with name = ' + str(data))
                 result = flask.send_file(os.path.join('upload/', filename), as_attachment=True,
