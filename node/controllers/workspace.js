@@ -543,7 +543,7 @@ exports.updateSearchReplaceSentence = function (req, res) {
     async.waterfall([
         function (waterfall_callback) {
             if ("is_alone" in sentence_pair && !sentence_pair.is_alone) {
-                if (sentence_pair.accepted) {
+                if (sentence_pair.accepted && sentence_pair.changes && Array.isArray(sentence_pair.changes) && sentence_pair.changes.length > 0) {
                     let target = sentence_pair.target
                     let target_change = sentence_pair.changes[0].target_search
                     let target_replace = sentence_pair.changes[0].replace
