@@ -55,8 +55,8 @@ def download_docx():
     if filename == '':
         return CustomResponse(Status.ERR_GLOBAL_MISSING_PARAMETERS.value, 'filename missing').getres()
     try:
-
-        n_filename = filename.split('_')
+        filename_without_docx = filename.split('.docx')[0]
+        n_filename = filename_without_docx.split('_')
         try:
             log.info('download-docx: finding process from basename : ' + str(n_filename[0]))
             translationProcess = TranslationProcess.objects(basename=n_filename[0])
