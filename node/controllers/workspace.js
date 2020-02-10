@@ -540,63 +540,116 @@ exports.updateSearchReplaceSentence = function (req, res) {
     }
     let sentence_pair = req.body.sentence_pair
     sentence_pair.viewed = true
-    SentencePair.updateSentencePair(sentence_pair, function (err, models) {
-        if (err) {
-            LOG.error(err)
-            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-            return res.status(apistatus.http.status).json(apistatus);
+    async.waterfall([
+        function (waterfall_callback) {
+            if ("is_alone" in sentence_pair && !sentence_pair.is_alone) {
+                if (sentence_pair.accepted) {
+                    let target = sentence_pair.target
+                    let target_change = sentence_pair.changes[0].target_search
+                    let target_replace = sentence_pair.changes[0].replace
+                    target = target.replace(target_change, target_replace)
+                    sentence_pair.updated = target
+                    SentencePair.findByCondition({ processId: sentence_pair.processId, hash_: sentence_pair.hash_, serial_no: sentence_pair.serial_no++ }, function (err, result) {
+                        if (result && Array.isArray(result) && result.length > 0) {
+                            let result_obj = result[0]._doc
+                            result_obj.target = target
+                            SentencePair.updateSentencePair(result_obj, function (err, doc) {
+                                if (err) {
+                                    LOG.error(err)
+                                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                    return res.status(apistatus.http.status).json(apistatus);
+                                }
+                                waterfall_callback()
+                            })
+                        } else {
+                            waterfall_callback()
+                        }
+                    })
+                } else {
+                    SentencePair.findByCondition({ processId: sentence_pair.processId, hash_: sentence_pair.hash_, serial_no: sentence_pair.serial_no + 1 }, function (err, result) {
+                        if (result && Array.isArray(result) && result.length > 0) {
+                            async.each(result, function (sentence_pair_doc, callback) {
+                                let sentence_pair = sentence_pair_doc._doc
+                                sentence_pair.viewed = true
+                                SentencePair.updateSentencePair(sentence_pair, function (err, models) {
+                                    if (err) {
+                                        LOG.error(err)
+                                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                        return res.status(apistatus.http.status).json(apistatus);
+                                    }
+                                    callback()
+                                })
+                            }, function (err) {
+                                waterfall_callback()
+                            })
+                        } else {
+                            waterfall_callback()
+                        }
+                    })
+                }
+            } else {
+                waterfall_callback()
+            }
         }
-        SentencePair.countDocuments({ processId: sentence_pair.processId, viewed: { $exists: false } }, function (err, count) {
+    ], function () {
+        SentencePair.updateSentencePair(sentence_pair, function (err, models) {
             if (err) {
                 LOG.error(err)
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
-            LOG.debug('Sentence pair remaining for process', count)
-            if (count == 0) {
-                SearchReplaceWorkspace.findByCondition({ session_id: sentence_pair.processId }, null, null, function (err, models) {
-                    if (err) {
-                        LOG.error(err)
-                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                        return res.status(apistatus.http.status).json(apistatus);
-                    } else if (!models || models.length == 0) {
-                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_INVALID_PARAMETERS, COMPONENT).getRspStatus()
-                        return res.status(apistatus.http.status).json(apistatus);
-                    }
-                    models[0]._doc.step = STEP_IN_PROGRESS
-                    SearchReplaceWorkspace.updateSearchReplaceWorkspace(models[0]._doc, function (err, doc) {
+            SentencePair.countDocuments({ processId: sentence_pair.processId, viewed: { $exists: false } }, function (err, count) {
+                if (err) {
+                    LOG.error(err)
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
+                LOG.debug('Sentence pair remaining for process', count)
+                if (count == 0) {
+                    SearchReplaceWorkspace.findByCondition({ session_id: sentence_pair.processId }, null, null, function (err, models) {
                         if (err) {
-                            LOG.error(err);
+                            LOG.error(err)
                             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                             return res.status(apistatus.http.status).json(apistatus);
+                        } else if (!models || models.length == 0) {
+                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_INVALID_PARAMETERS, COMPONENT).getRspStatus()
+                            return res.status(apistatus.http.status).json(apistatus);
                         }
-                        KafkaProducer.getInstance().getProducer((err, producer) => {
+                        models[0]._doc.step = STEP_IN_PROGRESS
+                        SearchReplaceWorkspace.updateSearchReplaceWorkspace(models[0]._doc, function (err, doc) {
                             if (err) {
-                                LOG.error("Unable to connect to KafkaProducer");
-                            } else {
-                                LOG.debug("KafkaProducer connected")
-                                let data = models[0]._doc
-                                data.path = PATH_WRITE_TO_FILE
-                                let payloads = [
-                                    {
-                                        topic: TOPIC_STAGE_3, messages: JSON.stringify({ data: data, path: PATH_WRITE_TO_FILE }), partition: 0
-                                    }
-                                ]
-                                producer.send(payloads, function (err, data) {
-                                    LOG.debug('Produced')
-                                    let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
-                                    return res.status(response.http.status).json(response);
-                                });
+                                LOG.error(err);
+                                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                return res.status(apistatus.http.status).json(apistatus);
                             }
+                            KafkaProducer.getInstance().getProducer((err, producer) => {
+                                if (err) {
+                                    LOG.error("Unable to connect to KafkaProducer");
+                                } else {
+                                    LOG.debug("KafkaProducer connected")
+                                    let data = models[0]._doc
+                                    data.path = PATH_WRITE_TO_FILE
+                                    let payloads = [
+                                        {
+                                            topic: TOPIC_STAGE_3, messages: JSON.stringify({ data: data, path: PATH_WRITE_TO_FILE }), partition: 0
+                                        }
+                                    ]
+                                    producer.send(payloads, function (err, data) {
+                                        LOG.debug('Produced')
+                                        let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                                        return res.status(response.http.status).json(response);
+                                    });
+                                }
+                            })
                         })
+
                     })
+                } else {
+                    let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                    return res.status(response.http.status).json(response);
+                }
 
-                })
-            } else {
-                let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
-                return res.status(response.http.status).json(response);
-            }
-
+            })
         })
     })
 }
