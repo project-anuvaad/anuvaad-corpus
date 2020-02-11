@@ -36,6 +36,9 @@ module.exports = function (router) {
     router.route('/fetch-search-replace-sentence')
         .get(workspaceController.fetchSearchReplaceSentence);
 
+    router.route('/fetch-composition-workspace')
+        .get(workspaceController.fetchCompositionWorkspace);
+
     router.route('/update-search-replace-sentence')
         .post(workspaceController.updateSearchReplaceSentence);
 

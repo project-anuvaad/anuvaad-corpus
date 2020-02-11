@@ -817,6 +817,40 @@ exports.fetchParagraphWorkspace = function (req, res) {
     })
 }
 
+exports.fetchCompositionWorkspace = function(req, res){
+    let status = req.query.status
+    let step = req.query.step
+    var pagesize = req.query.pagesize
+    var pageno = req.query.pageno
+    var search_param = req.query.search_param
+    let condition = {}
+    if (status) {
+        condition = { status: status, stage: 1 }
+    }
+    if (search_param) {
+        condition['title'] = new RegExp(search_param, "i")
+    }
+    if (step) {
+        condition['step'] = step
+    }
+    CompositionWorkspace.countDocuments(condition, function (err, count) {
+        if (err) {
+            LOG.error(err)
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+        CompositionWorkspace.findByCondition(condition, pagesize, pageno, function (err, models) {
+            if (err) {
+                LOG.error(err)
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+            let response = new Response(StatusCode.SUCCESS, models, count).getRsp()
+            return res.status(response.http.status).json(response);
+        })
+    })
+}
+
 exports.startTokenization = function (req, res) {
     if (!req || !req.body || !req.body.paragraph_workspace || !req.body.paragraph_workspace.negative_token_file || !req.body.paragraph_workspace.token_file) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
