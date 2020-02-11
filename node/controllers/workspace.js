@@ -5,6 +5,7 @@ var MTWorkspace = require('../models/mt_workspace');
 var SentencePair = require('../models/sentence_pair');
 var SentencePairUnchecked = require('../models/sentence_pair_unchecked');
 var SearchReplaceWorkspace = require('../models/search_replace_workspace');
+var CompositionWorkspace = require('../models/composition_workspace');
 var TranslationProcess = require('../models/translation_process');
 var StatusCode = require('../errors/statuscodes').StatusCode
 var LOG = require('../logger/logger').logger
@@ -19,6 +20,7 @@ var es = require('../db/elastic');
 const BASE_PATH_PIPELINE_1 = 'corpusfiles/processing/pipeline_stage_1/'
 const BASE_PATH_PIPELINE_2 = 'corpusfiles/processing/pipeline_stage_2/'
 const BASE_PATH_PIPELINE_3 = 'corpusfiles/processing/pipeline_stage_3/'
+const BASE_PATH_PIPELINE_4 = 'corpusfiles/processing/pipeline_stage_4/'
 const BASE_PATH_NGINX = 'nginx/'
 const STATUS_PROCESSING = 'PROCESSING'
 const STATUS_PROCESSED = 'PROCESSED'
@@ -927,6 +929,71 @@ exports.saveSearchReplaceWorkspace = function (req, res) {
                                     });
                                 }
                             })
+                            callback()
+                        })
+
+                    }, function (err) {
+                        let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                        return res.status(response.http.status).json(response);
+                    });
+                })
+            })
+        })
+    })
+}
+
+exports.saveCompositionWorkspace = function (req, res) {
+    let userId = req.headers['ad-userid']
+    if (!req || !req.body || !req.body.composition_workspace || !req.body.composition_workspace.search_replace_workspaces) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let workspace = req.body.composition_workspace
+    workspace.session_id = UUIDV4()
+    axios.get(USER_INFO_URL + '/' + userId).then((api_res) => {
+        workspace.status = STATUS_PROCESSING
+        workspace.step = STEP_IN_PROGRESS
+        workspace.created_at = new Date()
+        workspace.created_by = userId
+        workspace.selected_files = []
+        if (api_res.data) {
+            workspace.username = api_res.data.username
+        }
+        fs.mkdir(BASE_PATH_PIPELINE_4 + workspace.session_id, function (e) {
+            fs.copyFile(BASE_PATH_NGINX + workspace.config_file_location, BASE_PATH_PIPELINE_4 + workspace.session_id + '/' + workspace.config_file_location, function (err) {
+                if (err) {
+                    LOG.error(err)
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
+                CompositionWorkspace.save([workspace], function (err, models) {
+                    if (err) {
+                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                        return res.status(apistatus.http.status).json(apistatus);
+                    }
+                    async.each(req.body.composition_workspace.search_replace_workspaces, function (selected_workspace, callback) {
+                        workspace.selected_files.push(selected_workspace.sentence_file)
+                        fs.copyFile(BASE_PATH_PIPELINE_3 + selected_workspace.session_id + '/' + selected_workspace.sentence_file, BASE_PATH_PIPELINE_4 + workspace.session_id + '/' + selected_workspace.sentence_file, function (err) {
+                            if (err) {
+                                LOG.error(err)
+                            } else {
+                                LOG.debug('File transfered [%s]', selected_workspace.sentence_file)
+                            }
+                            // KafkaProducer.getInstance().getProducer((err, producer) => {
+                            //     if (err) {
+                            //         LOG.error("Unable to connect to KafkaProducer");
+                            //     } else {
+                            //         LOG.debug("KafkaProducer connected")
+                            //         let payloads = [
+                            //             {
+                            //                 topic: TOPIC_STAGE_3, messages: JSON.stringify({ data: workspace, path: PATH_SEARCH_REPLACE }), partition: 0
+                            //             }
+                            //         ]
+                            //         producer.send(payloads, function (err, data) {
+                            //             LOG.debug('Produced')
+                            //         });
+                            //     }
+                            // })
                             callback()
                         })
 

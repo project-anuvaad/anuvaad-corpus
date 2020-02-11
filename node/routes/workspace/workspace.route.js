@@ -24,6 +24,9 @@ module.exports = function (router) {
     router.route('/save-search-replace-workspace')
         .post(workspaceController.saveSearchReplaceWorkspace);
 
+    router.route('/save-composition-workspace')
+        .post(workspaceController.saveCompositionWorkspace);
+
     router.route('/start-tokenization')
         .post(workspaceController.startTokenization);
 
