@@ -34,7 +34,6 @@ ParagraphWorkspace.findByCondition = function (condition, pagesize, pageno, cb) 
             LOG.error("Unable to find ParagraphWorkspace due to [%s]", JSON.stringify(err));
             return cb(err, null);
         }
-        LOG.debug("[%s] ParagraphWorkspace found", data);
         return cb(null, data);
     })
 }
