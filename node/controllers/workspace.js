@@ -1212,7 +1212,7 @@ exports.saveMTWorkspace = function (req, res) {
                                 LOG.debug(api_res.data)
                                 if (api_res && api_res.data) {
                                     LOG.debug(api_res.data.data)
-                                    MTWorkspace.findByCondition({ session_id: workspace.session_id }, function (err, docs) {
+                                    MTWorkspace.findByCondition({ session_id: workspace.session_id }, null, null, function (err, docs) {
                                         if (docs && docs.length > 0) {
                                             let workspacedb = doc[0]._doc
                                             workspacedb.report = api_res.data.data
