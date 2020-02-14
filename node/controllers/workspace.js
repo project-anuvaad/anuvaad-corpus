@@ -1206,8 +1206,8 @@ exports.saveMTWorkspace = function (req, res) {
                                     topic: TOPIC_STAGE_2, messages: JSON.stringify({ data: workspace }), partition: 0
                                 }
                             ]
-                            LOG.debug('Sending req', { session_id: workspace.session_id, files: workspace.selected_files, target_language: workspace.target_lang })
-                            axios.post(CORPUS_REPORT_URL, { session_id: workspace.session_id, files: workspace.selected_files, target_language: workspace.target_lang }, { headers: { 'content-type': 'application/json' } }).then((api_res) => {
+                            LOG.debug('Sending req', { session_id: workspace.session_id, files: workspace.selected_files, target_language: workspace.target_language })
+                            axios.post(CORPUS_REPORT_URL, { session_id: workspace.session_id, files: workspace.selected_files, target_language: workspace.target_language }, { headers: { 'content-type': 'application/json' } }).then((api_res) => {
                                 LOG.debug('Response receive for mt report')
                                 LOG.debug(api_res.data)
                                 if (api_res && api_res.data && api_res.data.ok) {
