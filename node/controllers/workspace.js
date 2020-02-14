@@ -1226,6 +1226,7 @@ exports.saveMTWorkspace = function (req, res) {
                                 }
                             }).catch((e) => {
                                 LOG.error('Unable to fetch reports for mt workspace [%s]', JSON.stringify(workspace))
+                                LOG.error(e)
                             })
                             LOG.debug('Sending message', payloads)
                             producer.send(payloads, function (err, data) {
