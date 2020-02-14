@@ -27,7 +27,7 @@ MTWorkspace.save = function (mtWorkspaces, cb) {
 }
 
 MTWorkspace.findByCondition = function (condition, pagesize, pageno, cb) {
-    MTWorkspace.find(condition, {}, (pagesize && pageno ? { skip: (pageno - 1) * pagesize, limit: parseInt(pagesize), sort: {'_id': -1} } : {sort: {'_id': -1}}), function (err, data) {
+    MTWorkspace.find(condition, {}, (pagesize && pageno ? { skip: (pageno - 1) * pagesize, limit: parseInt(pagesize), sort: { '_id': -1 } } : { sort: { '_id': -1 } }), function (err, data) {
         if (err) {
             LOG.error("Unable to find MTWorkspace due to [%s]", JSON.stringify(err));
             return cb(err, null);
@@ -37,7 +37,7 @@ MTWorkspace.findByCondition = function (condition, pagesize, pageno, cb) {
 }
 
 MTWorkspace.updateMTWorkspace = function (mtWorkspace, cb) {
-    MTWorkspace.collection.updateOne({ _id: mongoose.Types.ObjectId(mtWorkspace._id) }, { $set: { status: mtWorkspace.status,sentence_count: mtWorkspace.sentence_count, sentence_file: mtWorkspace.sentence_file, step: mtWorkspace.step } }, { upsert: false }, function (err, doc) {
+    MTWorkspace.collection.updateOne({ _id: mongoose.Types.ObjectId(mtWorkspace._id) }, { $set: { report: mtWorkspace.report, status: mtWorkspace.status, sentence_count: mtWorkspace.sentence_count, sentence_file: mtWorkspace.sentence_file, step: mtWorkspace.step } }, { upsert: false }, function (err, doc) {
         if (err) {
             LOG.error(err)
             cb(err, null)
