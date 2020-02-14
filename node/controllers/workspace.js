@@ -1207,28 +1207,30 @@ exports.saveMTWorkspace = function (req, res) {
                                 }
                             ]
                             LOG.debug('Sending message', payloads)
-                            // axios.post(CORPUS_REPORT_URL, { session_id: workspace.session_id, files: workspace.selected_files, target_language: workspace.target_lang }).then((api_res) => {
-                            //     LOG.debug('Response receive for mt report')
-                            //     if (api_res && api_res.data) {
-                            //         MTWorkspace.findByCondition({ session_id: workspace.session_id }, function (err, docs) {
-                            //             if (docs && docs.length > 0) {
-                            //                 let workspacedb = doc[0]._doc
-                            //                 workspacedb.report = api_res.data.data
-                            //                 MTWorkspace.updateMTWorkspace(workspacedb, function (err, doc) {
-                            //                     if (err) {
-                            //                         LOG.error(err)
-                            //                     }
-                            //                     else {
-                            //                         LOG.debug(doc)
-                            //                     }
-                            //                 })
-                            //             }
-                            //         })
-                            //     }
-                            // }).catch((e) => {
-                            //     LOG.error('Unable to fetch reports for mt workspace [%s]', JSON.stringify(workspace))
-                            //     LOG.error(e)
-                            // })
+                            axios.post(CORPUS_REPORT_URL, { session_id: workspace.session_id, files: workspace.selected_files, target_language: workspace.target_lang }).then((api_res) => {
+                                LOG.debug('Response receive for mt report')
+                                LOG.debug(api_res.data)
+                                if (api_res && api_res.data) {
+                                    LOG.debug(api_res.data.data)
+                                    MTWorkspace.findByCondition({ session_id: workspace.session_id }, function (err, docs) {
+                                        if (docs && docs.length > 0) {
+                                            let workspacedb = doc[0]._doc
+                                            workspacedb.report = api_res.data.data
+                                            MTWorkspace.updateMTWorkspace(workspacedb, function (err, doc) {
+                                                if (err) {
+                                                    LOG.error(err)
+                                                }
+                                                else {
+                                                    LOG.debug(doc)
+                                                }
+                                            })
+                                        }
+                                    })
+                                }
+                            }).catch((e) => {
+                                LOG.error('Unable to fetch reports for mt workspace [%s]', JSON.stringify(workspace))
+                                LOG.error(e)
+                            })
                             producer.send(payloads, function (err, data) {
                                 let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
                                 return res.status(response.http.status).json(response);
