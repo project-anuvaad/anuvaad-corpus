@@ -30,8 +30,10 @@ const STEP_SENTENCE = 'At Step2'
 const STEP_ERROR = 'FAILED'
 const STEP_COMPLETED = 'COMPLETED'
 const PYTHON_URL = process.env.PYTHON_URL ? process.env.PYTHON_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/corpus/'
+const CORPUS_TOOLS_URL = process.env.CORPUS_TOOLS_URL ? process.env.CORPUS_TOOLS_URL : 'http://gateway_tools:5099/'
 const ES_SERVER_URL = process.env.GATEWAY_URL ? process.env.GATEWAY_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/admin/'
 const USER_INFO_URL = ES_SERVER_URL + 'users'
+const CORPUS_REPORT_URL = CORPUS_TOOLS_URL + 'calculate-stats'
 
 const TOPIC_STAGE_1 = 'tokenext'
 const TOPIC_STAGE_1_STEP_2 = 'sentencesext'
@@ -817,7 +819,7 @@ exports.fetchParagraphWorkspace = function (req, res) {
     })
 }
 
-exports.fetchCompositionWorkspace = function(req, res){
+exports.fetchCompositionWorkspace = function (req, res) {
     let status = req.query.status
     let step = req.query.step
     var pagesize = req.query.pagesize
@@ -1204,6 +1206,27 @@ exports.saveMTWorkspace = function (req, res) {
                                     topic: TOPIC_STAGE_2, messages: JSON.stringify({ data: workspace }), partition: 0
                                 }
                             ]
+                            axios.post(CORPUS_REPORT_URL, { session_id: workspace.session_id, files: workspace.selected_files, target_language: workspace.target_lang }).then((api_res) => {
+                                LOG.debug("Data received for mt workspace report [%s]", JSON.stringify(api_res))
+                                if (api_res && api_res.data) {
+                                    MTWorkspace.findByCondition({ session_id: workspace.session_id }, function (err, docs) {
+                                        if (docs && docs.length > 0) {
+                                            let workspacedb = doc[0]._doc
+                                            workspacedb.report = api_res.data.data
+                                            MTWorkspace.updateMTWorkspace(workspacedb, function (err, doc) {
+                                                if (err) {
+                                                    LOG.error(err)
+                                                }
+                                                else {
+                                                    LOG.debug(doc)
+                                                }
+                                            })
+                                        }
+                                    })
+                                }
+                            }).catch((e) => {
+                                LOG.error('Unable to fetch reports for mt workspace [%s]', JSON.stringify(workspace))
+                            })
                             LOG.debug('Sending message', payloads)
                             producer.send(payloads, function (err, data) {
                                 let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
