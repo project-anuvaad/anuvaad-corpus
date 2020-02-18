@@ -29,7 +29,7 @@ Corpus.fetchAll = function(cb){
     })
 }
 
-Corpus.updateCorpus = function (language, cb) {
+Corpus.updateCorpus = function (corpus, cb) {
     Corpus.collection.findOneAndUpdate({ _id: mongoose.Types.ObjectId(corpus._id)}, { $set: { data_processed: corpus.data_processed} }, { upsert: false }, function (err, doc) {
         if (err) {
             LOG.error(err)
