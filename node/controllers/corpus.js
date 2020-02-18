@@ -22,6 +22,8 @@ const { Translate } = require('@google-cloud/translate');
 const projectId = "anuvaad";
 
 var COMPONENT = "corpus";
+const STATUS_ACCEPTED = "ACCEPTED"
+const STATUS_REJECTED = "REJECTED"
 var PARALLEL_CORPUS_COMPONENT = "parallelCorpus";
 
 const LANGUAGES = {
@@ -60,7 +62,6 @@ exports.fetchCorpusSentences = function (req, res) {
     }
     Corpus.findOne({ basename: basename }, function (error, corpus) {
         Sentence.countDocuments({ basename: basename }, function (err, count) {
-            LOG.debug(count)
             Sentence.fetch(basename, pagesize, pageno, status, null, function (err, sentences) {
                 if (err) {
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
@@ -156,6 +157,7 @@ exports.updateSentencesStatus = function (req, res) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
+    let corpus_basename = req.body.sentences[0].basename
     async.each(req.body.sentences, function (sentence, callback) {
         LOG.debug("Updating sentence status [%s]", JSON.stringify(sentence))
         Sentence.find({ _id: sentence._id }, {}, function (err, results) {
@@ -189,8 +191,30 @@ exports.updateSentencesStatus = function (req, res) {
             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
             return res.status(apistatus.http.status).json(apistatus);
         }
-        let apistatus = new APIStatus(StatusCode.SUCCESS, COMPONENT).getRspStatus()
-        return res.status(apistatus.http.status).json(apistatus);
+        Corpus.findByCondition({ basename: corpus_basename }, function (err, corpus) {
+            if (err || !corpus) {
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+            Sentence.countDocuments({ basename: corpus_basename }, function (err, totalcount) {
+                Sentence.countDocuments({ basename: corpus_basename, $or: [{status: STATUS_ACCEPTED, status: STATUS_REJECTED}] }, function (err, processedcount) {
+                    if(processedcount == totalcount){
+                        LOG.info("Data processed")
+                        let corpus_obj = corpus[0]._doc
+                        corpus_obj.data_processed = true
+                        Corpus.updateCorpus(corpus_obj, function(err, doc){
+                            if(err){
+                                LOG.error(err)
+                            }else{
+                                LOG.info('Corpus updated')
+                            }
+                        })
+                    }
+                    let apistatus = new APIStatus(StatusCode.SUCCESS, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                })
+            })
+        })
     });
 }
 
