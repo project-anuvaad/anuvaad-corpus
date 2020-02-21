@@ -29,6 +29,9 @@ import json
 import uuid
 from datetime import datetime
 from indicnlp.tokenize import sentence_tokenize
+import tokenizer.token_extractor as TOKEN_EXTRACTOR
+import tokenizer.custom_nltk_tokenizer as NLTK_TOKENIZER
+
 
 log = logging.getLogger('file')
 
@@ -350,7 +353,7 @@ def translate_docx_v2():
         doc_nodes = DocumentNodes(basename=basename, created_date=current_time, total_nodes=total_nodes, nodes_sent=0,
                                   nodes_received=0, is_complete=False)
         doc_nodes.save()
-        send_nodes(nodes, basename, model_id, url_end_point, targetLang_code, sourceLang_code)
+        send_nodes(nodes, basename, model_id, url_end_point, targetLang_code, sourceLang_code, texts)
         res = CustomResponse(Status.SUCCESS.value, 'file has been queued')
         translationProcess = TranslationProcess.objects(basename=basename)
         translationProcess.update(set__status=STATUS_PROCESSING)
@@ -405,7 +408,7 @@ def get_lang(model):
         return 'hi'
 
 
-def send_nodes(nodes, basename, model_id, url_end_point, targetLang, sourceLang):
+def send_nodes(nodes, basename, model_id, url_end_point, targetLang, sourceLang, all_texts):
     log.info('send_nodes : started')
     if producer is None:
         raise Exception('Kafka Producer not available, aborting process')
@@ -417,7 +420,11 @@ def send_nodes(nodes, basename, model_id, url_end_point, targetLang, sourceLang)
     doc_nodes_dict = json.loads(doc_nodes.to_json())
     node_count = doc_nodes_dict[0]['nodes_sent']
     doc_nodes.update(nodes_sent=node_count + node_sent_count)
+    tokenizer = None
+    if sourceLang == 'en':
 
+        tokens = TOKEN_EXTRACTOR.get_tokens(all_texts)
+        tokenizer = NLTK_TOKENIZER.load_tokenizer(tokens)
     for node in nodes:
         messages = []
         text = node.text
@@ -430,7 +437,7 @@ def send_nodes(nodes, basename, model_id, url_end_point, targetLang, sourceLang)
             else:
                 n_id = node.attrib['id']
                 _id = model_id
-                tokens = tokenize(node.text, sourceLang)
+                tokens = tokenize(node.text, sourceLang, tokenizer)
                 token_len = len(tokens)
                 created_date = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
                 log.info('send_nodes : text in a node == ' + node.text)
@@ -458,8 +465,11 @@ def send_nodes(nodes, basename, model_id, url_end_point, targetLang, sourceLang)
                     log.info('send_nodes : flushed')
 
 
-def tokenize(text, lang):
+def tokenize(text, lang, tokenizer):
     if lang == 'en':
+        if tokenizer is not None:
+            return tokenizer.tokenize(text)
+
         return sent_tokenize(text)
     else:
         return sentence_tokenize.sentence_split(text, lang=lang)

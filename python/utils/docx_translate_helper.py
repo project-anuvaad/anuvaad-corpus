@@ -244,6 +244,7 @@ def pre_process_text(xmltree):
 
         para_text = ''
         prev_run = None
+        prev_run_ = None
         log.info('pre_process_text :  merging run')
         for r in para.iterchildren():
 
@@ -260,6 +261,7 @@ def pre_process_text(xmltree):
                                 para_text = para_text + x.text
                                 x.text = ''
                                 prev_run = x
+                                prev_run_ = prev_run
                             else:
                                 similar = check_prop_difference(x, prev_run)
                                 if similar:
@@ -267,6 +269,7 @@ def pre_process_text(xmltree):
                                     para_text = para_text + x.text
                                     x.text = ''
                                     prev_run = x
+                                    prev_run_ = prev_run
                                 else:
 
                                     prev_run.text = para_text
@@ -279,8 +282,8 @@ def pre_process_text(xmltree):
 
 
                 log.debug('pre_process_text: RUN LEVEL TEXT IS ==' + str(run_text))
-        if prev_run is not None:
-            prev_run.text = para_text
+        if prev_run_ is not None:
+            prev_run_.text = para_text
             sentence = sentence + para_text
             log.info('pre_process_text: sentence is == ' + str(sentence))
 
