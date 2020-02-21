@@ -198,8 +198,6 @@ exports.updateSentencesStatus = function (req, res) {
             }
             Sentence.countDocuments({ basename: corpus_basename }, function (err, totalcount) {
                 Sentence.countDocuments({ basename: corpus_basename, $or: [{ status: STATUS_ACCEPTED }, { status: STATUS_REJECTED }] }, function (err, processedcount) {
-                    LOG.info(processedcount)
-                    LOG.info(totalcount)
                     if (processedcount == totalcount) {
                         LOG.info("Data processed")
                         let corpus_obj = corpus[0]._doc
