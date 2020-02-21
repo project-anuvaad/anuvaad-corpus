@@ -827,7 +827,7 @@ exports.fetchCompositionWorkspace = function (req, res) {
     var search_param = req.query.search_param
     let condition = {}
     if (status) {
-        condition = { status: status, stage: 1 }
+        condition = { status: status }
     }
     if (search_param) {
         condition['title'] = new RegExp(search_param, "i")
