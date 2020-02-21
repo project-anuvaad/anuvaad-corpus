@@ -197,17 +197,17 @@ exports.updateSentencesStatus = function (req, res) {
                 return res.status(apistatus.http.status).json(apistatus);
             }
             Sentence.countDocuments({ basename: corpus_basename }, function (err, totalcount) {
-                Sentence.countDocuments({ basename: corpus_basename, $or: [{status: STATUS_ACCEPTED, status: STATUS_REJECTED}] }, function (err, processedcount) {
+                Sentence.countDocuments({ basename: corpus_basename, $or: [{ status: STATUS_ACCEPTED }, { status: STATUS_REJECTED }] }, function (err, processedcount) {
                     LOG.info(processedcount)
                     LOG.info(totalcount)
-                    if(processedcount == totalcount){
+                    if (processedcount == totalcount) {
                         LOG.info("Data processed")
                         let corpus_obj = corpus[0]._doc
                         corpus_obj.data_processed = true
-                        Corpus.updateCorpus(corpus_obj, function(err, doc){
-                            if(err){
+                        Corpus.updateCorpus(corpus_obj, function (err, doc) {
+                            if (err) {
                                 LOG.error(err)
-                            }else{
+                            } else {
                                 LOG.info('Corpus updated')
                             }
                         })
