@@ -82,6 +82,9 @@ KafkaConsumer.getInstance().getConsumer((err, consumer) => {
           case 'write_to_file':
             WorkspaceController.handleWriteToFileRequest(data)
             break;
+          case 'composition':
+            WorkspaceController.handleCompositionRequest(data)
+            break;
           default:
             LOG.debug('Path not found', data.path)
             break

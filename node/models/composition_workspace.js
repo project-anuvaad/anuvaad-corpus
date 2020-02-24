@@ -37,7 +37,7 @@ CompositionWorkspace.findByCondition = function (condition, pagesize, pageno, cb
 }
 
 CompositionWorkspace.updateCompositionWorkspace = function (compositionWorkspace, cb) {
-    CompositionWorkspace.collection.updateOne({ _id: mongoose.Types.ObjectId(compositionWorkspace._id) }, { $set: { sentence_count_rejected: compositionWorkspace.sentence_count_rejected, source_file_full_path: compositionWorkspace.source_file_full_path, target_file_full_path: compositionWorkspace.target_file_full_path, status: compositionWorkspace.status, sentence_count: compositionWorkspace.sentence_count, sentence_file: compositionWorkspace.sentence_file, step: compositionWorkspace.step, sentence_file_full_path: compositionWorkspace.sentence_file_full_path } }, { upsert: false }, function (err, doc) {
+    CompositionWorkspace.collection.updateOne({ _id: mongoose.Types.ObjectId(compositionWorkspace._id) }, { $set: { sentence_count: compositionWorkspace.sentence_count, source_file_full_path: compositionWorkspace.source_file_full_path, target_file_full_path: compositionWorkspace.target_file_full_path, status: compositionWorkspace.status, sentence_count: compositionWorkspace.sentence_count, sentence_file: compositionWorkspace.sentence_file, step: compositionWorkspace.step, sentence_file_full_path: compositionWorkspace.sentence_file_full_path } }, { upsert: false }, function (err, doc) {
         if (err) {
             LOG.error(err)
             cb(err, null)
