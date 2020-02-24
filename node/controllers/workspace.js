@@ -39,6 +39,7 @@ const TOPIC_STAGE_1 = 'tokenext'
 const TOPIC_STAGE_1_STEP_2 = 'sentencesext'
 const TOPIC_STAGE_2 = 'sentencesmt'
 const TOPIC_STAGE_3 = 'searchreplace'
+const TOPIC_STAGE_4 = 'composition'
 const PATH_SEARCH_REPLACE = 'search_replace'
 const PATH_WRITE_TO_FILE = 'write_to_file'
 const STATUS_EDITING = 'EDITING'
@@ -189,6 +190,48 @@ exports.handleWriteToFileRequest = function (req) {
                     }
                 })
                 SearchReplaceWorkspace.updateSearchReplaceWorkspace(workspace._doc, (error, results) => {
+                    if (error) {
+                        LOG.error(error)
+                    }
+                    else {
+                        LOG.debug('Data updated successfully [%s]', JSON.stringify(req))
+                    }
+                })
+            }
+        })
+    }
+}
+
+exports.handleCompositionRequest = function(req){
+    if (!req || !req.data || !req.data.process_id) {
+        LOG.error('Data missing for [%s]', JSON.stringify(req))
+    } else {
+        CompositionWorkspace.findOne({ session_id: req.data.process_id }, function (error, workspace) {
+            if (error) {
+                LOG.error(error)
+            }
+            else if (!workspace) {
+                LOG.error('CompositionWorkspace not found [%s]', req)
+            } else {
+                if (req.data.status === STEP_ERROR) {
+                    workspace._doc.step = STEP_ERROR
+                } else {
+                    workspace._doc.status = STATUS_PROCESSED
+                    workspace._doc.step = STEP_COMPLETED
+                    workspace._doc.sentence_count = req.data.sentence_count
+                    workspace._doc.sentence_file_full_path = BASE_PATH_PIPELINE_4 + req.data.process_id + '/' + req.data.files
+                    workspace._doc.source_file_full_path = BASE_PATH_PIPELINE_4 + req.data.process_id + '/' + req.data.source_file
+                    workspace._doc.target_file_full_path = BASE_PATH_PIPELINE_4 + req.data.process_id + '/' + req.data.target_file
+                    workspace._doc.sentence_file = req.data.files
+                }
+                fs.copyFile(BASE_PATH_PIPELINE_4 + req.data.process_id + '/' + req.data.files, BASE_PATH_NGINX + req.data.files, function (err) {
+                    if (err) {
+                        LOG.error(err)
+                    } else {
+                        LOG.debug('File transfered [%s]', req.data.files)
+                    }
+                })
+                CompositionWorkspace.updateCompositionWorkspace(workspace._doc, (error, results) => {
                     if (error) {
                         LOG.error(error)
                     }
@@ -1015,21 +1058,21 @@ exports.saveCompositionWorkspace = function (req, res) {
                             } else {
                                 LOG.debug('File transfered [%s]', selected_workspace.sentence_file)
                             }
-                            // KafkaProducer.getInstance().getProducer((err, producer) => {
-                            //     if (err) {
-                            //         LOG.error("Unable to connect to KafkaProducer");
-                            //     } else {
-                            //         LOG.debug("KafkaProducer connected")
-                            //         let payloads = [
-                            //             {
-                            //                 topic: TOPIC_STAGE_3, messages: JSON.stringify({ data: workspace, path: PATH_SEARCH_REPLACE }), partition: 0
-                            //             }
-                            //         ]
-                            //         producer.send(payloads, function (err, data) {
-                            //             LOG.debug('Produced')
-                            //         });
-                            //     }
-                            // })
+                            KafkaProducer.getInstance().getProducer((err, producer) => {
+                                if (err) {
+                                    LOG.error("Unable to connect to KafkaProducer");
+                                } else {
+                                    LOG.debug("KafkaProducer connected")
+                                    let payloads = [
+                                        {
+                                            topic: TOPIC_STAGE_4, messages: JSON.stringify({ data: workspace }), partition: 0
+                                        }
+                                    ]
+                                    producer.send(payloads, function (err, data) {
+                                        LOG.debug('Produced')
+                                    });
+                                }
+                            })
                             callback()
                         })
 
