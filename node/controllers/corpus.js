@@ -11,6 +11,7 @@ var Response = require('../models/response')
 var APIStatus = require('../errors/apistatus')
 var StatusCode = require('../errors/statuscodes').StatusCode
 var Status = require('../utils/status').Status
+var KafkaProducer = require('../kafka/producer');
 var LOG = require('../logger/logger').logger
 var UUIDV4 = require('uuid/v4')
 var async = require('async');
@@ -24,6 +25,8 @@ const projectId = "anuvaad";
 var COMPONENT = "corpus";
 const STATUS_ACCEPTED = "ACCEPTED"
 const STATUS_REJECTED = "REJECTED"
+const PATH_HUMAN_CORRECTION = 'human_correction'
+const TOPIC_STAGE_3 = 'searchreplace'
 var PARALLEL_CORPUS_COMPONENT = "parallelCorpus";
 
 const LANGUAGES = {
@@ -196,24 +199,44 @@ exports.updateSentencesStatus = function (req, res) {
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
-            Sentence.countDocuments({ basename: corpus_basename }, function (err, totalcount) {
-                Sentence.countDocuments({ basename: corpus_basename, $or: [{ status: STATUS_ACCEPTED }, { status: STATUS_REJECTED }] }, function (err, processedcount) {
-                    if (processedcount == totalcount) {
-                        LOG.info("Data processed")
-                        let corpus_obj = corpus[0]._doc
-                        corpus_obj.data_processed = true
-                        Corpus.updateCorpus(corpus_obj, function (err, doc) {
-                            if (err) {
-                                LOG.error(err)
-                            } else {
-                                LOG.info('Corpus updated')
-                            }
-                        })
-                    }
-                    let apistatus = new APIStatus(StatusCode.SUCCESS, COMPONENT).getRspStatus()
-                    return res.status(apistatus.http.status).json(apistatus);
+            let corpus_obj = corpus[0]._doc
+            if (corpus_obj.data_processed) {
+                let apistatus = new APIStatus(StatusCode.SUCCESS, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            } else {
+                Sentence.countDocuments({ basename: corpus_basename }, function (err, totalcount) {
+                    Sentence.countDocuments({ basename: corpus_basename, $or: [{ status: STATUS_ACCEPTED }, { status: STATUS_REJECTED }] }, function (err, processedcount) {
+                        if (processedcount == totalcount) {
+                            LOG.info("Data processed")
+                            corpus_obj.data_processed = true
+                            KafkaProducer.getInstance().getProducer((err, producer) => {
+                                if (err) {
+                                    LOG.error("Unable to connect to KafkaProducer");
+                                } else {
+                                    LOG.debug("KafkaProducer connected")
+                                    let payloads = [
+                                        {
+                                            topic: TOPIC_STAGE_3, messages: JSON.stringify({ data: { session_id: corpus_obj.basename }, path: PATH_HUMAN_CORRECTION }), partition: 0
+                                        }
+                                    ]
+                                    producer.send(payloads, function (err, data) {
+                                        LOG.debug('Produced')
+                                    });
+                                }
+                            })
+                            Corpus.updateCorpus(corpus_obj, function (err, doc) {
+                                if (err) {
+                                    LOG.error(err)
+                                } else {
+                                    LOG.info('Corpus updated')
+                                }
+                            })
+                        }
+                        let apistatus = new APIStatus(StatusCode.SUCCESS, COMPONENT).getRspStatus()
+                        return res.status(apistatus.http.status).json(apistatus);
+                    })
                 })
-            })
+            }
         })
     });
 }
