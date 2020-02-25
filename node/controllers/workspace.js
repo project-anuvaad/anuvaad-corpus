@@ -1069,7 +1069,11 @@ exports.saveCompositionWorkspace = function (req, res) {
                                             topic: TOPIC_STAGE_4, messages: JSON.stringify({ data: workspace, path: PATH_FILE_MERGER }), partition: 0
                                         }
                                     ]
+                                    LOG.debug(payloads)
                                     producer.send(payloads, function (err, data) {
+                                        if(err){
+                                            LOG.error(err)
+                                        }
                                         LOG.debug('Produced')
                                     });
                                 }
