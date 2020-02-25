@@ -42,6 +42,7 @@ const TOPIC_STAGE_3 = 'searchreplace'
 const TOPIC_STAGE_4 = 'composition'
 const PATH_SEARCH_REPLACE = 'search_replace'
 const PATH_WRITE_TO_FILE = 'write_to_file'
+const PATH_FILE_MERGER = 'file_merger'
 const STATUS_EDITING = 'EDITING'
 
 var async = require('async');
@@ -1065,7 +1066,7 @@ exports.saveCompositionWorkspace = function (req, res) {
                                     LOG.debug("KafkaProducer connected")
                                     let payloads = [
                                         {
-                                            topic: TOPIC_STAGE_4, messages: JSON.stringify({ data: workspace }), partition: 0
+                                            topic: TOPIC_STAGE_4, messages: JSON.stringify({ data: workspace, path: PATH_FILE_MERGER }), partition: 0
                                         }
                                     ]
                                     producer.send(payloads, function (err, data) {
