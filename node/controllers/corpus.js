@@ -24,6 +24,7 @@ const projectId = "anuvaad";
 
 var COMPONENT = "corpus";
 const STATUS_ACCEPTED = "ACCEPTED"
+const STATUS_COMPLETED = "COMPLETED"
 const STATUS_REJECTED = "REJECTED"
 const PATH_HUMAN_CORRECTION = 'human_correction'
 const TOPIC_STAGE_3 = 'searchreplace'
@@ -205,6 +206,7 @@ exports.updateSentencesStatus = function (req, res) {
                     if (processedcount == totalcount) {
                         LOG.info("Data processed")
                         corpus_obj.data_processed = true
+                        corpus_obj.status = STATUS_COMPLETED
                         KafkaProducer.getInstance().getProducer((err, producer) => {
                             if (err) {
                                 LOG.error("Unable to connect to KafkaProducer");
