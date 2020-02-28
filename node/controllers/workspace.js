@@ -370,6 +370,23 @@ exports.fetchSearchReplaceWorkspaceDetail = function (req, res) {
     })
 }
 
+exports.fetchCompositionWorkspaceDetail = function (req, res){
+    if (!req || !req.query || !req.query.session_id) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let session_id = req.query.session_id
+    CompositionWorkspace.findOne({ session_id: session_id }, function (error, workspace) {
+        if (error) {
+            LOG.error(error)
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+        let response = new Response(StatusCode.SUCCESS, workspace).getRsp()
+        return res.status(response.http.status).json(response);
+    })
+}
+
 exports.fetchMTWorkspaceDetail = function (req, res) {
     if (!req || !req.query || !req.query.session_id) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
