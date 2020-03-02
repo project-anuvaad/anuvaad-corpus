@@ -27,8 +27,9 @@ producer = get_producer()
 # {'name': 'Tamil', 'language': 'ta'},
 # {'name': 'Telugu', 'language': 'te'}
 # {'name': 'Malayalam', 'language': 'ml'}
+# {'name': 'Urdu', 'language': 'ur'}
 
-supported_languages = ['en', 'hi', 'gu', 'mr', 'bn', 'kn', 'pa', 'ta', 'te', 'ml']
+supported_languages = ['en', 'hi', 'gu', 'mr', 'bn', 'kn', 'pa', 'ta', 'te', 'ml','ur']
 supported_source_languages = ['en']
 
 
