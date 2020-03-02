@@ -40,7 +40,8 @@ const LANGUAGES = {
     'Telugu': 'te',
     'Malayalam': 'ml',
     'Punjabi': 'pa',
-    'Tamil': 'ta'
+    'Tamil': 'ta',
+    'Urdu': 'ur',
 }
 
 

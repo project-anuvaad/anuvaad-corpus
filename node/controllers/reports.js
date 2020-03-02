@@ -26,7 +26,8 @@ const LANGUAGES = {
     'te': 'Telugu',
     'ml': 'Malayalam',
     'pa': 'Punjabi',
-    'ta': 'Tamil'
+    'ta': 'Tamil',
+    'ur': 'Urdu'
 }
 
 exports.fetchBenchmarkAnalyzerReports = function (req, res) {
