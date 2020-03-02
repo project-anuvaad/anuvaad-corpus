@@ -153,7 +153,8 @@ def itertext_1(xmltree):
 
 def check_element_is(element, type_char):
     word_schema = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
-    return element.tag == '{%s}%s' % (word_schema, type_char)
+    word_schema2 = 'http://purl.oclc.org/ooxml/wordprocessingml/main'
+    return element.tag == '{%s}%s' % (word_schema, type_char) or element.tag == '{%s}%s' % (word_schema2, type_char)
 
 
 def add_identification_tag(xmltree, identifier):
