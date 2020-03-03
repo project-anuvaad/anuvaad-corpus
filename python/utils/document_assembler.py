@@ -14,8 +14,11 @@ TOPIC_TO_PROCESS = 'to-process'
 
 def keep_on_running():
     consumer = get_consumer(TOPIC)
+    message_count = 0
     try:
         for msg in consumer:
+            message_count += 1
+            log.info('-------------message count---------'+str(message_count))
             try:
                 message = msg.value['out']
                 log.info('keep_on_running : message received = ' + str(message))
@@ -50,8 +53,8 @@ def process_sentence(sentences):
             log.info('process_sentence : sen objects is = '+str(sen))
 
             text_node_dict[0]['sentences'].append(sen)
-        # ttl_sentences = len(sentences)
-        ttl_sentences = text_node_dict[0]['tokens_received'] + 1
+        ttl_sentences = len(sentences)
+        ttl_sentences = text_node_dict[0]['tokens_received'] + ttl_sentences
         completed = False
         if ttl_sentences == text_node_dict[0]['tokens_sent']:
             completed = True
