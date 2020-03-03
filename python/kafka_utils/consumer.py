@@ -17,7 +17,7 @@ def get_consumer(topic):
             auto_offset_reset='earliest',
             enable_auto_commit=True,
             group_id=group_id,
-            value_deserializer=lambda x: handle_json(x),)
+            value_deserializer=lambda x: handle_json(x))
 
         log.info('get_consumer : consumer returned for topic = ' + topic)
         return consumer
