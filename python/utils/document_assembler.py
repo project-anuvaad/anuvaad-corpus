@@ -69,6 +69,8 @@ def process_sentence(sentences):
             if nodes_received == nodes_sent:
                 log.info('process_sentence : producing nodes for writing')
                 doc_nodes.update(set__nodes_received=nodes_received, is_complete=True)
+                text_node.update(set__sentences=text_node_dict[0]['sentences'],
+                                 set__tokens_received=ttl_sentences, set__is_complete=completed)
                 write_document_basename(basename)
                 # producer = get_producer()
                 # producer.send(TOPIC_TO_PROCESS, value=basename)
