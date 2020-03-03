@@ -472,7 +472,7 @@ def send_nodes(nodes, basename, model_id, url_end_point, targetLang, sourceLang,
                     producer.send(TOPIC, value=msg)
                     producer.flush()
                     kafka_sent_node_count = kafka_sent_node_count + 1
-                    if kafka_sent_node_count != node_count + node_sent_count:
+                    if kafka_sent_node_count > node_count + node_sent_count:
                         log.info('send_nodes : node count not equal == '+str(kafka_sent_node_count))
                         log.info('send_nodes : updating record')
                         doc_nodes.update(nodes_sent=kafka_sent_node_count)
