@@ -50,8 +50,8 @@ def process_sentence(sentences):
             log.info('process_sentence : sen objects is = '+str(sen))
 
             text_node_dict[0]['sentences'].append(sen)
-        ttl_sentences = len(sentences)
-        ttl_sentences = text_node_dict[0]['tokens_received'] + ttl_sentences
+        # ttl_sentences = len(sentences)
+        ttl_sentences = text_node_dict[0]['tokens_received'] + 1
         completed = False
         if ttl_sentences == text_node_dict[0]['tokens_sent']:
             completed = True
