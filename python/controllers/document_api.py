@@ -421,6 +421,7 @@ def send_nodes(nodes, basename, model_id, url_end_point, targetLang, sourceLang,
     node_count = doc_nodes_dict[0]['nodes_sent']
     doc_nodes.update(nodes_sent=node_count + node_sent_count)
     tokenizer = None
+    kafka_sent_node_count = 0
     if sourceLang == 'en':
 
         tokens = TOKEN_EXTRACTOR.get_tokens(all_texts)
@@ -457,6 +458,7 @@ def send_nodes(nodes, basename, model_id, url_end_point, targetLang, sourceLang,
                             log.info('send_nodes : in 25 final msg is == ' + str(msg_))
                             producer.send(TOPIC, value=msg_)
                             producer.flush()
+                            kafka_sent_node_count = kafka_sent_node_count + 1
                             messages = []
                             increase_node_count = True
                             i = 0
@@ -466,8 +468,14 @@ def send_nodes(nodes, basename, model_id, url_end_point, targetLang, sourceLang,
                         i = i + 1
                     msg = {'url_end_point': url_end_point, 'message': messages}
                     log.info('send_nodes : final msg is == '+str(msg))
+                    log.info('send_nodes : node count is == '+str((node_count + node_sent_count)))
                     producer.send(TOPIC, value=msg)
                     producer.flush()
+                    kafka_sent_node_count = kafka_sent_node_count + 1
+                    if kafka_sent_node_count != node_count + node_sent_count:
+                        log.info('send_nodes : node count not equal == '+str(kafka_sent_node_count))
+                        log.info('send_nodes : updating record')
+                        doc_nodes.update(nodes_sent=kafka_sent_node_count)
                     log.info('send_nodes : flushed')
 
 
