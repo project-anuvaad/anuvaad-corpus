@@ -426,6 +426,7 @@ def send_nodes(nodes, basename, model_id, url_end_point, targetLang, sourceLang,
         tokens = TOKEN_EXTRACTOR.get_tokens(all_texts)
         tokenizer = NLTK_TOKENIZER.load_tokenizer(tokens)
     for node in nodes:
+        increase_node_count = False
         messages = []
         text = node.text
         if text is not None and text.strip() is not '':
@@ -447,12 +448,17 @@ def send_nodes(nodes, basename, model_id, url_end_point, targetLang, sourceLang,
                     text_node.save()
                     i = 0
                     for token in tokens:
+                        if increase_node_count:
+                            node_count = node_count + 1
+                            doc_nodes.update(nodes_sent=node_count + node_sent_count)
+                            increase_node_count = False
                         if i == 25:
-                            log.info('send_nodes : in 25 final msg is == ' + str(msg))
                             msg_ = {'url_end_point': url_end_point, 'message': messages}
+                            log.info('send_nodes : in 25 final msg is == ' + str(msg_))
                             producer.send(TOPIC, value=msg_)
                             producer.flush()
                             messages = []
+                            increase_node_count = True
                             i = 0
                         msg = {'src': token.strip(), 'id': _id, 'n_id': n_id, 's_id': i}
                         log.info('send_nodes : message is = ' + str(msg))
