@@ -58,7 +58,7 @@ exports.savePdfParserProcess = function (req, res) {
                         data.map((d) => {
                             paragraphs.push(d.text)
                         })
-                        axios.post(PYTHON_BASE_URL,
+                        axios.post(PYTHON_BASE_URL+'tokenize-sentence',
                             {
                                 paragraphs: paragraphs
                             }
