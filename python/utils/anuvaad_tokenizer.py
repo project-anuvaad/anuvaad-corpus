@@ -27,7 +27,7 @@ class AnuvaadEngTokenizer(object):
             text = f.read()
         punkt_param.sent_starters = text.split('\n')
         self._regex_search_texts = []
-        self._tokenizer = PunktSentenceTokenizer(train_text=punkt_param,lang_vars = BulletPointLangVars())
+        self._tokenizer = PunktSentenceTokenizer(train_text=punkt_param)
 
     def tokenize(self, text):
         print('--------------Process started-------------')

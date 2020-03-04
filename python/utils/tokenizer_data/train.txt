@@ -44,7 +44,6 @@ for M/s. PLR Chambers & Co.,AOR
 Ms. Daisy Hannah,Adv.
 Mr. Shekhar Kumar,AOR
 UPON hearing the counsel the Court made the following order
-ORDER
 As the applicant-appellant is going to retire at the end of September, 2019, office to list the case on 12.9.2019 before the appropriate Bench. The case will be listed on the top of the board.
 Application for early hearing is allowed accordingly.
 Branch Officer AR-cum-PS
@@ -55,7 +54,6 @@ SUPREME COURT OF INDIA
 RECORD OF PROCEEDINGS
 CIVIL APPEAL NO. 2858/2007
 APPELLANT(S)THE STATE OF WEST BENGAL AND OTHERS RESPONDENT(S)
-WITH
 C.A. NO. 2859/2007 (XVI)
 Date : 19-02-2019 These appeals were called on for hearing today.
 CORAM :
@@ -68,7 +66,6 @@ For Respondent(s)
 for M/s. PLR Chambers And Co., AOR
 Mr. Shekhar Kumar, AOR
 UPON hearing the counsel the Court made the following order
-ORDER
 List the matters for further hearing tomorrow i.e. 20th February, 2019.
 [VINOD LAKHINA]
 [ANAND PRAKASH]
@@ -96,7 +93,6 @@ Ms. Dimple Nagpal, Adv.
 M/s. PLR Chambers And Co., AOR
 Mr. Shekhar Kumar, AOR
 UPON hearing the counsel the Court made the following order
-ORDER
 This is an application for early hearing of the appeal.
 Let the appeal be listed in the month of January, 2019 before the appropriate Bench.
 The application is accordingly disposed of.
@@ -129,7 +125,6 @@ Mr. Ranjay Kr. Dubey,Adv.
 Mr. P.V. Yogeswaran,AOR
 Ms. Preeti Singh,AOR
 UPON hearing the counsel the Court made the following order
-ORDER
 List in the month of January, 2020, before appropriate Bench.
 Application for early hearing is disposed of.
 Branch Officer AR-cum-PS
@@ -141,9 +136,7 @@ CRIMINAL APPEAL NO.416 OF 2018
 UNION OF INDIA …
 PETITIONER(S)STATE OF MAHARASHTRA AND ORS. …
 RESPONDENT(S)
-WITH
 REVIEW PETITION (CRIMINAL) NO.275 OF 2018
-IN
 CRIMINAL APPEAL NO.416 OF 2018
 ORDER
 1. Considering the importance of the matter, we feel that these matters
@@ -161,7 +154,6 @@ UNION OF INDIA
 Petitioner(s)THE STATE OF MAHARASHTRA & ORS.
 Respondent(s)
 ([HEARD BY : HON. ARUN MISHRA AND HON. UDAY UMESH LALIT, JJ.] )
-WITH
 R.P.(Crl.) No. 275/2018 in Crl.A. No. 416/2018 (II-A)
 Date : 13-09-2019 These petitions were called for pronouncement of order today.
 Counsel for the parties Mr. K. S. Namdar, Sr. Adv.
@@ -208,7 +200,6 @@ Civil Appeal Nos. 10866-10867/2010
 M.SIDDIQ (D) THR. LRS.
 Appellant(s)MAHANT SURESH DAS & ORS.
 Respondent(s)
-WITH
 C.A. Nos. 4768-4771/2011 (III-A)
 C.A. No. 2636/2011 (III-A)
 C.A. No. 821/2011 (III-A)
@@ -265,7 +256,6 @@ Appellant(s)MAHANT SURESH DAS & ORS. Respondent(s)
 MAHANT SURESH DAS & ORS.
 Respondent(s)
 (FOR DIRECTIONS)
-WITH
 C.A. Nos.4768-4771/2011 (III-A)
 C.A. No.2636/2011 (III-A)
 C.A. No.821/2011 (III-A)
@@ -322,7 +312,6 @@ ITEM NO.701 COURT NO.5 SECTION III-C
 RECORD OF PROCEEDINGS
 Civil Appeal Nos. 10866-10867/2010
 M.SIDDIQ (D) THR. LRS. Appellant(s)MAHANT SURESH DAS & ORS. Respondent(s)
-WITH
 C.A. Nos. 4768-4771/2011 (III-A)
 C.A. No. 2636/2011 (III-A)
 C.A. No. 821/2011 (III-A)
@@ -439,7 +428,6 @@ Civil Appeal Nos.10866-10867/2010
 M. SIDDIQ (D) THR. LRS.
 Appellant(s)MAHANT SURESH DAS & ORS.
 Respondent(s)
-WITH
 C.A. Nos.4768-4771/2011 (III-A)
 C.A. No.2636/2011 (III-A)
 C.A. No.821/2011 (III-A)
@@ -681,7 +669,6 @@ IN THE SUPREME COURT OF INDIA
 CRIMINAL APPELLATE JURISDICTION
 CRIMINAL APPEAL NO. 1475 OF 2009
 GIRISH SINGH ... APPELLANT(S)THE STATE OF UTTARAKHAND ... RESPONDENT(S)
-WITH
 CRIMINAL APPEAL NO. 1476 OF 2009
 JUDGMENT
 REPORTABLE
@@ -748,7 +735,6 @@ CLPA14102019 ORDER
 IN THE HIGH COURT OF GUJARAT AT AHMEDABAD
 RLETTERS PATENT APPEAL NO. 1410 of 2019
 RSPECIAL CIVIL APPLICATION NO. 9654 of 2019
-With
 CIVIL APPLICATION (FOR STAY) NO. 1 of 2019
 RLETTERS PATENT APPEAL NO. 1410 of 2019UNION OF INDIA
 Appearance:
@@ -773,7 +759,6 @@ Date : 23072019
 ORAL ORDER
 ORDER SHEET
 GA No.2888 of 2018
-With
 AP No.579 of 2008
 GA No.2682 of 2018
 IN THE HIGH COURT AT CALCUTTA
@@ -788,7 +773,6 @@ for petitioner.
 . . .for respondent.
 OD 1
 GA No.1645 of 2019
-With
 WP No.608 of 2018
 IN THE HIGH COURT AT CALCUTTA
 Constitutional Writ Jurisdiction
@@ -814,7 +798,6 @@ BEFORE:
 The Hon'ble JUSTICE PROTIK PRAKASH BANERJEE
 ORDER SHEET
 GA No.2889 of 2018
-With
 AP No.212 of 2010
 GA No.2680 of 2018
 IN THE HIGH COURT AT CALCUTTA
@@ -1054,35 +1037,20 @@ ORDER
 CSCA109272018 ORDER
 IN THE HIGH COURT OF GUJARAT AT AHMEDABAD
 RSPECIAL CIVIL APPLICATION NO. 10927 of 2018
-With
 RSPECIAL CIVIL APPLICATION NO. 1936 of 2019
-With
 R/SPECIAL CIVIL APPLICATION NO. 2491 of 2019
-With
 R/SPECIAL  CIVIL APPLICATION NO. 1943 of 2019
-With
 RSPECIAL CIVIL APPLICATION NO. 10929 of 2018
-With
 RSPECIAL CIVIL APPLICATION NO. 10928 of 2018
-With
 RSPECIAL CIVIL APPLICATION NO. 10924 of 2018
-With
 R/SPECIAL  CIVIL APPLICATION NO. 10926 of 2018
-With
 R/SPECIAL  CIVIL APPLICATION NO. 10919 of 2018
-With
 R/SPECIAL  CIVIL APPLICATION NO. 10920 of 2018
-With
 R/SPECIAL  CIVIL APPLICATION NO. 10921 of 2018
-With
 R/SPECIAL  CIVIL APPLICATION NO. 10922 of 2018
-With
 R/SPECIAL  CIVIL APPLICATION NO. 10923 of 2018
-With
 R/SPECIAL  CIVIL APPLICATION NO. 10925 of 2018
-With
 R/SPECIAL  CIVIL APPLICATION NO. 14011 of 2018
-With
 R/SPECIAL  CIVIL APPLICATION NO. 14009 of 2018
 GAMBHIRBHAI NAYKABHAI VASAVARANGE FOREST OFFICER & 1 other(s)
 Appearance:
@@ -1220,7 +1188,6 @@ Mr. Ranjit Ghosal, Adv.
 ..for the respondents 5 & 6
 OD 3
 GA 651 of 2018
-With
 AID 4 of 2017
 IN THE HIGH COURT AT CALCUTTA
 Special Jurisdiction
@@ -1357,7 +1324,6 @@ Mr M. Y. Bhat, Advocate.
 Coram:
 HON'BLE THE CHIEF JUSTICE
 HON'BLE MR JUSTICE RASHID ALI DAR, JUDGE
-ORDER
 IN THE HIGH COURT OF JAMMU AND KASHMIR
 AT SRINAGAR
 WP(C) No. 22002019
@@ -1371,7 +1337,6 @@ Through: Mr H. Aman Ali, GA for R 1 & 2.
 Mr Azhar Ul Amin, Advocate for R 3.
 CORAM:
 Hon'ble Mr Justice Ali Mohammad Magrey, Judge.
-ORDER
 Page 1 of 1
 HIGH COURT OF TRIPURA
 AGARTALA
