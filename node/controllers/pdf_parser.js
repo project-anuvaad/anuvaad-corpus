@@ -62,10 +62,10 @@ exports.savePdfParserProcess = function (req, res) {
                             {
                                 paragraphs: paragraphs
                             }
-                        ).then(function (response) {
-                            LOG.debug(response)
-                            if (response && response.data) {
-                                response.data.data.map((d, index) => {
+                        ).then(function (res) {
+                            LOG.debug(res)
+                            if (res && res.data) {
+                                res.data.data.map((d, index) => {
                                     data[index].text = d
                                 })
                                 let response = new Response(StatusCode.SUCCESS, data).getRsp()
