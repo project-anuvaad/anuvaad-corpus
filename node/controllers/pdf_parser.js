@@ -63,6 +63,7 @@ exports.savePdfParserProcess = function (req, res) {
                                 paragraphs: paragraphs
                             }
                         ).then(function (response) {
+                            LOG.info(response)
                             if (response && response.data) {
                                 response.data.data.map((d, index) => {
                                     data[index].text = d
