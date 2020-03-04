@@ -34,14 +34,28 @@ class AnuvaadEngTokenizer(object):
         text = self.serialize_pattern(text)
         text = self.serialize_with_abbrevations(text)
         text = self.serialize_dots(text)
+        text = self.serialize_dot_with_number(text)
         sentences = self._tokenizer.tokenize(text)
         output = []
         for se in sentences:
             se = self.deserialize_pattern(se)
             se = self.deserialize_dots(se)
+            se = self.deserialize_dot_with_number(se)
             output.append(self.deserialize_with_abbrevations(se))
         print('--------------Process finished-------------')
         return output
+
+    def serialize_dot_with_number(self, text):
+        for i in range(0, 9):
+            pattern = re.compile(r'(['+str(i)+'][.])')
+            text = pattern.sub('XX_'+str(i)+'_XX', text)
+        return text
+
+    def deserialize_dot_with_number(self, text):
+        for i in range(0, 9):
+            pattern = re.compile(re.escape('XX_'+str(i)+'_XX'), re.IGNORECASE)
+            text = pattern.sub(str(i)+'.', text)
+        return text
 
     def serialize_dots(self, text):
         pattern = re.compile(r'([.]{3,})')
