@@ -11,7 +11,7 @@ var fs = require('fs');
 
 var COMPONENT = "pdf_parser";
 const BASE_PATH_NGINX = 'nginx/'
-const BASE_PATH_UPLOAD = 'upload/'
+const BASE_PATH_UPLOAD = 'corpusfiles/'
 const STATUS_PROCESSING = 'PROCESSING'
 
 
