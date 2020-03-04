@@ -17,6 +17,4 @@ module.exports = function (router) {
     router.route('/update-model')
         .post(nmtController.updateModels);
 
-    
-
 }
