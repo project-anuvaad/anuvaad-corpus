@@ -1,6 +1,6 @@
 const htmlToJson = require('html-to-json')
 const fs = require('fs');
-const sentence_ends = [')', '.', '?', '!']
+const sentence_ends = ['.', '?', '!']
 
 exports.convertHtmlToJson = function (basefolder, inputfilename, session_id, cb) {
     fs.readFile(basefolder + session_id + "/" + inputfilename, 'utf8', function (err, data) {
