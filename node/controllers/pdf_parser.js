@@ -4,6 +4,7 @@ var Response = require('../models/response')
 var APIStatus = require('../errors/apistatus')
 var StatusCode = require('../errors/statuscodes').StatusCode
 var LOG = require('../logger/logger').logger
+
 var PdfToHtml = require('../utils/pdf_to_html')
 var HtmlToText = require('../utils/html_to_text')
 var UUIDV4 = require('uuid/v4')
@@ -16,20 +17,22 @@ const STATUS_PROCESSING = 'PROCESSING'
 
 
 exports.savePdfParserProcess = function (req, res) {
+    LOG.info(req.files)
     let userId = req.headers['ad-userid']
-    if (!req || !req.body || !req.body.pdf_path || !req.body.process_name) {
+    if (!req || !req.body || !req.body.process_name || !req.files || !req.files.pdf_data) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
+    let file = req.files.pdf_data
     let pdf_parser_process = {}
     pdf_parser_process.session_id = UUIDV4()
     pdf_parser_process.process_name = req.body.process_name
-    pdf_parser_process.pdf_path = req.body.pdf_path + '.pdf'
+    pdf_parser_process.pdf_path = file.name
     pdf_parser_process.status = STATUS_PROCESSING
     pdf_parser_process.created_by = userId
     pdf_parser_process.created_on = new Date()
     fs.mkdir(BASE_PATH_UPLOAD + pdf_parser_process.session_id, function (e) {
-        fs.copyFile(BASE_PATH_NGINX + req.body.pdf_path, BASE_PATH_UPLOAD + pdf_parser_process.session_id + '/' + pdf_parser_process.pdf_path, function (err) {
+        fs.writeFile(BASE_PATH_UPLOAD + pdf_parser_process.session_id + '/' + pdf_parser_process.pdf_path, file.data, function (err) {
             if (err) {
                 LOG.error(err)
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()

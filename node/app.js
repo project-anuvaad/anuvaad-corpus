@@ -5,6 +5,7 @@ var bodyParser = require('body-parser');
 var methodOverride = require('method-override');
 
 var LOG = require('./logger/logger').logger
+var fileUpload = require('express-fileupload')
 var jaeger_collector = require('./utils/jaeger-collector')
 
 var APP_CONFIG = require('./config/config').config
@@ -14,7 +15,6 @@ var Response = require('./models/response')
 var daemon = require('./controllers/daemon/daemon');
 var KafkaConsumer = require('./kafka/consumer');
 var StatusCode = require('./errors/statuscodes').StatusCode
-
 
 // Imports the Google Cloud client library
 const { Storage } = require('@google-cloud/storage');
@@ -155,6 +155,9 @@ function startApp() {
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({
     extended: false
+  }));
+  app.use(fileUpload({
+    limits: { fileSize: 50 * 1024 * 1024 },
   }));
   app.use(methodOverride());
   app.use(jaeger_collector);
