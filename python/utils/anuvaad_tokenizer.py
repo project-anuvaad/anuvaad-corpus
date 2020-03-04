@@ -23,7 +23,7 @@ class AnuvaadEngTokenizer(object):
         if abbrevations is not None:
             self._abbrevations_without_space.append(abbrevations)
         punkt_param = PunktParameters()
-        with open('starter.txt', encoding='utf8') as f:
+        with open('utils/tokenizer_data/starter.txt', encoding='utf8') as f:
             text = f.read()
         punkt_param.sent_starters = text.split('\n')
         self._regex_search_texts = []
@@ -35,11 +35,13 @@ class AnuvaadEngTokenizer(object):
         text = self.serialize_with_abbrevations(text)
         text = self.serialize_dots(text)
         sentences = self._tokenizer.tokenize(text)
+        output = []
         for se in sentences:
             se = self.deserialize_pattern(se)
             se = self.deserialize_dots(se)
-            print(self.deserialize_with_abbrevations(se))
+            output.append(self.deserialize_with_abbrevations(se))
         print('--------------Process finished-------------')
+        return output
 
     def serialize_dots(self, text):
         pattern = re.compile(r'([.]{3,})')
@@ -105,16 +107,16 @@ class AnuvaadEngTokenizer(object):
 
 class BulletPointLangVars(PunktLanguageVars):
     text = []
-    with open('train.txt', encoding='utf8') as f:
+    with open('utils/tokenizer_data/train.txt', encoding='utf8') as f:
         text = f.read()
     sent_end_chars = text.split('\n')
     
     # # punkt = PunktTrainer()
     # # punkt.train(text,finalize=False, verbose=False)
     # # punkt.finalize_training(verbose=True)
-text = ''
-with open('data5.txt', encoding='utf8') as f:
-    text = f.read()
-tokenizer = AnuvaadEngTokenizer()
-tokenizer.tokenize(text)
+# text = ''
+# with open('data5.txt', encoding='utf8') as f:
+#     text = f.read()
+# tokenizer = AnuvaadEngTokenizer()
+# tokenizer.tokenize(text)
     
