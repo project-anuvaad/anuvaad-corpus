@@ -25,7 +25,7 @@ from db.conmgr_mongo import connectmongo
 from utils.pdftoimage import converttoimage
 from utils.imagetotext import convertimagetotext
 
-from jaeger.middleware import LoggerMiddleware
+# from jaeger.middleware import LoggerMiddleware
 
 from utils.imagetoalto import convertimagetoalto
 from utils.removetextv2 import removetext
@@ -189,16 +189,16 @@ except:
     logging.disable(logging.DEBUG)
     log.info("DEBUG LOGS InACTIVE")
 
-try:
-    t1 = threading.Thread(target=keep_on_running, name='keep_on_running')
-    t1.start()
-    # t2 = threading.Thread(target=write_document, name='write_document')
-    # t2.start()
-    # t3 = threading.Thread(target=sentence_creator, name='sentence_creator')
-    # t3.setDaemon(True)
-    # t3.start()
-except Exception as e:
-    log.info('ERROR WHILE RUNNING CUSTOM THREADS '+str(e))
+# try:
+#     t1 = threading.Thread(target=keep_on_running, name='keep_on_running')
+#     t1.start()
+#     # t2 = threading.Thread(target=write_document, name='write_document')
+#     # t2.start()
+#     # t3 = threading.Thread(target=sentence_creator, name='sentence_creator')
+#     # t3.setDaemon(True)
+#     # t3.start()
+# except Exception as e:
+#     log.info('ERROR WHILE RUNNING CUSTOM THREADS '+str(e))
 
 
 @app.route('/hello', methods=['GET'])

@@ -12,6 +12,7 @@ import logging
 from models.status import Status
 from models.response import CustomResponse
 import utils.docx_translate_helper as docx_helper
+from utils.anuvaad_tokenizer import AnuvaadEngTokenizer
 from models.translation_process import TranslationProcess
 from models.user_high_court import Userhighcourt
 from models.high_court import Highcourt
@@ -228,6 +229,20 @@ def get_sentence_word_count():
         texts.append(text)
         word_count = word_count + len(text.split(' '))
     res = CustomResponse(Status.SUCCESS.value, {'sentence_count':len(texts), 'word_count': word_count})
+    return res.getres()
+
+@document_api.route('/tokenize-sentence', methods=['POST'])
+def tokenize_sentence():
+    body = request.get_json()
+    if body['paragraphs'] is None or not isinstance(body['paragraphs'], list):
+        res = CustomResponse(
+            Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
+        return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
+    response = []
+    for paragraph in body['paragraphs']:
+        tokenizer = AnuvaadEngTokenizer()
+        response.append(tokenizer.tokenize(paragraph))
+    res = CustomResponse(Status.SUCCESS.value, response)
     return res.getres()
 
 
