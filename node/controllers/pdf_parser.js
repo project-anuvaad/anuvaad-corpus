@@ -9,6 +9,10 @@ var PdfToHtml = require('../utils/pdf_to_html')
 var HtmlToText = require('../utils/html_to_text')
 var UUIDV4 = require('uuid/v4')
 var fs = require('fs');
+var axios = require('axios');
+
+const PYTHON_BASE_URL = process.env.PYTHON_URL ? process.env.PYTHON_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/corpus/'
+
 
 var COMPONENT = "pdf_parser";
 const BASE_PATH_NGINX = 'nginx/'
@@ -17,7 +21,6 @@ const STATUS_PROCESSING = 'PROCESSING'
 
 
 exports.savePdfParserProcess = function (req, res) {
-    LOG.info(req.files)
     let userId = req.headers['ad-userid']
     if (!req || !req.body || !req.body.process_name || !req.files || !req.files.pdf_data) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
@@ -51,8 +54,24 @@ exports.savePdfParserProcess = function (req, res) {
                         return res.status(apistatus.http.status).json(apistatus);
                     }
                     HtmlToText.convertHtmlToJson(BASE_PATH_UPLOAD, 'output-html.html', pdf_parser_process.session_id, function (err, data) {
-                        let response = new Response(StatusCode.SUCCESS, data).getRsp()
-                        return res.status(response.http.status).json(response);
+                        let paragraphs = []
+                        data.map((d) => {
+                            paragraphs.push(d.text)
+                        })
+                        axios.post(PYTHON_BASE_URL,
+                            {
+                                paragraphs: paragraphs
+                            }
+                        ).then(function (response) {
+                            if (response && response.data) {
+                                response.data.data.map((d, index) => {
+                                    data[index].text = d
+                                })
+                                let response = new Response(StatusCode.SUCCESS, data).getRsp()
+                                return res.status(response.http.status).json(response);
+                            }
+                        })
+
                     })
                 })
             })
