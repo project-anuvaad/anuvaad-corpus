@@ -11,6 +11,7 @@ var HtmlToText = require('../utils/html_to_text')
 var UUIDV4 = require('uuid/v4')
 var fs = require('fs');
 var axios = require('axios');
+var async = require('async')
 
 const PYTHON_BASE_URL = process.env.PYTHON_URL ? process.env.PYTHON_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/corpus/'
 
@@ -63,25 +64,31 @@ exports.savePdfParserProcess = function (req, res) {
                     ).then(function (api_res) {
                         let sentences = []
                         if (api_res && api_res.data) {
-                            api_res.data.data.map((d, index) => {
+                            let index = 0
+                            async.each(api_res.data.data, (d, cb) => {
                                 data[index].text = d
-                                d.map((text) => {
+                                async.each(d, function (text, callback) {
                                     let sentence = {}
                                     sentence.text = text
                                     sentence.session_id = pdf_parser_process.session_id
                                     sentence.status = STATUS_PENDING
                                     sentences.push(sentence)
+                                    callback()
+                                }, function (err) {
+                                    index++
+                                    cb()
                                 })
-                            })
-                            BaseModel.saveData(PdfSentence, sentences, function (err, doc) {
-                                BaseModel.saveData(PdfParser, [pdf_parser_process], function (err, doc) {
-                                    if (err) {
-                                        LOG.error(err)
-                                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                                        return res.status(apistatus.http.status).json(apistatus);
-                                    }
-                                    let response = new Response(StatusCode.SUCCESS, data).getRsp()
-                                    return res.status(response.http.status).json(response);
+                            }, function (err) {
+                                BaseModel.saveData(PdfSentence, sentences, function (err, doc) {
+                                    BaseModel.saveData(PdfParser, [pdf_parser_process], function (err, doc) {
+                                        if (err) {
+                                            LOG.error(err)
+                                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                            return res.status(apistatus.http.status).json(apistatus);
+                                        }
+                                        let response = new Response(StatusCode.SUCCESS, doc).getRsp()
+                                        return res.status(response.http.status).json(response);
+                                    })
                                 })
                             })
                         }
