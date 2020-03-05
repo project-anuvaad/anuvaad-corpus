@@ -68,7 +68,7 @@ exports.savePdfParserProcess = function (req, res) {
                                 d.map((text) => {
                                     let sentence = {}
                                     sentence.text = text
-                                    sentence.basename = pdf_parser_process.session_id
+                                    sentence.session_id = pdf_parser_process.session_id
                                     sentence.status = STATUS_PENDING
                                     sentences.push(sentence)
                                 })
@@ -123,15 +123,15 @@ exports.fetchPdfParserProcess = function (req, res) {
 
 exports.fetchPdfSentences = function (req, res) {
     let status = req.query.status
-    let basename = req.query.basename
+    let session_id = req.query.session_id
     var pagesize = req.query.pagesize
     var pageno = req.query.pageno
     let condition = {}
     if (status) {
         condition = { status: status }
     }
-    if (basename) {
-        condition['basename'] = basename
+    if (session_id) {
+        condition['session_id'] = session_id
     }
     PdfSentence.countDocuments(condition, function (err, count) {
         if (err) {
