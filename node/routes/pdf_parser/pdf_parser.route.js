@@ -14,4 +14,7 @@ module.exports = function (router) {
     router.route('/fetch-pdf-parse-process')
         .get(pdfParserController.fetchPdfParserProcess);
 
+    router.route('/fetch-pdf-sentences')
+        .get(pdfParserController.fetchPdfSentences);
+
 }
