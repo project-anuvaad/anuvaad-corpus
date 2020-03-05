@@ -73,8 +73,8 @@ exports.savePdfParserProcess = function (req, res) {
                                     sentences.push(sentence)
                                 })
                             })
-                            BaseModel.saveData(PdfSentence, sentences, function (err, data) {
-                                BaseModel.saveData(PdfParser, [pdf_parser_process], function (err, data) {
+                            BaseModel.saveData(PdfSentence, sentences, function (err, doc) {
+                                BaseModel.saveData(PdfParser, [pdf_parser_process], function (err, doc) {
                                     if (err) {
                                         LOG.error(err)
                                         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
