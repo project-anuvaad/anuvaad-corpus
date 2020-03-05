@@ -49,12 +49,16 @@ class AnuvaadEngTokenizer(object):
         for i in range(0, 50):
             pattern = re.compile(r'([ ]['+str(i)+'][.])')
             text = pattern.sub(' XX_'+str(i)+'_XX', text)
+            pattern = re.compile(r'(^['+str(i)+'][.])')
+            text = pattern.sub(' YY_'+str(i)+'_YY', text)
         return text
 
     def deserialize_dot_with_number(self, text):
         for i in range(50, 0, -1):
-            pattern = re.compile(re.escape(' XX_'+str(i)+'_XX'), re.IGNORECASE)
-            text = pattern.sub(' '+str(i)+'.', text)
+            pattern = re.compile(re.escape('XX_'+str(i)+'_XX'), re.IGNORECASE)
+            text = pattern.sub(str(i)+'.', text)
+            pattern = re.compile(re.escape('YY_'+str(i)+'_YY'), re.IGNORECASE)
+            text = pattern.sub(str(i)+'.', text)
         return text
 
     def serialize_dots(self, text):
