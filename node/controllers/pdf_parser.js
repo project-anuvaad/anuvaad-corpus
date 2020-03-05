@@ -65,14 +65,17 @@ exports.savePdfParserProcess = function (req, res) {
                         let sentences = []
                         if (api_res && api_res.data) {
                             let index = 0
+                            let sentence_index = 0
                             async.each(api_res.data.data, (d, cb) => {
                                 data[index].text = d
                                 async.each(d, function (text, callback) {
                                     let sentence = {}
                                     sentence.text = text
+                                    sentence.sentence_index = sentence_index
                                     sentence.session_id = pdf_parser_process.session_id
                                     sentence.status = STATUS_PENDING
                                     sentences.push(sentence)
+                                    sentence_index++
                                     callback()
                                 }, function (err) {
                                     index++
@@ -115,7 +118,7 @@ exports.fetchPdfParserProcess = function (req, res) {
             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
             return res.status(apistatus.http.status).json(apistatus);
         }
-        BaseModel.findByCondition(PdfParser, condition, pagesize, pageno, function (err, models) {
+        BaseModel.findByCondition(PdfParser, condition, pagesize, pageno,null, function (err, models) {
             if (err) {
                 LOG.error(err)
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
@@ -146,7 +149,7 @@ exports.fetchPdfSentences = function (req, res) {
             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
             return res.status(apistatus.http.status).json(apistatus);
         }
-        BaseModel.findByCondition(PdfSentence, condition, pagesize, pageno, function (err, models) {
+        BaseModel.findByCondition(PdfSentence, condition, pagesize, pageno,'sentence_index', function (err, models) {
             if (err) {
                 LOG.error(err)
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
