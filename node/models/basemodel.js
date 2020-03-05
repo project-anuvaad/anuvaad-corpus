@@ -25,8 +25,11 @@ Basemodel.updateData = function (schema, data, id, cb) {
     });
 }
 
-Basemodel.findByCondition = function (schema, condition, pagesize, pageno, cb) {
-    schema.find(condition, {}, (pagesize && pageno ? { skip: (pageno - 1) * pagesize, limit: parseInt(pagesize), sort: { '_id': -1 } } : { sort: { '_id': -1 } }), function (err, data) {
+Basemodel.findByCondition = function (schema, condition, pagesize, pageno, sort_column, cb) {
+    if (!sort_column) {
+        sort_column = '_id'
+    }
+    schema.find(condition, {}, (pagesize && pageno ? { skip: (pageno - 1) * pagesize, limit: parseInt(pagesize), sort: { sort_column: -1 } } : { sort: { sort_column: -1 } }), function (err, data) {
         if (err) {
             LOG.error("Unable to find data due to [%s]", JSON.stringify(err));
             return cb(err, null);
