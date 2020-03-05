@@ -23,6 +23,38 @@ const STATUS_PROCESSING = 'PROCESSING'
 const STATUS_COMPLETED = 'COMPLETED'
 const STATUS_PENDING = 'PENDING'
 
+exports.extractParagraphs = function (req, res) {
+    if (!req || !req.body || !req.files || !req.files.pdf_data) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let file = req.files.pdf_data
+    let pdf_parser_process = {}
+    pdf_parser_process.session_id = UUIDV4()
+    pdf_parser_process.pdf_path = file.name
+    fs.mkdir(BASE_PATH_UPLOAD + pdf_parser_process.session_id, function (e) {
+        fs.writeFile(BASE_PATH_UPLOAD + pdf_parser_process.session_id + '/' + pdf_parser_process.pdf_path, file.data, function (err) {
+            if (err) {
+                LOG.error(err)
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+
+            PdfToHtml.convertPdfToHtml(BASE_PATH_UPLOAD, pdf_parser_process.pdf_path, 'output.html', pdf_parser_process.session_id, function (err, data) {
+                if (err) {
+                    LOG.error(err)
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
+                HtmlToText.convertHtmlToJson(BASE_PATH_UPLOAD, 'output-html.html', pdf_parser_process.session_id, function (err, data) {
+                    let response = new Response(StatusCode.SUCCESS, data).getRsp()
+                    return res.status(response.http.status).json(response);
+
+                })
+            })
+        })
+    })
+}
 
 exports.savePdfParserProcess = function (req, res) {
     let userId = req.headers['ad-userid']
@@ -118,7 +150,7 @@ exports.fetchPdfParserProcess = function (req, res) {
             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
             return res.status(apistatus.http.status).json(apistatus);
         }
-        BaseModel.findByCondition(PdfParser, condition, pagesize, pageno,null, function (err, models) {
+        BaseModel.findByCondition(PdfParser, condition, pagesize, pageno, null, function (err, models) {
             if (err) {
                 LOG.error(err)
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
@@ -149,7 +181,7 @@ exports.fetchPdfSentences = function (req, res) {
             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
             return res.status(apistatus.http.status).json(apistatus);
         }
-        BaseModel.findByCondition(PdfSentence, condition, pagesize, pageno,'sentence_index', function (err, models) {
+        BaseModel.findByCondition(PdfSentence, condition, pagesize, pageno, 'sentence_index', function (err, models) {
             if (err) {
                 LOG.error(err)
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
@@ -159,4 +191,8 @@ exports.fetchPdfSentences = function (req, res) {
             return res.status(response.http.status).json(response);
         })
     })
+}
+
+exports.updatePdfSentences = function (req, res) {
+
 }
