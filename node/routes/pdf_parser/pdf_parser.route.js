@@ -20,4 +20,7 @@ module.exports = function (router) {
     router.route('/update-pdf-sentences')
         .get(pdfParserController.updatePdfSentences);
 
+    router.route('/extract-paragraphs')
+        .post(pdfParserController.extractParagraphs);
+
 }
