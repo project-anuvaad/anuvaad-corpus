@@ -50,7 +50,7 @@ class AnuvaadEngTokenizer(object):
             pattern = re.compile(r'([ ]['+str(i)+'][.])')
             text = pattern.sub(' XX_'+str(i)+'_XX', text)
             pattern = re.compile(r'(^['+str(i)+'][.])')
-            text = pattern.sub(' YY_'+str(i)+'_YY', text)
+            text = pattern.sub('YY_'+str(i)+'_YY', text)
         return text
 
     def deserialize_dot_with_number(self, text):
