@@ -14,7 +14,7 @@ class AnuvaadEngTokenizer(object):
     """
     Default abbrevations
     """
-    _abbrevations_with_space = ['of ', 'NO. ','Pvt. ', 'NOS. ','Smt. ','Sec. ','Spl. ','Mr. ']
+    _abbrevations_with_space = ['of ', 'NO. ','Pvt. ', 'NOS. ','Smt. ','Sec. ','Spl. ','Mr. ','ft. ']
     _abbrevations_without_space = ['Crl.']
     _tokenizer = None
     _regex_search_texts = []
