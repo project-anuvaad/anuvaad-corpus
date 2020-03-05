@@ -17,4 +17,7 @@ module.exports = function (router) {
     router.route('/fetch-pdf-sentences')
         .get(pdfParserController.fetchPdfSentences);
 
+    router.route('/update-pdf-sentences')
+        .get(pdfParserController.updatePdfSentences);
+
 }
