@@ -1,6 +1,8 @@
 const htmlToJson = require('html-to-json')
 const fs = require('fs');
 const sentence_ends = ['.', '?', '!']
+const regex = /([,|a-zA-Z]{2,}[.]$)/g;
+
 
 exports.convertHtmlToJson = function (basefolder, inputfilename, session_id, cb) {
     fs.readFile(basefolder + session_id + "/" + inputfilename, 'utf8', function (err, data) {
@@ -29,7 +31,7 @@ exports.convertHtmlToJson = function (basefolder, inputfilename, session_id, cb)
             items.map((it, index) => {
                 if (output && output.length > 0) {
                     let data = output[output.length - 1]
-                    if ((data.y == it.y || !(sentence_ends.indexOf(data.text.substring(data.text.length - 1, data.text.length)) >= 0)) && index > 10) {
+                    if ((data.y == it.y || !(sentence_ends.indexOf(data.text.substring(data.text.length - 1, data.text.length)) >= 0 && data.text.search(regex) >= 0)) && index > 10) {
                         data.text += ' ' + it.text
                         data.text = data.text.replace(/\s+/g, " ")
                     } else {
