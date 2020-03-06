@@ -18,6 +18,9 @@ class AnuvaadEngTokenizer(object):
     _abbrevations_without_space = ['Crl.']
     _tokenizer = None
     _regex_search_texts = []
+    _dot_with_quote_abbrevations = []
+    _dot_with_number_abbrevations = []
+    _dot_with_beginning_number_abbrevations = []
     
     def __init__(self, abbrevations=None):
         if abbrevations is not None:
@@ -27,6 +30,9 @@ class AnuvaadEngTokenizer(object):
             text = f.read()
         punkt_param.sent_starters = text.split('\n')
         self._regex_search_texts = []
+        self._dot_abbrevations = []
+        self._dot_with_number_abbrevations = []
+        self._dot_with_beginning_number_abbrevations = []
         self._tokenizer = PunktSentenceTokenizer(train_text=punkt_param,lang_vars=BulletPointLangVars())
 
     def tokenize(self, text):
@@ -35,6 +41,7 @@ class AnuvaadEngTokenizer(object):
         text = self.serialize_with_abbrevations(text)
         text = self.serialize_dots(text)
         text = self.serialize_dot_with_number(text)
+        text = self.serialize_dot_with_number_beginning(text)
         text = self.serialize_quotes_with_number(text)
         sentences = self._tokenizer.tokenize(text)
         output = []
@@ -42,48 +49,70 @@ class AnuvaadEngTokenizer(object):
             se = self.deserialize_pattern(se)
             se = self.deserialize_dots(se)
             se = self.deserialize_dot_with_number(se)
+            se = self.deserialize_dot_with_number_beginning(se)
             se = self.deserialize_quotes_with_number(se)
             output.append(self.deserialize_with_abbrevations(se))
         print('--------------Process finished-------------')
         return output
 
     def serialize_quotes_with_number(self, text):
-        for i in range(0, 999):
-            if i > 9:
-                pattern = re.compile(r'[“]['+str(int(i/10))+']['+str(i%10)+'][.]')
-            elif i> 99:
-                pattern = re.compile(r'[“]['+str(int(i/100))+']['+str(int(i/10)%10)+']['+str(i%100)+'][.]')
-            else:
-                pattern = re.compile(r'[“]['+str(i)+'][.]')
-            text = pattern.sub(' ZZ_'+str(i)+'_ZZ', text)
+        patterns = re.findall(r'([ ][“][0-9a-zA-Z]{1,}[.])',text)
+        index = 0
+        if patterns is not None and isinstance(patterns, list):
+            for pattern in patterns:
+                pattern_obj = re.compile(pattern)
+                self._dot_with_quote_abbrevations.append(pattern)
+                text = pattern_obj.sub(' ZZ_'+str(index)+'_ZZ', text)
+                index+=1
         return text
 
     def deserialize_quotes_with_number(self, text):
-        for i in range(999, 0, -1):
-            pattern = re.compile(re.escape('ZZ_'+str(i)+'_ZZ'), re.IGNORECASE)
-            text = pattern.sub('“'+str(i)+'.', text)
+        index = 0
+        if self._dot_with_quote_abbrevations is not None and isinstance(self._dot_with_quote_abbrevations, list):
+            for pattern in self._dot_with_quote_abbrevations:
+                pattern_obj = re.compile(re.escape('ZZ_'+str(index)+'_ZZ'), re.IGNORECASE)
+                text = pattern_obj.sub(pattern, text)
+                index+=1
+        return text
+
+    def serialize_dot_with_number_beginning(self, text):
+        patterns = re.findall(r'(^[0-9]{1,}[.])',text)
+        index = 0
+        if patterns is not None and isinstance(patterns, list):
+            for pattern in patterns:
+                pattern_obj = re.compile(pattern)
+                self._dot_with_beginning_number_abbrevations.append(pattern)
+                text = pattern_obj.sub('YY_'+str(index)+'_YY', text)
+                index+=1
+        return text
+
+    def deserialize_dot_with_number_beginning(self, text):
+        index = 0
+        if self._dot_with_beginning_number_abbrevations is not None and isinstance(self._dot_with_beginning_number_abbrevations, list):
+            for pattern in self._dot_with_beginning_number_abbrevations:
+                pattern_obj = re.compile(re.escape('YY_'+str(index)+'_YY'), re.IGNORECASE)
+                text = pattern_obj.sub(pattern, text)
+                index+=1
         return text
 
     def serialize_dot_with_number(self, text):
-        for i in range(0, 50):
-            if i > 9:
-                pattern = re.compile(r'([ ]['+str(int(i/10))+']['+str(i%10)+'][.])')
-                text = pattern.sub(' XX_'+str(i)+'_XX', text)
-                pattern = re.compile(r'(^['+str(int(i/10))+']['+str(i%10)+'][.])')
-                text = pattern.sub('YY_'+str(i)+'_YY', text)
-            else:
-                pattern = re.compile(r'([ ]['+str(i)+'][.])')
-                text = pattern.sub(' XX_'+str(i)+'_XX', text)
-                pattern = re.compile(r'(^['+str(i)+'][.])')
-                text = pattern.sub('YY_'+str(i)+'_YY', text)
+        patterns = re.findall(r'([ ][0-9]{1,}[.])',text)
+        index = 0
+        if patterns is not None and isinstance(patterns, list):
+            for pattern in patterns:
+                pattern_obj = re.compile(pattern)
+                self._dot_with_number_abbrevations.append(pattern)
+                text = pattern_obj.sub(' XX_'+str(index)+'_XX', text)
+                index+=1
         return text
 
     def deserialize_dot_with_number(self, text):
-        for i in range(50, 0, -1):
-            pattern = re.compile(re.escape('XX_'+str(i)+'_XX'), re.IGNORECASE)
-            text = pattern.sub(str(i)+'.', text)
-            pattern = re.compile(re.escape('YY_'+str(i)+'_YY'), re.IGNORECASE)
-            text = pattern.sub(str(i)+'.', text)
+        index = 0
+        if self._dot_with_number_abbrevations is not None and isinstance(self._dot_with_number_abbrevations, list):
+            for pattern in self._dot_with_number_abbrevations:
+                pattern_obj = re.compile(re.escape('XX_'+str(index)+'_XX'), re.IGNORECASE)
+                text = pattern_obj.sub(pattern, text)
+                index+=1
         return text
 
     def serialize_dots(self, text):
