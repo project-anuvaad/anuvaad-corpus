@@ -72,7 +72,7 @@ class AnuvaadEngTokenizer(object):
         return text
            
     def serialize_pattern(self, text):
-        regexp = re.compile(r'^([a-zA-Z][.][a-zA-Z][.])$')
+        regexp = re.compile(r'[a-zA-Z][.][a-zA-Z][.]')
         text_array = text.split(' ')
         text_updated = ''
         index = 0
