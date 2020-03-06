@@ -48,23 +48,34 @@ class AnuvaadEngTokenizer(object):
         return output
 
     def serialize_quotes_with_number(self, text):
-        for i in range(0, 99999):
-            pattern = re.compile(r'([ ]["]['+str(i)+'][.])')
+        for i in range(0, 999):
+            if i > 9:
+                pattern = re.compile(r'[“]['+str(int(i/10))+']['+str(i%10)+'][.]')
+            elif i> 99:
+                pattern = re.compile(r'[“]['+str(int(i/100))+']['+str(int(i/10)%10)+']['+str(i%100)+'][.]')
+            else:
+                pattern = re.compile(r'[“]['+str(i)+'][.]')
             text = pattern.sub(' ZZ_'+str(i)+'_ZZ', text)
         return text
 
     def deserialize_quotes_with_number(self, text):
-        for i in range(99999, 0, -1):
+        for i in range(999, 0, -1):
             pattern = re.compile(re.escape('ZZ_'+str(i)+'_ZZ'), re.IGNORECASE)
-            text = pattern.sub('"'+str(i)+'.', text)
+            text = pattern.sub('“'+str(i)+'.', text)
         return text
 
     def serialize_dot_with_number(self, text):
         for i in range(0, 50):
-            pattern = re.compile(r'([ ]['+str(i)+'][.])')
-            text = pattern.sub(' XX_'+str(i)+'_XX', text)
-            pattern = re.compile(r'(^['+str(i)+'][.])')
-            text = pattern.sub('YY_'+str(i)+'_YY', text)
+            if i > 9:
+                pattern = re.compile(r'([ ]['+str(int(i/10))+']['+str(i%10)+'][.])')
+                text = pattern.sub(' XX_'+str(i)+'_XX', text)
+                pattern = re.compile(r'(^['+str(int(i/10))+']['+str(i%10)+'][.])')
+                text = pattern.sub('YY_'+str(i)+'_YY', text)
+            else:
+                pattern = re.compile(r'([ ]['+str(i)+'][.])')
+                text = pattern.sub(' XX_'+str(i)+'_XX', text)
+                pattern = re.compile(r'(^['+str(i)+'][.])')
+                text = pattern.sub('YY_'+str(i)+'_YY', text)
         return text
 
     def deserialize_dot_with_number(self, text):
