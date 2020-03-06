@@ -35,15 +35,29 @@ class AnuvaadEngTokenizer(object):
         text = self.serialize_with_abbrevations(text)
         text = self.serialize_dots(text)
         text = self.serialize_dot_with_number(text)
+        text = self.serialize_quotes_with_number(text)
         sentences = self._tokenizer.tokenize(text)
         output = []
         for se in sentences:
             se = self.deserialize_pattern(se)
             se = self.deserialize_dots(se)
             se = self.deserialize_dot_with_number(se)
+            se = self.deserialize_quotes_with_number(se)
             output.append(self.deserialize_with_abbrevations(se))
         print('--------------Process finished-------------')
         return output
+
+    def serialize_quotes_with_number(self, text):
+        for i in range(0, 99999):
+            pattern = re.compile(r'([ ]["]['+str(i)+'][.])')
+            text = pattern.sub(' ZZ_'+str(i)+'_ZZ', text)
+        return text
+
+    def deserialize_quotes_with_number(self, text):
+        for i in range(99999, 0, -1):
+            pattern = re.compile(re.escape('ZZ_'+str(i)+'_ZZ'), re.IGNORECASE)
+            text = pattern.sub('"'+str(i)+'.', text)
+        return text
 
     def serialize_dot_with_number(self, text):
         for i in range(0, 50):
