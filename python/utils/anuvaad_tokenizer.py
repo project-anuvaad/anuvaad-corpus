@@ -98,7 +98,7 @@ class AnuvaadEngTokenizer(object):
         return text
 
     def serialize_dot_with_number(self, text):
-        patterns = re.findall(r'([ ][0-9]{1,}[.])',text)
+        patterns = re.findall(r'(?:[ ][0-9]{1,}[.])',text)
         index = 0
         if patterns is not None and isinstance(patterns, list):
             for pattern in patterns:
@@ -128,8 +128,9 @@ class AnuvaadEngTokenizer(object):
         return text
 
     def serialize_pattern(self, text):
-        patterns = re.findall(r'([a-zA-Z][.]){2,}',text)
+        patterns = re.findall(r'(?:[a-zA-Z][.]){2,}',text)
         index = 0
+        print(patterns)
         if patterns is not None and isinstance(patterns, list):
             for pattern in patterns:
                 pattern_obj = re.compile(re.escape(pattern))
