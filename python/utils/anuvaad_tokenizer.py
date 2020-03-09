@@ -74,8 +74,8 @@ class AnuvaadEngTokenizer(object):
 
     def deserialize_brackets(self, text):
         index = 0
-        if self._brackets_abbrevations is not None and isinstance(self._dot_with_quote_abbrevations, list):
-            for pattern in self._dot_with_quote_abbrevations:
+        if self._brackets_abbrevations is not None and isinstance(self._brackets_abbrevations, list):
+            for pattern in self._brackets_abbrevations:
                 pattern_obj = re.compile(re.escape('WW_'+str(index)+'_WW'), re.IGNORECASE)
                 text = pattern_obj.sub(pattern, text)
                 index+=1
