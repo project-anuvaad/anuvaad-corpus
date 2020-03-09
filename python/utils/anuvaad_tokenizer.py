@@ -18,6 +18,7 @@ class AnuvaadEngTokenizer(object):
     _abbrevations_without_space = ['Crl.']
     _tokenizer = None
     _regex_search_texts = []
+    _brackets_abbrevations = []
     _dot_with_char_abbrevations = []
     _dot_with_quote_abbrevations = []
     _dot_with_number_abbrevations = []
@@ -32,6 +33,7 @@ class AnuvaadEngTokenizer(object):
         punkt_param.sent_starters = text.split('\n')
         self._regex_search_texts = []
         self._dot_abbrevations = []
+        self._brackets_abbrevations = []
         self._dot_with_char_abbrevations = []
         self._dot_with_number_abbrevations = []
         self._dot_with_beginning_number_abbrevations = []
@@ -42,6 +44,7 @@ class AnuvaadEngTokenizer(object):
         text = self.serialize_pattern(text)
         text = self.serialize_with_abbrevations(text)
         text = self.serialize_dots(text)
+        text = self.serialize_brackets(text)
         text = self.serialize_dot_with_number(text)
         text = self.serialize_dot_with_number_beginning(text)
         text = self.serialize_quotes_with_number(text)
@@ -50,12 +53,33 @@ class AnuvaadEngTokenizer(object):
         for se in sentences:
             se = self.deserialize_pattern(se)
             se = self.deserialize_dots(se)
+            se = self.deserialize_brackets(se)
             se = self.deserialize_dot_with_number(se)
             se = self.deserialize_dot_with_number_beginning(se)
             se = self.deserialize_quotes_with_number(se)
             output.append(self.deserialize_with_abbrevations(se))
         print('--------------Process finished-------------')
         return output
+
+    def serialize_brackets(self, text):
+        patterns = re.findall(r'([(][0-9a-zA-Z.-]{1,}[)])',text)
+        index = 0
+        if patterns is not None and isinstance(patterns, list):
+            for pattern in patterns:
+                pattern_obj = re.compile(re.escape(pattern))
+                self._brackets_abbrevations.append(pattern)
+                text = pattern_obj.sub('WW_'+str(index)+'_WW', text)
+                index+=1
+        return text
+
+    def deserialize_brackets(self, text):
+        index = 0
+        if self._brackets_abbrevations is not None and isinstance(self._dot_with_quote_abbrevations, list):
+            for pattern in self._dot_with_quote_abbrevations:
+                pattern_obj = re.compile(re.escape('WW_'+str(index)+'_WW'), re.IGNORECASE)
+                text = pattern_obj.sub(pattern, text)
+                index+=1
+        return text
 
     def serialize_quotes_with_number(self, text):
         patterns = re.findall(r'([ ][“][0-9a-zA-Z]{1,}[.])',text)
@@ -130,7 +154,6 @@ class AnuvaadEngTokenizer(object):
     def serialize_pattern(self, text):
         patterns = re.findall(r'(?:[a-zA-Z][.]){2,}',text)
         index = 0
-        print(patterns)
         if patterns is not None and isinstance(patterns, list):
             for pattern in patterns:
                 pattern_obj = re.compile(re.escape(pattern))
