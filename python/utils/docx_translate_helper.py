@@ -210,8 +210,8 @@ def check_prop_difference(curr, prev):
         log.info('check_prop_difference : ended')
         return False
     except Exception as e:
-        log.error('check_prop_difference : Error occurred, error is ' + str(e))
-        return False
+        log.error('check_prop_difference : Error occurred, merging para as no props found, error is ' + str(e))
+        return True
 
 
 def pre_process_text(xmltree):
