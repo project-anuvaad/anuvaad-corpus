@@ -230,7 +230,7 @@ def pre_process_text(xmltree):
                 prev_node_c = None
                 for x in r.iterchildren():
                     log.info(str(x.tag))
-                    if x.tag == TEXT:
+                    if x.tag == check_element_is(x, 't'):
                         log.info('TAG text is == ' + str(x.text))
                         if x is not None:
                             log.info('x is not None ')
@@ -249,11 +249,11 @@ def pre_process_text(xmltree):
         log.info('pre_process_text :  merging run')
         for r in para.iterchildren():
 
-            if r.tag == RUN:
+            if check_element_is(r, 'r'):
 
                 run_text = ''
                 for x in r.iterchildren():
-                    if x.tag == TEXT:
+                    if check_element_is(x, 't'):
 
                         log.debug('pre_process_text : TAG text is  == ' + str(x.text))
                         if x is not None and x.text is not '':
@@ -278,7 +278,7 @@ def pre_process_text(xmltree):
                                     para_text = ''
                                     para_text = para_text + x.text
                                     x.text = ''
-                    if x.tag == TAB:
+                    if check_element_is(x, 'tab'):
                         para_text = para_text + ' '
 
 
@@ -297,7 +297,7 @@ def pre_process_properties(xmltree):
         log.info('pre_process_properties : Paragraph children == ' + str(para_child_count))
 
         for r in para.iterchildren():
-            if r.tag == RUN:
+            if check_element_is(r, 'r'):
                 rp = get_run_font_props(r)
                 if rp is not None:
                     prop_ascii = get_attrib(rp, FONT_ASCII)
@@ -327,16 +327,16 @@ def get_attrib(data, key):
 
 def get_text_node(node):
     for x in node.iterchildren():
-        if x is not None and x.tag == TEXT:
+        if x is not None and check_element_is(x, 't'):
             return x
     return None
 
 
 def get_run_font_props(node):
     for x in node.iterchildren():
-        if x is not None and x.tag == RUN_PROP:
+        if x is not None and check_element_is(x, 'rPr'):
             for rp in x.iterchildren():
-                if rp.tag == R_FONTS:
+                if check_element_is(rp, 'rFonts'):
                     return rp
     return None
 
