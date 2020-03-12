@@ -1,6 +1,6 @@
 # Anuvaad Toolkit: Anuvaad English Tokenizer extending nltk tokenizer
 #
-# Author: Aroop <aroop@tarento.com>
+# Author: Aroop <aroop.ghosh@tarento.com>
 # URL: <http://developers.anuvaad.org/>
 
 import re
