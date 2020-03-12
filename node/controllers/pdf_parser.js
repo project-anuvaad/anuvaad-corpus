@@ -23,6 +23,50 @@ const STATUS_PROCESSING = 'PROCESSING'
 const STATUS_COMPLETED = 'COMPLETED'
 const STATUS_PENDING = 'PENDING'
 
+exports.extractParagraphsPerPages = function (req, res) {
+    if (!req || !req.body || !req.files || !req.files.pdf_data) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let file = req.files.pdf_data
+    let pdf_parser_process = {}
+    pdf_parser_process.session_id = UUIDV4()
+    pdf_parser_process.pdf_path = file.name
+    fs.mkdir(BASE_PATH_UPLOAD + pdf_parser_process.session_id, function (e) {
+        fs.writeFile(BASE_PATH_UPLOAD + pdf_parser_process.session_id + '/' + pdf_parser_process.pdf_path, file.data, function (err) {
+            if (err) {
+                LOG.error(err)
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+
+            PdfToHtml.convertPdfToHtmlPagewise(BASE_PATH_UPLOAD, pdf_parser_process.pdf_path, 'output.html', pdf_parser_process.session_id, function (err, data) {
+                if (err) {
+                    LOG.error(err)
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
+                let index = 1
+                let output_res = {}
+                processHtml(pdf_parser_process, index, output_res, res)
+            })
+        })
+    })
+}
+
+function processHtml(pdf_parser_process, index, output_res, res) {
+    if (fs.existsSync(BASE_PATH_UPLOAD + pdf_parser_process.session_id + "/" + 'output-' + index + '.html')) {
+        HtmlToText.convertHtmlToJsonPagewise(BASE_PATH_UPLOAD, 'output-' + index + '.html', pdf_parser_process.session_id, function (err, data) {
+            output_res[index + ''] = data
+            index+=1
+            processHtml(pdf_parser_process, index, output_res, res)
+        })
+    } else {
+        let response = new Response(StatusCode.SUCCESS, output_res).getRsp()
+        return res.status(response.http.status).json(response);
+    }
+}
+
 exports.extractParagraphs = function (req, res) {
     if (!req || !req.body || !req.files || !req.files.pdf_data) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
