@@ -76,6 +76,7 @@ exports.convertHtmlToJson = function (basefolder, inputfilename, session_id, cb)
                 obj.style = style
                 obj['class'] = class_identifier
                 obj['page_no'] = parseInt(class_identifier.split('ft')[1] / 10)
+                obj['page_no_end'] = parseInt(class_identifier.split('ft')[1] / 10)
                 let class_style_text = style_text.split(obj['class'])[1].split('}')[0].split('{')[1]
                 let class_style_obj = {}
                 class_style_text = class_style_text.split(';')
@@ -96,7 +97,7 @@ exports.convertHtmlToJson = function (basefolder, inputfilename, session_id, cb)
                     //     data.text += ' ' + it.text
                     //     data.text = data.text.replace(/\s+/g, " ")
                     // } else {
-                    if (style_map[class_identifier] && it.page_no - style_map[class_identifier].data.page_no <= 1) {
+                    if (style_map[class_identifier] && it.page_no_end - style_map[class_identifier].data.page_no_end <= 1) {
                         let old_data = style_map[class_identifier]
                         let data = old_data.data
                         if ((!(sentence_ends.indexOf(data.text.substring(data.text.length - 1, data.text.length)) >= 0 && data.text.search(regex) >= 0) || abbrivations2.indexOf(data.text.substring(data.text.length - 3, data.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(data.text.substring(data.text.length - 4, data.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(data.text.substring(data.text.length - 5, data.text.length).toLowerCase()) >= 0) && it.node_index - data.node_index <= 5) {
@@ -106,6 +107,7 @@ exports.convertHtmlToJson = function (basefolder, inputfilename, session_id, cb)
                             } else {
                                 old_data.data.text += " " + it.text.replace(/\s+/g, " ")
                                 old_data.data.node_index = it.node_index
+                                old_data.data.page_no_end = it.page_no_end
                                 output[old_data.index] = old_data.data
                                 style_map[class_identifier] = old_data
                             }
