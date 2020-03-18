@@ -161,7 +161,7 @@ exports.convertHtmlToJson = function (basefolder, inputfilename, session_id, cb)
                             let data = old_data.data
                             data.text = data.text.trim()
                             if ((!(sentence_ends.indexOf(data.text.substring(data.text.length - 1, data.text.length)) >= 0 && data.text.search(regex) >= 0) || abbrivations2.indexOf(data.text.substring(data.text.length - 3, data.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(data.text.substring(data.text.length - 4, data.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(data.text.substring(data.text.length - 5, data.text.length).toLowerCase()) >= 0) && it.node_index - data.node_index <= 5) {
-                                if (it.node_index - data.node_index >= 2 && it.page_no - style_map[class_identifier].data.page_no == 0) {
+                                if (it.node_index - data.node_index > 2 && it.page_no - style_map[class_identifier].data.page_no == 0) {
                                     output.push(it)
                                     style_map[class_identifier] = { index: output.length - 1, data: it }
                                 } else {
