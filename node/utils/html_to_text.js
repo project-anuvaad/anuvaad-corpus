@@ -1,7 +1,7 @@
 const htmlToJson = require('html-to-json')
 const fs = require('fs');
 const sentence_ends = ['.', '?', '!']
-const regex = /([,|a-zA-Z|0-9]{3,}[.]$)/g;
+const regex = /([,|a-zA-Z|0-9]{2,}[.]$)/g;
 const abbrivations2 = ['no.', 'mr.', 'ft.', 'kg.', 'dr.', 'ms.', 'st.', 'pp.', 'co.', 'rs.', 'sh.', 'vs.']
 const abbrivations3 = ['pvt.', 'nos.', 'smt.', 'sec.', 'spl.', 'kgs.', 'ltd.', 'pty.', 'vol.', 'pty.', 'm/s.', 'mrs.']
 const abbrivations4 = ['assn.']
@@ -106,38 +106,43 @@ exports.convertHtmlToJson = function (basefolder, inputfilename, session_id, cb)
             //Find header or footer
             let header_end_index = -1
             let footer_start_index = -1
+            let footer_text = ''
             Object.keys(items).forEach(function (key, index) {
-                let obj = items[key]
-                let obj_prev = items[key - 1]
-                let obj_next = items[key + 1]
-                let obj_to_check = obj_prev ? obj_prev : obj_next
-                let current_header_end_index = -1
-                let current_footer_start_index = -1
-                obj.map((it, index) => {
-                    if (current_header_end_index == -1 || index - current_header_end_index == 1) {
-                        if (obj_to_check[index] && obj_to_check[index].text === obj[index].text) {
-                            current_header_end_index = index
-                        }
+                if (index != 0) {
+                    let obj = items[key]
+                    let obj_prev = items[key - 1]
+                    let obj_next = items[key + 1]
+                    let obj_to_check = obj_next ? obj_next : obj_prev
+                    let current_header_end_index = -1
+                    let current_footer_start_index = -1
+                    if (obj_to_check) {
+                        obj.map((it, index) => {
+                            if (current_header_end_index == -1 || index - current_header_end_index == 1) {
+                                if (obj_to_check[index] && obj_to_check[index].text === obj[index].text) {
+                                    current_header_end_index = index
+                                }
+                            }
+                        })
+                        obj.slice(0).reverse().map((it, index) => {
+                            if (current_footer_start_index == -1 || index - current_footer_start_index == 1) {
+                                if (obj_to_check[obj_to_check.length - index - 1] && obj_to_check[obj_to_check.length - index - 1].text === it.text) {
+                                    current_footer_start_index = index
+                                    footer_text = it.text
+                                }
+                            }
+                        })
                     }
-                })
-                obj.slice(0).reverse().map((it, index) => {
-                    if (current_footer_start_index == -1 || index - current_footer_start_index == 1) {
-                        console.log(obj_to_check.length - index-1)
-                        console.log(obj_to_check[obj_to_check.length - index-1])
-                        if (obj_to_check[obj_to_check.length - index-1] && obj_to_check[obj_to_check.length - index-1].text === obj[index].text) {
-                            current_footer_start_index = index
-                        }
+                    if (header_end_index !== -1 && header_end_index !== current_header_end_index) {
+                        header_end_index = -1
+                    } else {
+                        header_end_index = current_header_end_index
                     }
-                })
-                if (header_end_index !== -1 && header_end_index !== current_header_end_index) {
-                    header_end_index = -1
-                } else {
-                    header_end_index = current_header_end_index
-                }
-                if (footer_start_index !== -1 && footer_start_index !== current_footer_start_index) {
-                    footer_start_index = -1
-                } else {
-                    footer_start_index = current_footer_start_index
+                    if (footer_start_index !== -1 && footer_start_index !== current_footer_start_index) {
+                        footer_start_index = -1
+                        footer_text = ''
+                    } else {
+                        footer_start_index = current_footer_start_index
+                    }
                 }
             })
             Object.keys(items).forEach(function (key, index) {
@@ -147,6 +152,9 @@ exports.convertHtmlToJson = function (basefolder, inputfilename, session_id, cb)
                         return
                     }
                     if (header_end_index !== -1 && index <= header_end_index) {
+                        return
+                    }
+                    if ((footer_start_index !== -1 && index >= obj.length - footer_start_index - 1) || key == 1 && it.text === footer_text) {
                         return
                     }
                     let class_identifier = it.class_style['font-size'] + it.class_style['font-family']
