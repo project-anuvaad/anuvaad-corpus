@@ -38,7 +38,7 @@ class AnuvaadEngTokenizer(object):
         self._dot_with_char_abbrevations = []
         self._dot_with_number_abbrevations = []
         self._dot_with_beginning_number_abbrevations = []
-        self._tokenizer = PunktSentenceTokenizer(train_text=punkt_param,lang_vars=BulletPointLangVars())
+        self._tokenizer = PunktSentenceTokenizer(train_text=punkt_param)
 
     def tokenize(self, text):
         print('--------------Process started-------------')
