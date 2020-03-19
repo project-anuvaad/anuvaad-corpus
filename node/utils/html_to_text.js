@@ -6,7 +6,7 @@ const abbrivations2 = ['no.', 'mr.', 'ft.', 'kg.', 'dr.', 'ms.', 'st.', 'pp.', '
 const abbrivations3 = ['pvt.', 'nos.', 'smt.', 'sec.', 'spl.', 'kgs.', 'ltd.', 'pty.', 'vol.', 'pty.', 'm/s.', 'mrs.']
 const abbrivations4 = ['assn.']
 
-exports.convertHtmlToJsonPagewise = function (basefolder, inputfilename, session_id, merge, pageno, cb) {
+exports.convertHtmlToJsonPagewise = function (basefolder, inputfilename, session_id, merge, pageno,start_node_index, cb) {
     fs.readFile(basefolder + session_id + "/" + inputfilename, 'utf8', function (err, data) {
         let output = []
         data = data.replace(/<br\/>/g, ' ')
@@ -15,7 +15,7 @@ exports.convertHtmlToJsonPagewise = function (basefolder, inputfilename, session
             this.map('style', function ($item) {
                 style_text += $item.toString()
             })
-            var node_index = 1
+            var node_index = start_node_index
             return this.map('p', function ($item) {
                 let obj = {}
                 let style = $item['0']['attribs']['style']
@@ -259,7 +259,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                             current_footer_start_index = index
                             footer_text = it.text
                         }
-                    } 
+                    }
                 })
             }
             if (header_end_index !== -1 && header_end_index !== current_header_end_index) {
@@ -299,7 +299,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                     let data = old_data.data
                     data.text = data.text.trim()
                     if ((!(sentence_ends.indexOf(data.text.substring(data.text.length - 1, data.text.length)) >= 0 && data.text.search(regex) >= 0) || abbrivations2.indexOf(data.text.substring(data.text.length - 3, data.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(data.text.substring(data.text.length - 4, data.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(data.text.substring(data.text.length - 5, data.text.length).toLowerCase()) >= 0) && it.node_index - data.node_index <= 5) {
-                        if (it.node_index - data.node_index > 2 && it.page_no - style_map[class_identifier].data.page_no == 0) {
+                        if ((it.node_index - data.node_index > 2 && it.page_no - style_map[class_identifier].data.page_no == 0) || (it.node_index - data.node_index > 6 && it.page_no - style_map[class_identifier].data.page_no == 1)) {
                             output.push(it)
                             style_map[class_identifier] = { index: output.length - 1, data: it }
                         } else {
