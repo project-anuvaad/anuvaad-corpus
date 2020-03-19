@@ -48,18 +48,19 @@ exports.extractParagraphsPerPages = function (req, res) {
                 }
                 let index = 1
                 let output_res = {}
-                processHtml(pdf_parser_process, index, output_res, true, res)
+                processHtml(pdf_parser_process, index, output_res, true, 1, res)
             })
         })
     })
 }
 
-function processHtml(pdf_parser_process, index, output_res, merge, res) {
+function processHtml(pdf_parser_process, index, output_res, merge, start_node_index, res) {
     if (fs.existsSync(BASE_PATH_UPLOAD + pdf_parser_process.session_id + "/" + 'output-' + index + '.html')) {
-        HtmlToText.convertHtmlToJsonPagewise(BASE_PATH_UPLOAD, 'output-' + index + '.html', pdf_parser_process.session_id, merge, index, function (err, data) {
+        HtmlToText.convertHtmlToJsonPagewise(BASE_PATH_UPLOAD, 'output-' + index + '.html', pdf_parser_process.session_id, merge, index, start_node_index, function (err, data) {
             output_res[index + ''] = data
             index += 1
-            processHtml(pdf_parser_process, index, output_res, merge, res)
+            start_node_index += data.length
+            processHtml(pdf_parser_process, index, output_res, merge, start_node_index, res)
         })
     } else {
         if (merge) {
@@ -99,7 +100,7 @@ exports.extractParagraphs = function (req, res) {
                 }
                 let index = 1
                 let output_res = {}
-                processHtml(pdf_parser_process, index, output_res, false, res)
+                processHtml(pdf_parser_process, index, output_res, false, 1, res)
             })
         })
     })
