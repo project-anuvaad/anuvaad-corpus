@@ -81,6 +81,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                             async.each(api_res.data.data, (d, cb) => {
                                 data[index].text = d
                                 async.each(d, function (tokenized_sentence, callback) {
+                                    LOG.info(tokenized_sentence)
                                     let sentence = {}
                                     sentence.text = tokenized_sentence.text
                                     sentence.page_no = tokenized_sentence.page_no
