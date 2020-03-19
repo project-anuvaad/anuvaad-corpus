@@ -80,10 +80,10 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                             let sentence_index = 0
                             async.each(api_res.data.data, (d, cb) => {
                                 data[index].text = d
-                                async.each(d, function (text, callback) {
+                                async.each(d, function (tokenized_sentence, callback) {
                                     let sentence = {}
-                                    sentence.text = d.text
-                                    sentence.page_no = d.page_no
+                                    sentence.text = tokenized_sentence.text
+                                    sentence.page_no = tokenized_sentence.page_no
                                     sentence.sentence_index = sentence_index
                                     sentence.session_id = pdf_parser_process.session_id
                                     sentence.status = STATUS_PENDING
