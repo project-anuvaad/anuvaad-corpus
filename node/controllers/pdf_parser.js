@@ -48,22 +48,29 @@ exports.extractParagraphsPerPages = function (req, res) {
                 }
                 let index = 1
                 let output_res = {}
-                processHtml(pdf_parser_process, index, output_res, res)
+                processHtml(pdf_parser_process, index, output_res, true, res)
             })
         })
     })
 }
 
-function processHtml(pdf_parser_process, index, output_res, res) {
+function processHtml(pdf_parser_process, index, output_res, merge, res) {
     if (fs.existsSync(BASE_PATH_UPLOAD + pdf_parser_process.session_id + "/" + 'output-' + index + '.html')) {
-        HtmlToText.convertHtmlToJsonPagewise(BASE_PATH_UPLOAD, 'output-' + index + '.html', pdf_parser_process.session_id, function (err, data) {
+        HtmlToText.convertHtmlToJsonPagewise(BASE_PATH_UPLOAD, 'output-' + index + '.html', pdf_parser_process.session_id, merge, index, function (err, data) {
             output_res[index + ''] = data
-            index+=1
-            processHtml(pdf_parser_process, index, output_res, res)
+            index += 1
+            processHtml(pdf_parser_process, index, output_res, merge, res)
         })
     } else {
-        let response = new Response(StatusCode.SUCCESS, output_res).getRsp()
-        return res.status(response.http.status).json(response);
+        if (merge) {
+            let response = new Response(StatusCode.SUCCESS, output_res).getRsp()
+            return res.status(response.http.status).json(response);
+        } else {
+            HtmlToText.mergeHtmlNodes(output_res, function (err, data) {
+                let response = new Response(StatusCode.SUCCESS, data).getRsp()
+                return res.status(response.http.status).json(response);
+            })
+        }
     }
 }
 
@@ -84,17 +91,15 @@ exports.extractParagraphs = function (req, res) {
                 return res.status(apistatus.http.status).json(apistatus);
             }
 
-            PdfToHtml.convertPdfToHtml(BASE_PATH_UPLOAD, pdf_parser_process.pdf_path, 'output.html', pdf_parser_process.session_id, function (err, data) {
+            PdfToHtml.convertPdfToHtmlPagewise(BASE_PATH_UPLOAD, pdf_parser_process.pdf_path, 'output.html', pdf_parser_process.session_id, function (err, data) {
                 if (err) {
                     LOG.error(err)
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);
                 }
-                HtmlToText.convertHtmlToJson(BASE_PATH_UPLOAD, 'output-html.html', pdf_parser_process.session_id, function (err, data) {
-                    let response = new Response(StatusCode.SUCCESS, data).getRsp()
-                    return res.status(response.http.status).json(response);
-
-                })
+                let index = 1
+                let output_res = {}
+                processHtml(pdf_parser_process, index, output_res, false, res)
             })
         })
     })
