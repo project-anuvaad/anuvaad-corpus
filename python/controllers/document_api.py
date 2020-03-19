@@ -241,7 +241,13 @@ def tokenize_sentence():
     response = []
     for paragraph in body['paragraphs']:
         tokenizer = AnuvaadEngTokenizer()
-        response.append(tokenizer.tokenize(paragraph))
+        if 'text' in paragraph:
+            tokenized_data = {}
+            tokenized_data['text'] = tokenizer.tokenize(paragraph['text'])
+            tokenized_data['page_no'] = paragraph['page_no']
+            response.append(tokenized_data)
+        else:
+            response.append(tokenizer.tokenize(paragraph))
     res = CustomResponse(Status.SUCCESS.value, response)
     return res.getres()
 

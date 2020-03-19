@@ -69,13 +69,9 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
         } else {
             HtmlToText.mergeHtmlNodes(output_res, function (err, data) {
                 if (tokenize) {
-                    let paragraphs = []
-                    data.map((d) => {
-                        paragraphs.push(d.text)
-                    })
                     axios.post(PYTHON_BASE_URL + 'tokenize-sentence',
                         {
-                            paragraphs: paragraphs
+                            paragraphs: data
                         }
                     ).then(function (api_res) {
                         let sentences = []
@@ -86,7 +82,8 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                 data[index].text = d
                                 async.each(d, function (text, callback) {
                                     let sentence = {}
-                                    sentence.text = text
+                                    sentence.text = d.text
+                                    sentence.page_no = d.page_no
                                     sentence.sentence_index = sentence_index
                                     sentence.session_id = pdf_parser_process.session_id
                                     sentence.status = STATUS_PENDING
@@ -112,9 +109,10 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                             })
                         }
                     })
+                } else {
+                    let response = new Response(StatusCode.SUCCESS, data).getRsp()
+                    return res.status(response.http.status).json(response);
                 }
-                let response = new Response(StatusCode.SUCCESS, data).getRsp()
-                return res.status(response.http.status).json(response);
             })
         }
     }
