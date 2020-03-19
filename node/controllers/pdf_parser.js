@@ -48,19 +48,19 @@ exports.extractParagraphsPerPages = function (req, res) {
                 }
                 let index = 1
                 let output_res = {}
-                processHtml(pdf_parser_process, index, output_res, true, 1, res)
+                processHtml(pdf_parser_process, index, output_res, true, 1, false, res)
             })
         })
     })
 }
 
-function processHtml(pdf_parser_process, index, output_res, merge, start_node_index, res) {
+function processHtml(pdf_parser_process, index, output_res, merge, start_node_index, tokenize, res) {
     if (fs.existsSync(BASE_PATH_UPLOAD + pdf_parser_process.session_id + "/" + 'output-' + index + '.html')) {
         HtmlToText.convertHtmlToJsonPagewise(BASE_PATH_UPLOAD, 'output-' + index + '.html', pdf_parser_process.session_id, merge, index, start_node_index, function (err, data) {
             output_res[index + ''] = data
             index += 1
             start_node_index += data.length
-            processHtml(pdf_parser_process, index, output_res, merge, start_node_index, res)
+            processHtml(pdf_parser_process, index, output_res, merge, start_node_index, tokenize, res)
         })
     } else {
         if (merge) {
@@ -68,73 +68,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
             return res.status(response.http.status).json(response);
         } else {
             HtmlToText.mergeHtmlNodes(output_res, function (err, data) {
-                let response = new Response(StatusCode.SUCCESS, data).getRsp()
-                return res.status(response.http.status).json(response);
-            })
-        }
-    }
-}
-
-exports.extractParagraphs = function (req, res) {
-    if (!req || !req.body || !req.files || !req.files.pdf_data) {
-        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
-        return res.status(apistatus.http.status).json(apistatus);
-    }
-    let file = req.files.pdf_data
-    let pdf_parser_process = {}
-    pdf_parser_process.session_id = UUIDV4()
-    pdf_parser_process.pdf_path = file.name
-    fs.mkdir(BASE_PATH_UPLOAD + pdf_parser_process.session_id, function (e) {
-        fs.writeFile(BASE_PATH_UPLOAD + pdf_parser_process.session_id + '/' + pdf_parser_process.pdf_path, file.data, function (err) {
-            if (err) {
-                LOG.error(err)
-                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                return res.status(apistatus.http.status).json(apistatus);
-            }
-
-            PdfToHtml.convertPdfToHtmlPagewise(BASE_PATH_UPLOAD, pdf_parser_process.pdf_path, 'output.html', pdf_parser_process.session_id, function (err, data) {
-                if (err) {
-                    LOG.error(err)
-                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                    return res.status(apistatus.http.status).json(apistatus);
-                }
-                let index = 1
-                let output_res = {}
-                processHtml(pdf_parser_process, index, output_res, false, 1, res)
-            })
-        })
-    })
-}
-
-exports.savePdfParserProcess = function (req, res) {
-    let userId = req.headers['ad-userid']
-    if (!req || !req.body || !req.body.process_name || !req.files || !req.files.pdf_data) {
-        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
-        return res.status(apistatus.http.status).json(apistatus);
-    }
-    let file = req.files.pdf_data
-    let pdf_parser_process = {}
-    pdf_parser_process.session_id = UUIDV4()
-    pdf_parser_process.process_name = req.body.process_name
-    pdf_parser_process.pdf_path = file.name
-    pdf_parser_process.status = STATUS_COMPLETED
-    pdf_parser_process.created_by = userId
-    pdf_parser_process.created_on = new Date()
-    fs.mkdir(BASE_PATH_UPLOAD + pdf_parser_process.session_id, function (e) {
-        fs.writeFile(BASE_PATH_UPLOAD + pdf_parser_process.session_id + '/' + pdf_parser_process.pdf_path, file.data, function (err) {
-            if (err) {
-                LOG.error(err)
-                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                return res.status(apistatus.http.status).json(apistatus);
-            }
-
-            PdfToHtml.convertPdfToHtml(BASE_PATH_UPLOAD, pdf_parser_process.pdf_path, 'output.html', pdf_parser_process.session_id, function (err, data) {
-                if (err) {
-                    LOG.error(err)
-                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                    return res.status(apistatus.http.status).json(apistatus);
-                }
-                HtmlToText.convertHtmlToJson(BASE_PATH_UPLOAD, 'output-html.html', pdf_parser_process.session_id, function (err, data) {
+                if (tokenize) {
                     let paragraphs = []
                     data.map((d) => {
                         paragraphs.push(d.text)
@@ -178,8 +112,75 @@ exports.savePdfParserProcess = function (req, res) {
                             })
                         }
                     })
+                }
+                let response = new Response(StatusCode.SUCCESS, data).getRsp()
+                return res.status(response.http.status).json(response);
+            })
+        }
+    }
+}
 
-                })
+exports.extractParagraphs = function (req, res) {
+    if (!req || !req.body || !req.files || !req.files.pdf_data) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let file = req.files.pdf_data
+    let pdf_parser_process = {}
+    pdf_parser_process.session_id = UUIDV4()
+    pdf_parser_process.pdf_path = file.name
+    fs.mkdir(BASE_PATH_UPLOAD + pdf_parser_process.session_id, function (e) {
+        fs.writeFile(BASE_PATH_UPLOAD + pdf_parser_process.session_id + '/' + pdf_parser_process.pdf_path, file.data, function (err) {
+            if (err) {
+                LOG.error(err)
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+
+            PdfToHtml.convertPdfToHtmlPagewise(BASE_PATH_UPLOAD, pdf_parser_process.pdf_path, 'output.html', pdf_parser_process.session_id, function (err, data) {
+                if (err) {
+                    LOG.error(err)
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
+                let index = 1
+                let output_res = {}
+                processHtml(pdf_parser_process, index, output_res, false, 1, false, res)
+            })
+        })
+    })
+}
+
+exports.savePdfParserProcess = function (req, res) {
+    let userId = req.headers['ad-userid']
+    if (!req || !req.body || !req.body.process_name || !req.files || !req.files.pdf_data) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let file = req.files.pdf_data
+    let pdf_parser_process = {}
+    pdf_parser_process.session_id = UUIDV4()
+    pdf_parser_process.process_name = req.body.process_name
+    pdf_parser_process.pdf_path = file.name
+    pdf_parser_process.status = STATUS_COMPLETED
+    pdf_parser_process.created_by = userId
+    pdf_parser_process.created_on = new Date()
+    fs.mkdir(BASE_PATH_UPLOAD + pdf_parser_process.session_id, function (e) {
+        fs.writeFile(BASE_PATH_UPLOAD + pdf_parser_process.session_id + '/' + pdf_parser_process.pdf_path, file.data, function (err) {
+            if (err) {
+                LOG.error(err)
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+            PdfToHtml.convertPdfToHtmlPagewise(BASE_PATH_UPLOAD, pdf_parser_process.pdf_path, 'output.html', pdf_parser_process.session_id, function (err, data) {
+                if (err) {
+                    LOG.error(err)
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
+                let index = 1
+                let output_res = {}
+                processHtml(pdf_parser_process, index, output_res, false, 1, true, res)
             })
         })
     })
