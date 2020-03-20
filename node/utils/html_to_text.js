@@ -236,6 +236,9 @@ exports.mergeHtmlNodes = function (items, cb) {
     //Find header or footer
     let header_end_index = -1
     let footer_start_index = -1
+    let page_no_start_index = -1
+    let page_no_end_index = -1
+    let page_no_text = ''
     let footer_text = ''
     Object.keys(items).forEach(function (key, index) {
         if (index != 0) {
@@ -245,11 +248,25 @@ exports.mergeHtmlNodes = function (items, cb) {
             let obj_to_check = obj_next ? obj_next : obj_prev
             let current_header_end_index = -1
             let current_footer_start_index = -1
+            let current_page_no_start_index = -1
+            let current_page_no_end_index = -1
             if (obj_to_check) {
                 obj.map((it, index) => {
                     if (current_header_end_index == -1 || index - current_header_end_index == 1) {
                         if (obj_to_check[index] && obj_to_check[index].text === obj[index].text) {
                             current_header_end_index = index
+                        }
+                    }
+                    if(obj_to_check[index]){
+                        let current_text = it.text.replace(/\d+/g, '');
+                        current_text = current_text.replace(/\s+/g, '')
+                        if(current_text.length>0){
+                            let next_text = obj_to_check[index].text.replace(/\d+/g, '');
+                            next_text = next_text.replace(/\s+/g, '')
+                            if(next_text === current_text && index !== current_header_end_index){
+                                current_page_no_start_index = index
+                                page_no_text = next_text
+                            }
                         }
                     }
                 })
@@ -258,6 +275,18 @@ exports.mergeHtmlNodes = function (items, cb) {
                         if (obj_to_check[obj_to_check.length - index - 1] && obj_to_check[obj_to_check.length - index - 1].text === it.text) {
                             current_footer_start_index = index
                             footer_text = it.text
+                        }
+                    }
+                    if(obj_to_check[obj_to_check.length - index - 1]){
+                        let current_text = it.text.replace(/\d+/g, '');
+                        current_text = current_text.replace(/\s+/g, '')
+                        if(current_text.length>0){
+                            let next_text = obj_to_check[obj_to_check.length - index - 1].text.replace(/\d+/g, '');
+                            next_text = next_text.replace(/\s+/g, '')
+                            if(next_text === current_text && index !== current_footer_start_index){
+                                current_page_no_end_index = index
+                                page_no_text = next_text
+                            }
                         }
                     }
                 })
@@ -273,12 +302,25 @@ exports.mergeHtmlNodes = function (items, cb) {
             } else {
                 footer_start_index = current_footer_start_index
             }
+            if (page_no_start_index !== -1 && page_no_start_index !== current_page_no_start_index) {
+                page_no_start_index = -1
+            } else {
+                page_no_start_index = current_page_no_start_index
+            }
+            if (page_no_end_index !== -1 && page_no_end_index !== current_page_no_end_index) {
+                page_no_end_index = -1
+            } else {
+                page_no_end_index = current_page_no_end_index
+            }
         }
     })
     Object.keys(items).forEach(function (key, index) {
         let obj = items[key]
         obj.map((it, index) => {
             if (it.text == it.page_no) {
+                return
+            }
+            if((page_no_start_index !== -1 && index === page_no_start_index) || (page_no_end_index !== -1 && index === obj.length - page_no_end_index - 1) || (key == 1 && it.text.replace(/\d+/g, '').replace(/\s+/g, '') === page_no_text)){
                 return
             }
             if (header_end_index !== -1 && index <= header_end_index) {
