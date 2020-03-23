@@ -2,6 +2,7 @@ const htmlToJson = require('html-to-json')
 const fs = require('fs');
 var LOG = require('../logger/logger').logger
 const sentence_ends_regex = /(([,|a-zA-Z|0-9|.]{3,}[.|?|!|\"|”|:]|([:][ ][-]))$)/g;
+const reason_regex = /(([rR][e][a][s][o][n][:])$)/g;
 const abbrivations2 = ['no.', 'mr.', 'ft.', 'kg.', 'dr.', 'ms.', 'st.', 'pp.', 'co.', 'rs.', 'sh.', 'vs.']
 const abbrivations3 = ['pvt.', 'nos.', 'smt.', 'sec.', 'spl.', 'kgs.', 'ltd.', 'pty.', 'vol.', 'pty.', 'm/s.', 'mrs.']
 const abbrivations4 = ['assn.']
@@ -352,14 +353,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                         class_identifier = it.class_style['font-size'] + it.class_style['font-family']
                     }
                     data.text = data.text.trim()
-                    if (previous_node) {
-                        if (previous_node.page_no == 6) {
-                            LOG.info('Ar')
-                            LOG.info(data.text)
-                            LOG.info(data.text.search(sentence_ends_regex) >= 0)
-                        }
-                    }
-                    if ((!(data.text.search(sentence_ends_regex) >= 0) || abbrivations2.indexOf(data.text.substring(data.text.length - 3, data.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(data.text.substring(data.text.length - 4, data.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(data.text.substring(data.text.length - 5, data.text.length).toLowerCase()) >= 0) && it.node_index - data.node_index <= 10) {
+                    if ((!((data.text.search(sentence_ends_regex) >= 0 && data.text.search(reason_regex) < 0)) || abbrivations2.indexOf(data.text.substring(data.text.length - 3, data.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(data.text.substring(data.text.length - 4, data.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(data.text.substring(data.text.length - 5, data.text.length).toLowerCase()) >= 0) && it.node_index - data.node_index <= 10) {
                         if ((it.node_index - data.node_index > 2 && it.page_no - old_data.data.page_no == 0) || (it.node_index - data.node_index > 8 && it.page_no - old_data.data.page_no == 1)) {
                             output.push(it)
                             style_map[class_identifier] = { index: output.length - 1, data: it }
