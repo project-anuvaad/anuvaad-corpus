@@ -1,13 +1,12 @@
 const htmlToJson = require('html-to-json')
 const fs = require('fs');
 var LOG = require('../logger/logger').logger
-const sentence_ends = ['.', '?', '!']
-const regex = /([,|a-zA-Z|0-9]{3,}[.]$)/g;
+const sentence_ends_regex = /([,|a-zA-Z|0-9]{3,}[.|?|!|\"|”|:]$)/g;
 const abbrivations2 = ['no.', 'mr.', 'ft.', 'kg.', 'dr.', 'ms.', 'st.', 'pp.', 'co.', 'rs.', 'sh.', 'vs.']
 const abbrivations3 = ['pvt.', 'nos.', 'smt.', 'sec.', 'spl.', 'kgs.', 'ltd.', 'pty.', 'vol.', 'pty.', 'm/s.', 'mrs.']
 const abbrivations4 = ['assn.']
 
-exports.convertHtmlToJsonPagewise = function (basefolder, inputfilename, session_id, merge, pageno,start_node_index, cb) {
+exports.convertHtmlToJsonPagewise = function (basefolder, inputfilename, session_id, merge, pageno, start_node_index, cb) {
     fs.readFile(basefolder + session_id + "/" + inputfilename, 'utf8', function (err, data) {
         let output = []
         data = data.replace(/<br\/>/g, ' ')
@@ -189,7 +188,7 @@ exports.convertHtmlToJson = function (basefolder, inputfilename, session_id, cb)
                             let old_data = style_map[class_identifier]
                             let data = old_data.data
                             data.text = data.text.trim()
-                            if ((!(sentence_ends.indexOf(data.text.substring(data.text.length - 1, data.text.length)) >= 0 && data.text.search(regex) >= 0) || abbrivations2.indexOf(data.text.substring(data.text.length - 3, data.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(data.text.substring(data.text.length - 4, data.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(data.text.substring(data.text.length - 5, data.text.length).toLowerCase()) >= 0) && it.node_index - data.node_index <= 5) {
+                            if ((!(data.text.search(sentence_ends_regex) >= 0) || abbrivations2.indexOf(data.text.substring(data.text.length - 3, data.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(data.text.substring(data.text.length - 4, data.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(data.text.substring(data.text.length - 5, data.text.length).toLowerCase()) >= 0) && it.node_index - data.node_index <= 5) {
                                 if (it.node_index - data.node_index > 2 && it.page_no - style_map[class_identifier].data.page_no == 0) {
                                     output.push(it)
                                     style_map[class_identifier] = { index: output.length - 1, data: it }
@@ -241,6 +240,8 @@ exports.mergeHtmlNodes = function (items, cb) {
     let page_no_end_index = -1
     let page_no_text = ''
     let footer_text = ''
+    let previous_node = null
+    let change_style_map = false
     Object.keys(items).forEach(function (key, index) {
         if (index != 0) {
             let obj = items[key]
@@ -258,13 +259,13 @@ exports.mergeHtmlNodes = function (items, cb) {
                             current_header_end_index = index
                         }
                     }
-                    if(obj_to_check[index]){
+                    if (obj_to_check[index]) {
                         let current_text = it.text.replace(/\d+/g, '');
                         current_text = current_text.replace(/\s+/g, '')
-                        if(current_text.length>0){
+                        if (current_text.length > 0) {
                             let next_text = obj_to_check[index].text.replace(/\d+/g, '');
                             next_text = next_text.replace(/\s+/g, '')
-                            if(next_text === current_text && current_text.trim().length > 0 && index !== current_header_end_index){
+                            if (next_text === current_text && current_text.trim().length > 0 && index !== current_header_end_index) {
                                 current_page_no_start_index = index
                                 page_no_text = next_text
                             }
@@ -278,13 +279,13 @@ exports.mergeHtmlNodes = function (items, cb) {
                             footer_text = it.text
                         }
                     }
-                    if(obj_to_check[obj_to_check.length - index - 1]){
+                    if (obj_to_check[obj_to_check.length - index - 1]) {
                         let current_text = it.text.replace(/\d+/g, '');
                         current_text = current_text.replace(/\s+/g, '')
-                        if(current_text.length>0){
+                        if (current_text.length > 0) {
                             let next_text = obj_to_check[obj_to_check.length - index - 1].text.replace(/\d+/g, '');
                             next_text = next_text.replace(/\s+/g, '')
-                            if(next_text === current_text && index !== current_footer_start_index && current_text.trim().length > 0){
+                            if (next_text === current_text && index !== current_footer_start_index && current_text.trim().length > 0) {
                                 current_page_no_end_index = index
                                 page_no_text = next_text
                             }
@@ -321,7 +322,7 @@ exports.mergeHtmlNodes = function (items, cb) {
             if (it.text == it.page_no) {
                 return
             }
-            if((page_no_start_index !== -1 && index === page_no_start_index) || (page_no_end_index !== -1 && index === obj.length - page_no_end_index - 1) || (key == 1 && it.text.replace(/\d+/g, '').replace(/\s+/g, '') === page_no_text)){
+            if ((page_no_start_index !== -1 && index === page_no_start_index) || (page_no_end_index !== -1 && index === obj.length - page_no_end_index - 1) || (key == 1 && it.text.replace(/\d+/g, '').replace(/\s+/g, '') === page_no_text)) {
                 return
             }
             if (header_end_index !== -1 && index <= header_end_index) {
@@ -337,12 +338,29 @@ exports.mergeHtmlNodes = function (items, cb) {
                 //     data.text += ' ' + it.text
                 //     data.text = data.text.replace(/\s+/g, " ")
                 // } else {
+                
+
+                if (!style_map[class_identifier] && previous_node.page_no === it.page_no && previous_node && ((previous_node.y >= it.y && parseInt(it.y)-parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y) - parseInt(previous_node.class_style['font-size'].split('px')[0])) || (previous_node.y <= it.y && parseInt(it.y)-parseInt(it.class_style['font-size'].split('px')[0]) <= parseInt(previous_node.y) - parseInt(previous_node.class_style['font-size'].split('px')[0]))) && it.text.trim().length > 0) {
+                    class_identifier = previous_node.class_style['font-size'] + previous_node.class_style['font-family']
+                    change_style_map = true
+                }
                 if (style_map[class_identifier] && it.page_no_end - style_map[class_identifier].data.page_no_end <= 1) {
                     let old_data = style_map[class_identifier]
                     let data = old_data.data
+                    if (change_style_map) {
+                        style_map[class_identifier] = null
+                        class_identifier = it.class_style['font-size'] + it.class_style['font-family']
+                    }
                     data.text = data.text.trim()
-                    if ((!(sentence_ends.indexOf(data.text.substring(data.text.length - 1, data.text.length)) >= 0 && data.text.search(regex) >= 0) || abbrivations2.indexOf(data.text.substring(data.text.length - 3, data.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(data.text.substring(data.text.length - 4, data.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(data.text.substring(data.text.length - 5, data.text.length).toLowerCase()) >= 0) && it.node_index - data.node_index <= 10) {
-                        if ((it.node_index - data.node_index > 2 && it.page_no - style_map[class_identifier].data.page_no == 0) || (it.node_index - data.node_index > 8 && it.page_no - style_map[class_identifier].data.page_no == 1)) {
+                    if (previous_node) {
+                        if (previous_node.page_no == 6) {
+                            LOG.info('Ar')
+                            LOG.info(data.text)
+                            LOG.info(data.text.search(sentence_ends_regex) >= 0)
+                        }
+                    }
+                    if ((!(data.text.search(sentence_ends_regex) >= 0) || abbrivations2.indexOf(data.text.substring(data.text.length - 3, data.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(data.text.substring(data.text.length - 4, data.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(data.text.substring(data.text.length - 5, data.text.length).toLowerCase()) >= 0) && it.node_index - data.node_index <= 10) {
+                        if ((it.node_index - data.node_index > 2 && it.page_no - old_data.data.page_no == 0) || (it.node_index - data.node_index > 8 && it.page_no - old_data.data.page_no == 1)) {
                             output.push(it)
                             style_map[class_identifier] = { index: output.length - 1, data: it }
                         } else {
@@ -352,7 +370,8 @@ exports.mergeHtmlNodes = function (items, cb) {
                             output[old_data.index] = old_data.data
                             style_map[class_identifier] = old_data
                         }
-                    } else {
+                    }
+                    else {
                         output.push(it)
                         style_map[class_identifier] = { index: output.length - 1, data: it }
                     }
@@ -365,7 +384,8 @@ exports.mergeHtmlNodes = function (items, cb) {
                 output.push(it)
                 style_map[class_identifier] = { index: output.length - 1, data: it }
             }
-            LOG.debug(output)
+            change_style_map = true
+            previous_node = it
         })
     })
     var out = output.filter((o) => {
