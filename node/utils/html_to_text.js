@@ -358,7 +358,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                     class_identifier = previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold
                     change_style_map = true
                 }
-                if(previous_node && class_identifier !== previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold){
+                if(previous_node && previous_node.text.trim().length > 0 && it.text.trim().length > 0 && class_identifier !== previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold){
                     style_map[previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold] = null
                 }
                 if (style_map[class_identifier] && it.page_no_end - style_map[class_identifier].data.page_no_end <= 1) {
