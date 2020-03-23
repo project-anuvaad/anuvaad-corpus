@@ -323,7 +323,7 @@ exports.mergeHtmlNodes = function (items, cb) {
             LOG.debug(page_no_text)
             LOG.debug(header_end_index)
             LOG.debug(footer_start_index)
-            LOG.debug(footer_text)
+            LOG.debug(footer_text.trim().length)
             if (it.text == it.page_no) {
                 return
             }
