@@ -46,6 +46,7 @@ exports.convertHtmlToJsonPagewise = function (basefolder, inputfilename, session
                 return obj;
             });
         }).done(function (items) {
+            LOG.info(items)
             if (merge) {
                 items.map((it, index) => {
                     if (output && output.length > 0) {
