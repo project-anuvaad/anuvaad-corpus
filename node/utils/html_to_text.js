@@ -47,7 +47,6 @@ exports.convertHtmlToJsonPagewise = function (basefolder, inputfilename, session
                 return obj;
             });
         }).done(function (items) {
-            LOG.info(items)
             if (merge) {
                 items.map((it, index) => {
                     if (output && output.length > 0) {
@@ -319,6 +318,7 @@ exports.mergeHtmlNodes = function (items, cb) {
     Object.keys(items).forEach(function (key, index) {
         let obj = items[key]
         obj.map((it, index) => {
+            LOG.debug(it)
             if (it.text == it.page_no) {
                 return
             }
