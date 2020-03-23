@@ -4,7 +4,7 @@ var LOG = require('../logger/logger').logger
 const sentence_ends_regex = /(([,|a-zA-Z|0-9|.]{3,}[.|?|!|\"|”|:]|([:][ ][-]))$)/g;
 const reason_regex = /(([rR][e][a][s][o][n][:])$)/g;
 const abbrivations2 = ['no.', 'mr.', 'ft.', 'kg.', 'dr.', 'ms.', 'st.', 'pp.', 'co.', 'rs.', 'sh.', 'vs.']
-const abbrivations3 = ['pvt.', 'nos.', 'smt.', 'sec.', 'spl.', 'kgs.', 'ltd.', 'pty.', 'vol.', 'pty.', 'm/s.', 'mrs.']
+const abbrivations3 = ['pvt.', 'nos.', 'smt.', 'sec.', 'spl.', 'kgs.', 'ltd.', 'pty.', 'vol.', 'pty.', 'm/s.', 'mrs.','i.e.']
 const abbrivations4 = ['assn.']
 
 exports.convertHtmlToJsonPagewise = function (basefolder, inputfilename, session_id, merge, pageno, start_node_index, cb) {
