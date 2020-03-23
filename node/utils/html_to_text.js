@@ -254,7 +254,7 @@ exports.mergeHtmlNodes = function (items, cb) {
             if (obj_to_check) {
                 obj.map((it, index) => {
                     if (current_header_end_index == -1 || index - current_header_end_index == 1) {
-                        if (obj_to_check[index] && obj_to_check[index].text === obj[index].text) {
+                        if (obj_to_check[index] && obj_to_check[index].text === obj[index].text && obj[index].text.trim().length > 0) {
                             current_header_end_index = index
                         }
                     }
@@ -264,7 +264,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                         if(current_text.length>0){
                             let next_text = obj_to_check[index].text.replace(/\d+/g, '');
                             next_text = next_text.replace(/\s+/g, '')
-                            if(next_text === current_text && index !== current_header_end_index){
+                            if(next_text === current_text && current_text.trim().length > 0 && index !== current_header_end_index){
                                 current_page_no_start_index = index
                                 page_no_text = next_text
                             }
