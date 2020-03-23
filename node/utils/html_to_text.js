@@ -273,7 +273,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                 })
                 obj.slice(0).reverse().map((it, index) => {
                     if (current_footer_start_index == -1 || index - current_footer_start_index == 1) {
-                        if (obj_to_check[obj_to_check.length - index - 1] && obj_to_check[obj_to_check.length - index - 1].text === it.text) {
+                        if (obj_to_check[obj_to_check.length - index - 1] && obj_to_check[obj_to_check.length - index - 1].text === it.text && it.text.trim().length > 0) {
                             current_footer_start_index = index
                             footer_text = it.text
                         }
@@ -284,7 +284,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                         if(current_text.length>0){
                             let next_text = obj_to_check[obj_to_check.length - index - 1].text.replace(/\d+/g, '');
                             next_text = next_text.replace(/\s+/g, '')
-                            if(next_text === current_text && index !== current_footer_start_index){
+                            if(next_text === current_text && index !== current_footer_start_index && current_text.trim().length > 0){
                                 current_page_no_end_index = index
                                 page_no_text = next_text
                             }
