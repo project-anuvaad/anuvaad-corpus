@@ -318,12 +318,6 @@ exports.mergeHtmlNodes = function (items, cb) {
     Object.keys(items).forEach(function (key, index) {
         let obj = items[key]
         obj.map((it, index) => {
-            LOG.debug(page_no_start_index)
-            LOG.debug(page_no_end_index)
-            LOG.debug(page_no_text)
-            LOG.debug(header_end_index)
-            LOG.debug(footer_start_index)
-            LOG.debug(footer_text.trim().length)
             if (it.text == it.page_no) {
                 return
             }
