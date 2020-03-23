@@ -318,7 +318,11 @@ exports.mergeHtmlNodes = function (items, cb) {
     Object.keys(items).forEach(function (key, index) {
         let obj = items[key]
         obj.map((it, index) => {
-            LOG.debug(it)
+            LOG.debug(page_no_start_index)
+            LOG.debug(page_no_end_index)
+            LOG.debug(page_no_text)
+            LOG.debug(header_end_index)
+            LOG.debug(footer_start_index)
             if (it.text == it.page_no) {
                 return
             }
@@ -366,6 +370,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                 output.push(it)
                 style_map[class_identifier] = { index: output.length - 1, data: it }
             }
+            LOG.debug(it)
         })
     })
     var out = output.filter((o) => {
