@@ -370,7 +370,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                 output.push(it)
                 style_map[class_identifier] = { index: output.length - 1, data: it }
             }
-            LOG.debug(it)
+            LOG.debug(output)
         })
     })
     var out = output.filter((o) => {
