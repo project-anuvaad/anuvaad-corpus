@@ -4,7 +4,7 @@ var LOG = require('../logger/logger').logger
 const sentence_ends_regex = /(([\"|”|,|a-zA-Z|0-9|.]{3,}[.|?|!|\"|”|:|;]|([:][ ][-]))$)/g;
 const reason_regex = /(([rR][e][a][s][o][n][:])$)/g;
 const abbrivations2 = [' no.', ' mr.', ' ft.', ' kg.', ' dr.', ' ms.', ' st.', ' pp.', ' co.', ' rs.', ' sh.', ' vs.']
-const abbrivations3 = [' pvt.', ' nos.', ' smt.', ' sec.', ' spl.', ' kgs.', ' ltd.', ' pty.', ' vol.', ' pty.', ' m/s.', ' mrs.',' i.e.']
+const abbrivations3 = [' pvt.', ' nos.', ' smt.', ' sec.', ' spl.', ' kgs.', ' ltd.', ' pty.', ' vol.', ' pty.', ' m/s.', ' mrs.', ' i.e.']
 const abbrivations4 = [' assn.']
 
 exports.convertHtmlToJsonPagewise = function (basefolder, inputfilename, session_id, merge, pageno, start_node_index, cb) {
@@ -19,9 +19,9 @@ exports.convertHtmlToJsonPagewise = function (basefolder, inputfilename, session
             var node_index = start_node_index
             return this.map('p', function ($item) {
                 var is_bold = false
-                if($item['0'].children){
-                    $item['0'].children.map((child)=>{
-                        if(child.name === 'b'){
+                if ($item['0'].children) {
+                    $item['0'].children.map((child) => {
+                        if (child.name === 'b') {
                             is_bold = true
                         }
                     })
@@ -338,7 +338,7 @@ exports.mergeHtmlNodes = function (items, cb) {
             change_style_map = false
             is_sub = false
             is_super = false
-            if(it.text.trim().length ==0){
+            if (it.text.trim().length == 0) {
                 return
             }
             if (it.text == it.page_no && index > obj.length - 1) {
@@ -355,22 +355,15 @@ exports.mergeHtmlNodes = function (items, cb) {
             }
             let class_identifier = it.class_style['font-size'] + it.class_style['font-family'] + it.is_bold
             if (output && output.length > 0) {
-                let data = output[output.length - 1]
-                // if ((data.y == it.y || !(sentence_ends.indexOf(data.text.substring(data.text.length - 1, data.text.length)) >= 0 && data.text.search(regex) >= 0)) && data.class_style === it.class_style) {
-                //     data.text += ' ' + it.text
-                //     data.text = data.text.replace(/\s+/g, " ")
-                // } else {
-
-
-                if (!style_map[class_identifier] && previous_node.page_no === it.page_no && previous_node && ((previous_node.y >= it.y && parseInt(it.y) >= parseInt(previous_node.y) - parseInt(previous_node.class_style['font-size'].split('px')[0])) || (previous_node.y >= parseInt(it.y) - parseInt(it.class_style['font-size'].split('px')[0]) && parseInt(it.y) - parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y) - parseInt(previous_node.class_style['font-size'].split('px')[0]))) && it.text.trim().length > 0) {
+                if (!style_map[class_identifier] && previous_node.page_no === it.page_no && previous_node && ((parseInt(previous_node.y) >= parseInt(it.y) && parseInt(it.y) >= parseInt(previous_node.y) - parseInt(previous_node.class_style['font-size'].split('px')[0])) || (parseInt(previous_node.y) >= parseInt(it.y) - parseInt(it.class_style['font-size'].split('px')[0]) && parseInt(it.y) - parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y) - parseInt(previous_node.class_style['font-size'].split('px')[0]))) && it.text.trim().length > 0) {
                     class_identifier = previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold
-                    if((previous_node.y >= it.y && parseInt(it.y) >= parseInt(previous_node.y) - parseInt(previous_node.class_style['font-size'].split('px')[0]))){
+                    if ((parseInt(previous_node.y) >= parseInt(it.y) && parseInt(it.y) >= parseInt(previous_node.y) - parseInt(previous_node.class_style['font-size'].split('px')[0]))) {
                         is_super = true
-                    }else{
+                    } else {
                         is_sub = true
                     }
                 }
-                if(previous_node && class_identifier !== previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold){
+                if (previous_node && class_identifier !== previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold) {
                     style_map[previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold] = null
                     change_style_map = true
                 }
@@ -387,21 +380,21 @@ exports.mergeHtmlNodes = function (items, cb) {
                             output.push(it)
                             style_map[class_identifier] = { index: output.length - 1, data: it }
                         } else {
-                            if(is_sub || is_super){
-                                if(it.text.trim().length > 1 && isNaN(it.text)){
+                            if (is_sub || is_super) {
+                                if (it.text.trim().length > 1 && isNaN(it.text)) {
                                     old_data.data.text += " " + it.text.replace(/\s+/g, " ").trim()
-                                }else{
-                                    if(is_sub){
+                                } else {
+                                    if (is_sub) {
                                         let sub_array = old_data.data.sub_array ? old_data.data.sub_array : []
                                         sub_array.push(it.text.replace(/\s+/g, " "))
                                         old_data.data.sub_array = sub_array
-                                    }else{
+                                    } else {
                                         let sup_array = old_data.data.sup_array ? old_data.data.sup_array : []
                                         sup_array.push(it.text.replace(/\s+/g, " "))
                                         old_data.data.sup_array = sup_array
                                     }
                                 }
-                            }else{
+                            } else {
                                 old_data.data.text += " " + it.text.replace(/\s+/g, " ").trim()
                             }
                             old_data.data.node_index = it.node_index
@@ -423,7 +416,8 @@ exports.mergeHtmlNodes = function (items, cb) {
                 output.push(it)
                 style_map[class_identifier] = { index: output.length - 1, data: it }
             }
-            previous_node = it
+            if (!is_sub && !is_super)
+                previous_node = it
         })
     })
     var out = output.filter((o) => {
