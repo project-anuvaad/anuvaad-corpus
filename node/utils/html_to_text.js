@@ -385,8 +385,8 @@ exports.mergeHtmlNodes = function (items, cb) {
                         class_identifier = it.class_style['font-size'] + it.class_style['font-family'] + it.is_bold
                     }
                     data.text = data.text.trim()
-                    if ((!(data.text.search(sentence_ends_regex) >= 0) || abbrivations2.indexOf(data.text.substring(data.text.length - 4, data.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(data.text.substring(data.text.length - 5, data.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(data.text.substring(data.text.length - 6, data.text.length).toLowerCase()) >= 0) && it.node_index - data.node_index <= 10) {
-                        if ((previous_node && previous_node.text_completed) || ((it.node_index - data.node_index > 2 && it.page_no - old_data.data.page_no == 0) || (it.node_index - data.node_index > 8 && it.page_no - old_data.data.page_no == 1))) {
+                    if (is_super || is_sub || (!(data.text.search(sentence_ends_regex) >= 0) || abbrivations2.indexOf(data.text.substring(data.text.length - 4, data.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(data.text.substring(data.text.length - 5, data.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(data.text.substring(data.text.length - 6, data.text.length).toLowerCase()) >= 0) && it.node_index - data.node_index <= 10) {
+                        if ((it.node_index - data.node_index > 2 && it.page_no - old_data.data.page_no == 0) || (it.node_index - data.node_index > 8 && it.page_no - old_data.data.page_no == 1)) {
                             output.push(it)
                             style_map[class_identifier] = { index: output.length - 1, data: it }
                         } else {
