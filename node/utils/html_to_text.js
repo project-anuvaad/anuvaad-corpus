@@ -256,6 +256,8 @@ exports.mergeHtmlNodes = function (items, cb) {
     let footer_text = ''
     let previous_node = null
     let change_style_map = false
+    let is_super = false
+    let is_sub = false
     Object.keys(items).forEach(function (key, index) {
         if (index != 0) {
             let obj = items[key]
@@ -333,6 +335,9 @@ exports.mergeHtmlNodes = function (items, cb) {
     Object.keys(items).forEach(function (key, index) {
         let obj = items[key]
         obj.map((it, index) => {
+            change_style_map = false
+            is_sub = false
+            is_super = false
             if(it.text.trim().length ==0){
                 return
             }
@@ -357,12 +362,17 @@ exports.mergeHtmlNodes = function (items, cb) {
                 // } else {
 
 
-                if (!style_map[class_identifier] && previous_node.page_no === it.page_no && previous_node && ((previous_node.y >= it.y && parseInt(it.y) - parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y) - parseInt(previous_node.class_style['font-size'].split('px')[0])) || (previous_node.y <= it.y && parseInt(it.y) - parseInt(it.class_style['font-size'].split('px')[0]) <= parseInt(previous_node.y) - parseInt(previous_node.class_style['font-size'].split('px')[0]))) && it.text.trim().length > 0) {
+                if (!style_map[class_identifier] && previous_node.page_no === it.page_no && previous_node && ((previous_node.y >= it.y && parseInt(it.y) >= parseInt(previous_node.y) - parseInt(previous_node.class_style['font-size'].split('px')[0])) || (previous_node.y <= parseInt(it.y) - parseInt(it.class_style['font-size'].split('px')[0]) && parseInt(it.y) - parseInt(it.class_style['font-size'].split('px')[0]) <= parseInt(previous_node.y))) && it.text.trim().length > 0) {
                     class_identifier = previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold
-                    change_style_map = true
+                    if((previous_node.y >= it.y && parseInt(it.y) >= parseInt(previous_node.y) - parseInt(previous_node.class_style['font-size'].split('px')[0]))){
+                        is_super = true
+                    }else{
+                        is_sub = true
+                    }
                 }
                 if(previous_node && class_identifier !== previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold){
                     style_map[previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold] = null
+                    change_style_map = true
                 }
                 if (style_map[class_identifier] && it.page_no_end - style_map[class_identifier].data.page_no_end <= 1) {
                     let old_data = style_map[class_identifier]
@@ -377,7 +387,23 @@ exports.mergeHtmlNodes = function (items, cb) {
                             output.push(it)
                             style_map[class_identifier] = { index: output.length - 1, data: it }
                         } else {
-                            old_data.data.text += " " + it.text.replace(/\s+/g, " ")
+                            if(is_sub || is_super){
+                                if(it.text.trim().length > 1){
+                                    old_data.data.text += " " + it.text.replace(/\s+/g, " ")
+                                }else{
+                                    if(is_sub){
+                                        let sub_array = old_data.data.sub_array ? old_data.data.sub_array : []
+                                        sub_array.push(it.text.replace(/\s+/g, " "))
+                                        old_data.data.sub_array = sub_array
+                                    }else{
+                                        let sup_array = old_data.data.sup_array ? old_data.data.sup_array : []
+                                        sup_array.push(it.text.replace(/\s+/g, " "))
+                                        old_data.data.sup_array = sup_array
+                                    }
+                                }
+                            }else{
+                                old_data.data.text += " " + it.text.replace(/\s+/g, " ")
+                            }
                             old_data.data.node_index = it.node_index
                             old_data.data.page_no_end = it.page_no_end
                             output[old_data.index] = old_data.data
@@ -403,7 +429,8 @@ exports.mergeHtmlNodes = function (items, cb) {
     })
     var out = output.filter((o) => {
         o.text = o.text.replace(/\s+/g, " ")
-        o.text = o.text.replace(/Digitally signed by.{1,}Signature Not Verified/gm, '')
+        o.text = o.text.replace(/Digitally signed by.{1,}Reason:/gm, '')
+        o.text = o.text.replace(/Signature Not Verified/gm, '')
         o.text = o.text.trim()
         if (o.text != o.page_no && o.text.length > 0) {
             return true
