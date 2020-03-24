@@ -365,9 +365,6 @@ exports.mergeHtmlNodes = function (items, cb) {
                 if (!style_map[class_identifier] && previous_node.page_no === it.page_no && previous_node && ((previous_node.y >= it.y && parseInt(it.y) >= parseInt(previous_node.y) - parseInt(previous_node.class_style['font-size'].split('px')[0])) || (previous_node.y >= parseInt(it.y) - parseInt(it.class_style['font-size'].split('px')[0]) && parseInt(it.y) - parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y) - parseInt(previous_node.class_style['font-size'].split('px')[0]))) && it.text.trim().length > 0) {
                     class_identifier = previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold
                     if((previous_node.y >= it.y && parseInt(it.y) >= parseInt(previous_node.y) - parseInt(previous_node.class_style['font-size'].split('px')[0]))){
-                        if(it.page_no == 5){
-                            LOG.info(it.text)
-                        }
                         is_super = true
                     }else{
                         is_sub = true
