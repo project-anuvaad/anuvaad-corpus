@@ -1,7 +1,7 @@
 const htmlToJson = require('html-to-json')
 const fs = require('fs');
 var LOG = require('../logger/logger').logger
-const sentence_ends_regex = /(([,|a-zA-Z|0-9|.]{3,}[.|?|!|\"|”|:]|([:][ ][-]))$)/g;
+const sentence_ends_regex = /(([\"|”|,|a-zA-Z|0-9|.]{3,}[.|?|!|\"|”|:]|([:][ ][-]))$)/g;
 const reason_regex = /(([rR][e][a][s][o][n][:])$)/g;
 const abbrivations2 = ['no.', 'mr.', 'ft.', 'kg.', 'dr.', 'ms.', 'st.', 'pp.', 'co.', 'rs.', 'sh.', 'vs.']
 const abbrivations3 = ['pvt.', 'nos.', 'smt.', 'sec.', 'spl.', 'kgs.', 'ltd.', 'pty.', 'vol.', 'pty.', 'm/s.', 'mrs.','i.e.']
@@ -341,7 +341,7 @@ exports.mergeHtmlNodes = function (items, cb) {
             if(it.text.trim().length ==0){
                 return
             }
-            if (it.text == it.page_no) {
+            if (it.text == it.page_no && index > obj.length - 2) {
                 return
             }
             if ((page_no_start_index !== -1 && index === page_no_start_index) || (page_no_end_index !== -1 && index === obj.length - page_no_end_index - 1) || (key == 1 && it.text.replace(/\d+/g, '').replace(/\s+/g, '') === page_no_text)) {
@@ -365,6 +365,9 @@ exports.mergeHtmlNodes = function (items, cb) {
                 if (!style_map[class_identifier] && previous_node.page_no === it.page_no && previous_node && ((previous_node.y >= it.y && parseInt(it.y) >= parseInt(previous_node.y) - parseInt(previous_node.class_style['font-size'].split('px')[0])) || (previous_node.y <= parseInt(it.y) - parseInt(it.class_style['font-size'].split('px')[0]) && parseInt(it.y) - parseInt(it.class_style['font-size'].split('px')[0]) <= parseInt(previous_node.y))) && it.text.trim().length > 0) {
                     class_identifier = previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold
                     if((previous_node.y >= it.y && parseInt(it.y) >= parseInt(previous_node.y) - parseInt(previous_node.class_style['font-size'].split('px')[0]))){
+                        if(it.page_no == 5){
+                            LOG.info(it.text)
+                        }
                         is_super = true
                     }else{
                         is_sub = true
@@ -388,7 +391,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                             style_map[class_identifier] = { index: output.length - 1, data: it }
                         } else {
                             if(is_sub || is_super){
-                                if(it.text.trim().length > 1){
+                                if(it.text.trim().length > 1 && isNaN(it.text)){
                                     old_data.data.text += " " + it.text.replace(/\s+/g, " ")
                                 }else{
                                     if(is_sub){
