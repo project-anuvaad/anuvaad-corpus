@@ -11,6 +11,8 @@
 /node/corpusfiles/processing/pipeline_stage_2/*
 /node/corpusfiles/processing/pipeline_stage_3/*
 /python/env
+/python/corpusfiles/*
+!/python/corpusfiles/.gitkeep
 /python/upload/*
 /node/processing/*
 !/python/upload/.gitkeep
