@@ -255,12 +255,13 @@ exports.mergeHtmlNodes = function (items, cb) {
     let page_no_text = ''
     let footer_text = ''
     let previous_node = null
+    let previous_footer_node = null
     let change_style_map = false
     let is_super = false
     let is_sub = false
     Object.keys(items).forEach(function (key, index) {
         if (index != 0) {
-            let obj = items[key]
+            let obj = items[key].html_nodes
             let obj_prev = items[key - 1]
             let obj_next = items[key + 1]
             let obj_to_check = obj_next ? obj_next : obj_prev
@@ -269,6 +270,7 @@ exports.mergeHtmlNodes = function (items, cb) {
             let current_page_no_start_index = -1
             let current_page_no_end_index = -1
             if (obj_to_check) {
+                obj_to_check = obj_to_check.html_nodes
                 obj.map((it, index) => {
                     if (current_header_end_index == -1 || index - current_header_end_index == 1) {
                         if (obj_to_check[index] && obj_to_check[index].text === obj[index].text && obj[index].text.trim().length > 0) {
@@ -289,6 +291,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                     }
                 })
                 obj.slice(0).reverse().map((it, index) => {
+
                     if (current_footer_start_index == -1 || index - current_footer_start_index == 1) {
                         if (obj_to_check[obj_to_check.length - index - 1] && obj_to_check[obj_to_check.length - index - 1].text === it.text && it.text.trim().length > 0) {
                             current_footer_start_index = index
@@ -333,7 +336,16 @@ exports.mergeHtmlNodes = function (items, cb) {
         }
     })
     Object.keys(items).forEach(function (key, index) {
-        let obj = items[key]
+        let footer_available = false
+        let obj = items[key].html_nodes
+        let image_data = items[key].image_data
+        let footer_check_node = obj[obj.length - 1]
+        if (image_data.lines.length > 0) {
+            let margin = (parseInt(footer_check_node.y) - parseInt(image_data.lines[0].y)) / parseInt(footer_check_node.y)
+            if (margin > 0 && margin * 100 < 20) {
+                footer_available = true
+            }
+        }
         obj.map((it, index) => {
             change_style_map = false
             is_sub = false
@@ -341,16 +353,29 @@ exports.mergeHtmlNodes = function (items, cb) {
             if (it.text.trim().length == 0) {
                 return
             }
-            if (it.text == it.page_no && index > obj.length - 1) {
+            else if (it.text == it.page_no && index > obj.length - 1) {
                 return
             }
-            if ((page_no_start_index !== -1 && index === page_no_start_index) || (page_no_end_index !== -1 && index === obj.length - page_no_end_index - 1) || (key == 1 && it.text.replace(/\d+/g, '').replace(/\s+/g, '') === page_no_text)) {
+            else if ((page_no_start_index !== -1 && index === page_no_start_index) || (page_no_end_index !== -1 && index === obj.length - page_no_end_index - 1) || (key == 1 && it.text.replace(/\d+/g, '').replace(/\s+/g, '') === page_no_text)) {
                 return
             }
-            if (header_end_index !== -1 && index <= header_end_index) {
+            else if (header_end_index !== -1 && index <= header_end_index) {
                 return
             }
-            if ((footer_start_index !== -1 && index >= obj.length - footer_start_index - 1) || key == 1 && it.text === footer_text) {
+            else if ((footer_start_index !== -1 && index >= obj.length - footer_start_index - 1) || key == 1 && it.text === footer_text) {
+                return
+            }
+            else if (footer_available && image_data.lines[0].y < it.y) {
+                if (it.text.trim().length > 0) {
+                    if (previous_footer_node && ((parseInt(previous_footer_node.y) <= parseInt(it.y) && parseInt(it.y)- parseInt(it.class_style['font-size'].split('px')[0]) <= parseInt(previous_footer_node.y) - parseInt(previous_footer_node.class_style['font-size'].split('px')[0])) || (parseInt(previous_footer_node.y) - parseInt(previous_footer_node.class_style['font-size'].split('px')[0]) >= parseInt(it.y) - parseInt(it.class_style['font-size'].split('px')[0]) && parseInt(it.y) >= parseInt(previous_footer_node.y) - parseInt(previous_footer_node.class_style['font-size'].split('px')[0])))) {
+                        let last_node = output[output.length - 1]
+                        last_node.text += ' ' + it.text
+                        output[output.length - 1] = last_node
+                    } else {
+                        output.push(it)
+                    }
+                    previous_footer_node = it
+                }
                 return
             }
             let class_identifier = it.class_style['font-size'] + it.class_style['font-family'] + it.is_bold

@@ -8,6 +8,7 @@ var LOG = require('../logger/logger').logger
 
 var PdfToHtml = require('../utils/pdf_to_html')
 var HtmlToText = require('../utils/html_to_text')
+var ImageProcessing = require('../utils/image_processing')
 var UUIDV4 = require('uuid/v4')
 var fs = require('fs');
 var axios = require('axios');
@@ -57,18 +58,30 @@ exports.extractParagraphsPerPages = function (req, res) {
 
 function processHtml(pdf_parser_process, index, output_res, merge, start_node_index, tokenize, res) {
     if (fs.existsSync(BASE_PATH_UPLOAD + pdf_parser_process.session_id + "/" + 'output-' + index + '.html')) {
-        HtmlToText.convertHtmlToJsonPagewise(BASE_PATH_UPLOAD, 'output-' + index + '.html', pdf_parser_process.session_id, merge, index, start_node_index, function (err, data) {
-            output_res[index + ''] = data
-            index += 1
-            start_node_index += data.length
-            processHtml(pdf_parser_process, index, output_res, merge, start_node_index, tokenize, res)
+        let image_index = index
+        if ((index + '').length == 1) {
+            image_index = '00' + index
+        } else if ((index + '').length == 2) {
+            image_index = '0' + index
+        }
+        ImageProcessing.processImage(BASE_PATH_UPLOAD + '/' + pdf_parser_process.session_id + '/output' + image_index + '.png', function (err, image_data) {
+            if (err) {
+                LOG.error(err)
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+            HtmlToText.convertHtmlToJsonPagewise(BASE_PATH_UPLOAD, 'output-' + index + '.html', pdf_parser_process.session_id, merge, index, start_node_index, function (err, data) {
+                output_res[index + ''] = { html_nodes: data, image_data: image_data }
+                index += 1
+                start_node_index += data.length
+                processHtml(pdf_parser_process, index, output_res, merge, start_node_index, tokenize, res)
+            })
         })
     } else {
         if (merge) {
             let response = new Response(StatusCode.SUCCESS, output_res).getRsp()
             return res.status(response.http.status).json(response);
         } else {
-            LOG.info(output_res)
             HtmlToText.mergeHtmlNodes(output_res, function (err, data) {
                 if (tokenize) {
                     axios.post(PYTHON_BASE_URL + 'tokenize-sentence',
