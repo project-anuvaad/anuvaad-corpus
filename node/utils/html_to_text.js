@@ -78,172 +78,6 @@ exports.convertHtmlToJsonPagewise = function (basefolder, inputfilename, session
 }
 
 
-// exports.convertHtmlToJson = function (basefolder, inputfilename, session_id, cb) {
-//     fs.readFile(basefolder + session_id + "/" + inputfilename, 'utf8', function (err, data) {
-//         let output = []
-//         let style_map = {}
-//         data = data.replace(/<br\/>/g, ' ')
-//         htmlToJson.parse(data, function () {
-//             var style_text = ''
-//             this.map('style', function ($item) {
-//                 style_text += $item.toString()
-//             })
-//             var node_index = 1
-//             var previous_page = 0
-//             var pagewise_data = {}
-//             this.map('p', function ($item) {
-//                 let obj = {}
-//                 let style = $item['0']['attribs']['style']
-//                 let class_identifier = $item['0']['attribs']['class']
-//                 let styles = style.split(';')
-//                 styles.map((s) => {
-//                     let topLeft = s.split(':')
-//                     if (topLeft[0] == 'left') {
-//                         obj.x = topLeft[1].split('px')[0]
-//                     } else if (topLeft[0] == 'top') {
-//                         obj.y = topLeft[1].split('px')[0]
-//                     }
-//                 })
-//                 obj.text = $item.text()
-//                 obj.style = style
-//                 obj['class'] = class_identifier
-//                 obj['page_no'] = parseInt(class_identifier.split('ft')[1] / 10)
-//                 obj['page_no_end'] = parseInt(class_identifier.split('ft')[1] / 10)
-//                 if (previous_page !== obj['page_no_end']) {
-//                     previous_page = obj['page_no_end']
-//                     node_index = 1
-//                 }
-//                 let class_style_text = style_text.split(obj['class'])[1].split('}')[0].split('{')[1]
-//                 let class_style_obj = {}
-//                 class_style_text = class_style_text.split(';')
-//                 class_style_text.map((c) => {
-//                     class_style_obj[c.split(':')[0]] = c.split(':')[1]
-//                 })
-//                 obj['class_style'] = class_style_obj
-//                 obj.node_index = node_index
-//                 node_index++
-//                 if (pagewise_data[obj['page_no']]) {
-//                     let data = pagewise_data[obj['page_no']]
-//                     data.push(obj)
-//                 } else {
-//                     let data = [obj]
-//                     pagewise_data[obj['page_no']] = data
-//                 }
-
-//             });
-//             return pagewise_data;
-//         }).done(function (items) {
-//             //Find header or footer
-//             let header_end_index = -1
-//             let footer_start_index = -1
-//             let footer_text = ''
-//             Object.keys(items).forEach(function (key, index) {
-//                 if (index != 0) {
-//                     let obj = items[key]
-//                     let obj_prev = items[key - 1]
-//                     let obj_next = items[key + 1]
-//                     let obj_to_check = obj_next ? obj_next : obj_prev
-//                     let current_header_end_index = -1
-//                     let current_footer_start_index = -1
-//                     if (obj_to_check) {
-//                         obj.map((it, index) => {
-//                             if (current_header_end_index == -1 || index - current_header_end_index == 1) {
-//                                 if (obj_to_check[index] && obj_to_check[index].text === obj[index].text) {
-//                                     current_header_end_index = index
-//                                 }
-//                             }
-//                         })
-//                         obj.slice(0).reverse().map((it, index) => {
-//                             if (current_footer_start_index == -1 || index - current_footer_start_index == 1) {
-//                                 if (obj_to_check[obj_to_check.length - index - 1] && obj_to_check[obj_to_check.length - index - 1].text === it.text) {
-//                                     current_footer_start_index = index
-//                                     footer_text = it.text
-//                                 }
-//                             }
-//                         })
-//                     }
-//                     if (header_end_index !== -1 && header_end_index !== current_header_end_index) {
-//                         header_end_index = -1
-//                     } else {
-//                         header_end_index = current_header_end_index
-//                     }
-//                     if (footer_start_index !== -1 && footer_start_index !== current_footer_start_index) {
-//                         footer_start_index = -1
-//                         footer_text = ''
-//                     } else {
-//                         footer_start_index = current_footer_start_index
-//                     }
-//                 }
-//             })
-//             Object.keys(items).forEach(function (key, index) {
-//                 let obj = items[key]
-//                 obj.map((it, index) => {
-//                     if (it.text == it.page_no) {
-//                         return
-//                     }
-//                     if (header_end_index !== -1 && index <= header_end_index) {
-//                         return
-//                     }
-//                     if ((footer_start_index !== -1 && index >= obj.length - footer_start_index - 1) || key == 1 && it.text === footer_text) {
-//                         return
-//                     }
-//                     let class_identifier = it.class_style['font-size'] + it.class_style['font-family']
-//                     if (output && output.length > 0) {
-//                         let data = output[output.length - 1]
-//                         // if ((data.y == it.y || !(sentence_ends.indexOf(data.text.substring(data.text.length - 1, data.text.length)) >= 0 && data.text.search(regex) >= 0)) && data.class_style === it.class_style) {
-//                         //     data.text += ' ' + it.text
-//                         //     data.text = data.text.replace(/\s+/g, " ")
-//                         // } else {
-//                         if (style_map[class_identifier] && it.page_no_end - style_map[class_identifier].data.page_no_end <= 1) {
-//                             let old_data = style_map[class_identifier]
-//                             let data = old_data.data
-//                             data.text = data.text.trim()
-//                             if ((!(data.text.search(sentence_ends_regex) >= 0) || abbrivations2.indexOf(data.text.substring(data.text.length - 3, data.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(data.text.substring(data.text.length - 4, data.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(data.text.substring(data.text.length - 5, data.text.length).toLowerCase()) >= 0) && it.node_index - data.node_index <= 5) {
-//                                 if ((previous_node && previous_node.text_completed) || (it.node_index - data.node_index > 2 && it.page_no - style_map[class_identifier].data.page_no == 0)) {
-//                                     output.push(it)
-//                                     it.text_completed = true
-//                                     style_map[class_identifier] = { index: output.length - 1, data: it }
-//                                 } else {
-//                                     old_data.data.text += " " + it.text.replace(/\s+/g, " ")
-//                                     old_data.data.node_index = it.node_index
-//                                     old_data.data.page_no_end = it.page_no_end
-//                                     output[old_data.index] = old_data.data
-//                                     style_map[class_identifier] = old_data
-//                                 }
-//                             } else {
-//                                 output.push(it)
-//                                 it.text_completed = true
-//                                 style_map[class_identifier] = { index: output.length - 1, data: it }
-//                             }
-//                         } else {
-//                             output.push(it)
-//                             it.text_completed = true
-//                             style_map[class_identifier] = { index: output.length - 1, data: it }
-//                         }
-//                         // }
-//                     } else {
-//                         output.push(it)
-//                         it.text_completed = true
-//                         style_map[class_identifier] = { index: output.length - 1, data: it }
-//                     }
-//                 })
-//             })
-//             var out = output.filter((o) => {
-//                 o.text = o.text.replace(/\s+/g, " ")
-//                 o.text = o.text.replace(/Digitally signed by.{1,}Signature Not Verified/gm, '')
-//                 if (o.text != o.page_no && o.text.length > 0) {
-//                     return true
-//                 }
-//                 return false
-//             })
-//             cb(null, out)
-//         }, function (err) {
-//             cb(err, null)
-//         });
-//     })
-// }
-
-
 exports.mergeHtmlNodes = function (items, cb) {
     let output = []
     let style_map = {}
@@ -259,6 +93,7 @@ exports.mergeHtmlNodes = function (items, cb) {
     let change_style_map = false
     let is_super = false
     let is_sub = false
+    let need_to_add_in_array = true
     Object.keys(items).forEach(function (key, index) {
         if (index != 0) {
             let obj = items[key].html_nodes
@@ -334,6 +169,9 @@ exports.mergeHtmlNodes = function (items, cb) {
             }
         }
     })
+    if (page_no_end_index == -1 && page_no_start_index == -1) {
+        page_no_text = ''
+    }
     Object.keys(items).forEach(function (key, index) {
         let footer_available = false
         let obj = items[key].html_nodes
@@ -349,14 +187,14 @@ exports.mergeHtmlNodes = function (items, cb) {
             change_style_map = false
             is_sub = false
             is_super = false
-
+            need_to_add_in_array = true
             if (it.text.trim().length == 0) {
                 return
             }
-            else if (it.text == it.page_no && (index > obj.length - 2 || index < 2)) {
+            else if (parseInt(it.text) == parseInt(it.page_no) && (index > obj.length - 2 || index < 2)) {
                 return
             }
-            else if ((page_no_start_index !== -1 && index === page_no_start_index) || (page_no_end_index !== -1 && index === obj.length - page_no_end_index - 1) || (key == 1 && it.text.replace(/\d+/g, '').replace(/\s+/g, '') === page_no_text)) {
+            else if ((page_no_start_index !== -1 && index === page_no_start_index) || (page_no_end_index !== -1 && index === obj.length - page_no_end_index - 1) || (key == 1 && page_no_text.trim().length > 0 && ['.', ',', '"', '?', '!'].indexOf(page_no_text) < 0 && it.text.replace(/\d+/g, '').replace(/\s+/g, '') === page_no_text)) {
                 return
             }
             else if (header_end_index !== -1 && index <= header_end_index) {
@@ -365,8 +203,11 @@ exports.mergeHtmlNodes = function (items, cb) {
             else if ((footer_start_index !== -1 && index >= obj.length - footer_start_index - 1) || key == 1 && it.text === footer_text) {
                 return
             }
+
+            //Text in footer which is not common in all pages
             else if (footer_available && image_data.lines[0].y < it.y) {
                 if (it.text.trim().length > 0) {
+                    it.is_footer = true
                     if (previous_footer_node && ((parseInt(previous_footer_node.y) <= parseInt(it.y) && parseInt(it.y) - parseInt(it.class_style['font-size'].split('px')[0]) <= parseInt(previous_footer_node.y) - parseInt(previous_footer_node.class_style['font-size'].split('px')[0])) || (parseInt(previous_footer_node.y) - parseInt(previous_footer_node.class_style['font-size'].split('px')[0]) >= parseInt(it.y) - parseInt(it.class_style['font-size'].split('px')[0]) && parseInt(it.y) >= parseInt(previous_footer_node.y) - parseInt(previous_footer_node.class_style['font-size'].split('px')[0])))) {
                         let last_node = output[output.length - 1]
                         last_node.text += ' ' + it.text
@@ -378,8 +219,12 @@ exports.mergeHtmlNodes = function (items, cb) {
                 }
                 return
             }
+
+            //Make the class identifier to search in map for previously used node
             let class_identifier = it.class_style['font-size'] + it.class_style['font-family'] + it.is_bold
             if (output && output.length > 0) {
+
+                //Check for sub and super script
                 if (!style_map[class_identifier] && previous_node.page_no === it.page_no && previous_node && ((parseInt(previous_node.y) >= parseInt(it.y) && parseInt(it.y) >= parseInt(previous_node.y) - parseInt(previous_node.class_style['font-size'].split('px')[0])) || (parseInt(previous_node.y) >= parseInt(it.y) - parseInt(it.class_style['font-size'].split('px')[0]) && parseInt(it.y) - parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y) - parseInt(previous_node.class_style['font-size'].split('px')[0]))) && it.text.trim().length > 0) {
                     class_identifier = previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold
                     if ((parseInt(previous_node.y) >= parseInt(it.y) && parseInt(it.y) >= parseInt(previous_node.y) - parseInt(previous_node.class_style['font-size'].split('px')[0]))) {
@@ -388,6 +233,8 @@ exports.mergeHtmlNodes = function (items, cb) {
                         is_sub = true
                     }
                 }
+
+                //Check with previous node class identifier so end the previous node and not merge other nodes in that node
                 if (previous_node && class_identifier !== previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold) {
                     style_map[previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold] = null
                     change_style_map = true
@@ -395,16 +242,15 @@ exports.mergeHtmlNodes = function (items, cb) {
                 if (style_map[class_identifier] && it.page_no_end - style_map[class_identifier].data.page_no_end <= 1) {
                     let old_data = style_map[class_identifier]
                     let data = old_data.data
+
+                    //If previous node class identifier is different than the current node then current node is a new sentence
                     if (change_style_map) {
                         style_map[class_identifier] = null
                         class_identifier = it.class_style['font-size'] + it.class_style['font-family'] + it.is_bold
                     }
                     data.text = data.text.trim()
                     if (is_super || is_sub || (!(data.text.search(sentence_ends_regex) >= 0) || abbrivations2.indexOf(data.text.substring(data.text.length - 4, data.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(data.text.substring(data.text.length - 5, data.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(data.text.substring(data.text.length - 6, data.text.length).toLowerCase()) >= 0) && it.node_index - data.node_index <= 10) {
-                        if ((it.node_index - data.node_index > 2 && it.page_no - old_data.data.page_no == 0) || (it.node_index - data.node_index > 8 && it.page_no - old_data.data.page_no == 1)) {
-                            output.push(it)
-                            style_map[class_identifier] = { index: output.length - 1, data: it }
-                        } else {
+                        if (!((it.node_index - data.node_index > 2 && it.page_no - old_data.data.page_no == 0) || (it.node_index - data.node_index > 8 && it.page_no - old_data.data.page_no == 1))) {
                             if (is_sub || is_super) {
                                 if (it.text.trim().length > 1 && isNaN(it.text)) {
                                     old_data.data.text += " " + it.text.replace(/\s+/g, " ").trim()
@@ -426,18 +272,12 @@ exports.mergeHtmlNodes = function (items, cb) {
                             old_data.data.page_no_end = it.page_no_end
                             output[old_data.index] = old_data.data
                             style_map[class_identifier] = old_data
+                            need_to_add_in_array = false
                         }
                     }
-                    else {
-                        output.push(it)
-                        style_map[class_identifier] = { index: output.length - 1, data: it }
-                    }
-                } else {
-                    output.push(it)
-                    style_map[class_identifier] = { index: output.length - 1, data: it }
                 }
-                // }
-            } else {
+            }
+            if (need_to_add_in_array) {
                 output.push(it)
                 style_map[class_identifier] = { index: output.length - 1, data: it }
             }
@@ -450,7 +290,7 @@ exports.mergeHtmlNodes = function (items, cb) {
         o.text = o.text.replace(/Digitally signed by.{1,}Reason:/gm, '')
         o.text = o.text.replace(/Signature Not Verified/gm, '')
         o.text = o.text.trim()
-        if (o.text != o.page_no && o.text.length > 0) {
+        if (o.text.length > 0) {
             return true
         }
         return false
