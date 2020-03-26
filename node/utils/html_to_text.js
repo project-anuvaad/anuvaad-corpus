@@ -291,7 +291,6 @@ exports.mergeHtmlNodes = function (items, cb) {
                     }
                 })
                 obj.slice(0).reverse().map((it, index) => {
-
                     if (current_footer_start_index == -1 || index - current_footer_start_index == 1) {
                         if (obj_to_check[obj_to_check.length - index - 1] && obj_to_check[obj_to_check.length - index - 1].text === it.text && it.text.trim().length > 0) {
                             current_footer_start_index = index
@@ -350,10 +349,11 @@ exports.mergeHtmlNodes = function (items, cb) {
             change_style_map = false
             is_sub = false
             is_super = false
+
             if (it.text.trim().length == 0) {
                 return
             }
-            else if (it.text == it.page_no && index > obj.length - 1) {
+            else if (it.text == it.page_no && (index > obj.length - 2 || index < 2)) {
                 return
             }
             else if ((page_no_start_index !== -1 && index === page_no_start_index) || (page_no_end_index !== -1 && index === obj.length - page_no_end_index - 1) || (key == 1 && it.text.replace(/\d+/g, '').replace(/\s+/g, '') === page_no_text)) {
@@ -367,7 +367,7 @@ exports.mergeHtmlNodes = function (items, cb) {
             }
             else if (footer_available && image_data.lines[0].y < it.y) {
                 if (it.text.trim().length > 0) {
-                    if (previous_footer_node && ((parseInt(previous_footer_node.y) <= parseInt(it.y) && parseInt(it.y)- parseInt(it.class_style['font-size'].split('px')[0]) <= parseInt(previous_footer_node.y) - parseInt(previous_footer_node.class_style['font-size'].split('px')[0])) || (parseInt(previous_footer_node.y) - parseInt(previous_footer_node.class_style['font-size'].split('px')[0]) >= parseInt(it.y) - parseInt(it.class_style['font-size'].split('px')[0]) && parseInt(it.y) >= parseInt(previous_footer_node.y) - parseInt(previous_footer_node.class_style['font-size'].split('px')[0])))) {
+                    if (previous_footer_node && ((parseInt(previous_footer_node.y) <= parseInt(it.y) && parseInt(it.y) - parseInt(it.class_style['font-size'].split('px')[0]) <= parseInt(previous_footer_node.y) - parseInt(previous_footer_node.class_style['font-size'].split('px')[0])) || (parseInt(previous_footer_node.y) - parseInt(previous_footer_node.class_style['font-size'].split('px')[0]) >= parseInt(it.y) - parseInt(it.class_style['font-size'].split('px')[0]) && parseInt(it.y) >= parseInt(previous_footer_node.y) - parseInt(previous_footer_node.class_style['font-size'].split('px')[0])))) {
                         let last_node = output[output.length - 1]
                         last_node.text += ' ' + it.text
                         output[output.length - 1] = last_node
