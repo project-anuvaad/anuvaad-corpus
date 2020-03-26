@@ -94,6 +94,7 @@ exports.mergeHtmlNodes = function (items, cb) {
     let is_super = false
     let is_sub = false
     let need_to_add_in_array = true
+    let bottom_px = -1
     Object.keys(items).forEach(function (key, index) {
         if (index != 0) {
             let obj = items[key].html_nodes
@@ -173,6 +174,7 @@ exports.mergeHtmlNodes = function (items, cb) {
         page_no_text = ''
     }
     Object.keys(items).forEach(function (key, index) {
+        bottom_px = -1
         let footer_available = false
         let obj = items[key].html_nodes
         let image_data = items[key].image_data
@@ -183,6 +185,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                 footer_available = true
             }
         }
+        bottom_px = parseInt(obj[obj.length - 1].y)
         obj.map((it, index) => {
             change_style_map = false
             is_sub = false
@@ -208,7 +211,7 @@ exports.mergeHtmlNodes = function (items, cb) {
             else if (footer_available && image_data.lines[0].y < it.y) {
                 if (it.text.trim().length > 0) {
                     it.is_footer = true
-                    if (previous_footer_node && ((parseInt(previous_footer_node.y) <= parseInt(it.y) && parseInt(it.y) - parseInt(it.class_style['font-size'].split('px')[0]) <= parseInt(previous_footer_node.y) - parseInt(previous_footer_node.class_style['font-size'].split('px')[0])) || (parseInt(previous_footer_node.y) - parseInt(previous_footer_node.class_style['font-size'].split('px')[0]) >= parseInt(it.y) - parseInt(it.class_style['font-size'].split('px')[0]) && parseInt(it.y) >= parseInt(previous_footer_node.y) - parseInt(previous_footer_node.class_style['font-size'].split('px')[0])))) {
+                    if (previous_footer_node && ((parseInt(previous_footer_node.y) <= parseInt(it.y) && parseInt(it.y) <= parseInt(previous_footer_node.y) + parseInt(previous_footer_node.class_style['font-size'].split('px')[0])) || (parseInt(previous_footer_node.y) >= parseInt(it.y) && parseInt(it.y) + parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_footer_node.y)))) {
                         let last_node = output[output.length - 1]
                         last_node.text += ' ' + it.text
                         output[output.length - 1] = last_node
@@ -221,10 +224,9 @@ exports.mergeHtmlNodes = function (items, cb) {
             }
             if (image_data && image_data.lines && image_data.lines.length > 0) {
                 image_data.lines.map((line) => {
-                    let y_margin = (parseInt(line.y) - parseInt(it.y)) / parseInt(line.y)
+                    let y_margin = (parseInt(line.y) - (parseInt(it.y)+parseInt(it.class_style['font-size'].split('px')[0]))) / bottom_px
                     let x_margin = (parseInt(line.x) - parseInt(it.x)) / parseInt(line.x)
                     if (y_margin > 0 && y_margin * 100 < 15 && Math.abs(x_margin) * 100 < 15) {
-                        LOG.info(Math.abs(x_margin) * 100)
                         it.underline = true
                     }
                 })
@@ -235,9 +237,9 @@ exports.mergeHtmlNodes = function (items, cb) {
             if (output && output.length > 0) {
 
                 //Check for sub and super script
-                if (!style_map[class_identifier] && previous_node.page_no === it.page_no && previous_node && ((parseInt(previous_node.y) >= parseInt(it.y) && parseInt(it.y) >= parseInt(previous_node.y) - parseInt(previous_node.class_style['font-size'].split('px')[0])) || (parseInt(previous_node.y) >= parseInt(it.y) - parseInt(it.class_style['font-size'].split('px')[0]) && parseInt(it.y) - parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y) - parseInt(previous_node.class_style['font-size'].split('px')[0]))) && it.text.trim().length > 0) {
+                if (!style_map[class_identifier] && previous_node.page_no === it.page_no && previous_node && ((parseInt(previous_node.y) >= parseInt(it.y) && parseInt(it.y) + parseInt(it.class_style['font-size'].split('px')[0]) <= parseInt(previous_node.y) + parseInt(previous_node.class_style['font-size'].split('px')[0])) || (parseInt(previous_node.y) <= parseInt(it.y) && parseInt(it.y) <= parseInt(previous_node.y) + parseInt(previous_node.class_style['font-size'].split('px')[0]))) && it.text.trim().length > 0) {
                     class_identifier = previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold
-                    if ((parseInt(previous_node.y) >= parseInt(it.y) && parseInt(it.y) >= parseInt(previous_node.y) - parseInt(previous_node.class_style['font-size'].split('px')[0]))) {
+                    if ((parseInt(previous_node.y) >= parseInt(it.y) && parseInt(it.y) <= parseInt(previous_node.y) + parseInt(previous_node.class_style['font-size'].split('px')[0]))) {
                         is_super = true
                     } else {
                         is_sub = true
