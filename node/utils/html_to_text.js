@@ -191,7 +191,7 @@ exports.mergeHtmlNodes = function (items, cb) {
             if (it.text.trim().length == 0) {
                 return
             }
-            else if (parseInt(it.text) == parseInt(it.page_no) && (index > obj.length - 2 || index < 2)) {
+            else if (parseInt(it.text) == parseInt(it.page_no) && (index > obj.length - 2 || index < 5)) {
                 return
             }
             else if ((page_no_start_index !== -1 && index === page_no_start_index) || (page_no_end_index !== -1 && index === obj.length - page_no_end_index - 1) || (key == 1 && page_no_text.trim().length > 0 && ['.', ',', '"', '?', '!'].indexOf(page_no_text) < 0 && it.text.replace(/\d+/g, '').replace(/\s+/g, '') === page_no_text)) {
@@ -249,6 +249,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                         class_identifier = it.class_style['font-size'] + it.class_style['font-family'] + it.is_bold
                     }
                     data.text = data.text.trim()
+                    
                     if (is_super || is_sub || (!(data.text.search(sentence_ends_regex) >= 0) || abbrivations2.indexOf(data.text.substring(data.text.length - 4, data.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(data.text.substring(data.text.length - 5, data.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(data.text.substring(data.text.length - 6, data.text.length).toLowerCase()) >= 0) && it.node_index - data.node_index <= 10) {
                         if (!((it.node_index - data.node_index > 2 && it.page_no - old_data.data.page_no == 0) || (it.node_index - data.node_index > 8 && it.page_no - old_data.data.page_no == 1))) {
                             if (is_sub || is_super) {
