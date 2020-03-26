@@ -219,6 +219,16 @@ exports.mergeHtmlNodes = function (items, cb) {
                 }
                 return
             }
+            if (image_data && image_data.lines && image_data.lines.length > 0) {
+                image_data.lines.map((line) => {
+                    let y_margin = (parseInt(line.y) - parseInt(it.y)) / parseInt(line.y)
+                    let x_margin = (parseInt(line.x) - parseInt(it.x)) / parseInt(line.x)
+                    if (y_margin > 0 && y_margin * 100 < 15) {
+                        LOG.info(Math.abs(x_margin) * 100)
+                        it.underline = true
+                    }
+                })
+            }
 
             //Make the class identifier to search in map for previously used node
             let class_identifier = it.class_style['font-size'] + it.class_style['font-family'] + it.is_bold
@@ -235,11 +245,11 @@ exports.mergeHtmlNodes = function (items, cb) {
                 }
 
                 //Check with previous node class identifier so end the previous node and not merge other nodes in that node
-                if (previous_node && class_identifier !== previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold) {
+                if (previous_node && (class_identifier !== previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold || it.underline)) {
                     style_map[previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold] = null
                     change_style_map = true
                 }
-                if (style_map[class_identifier] && it.page_no_end - style_map[class_identifier].data.page_no_end <= 1) {
+                if (style_map[class_identifier] && it.page_no_end - style_map[class_identifier].data.page_no_end <= 1 && !it.underline) {
                     let old_data = style_map[class_identifier]
                     let data = old_data.data
 
@@ -249,7 +259,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                         class_identifier = it.class_style['font-size'] + it.class_style['font-family'] + it.is_bold
                     }
                     data.text = data.text.trim()
-                    
+
                     if (is_super || is_sub || (!(data.text.search(sentence_ends_regex) >= 0) || abbrivations2.indexOf(data.text.substring(data.text.length - 4, data.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(data.text.substring(data.text.length - 5, data.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(data.text.substring(data.text.length - 6, data.text.length).toLowerCase()) >= 0) && it.node_index - data.node_index <= 10) {
                         if (!((it.node_index - data.node_index > 2 && it.page_no - old_data.data.page_no == 0) || (it.node_index - data.node_index > 8 && it.page_no - old_data.data.page_no == 1))) {
                             if (is_sub || is_super) {
@@ -280,7 +290,8 @@ exports.mergeHtmlNodes = function (items, cb) {
             }
             if (need_to_add_in_array) {
                 output.push(it)
-                style_map[class_identifier] = { index: output.length - 1, data: it }
+                if (!it.underline)
+                    style_map[class_identifier] = { index: output.length - 1, data: it }
             }
             if (!is_sub && !is_super)
                 previous_node = it
