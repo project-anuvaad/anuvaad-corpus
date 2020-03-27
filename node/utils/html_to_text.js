@@ -303,7 +303,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                 if (!it.underline)
                     style_map[class_identifier] = { index: output.length - 1, data: it }
             }
-            if (!is_sub && !is_super)
+            if (!is_sub && !is_super && !it.underline)
                 previous_node = it
         })
     })
