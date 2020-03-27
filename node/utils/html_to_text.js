@@ -241,7 +241,7 @@ exports.mergeHtmlNodes = function (items, cb) {
             if (output && output.length > 0) {
 
                 //Check for sub and super script
-                if (!style_map[class_identifier] && previous_node.page_no === it.page_no && previous_node && ((parseInt(previous_node.y) >= parseInt(it.y) && parseInt(it.y) + parseInt(it.class_style['font-size'].split('px')[0]) <= parseInt(previous_node.y) + parseInt(previous_node.class_style['font-size'].split('px')[0])) || (parseInt(previous_node.y) <= parseInt(it.y) && parseInt(it.y) <= parseInt(previous_node.y) + parseInt(previous_node.class_style['font-size'].split('px')[0]))) && it.text.trim().length > 0) {
+                if (!style_map[class_identifier] && previous_node && previous_node.page_no === it.page_no && ((parseInt(previous_node.y) >= parseInt(it.y) && parseInt(it.y) + parseInt(it.class_style['font-size'].split('px')[0]) <= parseInt(previous_node.y) + parseInt(previous_node.class_style['font-size'].split('px')[0])) || (parseInt(previous_node.y) <= parseInt(it.y) && parseInt(it.y) <= parseInt(previous_node.y) + parseInt(previous_node.class_style['font-size'].split('px')[0]))) && it.text.trim().length > 0) {
                     class_identifier = previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold
                     if ((parseInt(previous_node.y) >= parseInt(it.y) && parseInt(it.y) <= parseInt(previous_node.y) + parseInt(previous_node.class_style['font-size'].split('px')[0]))) {
                         is_super = true
