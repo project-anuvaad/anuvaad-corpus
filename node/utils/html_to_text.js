@@ -177,6 +177,7 @@ exports.mergeHtmlNodes = function (items, cb) {
     }
     Object.keys(items).forEach(function (key, index) {
         bottom_px = -1
+        previous_footer_node = null
         let footer_available = false
         let obj = items[key].html_nodes
         let image_data = items[key].image_data
@@ -187,6 +188,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                 footer_available = true
             }
         }
+        
         bottom_px = parseInt(obj[obj.length - 1].y)
         obj.map((it, index) => {
             change_style_map = false
@@ -263,9 +265,8 @@ exports.mergeHtmlNodes = function (items, cb) {
                         class_identifier = it.class_style['font-size'] + it.class_style['font-family'] + it.is_bold
                     }
                     data.text = data.text.trim()
-
-                    if (is_super || is_sub || (!(data.text.search(sentence_ends_regex) >= 0) || abbrivations2.indexOf(data.text.substring(data.text.length - 4, data.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(data.text.substring(data.text.length - 5, data.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(data.text.substring(data.text.length - 6, data.text.length).toLowerCase()) >= 0) && it.node_index - data.node_index <= 10) {
-                        if (!((it.node_index - data.node_index > 2 && it.page_no - old_data.data.page_no == 0) || (it.node_index - data.node_index > 8 && it.page_no - old_data.data.page_no == 1))) {
+                    if (is_super || is_sub || (!(data.text.search(sentence_ends_regex) >= 0) || abbrivations2.indexOf(data.text.substring(data.text.length - 4, data.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(data.text.substring(data.text.length - 5, data.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(data.text.substring(data.text.length - 6, data.text.length).toLowerCase()) >= 0)) {
+                        if (!(it.node_index - data.node_index > 2 && it.page_no_end - old_data.data.page_no_end == 0) || (it.page_no_end - old_data.data.page_no_end == 1)) {
                             if (is_sub || is_super) {
                                 if (it.text.trim().length > 1 && isNaN(it.text)) {
                                     old_data.data.text += " " + it.text.replace(/\s+/g, " ").trim()
