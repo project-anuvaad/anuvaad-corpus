@@ -188,7 +188,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                 footer_available = true
             }
         }
-        
+
         bottom_px = parseInt(obj[obj.length - 1].y)
         obj.map((it, index) => {
             change_style_map = false
@@ -252,8 +252,13 @@ exports.mergeHtmlNodes = function (items, cb) {
 
                 //Check with previous node class identifier so end the previous node and not merge other nodes in that node
                 if (previous_node && (class_identifier !== previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold || it.underline)) {
-                    style_map[previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold] = null
-                    change_style_map = true
+                    if (!previous_node.is_bold && it.is_bold && it.node_index - previous_node.node_index == 1 && (previous_node.class_style['font-size'] + previous_node.class_style['font-family'] == it.class_style['font-size'] + it.class_style['font-family'])) {
+                        class_identifier = previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold
+                        it.is_bold = false
+                    } else {
+                        style_map[previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold] = null
+                        change_style_map = true
+                    }
                 }
                 if (style_map[class_identifier] && it.page_no_end - style_map[class_identifier].data.page_no_end <= 1 && !it.underline) {
                     let old_data = style_map[class_identifier]
