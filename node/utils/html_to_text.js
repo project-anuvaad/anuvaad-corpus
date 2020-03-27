@@ -97,6 +97,7 @@ exports.mergeHtmlNodes = function (items, cb) {
     let is_sub = false
     let need_to_add_in_array = true
     let bottom_px = -1
+    let footer_coordinate = -1
     Object.keys(items).forEach(function (key, index) {
         if (index != 0) {
             let obj = items[key].html_nodes
@@ -176,6 +177,7 @@ exports.mergeHtmlNodes = function (items, cb) {
         page_no_text = ''
     }
     Object.keys(items).forEach(function (key, index) {
+        footer_coordinate = -1
         bottom_px = -1
         previous_footer_node = null
         let footer_available = false
@@ -186,6 +188,7 @@ exports.mergeHtmlNodes = function (items, cb) {
             let margin = (parseInt(footer_check_node.y) - parseInt(image_data.lines[0].y)) / parseInt(footer_check_node.y)
             if (margin > 0 && margin * 100 < 20) {
                 footer_available = true
+                footer_coordinate = image_data.lines[0].y
             }
         }
 
@@ -228,10 +231,12 @@ exports.mergeHtmlNodes = function (items, cb) {
             }
             if (image_data && image_data.lines && image_data.lines.length > 0) {
                 image_data.lines.map((line) => {
-                    let y_margin = (parseInt(line.y) - (parseInt(it.y) + parseInt(it.class_style['font-size'].split('px')[0]))) / bottom_px
-                    let x_margin = (parseInt(line.x) - parseInt(it.x)) / parseInt(line.x)
-                    if (((y_margin >= 0 && y_margin * 100 < 7) || (parseInt(line.y) >= parseInt(it.y) && parseInt(line.y) <= (parseInt(it.y) + parseInt(it.class_style['font-size'].split('px')[0])))) && Math.abs(x_margin) * 100 < 5) {
-                        it.underline = true
+                    if (line.y !== footer_coordinate) {
+                        let y_margin = (parseInt(line.y) - (parseInt(it.y) + parseInt(it.class_style['font-size'].split('px')[0]))) / bottom_px
+                        let x_margin = (parseInt(line.x) - parseInt(it.x)) / parseInt(line.x)
+                        if (((y_margin >= 0 && y_margin * 100 < 7) || (parseInt(line.y) >= parseInt(it.y) && parseInt(line.y) <= (parseInt(it.y) + parseInt(it.class_style['font-size'].split('px')[0])))) && Math.abs(x_margin) * 100 < 5) {
+                            it.underline = true
+                        }
                     }
                 })
             }
