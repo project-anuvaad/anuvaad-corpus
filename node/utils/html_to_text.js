@@ -230,7 +230,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                 image_data.lines.map((line) => {
                     let y_margin = (parseInt(line.y) - (parseInt(it.y) + parseInt(it.class_style['font-size'].split('px')[0]))) / bottom_px
                     let x_margin = (parseInt(line.x) - parseInt(it.x)) / parseInt(line.x)
-                    if (((y_margin >= 0 && y_margin * 100 < 3) || (parseInt(line.y) >= parseInt(it.y) && parseInt(line.y) <= (parseInt(it.y) + parseInt(it.class_style['font-size'].split('px')[0])))) && Math.abs(x_margin) * 100 < 5) {
+                    if (((y_margin >= 0 && y_margin * 100 < 7) || (parseInt(line.y) >= parseInt(it.y) && parseInt(line.y) <= (parseInt(it.y) + parseInt(it.class_style['font-size'].split('px')[0])))) && Math.abs(x_margin) * 100 < 5) {
                         it.underline = true
                     }
                 })
