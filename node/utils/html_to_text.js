@@ -11,6 +11,8 @@ exports.convertHtmlToJsonPagewise = function (basefolder, inputfilename, session
     fs.readFile(basefolder + session_id + "/" + inputfilename, 'utf8', function (err, data) {
         let output = []
         data = data.replace(/<br\/>/g, ' ')
+        data = data.replace(/<i>/g, ' ')
+        data = data.replace(/<i\/>/g, ' ')
         htmlToJson.parse(data, function () {
             var style_text = ''
             this.map('style', function ($item) {
@@ -21,7 +23,7 @@ exports.convertHtmlToJsonPagewise = function (basefolder, inputfilename, session
                 var is_bold = false
                 if ($item['0'].children) {
                     $item['0'].children.map((child) => {
-                        if (child.name === 'b') {
+                        if (child.name === 'b' && child.children && child.children.length > 0 && child.children[0].data == $item.text()) {
                             is_bold = true
                         }
                     })
