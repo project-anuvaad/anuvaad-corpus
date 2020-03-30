@@ -2,7 +2,6 @@ const htmlToJson = require('html-to-json')
 const fs = require('fs');
 var LOG = require('../logger/logger').logger
 const sentence_ends_regex = /(([\"|”|,|a-zA-Z|0-9|.]{3,}[.|?|!|\"|”|:|;]|([:][ ][-]))$)/g;
-const reason_regex = /(([rR][e][a][s][o][n][:])$)/g;
 const abbrivations2 = [' no.', ' mr.', ' ft.', ' kg.', ' dr.', ' ms.', ' st.', ' pp.', ' co.', ' rs.', ' sh.', ' vs.']
 const abbrivations3 = [' pvt.', ' nos.', ' smt.', ' sec.', ' spl.', ' kgs.', ' ltd.', ' pty.', ' vol.', ' pty.', ' m/s.', ' mrs.', ' i.e.']
 const abbrivations4 = [' assn.']
@@ -122,7 +121,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                         if (current_text.length > 0) {
                             let next_text = obj_to_check[index].text.replace(/\d+/g, '');
                             next_text = next_text.replace(/\s+/g, '')
-                            if (next_text === current_text && current_text.trim().length > 0 && index !== current_header_end_index) {
+                            if (['.', ',', '"', '?', '!'].indexOf(next_text) < 0 && next_text === current_text && current_text.trim().length > 0 && index !== current_header_end_index) {
                                 current_page_no_start_index = index
                                 page_no_text = next_text
                             }
@@ -152,23 +151,23 @@ exports.mergeHtmlNodes = function (items, cb) {
             }
             if (header_end_index !== -1 && header_end_index !== current_header_end_index) {
                 header_end_index = -1
-            } else {
+            } else if(!(index > 1 && header_end_index == -1)){
                 header_end_index = current_header_end_index
             }
             if (footer_start_index !== -1 && footer_start_index !== current_footer_start_index) {
                 footer_start_index = -1
                 footer_text = ''
-            } else {
+            } else if(!(index > 1 && footer_start_index == -1)){
                 footer_start_index = current_footer_start_index
             }
             if (page_no_start_index !== -1 && page_no_start_index !== current_page_no_start_index) {
                 page_no_start_index = -1
-            } else {
+            } else if (!(index > 1 && page_no_start_index == -1)) {
                 page_no_start_index = current_page_no_start_index
             }
             if (page_no_end_index !== -1 && page_no_end_index !== current_page_no_end_index) {
                 page_no_end_index = -1
-            } else {
+            } else if (!(index > 1 && page_no_end_index == -1)) {
                 page_no_end_index = current_page_no_end_index
             }
         }
@@ -198,6 +197,9 @@ exports.mergeHtmlNodes = function (items, cb) {
             is_sub = false
             is_super = false
             need_to_add_in_array = true
+            it.text = it.text.replace(/Digitally signed by.{1,}Reason:/gm, '')
+            it.text = it.text.replace(/Signature Not Verified/gm, '')
+
             if (it.text.trim().length == 0) {
                 return
             }
@@ -229,6 +231,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                 }
                 return
             }
+
             if (image_data && image_data.lines && image_data.lines.length > 0) {
                 image_data.lines.map((line) => {
                     if (line.y !== footer_coordinate) {
@@ -240,6 +243,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                     }
                 })
             }
+
 
             //Make the class identifier to search in map for previously used node
             let class_identifier = it.class_style['font-size'] + it.class_style['font-family'] + it.is_bold
