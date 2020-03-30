@@ -56,6 +56,7 @@ import threading
 import atexit
 from utils.thread_manager import thread_manager
 from apscheduler.schedulers.background import BackgroundScheduler
+from controllers.ner_annotation_api import ner_annotation_api
 # from jaeger_client import Config
 
 
@@ -120,6 +121,7 @@ app.register_blueprint(corpus_api)
 app.register_blueprint(admin_api)
 app.register_blueprint(document_api)
 app.register_blueprint(indexer_api)
+app.register_blueprint(ner_annotation_api)
 
 UPLOAD_FOLDER = 'upload'
 STATUS_PENDING = 'PENDING'
