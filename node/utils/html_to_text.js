@@ -141,7 +141,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                         if (current_text.length > 0) {
                             let next_text = obj_to_check[obj_to_check.length - index - 1].text.replace(/\d+/g, '');
                             next_text = next_text.replace(/\s+/g, '')
-                            if (next_text === current_text && index !== current_footer_start_index && current_text.trim().length > 0) {
+                            if (['.', ',', '"', '?', '!'].indexOf(next_text) < 0 && next_text === current_text && index !== current_footer_start_index && current_text.trim().length > 0) {
                                 current_page_no_end_index = index
                                 page_no_text = next_text
                             }
@@ -151,23 +151,25 @@ exports.mergeHtmlNodes = function (items, cb) {
             }
             if (header_end_index !== -1 && header_end_index !== current_header_end_index) {
                 header_end_index = -1
-            } else if(!(index > 1 && header_end_index == -1)){
+            } else {
                 header_end_index = current_header_end_index
             }
             if (footer_start_index !== -1 && footer_start_index !== current_footer_start_index) {
                 footer_start_index = -1
                 footer_text = ''
-            } else if(!(index > 1 && footer_start_index == -1)){
+            } else {
                 footer_start_index = current_footer_start_index
             }
             if (page_no_start_index !== -1 && page_no_start_index !== current_page_no_start_index) {
                 page_no_start_index = -1
-            } else if (!(index > 1 && page_no_start_index == -1)) {
-                page_no_start_index = current_page_no_start_index
+            } else {
+                if (!(index > 2 && page_no_start_index == -1)) {
+                    page_no_start_index = current_page_no_start_index
+                }
             }
             if (page_no_end_index !== -1 && page_no_end_index !== current_page_no_end_index) {
                 page_no_end_index = -1
-            } else if (!(index > 1 && page_no_end_index == -1)) {
+            } else {
                 page_no_end_index = current_page_no_end_index
             }
         }
