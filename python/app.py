@@ -56,6 +56,7 @@ import threading
 import atexit
 from utils.thread_manager import thread_manager
 from apscheduler.schedulers.background import BackgroundScheduler
+from controllers.ner_annotation_api import ner_annotation_api
 # from jaeger_client import Config
 
 
@@ -120,6 +121,7 @@ app.register_blueprint(corpus_api)
 app.register_blueprint(admin_api)
 app.register_blueprint(document_api)
 app.register_blueprint(indexer_api)
+app.register_blueprint(ner_annotation_api)
 
 UPLOAD_FOLDER = 'upload'
 STATUS_PENDING = 'PENDING'
@@ -189,16 +191,16 @@ except:
     logging.disable(logging.DEBUG)
     log.info("DEBUG LOGS InACTIVE")
 
-try:
-    t1 = threading.Thread(target=keep_on_running, name='keep_on_running')
-    t1.start()
-    # t2 = threading.Thread(target=write_document, name='write_document')
-    # t2.start()
-    # t3 = threading.Thread(target=sentence_creator, name='sentence_creator')
-    # t3.setDaemon(True)
-    # t3.start()
-except Exception as e:
-    log.info('ERROR WHILE RUNNING CUSTOM THREADS '+str(e))
+# try:
+#     t1 = threading.Thread(target=keep_on_running, name='keep_on_running')
+#     t1.start()
+#     # t2 = threading.Thread(target=write_document, name='write_document')
+#     # t2.start()
+#     # t3 = threading.Thread(target=sentence_creator, name='sentence_creator')
+#     # t3.setDaemon(True)
+#     # t3.start()
+# except Exception as e:
+#     log.info('ERROR WHILE RUNNING CUSTOM THREADS '+str(e))
 
 
 @app.route('/hello', methods=['GET'])
