@@ -252,9 +252,9 @@ exports.mergeHtmlNodes = function (items, cb) {
             if (output && output.length > 0) {
 
                 //Check for sub and super script
-                if (!style_map[class_identifier] && previous_node && previous_node.page_no === it.page_no && ((parseInt(previous_node.y) >= parseInt(it.y) && parseInt(it.y) + parseInt(it.class_style['font-size'].split('px')[0]) <= parseInt(previous_node.y) + parseInt(previous_node.class_style['font-size'].split('px')[0])) || (parseInt(previous_node.y) <= parseInt(it.y) && parseInt(it.y) <= parseInt(previous_node.y) + parseInt(previous_node.class_style['font-size'].split('px')[0]))) && it.text.trim().length > 0) {
+                if (!style_map[class_identifier] && previous_node && previous_node.page_no === it.page_no && ((parseInt(previous_node.y) >= parseInt(it.y) && parseInt(it.y) + parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y)) || (parseInt(previous_node.y) <= parseInt(it.y) && parseInt(it.y) <= parseInt(previous_node.y) + parseInt(previous_node.class_style['font-size'].split('px')[0]))) && it.text.trim().length > 0) {
                     class_identifier = previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold
-                    if ((parseInt(previous_node.y) >= parseInt(it.y) && parseInt(it.y) <= parseInt(previous_node.y) + parseInt(previous_node.class_style['font-size'].split('px')[0]))) {
+                    if ((parseInt(previous_node.y) >= parseInt(it.y) && parseInt(it.y)+parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y))) {
                         is_super = true
                     } else {
                         is_sub = true
@@ -281,6 +281,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                         class_identifier = it.class_style['font-size'] + it.class_style['font-family'] + it.is_bold
                     }
                     data.text = data.text.trim()
+                    
                     if (is_super || is_sub || (!(data.text.search(sentence_ends_regex) >= 0) || abbrivations2.indexOf(data.text.substring(data.text.length - 4, data.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(data.text.substring(data.text.length - 5, data.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(data.text.substring(data.text.length - 6, data.text.length).toLowerCase()) >= 0)) {
                         if (!(it.node_index - data.node_index > 2 && it.page_no_end - old_data.data.page_no_end == 0) || (it.page_no_end - old_data.data.page_no_end == 1)) {
                             if (is_sub || is_super) {
