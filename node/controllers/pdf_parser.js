@@ -14,7 +14,7 @@ var fs = require('fs');
 var axios = require('axios');
 var async = require('async')
 
-const PYTHON_BASE_URL = process.env.PYTHON_URL ? process.env.PYTHON_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/corpus/'
+const PYTHON_BASE_URL = process.env.PYTHON_URL ? process.env.PYTHON_URL : 'http://auth.anuvaad.org/'
 
 
 var COMPONENT = "pdf_parser";
@@ -125,8 +125,26 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                         }
                     })
                 } else {
-                    let response = new Response(StatusCode.SUCCESS, data).getRsp()
-                    return res.status(response.http.status).json(response);
+                    let sentences = []
+                    data.map((d) => {
+                        sentences.push(d.text)
+                    })
+                    axios.post(PYTHON_BASE_URL + 'ner',
+                        {
+                            sentences: sentences
+                        }
+                    ).then(function (api_res) {
+                        if (api_res && api_res.data && api_res.data.data) {
+                            api_res.data.data.map((d, index) => {
+                                data[index]['ner'] = d
+                            })
+                            let response = new Response(StatusCode.SUCCESS, data).getRsp()
+                            return res.status(response.http.status).json(response);
+                        }
+                    }).catch((e) => {
+                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                        return res.status(apistatus.http.status).json(apistatus);
+                    })
                 }
             })
         }
