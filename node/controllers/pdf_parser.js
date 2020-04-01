@@ -79,8 +79,27 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
         })
     } else {
         if (merge) {
-            let response = new Response(StatusCode.SUCCESS, output_res).getRsp()
-            return res.status(response.http.status).json(response);
+            let sentences = []
+            Object.keys(output_res).forEach(function (key, index) {
+                sentences.push(output_res[key+'']['html_nodes'][0].text)
+            })
+            axios.post(PYTHON_BASE_URL + 'ner',
+                {
+                    sentences: sentences
+                }
+            ).then(function (api_res) {
+                if (api_res && api_res.data && api_res.data.data) {
+                    api_res.data.data.map((d, index) => {
+                        output_res[(index+1)+'']['ner'] = d
+                    })
+                    let response = new Response(StatusCode.SUCCESS, output_res).getRsp()
+                    return res.status(response.http.status).json(response);
+                }
+            }).catch((e) => {
+                LOG.error(e)
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            })
         } else {
             HtmlToText.mergeHtmlNodes(output_res, function (err, data) {
                 if (tokenize) {
