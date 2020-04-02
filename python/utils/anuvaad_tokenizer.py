@@ -82,7 +82,7 @@ class AnuvaadEngTokenizer(object):
         return text
 
     def serialize_table_points(self, text):
-        patterns = re.findall(r'(?:(?:(?:[(](?:[0,9]|[i]|[x]|[v]){1,3}[)])|(?:(?:[0-9]|[i]|[x]|[v]){1,3}[.])))',text)
+        patterns = re.findall(r'(?:(?:(?:[ ][(](?:(?:[0,9]|[i]|[x]|[v]){1,3}|[a-zA-Z]{1,1})[)])|(?:[ ](?:(?:[0-9]|[i]|[x]|[v]){1,3}|[a-zA-Z]{1,1})[.])))',text)
         index = 0
         if patterns is not None and isinstance(patterns, list):
             for pattern in patterns:
