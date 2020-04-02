@@ -19,6 +19,7 @@ class AnuvaadEngTokenizer(object):
     _abbrevations_without_space = ['Crl.']
     _tokenizer = None
     _regex_search_texts = []
+    _table_points_abbrevations = []
     _brackets_abbrevations = []
     _dot_with_char_abbrevations = []
     _dot_with_quote_abbrevations = []
@@ -34,14 +35,16 @@ class AnuvaadEngTokenizer(object):
         punkt_param.sent_starters = text.split('\n')
         self._regex_search_texts = []
         self._dot_abbrevations = []
+        self._table_points_abbrevations = []
         self._brackets_abbrevations = []
         self._dot_with_char_abbrevations = []
         self._dot_with_number_abbrevations = []
         self._dot_with_beginning_number_abbrevations = []
-        self._tokenizer = PunktSentenceTokenizer(train_text=punkt_param)
+        self._tokenizer = PunktSentenceTokenizer(train_text=punkt_param,lang_vars=BulletPointLangVars())
 
     def tokenize(self, text):
         print('--------------Process started-------------')
+        text = self.serialize_table_points(text)
         text = self.serialize_pattern(text)
         text = self.serialize_with_abbrevations(text)
         text = self.serialize_dots(text)
@@ -49,6 +52,7 @@ class AnuvaadEngTokenizer(object):
         text = self.serialize_dot_with_number(text)
         text = self.serialize_dot_with_number_beginning(text)
         text = self.serialize_quotes_with_number(text)
+        text = self.serialize_bullet_points(text)
         sentences = self._tokenizer.tokenize(text)
         output = []
         for se in sentences:
@@ -59,9 +63,44 @@ class AnuvaadEngTokenizer(object):
             se = self.deserialize_dot_with_number_beginning(se)
             se = self.deserialize_quotes_with_number(se)
             se = self.deserialize_with_abbrevations(se)
+            se = self.deserialize_bullet_points(se)
+            se = self.deserialize_table_points(se)
             output.append(se)
         print('--------------Process finished-------------')
         return output
+
+    def serialize_bullet_points(self, text):
+        pattern = re.compile(r'([•])')
+        text = pattern.sub('TT__TT UU__UU', text)
+        return text
+
+    def deserialize_bullet_points(self, text):
+        pattern = re.compile(re.escape('TT__TT'), re.IGNORECASE)
+        text = pattern.sub('', text)
+        pattern = re.compile(re.escape('UU__UU'), re.IGNORECASE)
+        text = pattern.sub('•', text)
+        return text
+
+    def serialize_table_points(self, text):
+        patterns = re.findall(r'(?:(?:(?:[(](?:[0,9]|[i]|[x]|[v]){1,3}[)])|(?:(?:[0-9]|[i]|[x]|[v]){1,3}[.])))',text)
+        index = 0
+        if patterns is not None and isinstance(patterns, list):
+            for pattern in patterns:
+                print(pattern)
+                pattern_obj = re.compile(re.escape(pattern))
+                self._table_points_abbrevations.append(pattern)
+                text = pattern_obj.sub('TT__TT RR_'+str(index)+'_RR', text)
+                index+=1
+        return text
+
+    def deserialize_table_points(self, text):
+        index = 0
+        if self._table_points_abbrevations is not None and isinstance(self._table_points_abbrevations, list):
+            for pattern in self._table_points_abbrevations:
+                pattern_obj = re.compile(re.escape('RR_'+str(index)+'_RR'), re.IGNORECASE)
+                text = pattern_obj.sub(pattern, text)
+                index+=1
+        return text
 
     def serialize_brackets(self, text):
         patterns = re.findall(r'([(][0-9a-zA-Z.-]{1,}[)])',text)
@@ -202,7 +241,7 @@ class AnuvaadEngTokenizer(object):
 
 class BulletPointLangVars(PunktLanguageVars):
     text = []
-    with open('utils/tokenizer_data/train.txt', encoding='utf8') as f:
+    with open('utils/tokenizer_data/end.txt', encoding='utf8') as f:
         text = f.read()
     sent_end_chars = text.split('\n')
     
