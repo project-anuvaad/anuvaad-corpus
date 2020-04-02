@@ -70,7 +70,7 @@ class AnuvaadEngTokenizer(object):
         return output
 
     def serialize_bullet_points(self, text):
-        pattern = re.compile(r'([•])')
+        pattern = re.compile(r'([ ][•])')
         text = pattern.sub('TT__TT UU__UU', text)
         return text
 
