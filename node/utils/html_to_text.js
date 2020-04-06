@@ -185,7 +185,7 @@ exports.mergeHtmlNodes = function (items, cb) {
         let obj = items[key].html_nodes
         let image_data = items[key].image_data
         let footer_check_node = obj[obj.length - 1]
-        if (image_data.lines.length > 0) {
+        if (image_data.lines && image_data.lines.length > 0) {
             let margin = (parseInt(footer_check_node.y) - parseInt(image_data.lines[0].y)) / parseInt(footer_check_node.y)
             if (margin > 0 && margin * 100 < 8) {
                 footer_available = true
