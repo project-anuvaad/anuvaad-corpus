@@ -33,7 +33,8 @@ exports.processImage = function (filepath, cb) {
                 }
                 cb(null, api_res.data.response)
             }).catch((e) => {
-                cb(e, null)
+                LOG.error(e)
+                cb(null, {})
             })
         }).catch((e) => {
             cb(e, null)
