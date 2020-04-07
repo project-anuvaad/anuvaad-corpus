@@ -2,8 +2,8 @@ const htmlToJson = require('html-to-json')
 const fs = require('fs');
 var LOG = require('../logger/logger').logger
 const sentence_ends_regex = /(([\"|”|,|a-zA-Z|0-9|.]{3,}[.|?|!|\"|”|:|;]|([:][ ][-]))$)/g;
-const abbrivations2 = [' no.', ' mr.', ' ft.', ' kg.', ' dr.', ' ms.', ' st.', ' pp.', ' co.', ' rs.', ' sh.', ' vs.',' ex.']
-const abbrivations3 = [' pvt.', ' nos.', ' smt.', ' sec.', ' spl.', ' kgs.', ' ltd.', ' pty.', ' vol.', ' pty.', ' m/s.', ' mrs.', ' i.e.',' etc.',' (ex.', ' o.s.',' anr.']
+const abbrivations2 = [' no.', ' mr.', ' ft.', ' kg.', ' dr.', ' ms.', ' st.', ' pp.', ' co.', ' rs.', ' sh.', ' vs.', ' ex.']
+const abbrivations3 = [' pvt.', ' nos.', ' smt.', ' sec.', ' spl.', ' kgs.', ' ltd.', ' pty.', ' vol.', ' pty.', ' m/s.', ' mrs.', ' i.e.', ' etc.', ' (ex.', ' o.s.', ' anr.', ' ors.']
 const abbrivations4 = [' assn.']
 
 exports.convertHtmlToJsonPagewise = function (basefolder, inputfilename, session_id, merge, pageno, start_node_index, cb) {
@@ -192,8 +192,8 @@ exports.mergeHtmlNodes = function (items, cb) {
                 footer_coordinate = image_data.lines[0].y
             }
         }
-
-        bottom_px = parseInt(obj[obj.length - 1].y)
+        if (obj && obj.length > 0)
+            bottom_px = parseInt(obj[obj.length - 1].y)
         obj.map((it, index) => {
             change_style_map = false
             is_sub = false
@@ -254,7 +254,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                 //Check for sub and super script
                 if (!style_map[class_identifier] && previous_node && previous_node.page_no === it.page_no && ((parseInt(previous_node.y) >= parseInt(it.y) && parseInt(it.y) + parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y)) || (parseInt(previous_node.y) <= parseInt(it.y) && parseInt(it.y) <= parseInt(previous_node.y) + parseInt(previous_node.class_style['font-size'].split('px')[0]))) && it.text.trim().length > 0) {
                     class_identifier = previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold
-                    if ((parseInt(previous_node.y) >= parseInt(it.y) && parseInt(it.y)+parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y))) {
+                    if ((parseInt(previous_node.y) >= parseInt(it.y) && parseInt(it.y) + parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y))) {
                         is_super = true
                     } else {
                         is_sub = true
@@ -281,7 +281,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                         class_identifier = it.class_style['font-size'] + it.class_style['font-family'] + it.is_bold
                     }
                     data.text = data.text.trim()
-                    
+
                     if (is_super || is_sub || (!(data.text.search(sentence_ends_regex) >= 0) || abbrivations2.indexOf(data.text.substring(data.text.length - 4, data.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(data.text.substring(data.text.length - 5, data.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(data.text.substring(data.text.length - 6, data.text.length).toLowerCase()) >= 0)) {
                         if (!(it.node_index - data.node_index > 2 && it.page_no_end - old_data.data.page_no_end == 0) || (it.page_no_end - old_data.data.page_no_end == 1)) {
                             if (is_sub || is_super) {
