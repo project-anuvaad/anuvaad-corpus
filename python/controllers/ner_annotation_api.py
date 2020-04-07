@@ -20,7 +20,7 @@ def ner_sentences():
         print("else correct")
         output_ner = list()
         for text in data['sentences']:
-            model_dir = 'upload/models/model_1000/'
+            model_dir = 'upload/models/model_1000/' # model dir static
             result_ner = api_call(model_dir,text)
             print(result_ner)
             if result_ner is None or model_dir is None:
