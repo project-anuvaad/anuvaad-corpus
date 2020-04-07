@@ -147,28 +147,28 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                     let sentences = []
                     let previous_page_no = -1
                     let page_sentences = ''
-                    data.map((d) => {
+                    data.map((d, index) => {
                         if (previous_page_no !== d.page_no) {
                             previous_page_no = d.page_no
                             if (page_sentences.length > 0) {
                                 sentences.push(page_sentences)
                             }
                             page_sentences = d.text
-                        }else{
-                            page_sentences += d.text
+                        } else {
+                            page_sentences += ' ' + d.text
                         }
                     })
+                    if (page_sentences.length > 0) {
+                        sentences.push(page_sentences)
+                    }
+                    LOG.info(sentences)
                     axios.post(PYTHON_BASE_URL + 'ner',
                         {
                             sentences: sentences
                         }
                     ).then(function (api_res) {
                         if (api_res && api_res.data && api_res.data.data) {
-                            data['ner'] = api_res.data.data
-                            api_res.data.data.map((d, index) => {
-                                data['ner'] = d
-                            })
-                            let response = new Response(StatusCode.SUCCESS, data).getRsp()
+                            let response = new Response(StatusCode.SUCCESS, data, null, null, null, api_res.data.data).getRsp()
                             return res.status(response.http.status).json(response);
                         }
                     }).catch((e) => {

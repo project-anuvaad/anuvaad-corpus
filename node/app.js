@@ -190,6 +190,7 @@ function startApp() {
   require('./routes/workspace/workspace.route')(router);
   require('./routes/feedback/feedback.route')(router);
   require('./routes/pdf_parser/pdf_parser.route')(router);
+  require('./routes/doc_parser/doc_parser.route')(router);
 
   app.get('/test', function (req, res) {
     res.send("Hello world!");
