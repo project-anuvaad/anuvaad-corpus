@@ -24,6 +24,7 @@
     "crypto-js": "^3.1.9-1",
     "csv-reader": "^1.0.3",
     "csv-writer": "^1.6.0",
+    "docx": "^5.0.2",
     "docx2html": "^1.1.0",
     "docx4js": "^3.2.1",
     "express": "^4.1.1",
