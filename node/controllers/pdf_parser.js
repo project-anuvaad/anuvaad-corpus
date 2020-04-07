@@ -81,7 +81,8 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
         if (merge) {
             let sentences = []
             Object.keys(output_res).forEach(function (key, index) {
-                sentences.push(output_res[key + '']['html_nodes'][0].text)
+                if (output_res[key + '']['html_nodes'] && output_res[key + '']['html_nodes'].length > 0)
+                    sentences.push(output_res[key + '']['html_nodes'][0].text)
             })
             axios.post(PYTHON_BASE_URL + 'ner',
                 {
@@ -161,7 +162,6 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                     if (page_sentences.length > 0) {
                         sentences.push(page_sentences)
                     }
-                    LOG.info(sentences)
                     axios.post(PYTHON_BASE_URL + 'ner',
                         {
                             sentences: sentences
