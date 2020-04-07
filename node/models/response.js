@@ -9,12 +9,13 @@ function Response(statuscode, data) {
     this.data = data;
 }
 
-function Response(statuscode, data, count, sum, pending) {
+function Response(statuscode, data, count, sum, pending, ner) {
     this.statuscode = statuscode;
     this.data = data;
     this.count = count;
     this.sum = sum
     this.pending = pending
+    this.ner = ner
 }
 
 Response.prototype.getRsp = function () {
@@ -30,6 +31,9 @@ Response.prototype.getRsp = function () {
     }
     if(!isNaN(this.pending)){
         result.pending = this.pending
+    }
+    if(this.ner){
+        result.ner = this.ner
     }
     return result
 };
