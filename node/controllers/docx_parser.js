@@ -20,7 +20,7 @@ const PYTHON_BASE_URL = process.env.PYTHON_URL ? process.env.PYTHON_URL : 'http:
 
 
 var COMPONENT = "doc_parser";
-const BASE_PATH_NGINX = 'nginx/upload/'
+const BASE_PATH_NGINX = 'nginx/'
 const BASE_PATH_UPLOAD = 'corpusfiles/pdfs/'
 const STATUS_PROCESSING = 'PROCESSING'
 const STATUS_COMPLETED = 'COMPLETED'
