@@ -14,4 +14,7 @@ module.exports = function (router) {
     router.route('/make-doc')
         .post(docParserController.makeDoc);
 
+    router.route('/convert-pdf-to-doc')
+        .post(docParserController.convertPdfToDoc);
+
 }
