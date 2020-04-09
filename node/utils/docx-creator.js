@@ -237,7 +237,7 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, cb) {
     // Used to export the file into a .docx file
     docx.Packer.toBuffer(doc).then((buffer) => {
         let file_name = UUIDV4() + (new Date().getMilliseconds()) + ".docx"
-        fs.writeFileSync(nginx_path + '/' + file_name, buffer);
+        fs.writeFileSync(nginx_path + file_name, buffer);
         cb(null, file_name)
     }).catch(e => {
         LOG.error(e)
