@@ -8,7 +8,7 @@ from nltk.tokenize.punkt import PunktSentenceTokenizer, PunktParameters, PunktTr
 from nltk.tokenize import sent_tokenize
 
 """
-Utility class for first page tokenizer for anuvaad project
+Utility tokenizer class for anuvaad project
 """
 class AnuvaadEngTokenizer(object):
     """
