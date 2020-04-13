@@ -72,7 +72,7 @@ function constructRunForNers(n, identifier_tag, children) {
 
 
 
-exports.covertJsonToDoc = function (data, ner_data, nginx_path, cb) {
+exports.covertJsonToDoc = function (data, ner_data, nginx_path, footer_text, cb) {
     let styles = []
     let children = []
     let last_page_runs = []
@@ -84,7 +84,6 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, cb) {
     let LAST_PAGE_NER_BEGINNING = ''
     let LAST_PAGE_NER_BEGINNING_FOUND = false
     let previous_footnote = ''
-    let footnote_run_count = 1
     let default_style = {
         id: 'DEFAULT',
         name: 'DEFAULT',
@@ -232,7 +231,7 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, cb) {
         })
     })
     children = children.concat(last_page_runs)
-    LOG.info(FOOTNOTE_RUN_ARRAY.length)
+    LOG.info(footer_text)
     // Create document
     const doc = new docx.Document({
         styles: {
@@ -241,6 +240,36 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, cb) {
         footnotes: FOOTNOTE_RUN_ARRAY
     });
     doc.addSection({
+        headers: {
+            default: new docx.Header({
+                children: [
+                    new docx.Paragraph({
+                        alignment: docx.AlignmentType.RIGHT,
+                        children: [
+                            new docx.TextRun({
+                                children: ["Page Number ", docx.PageNumber.CURRENT],
+                            }),
+                            new docx.TextRun({
+                                children: [" of ", docx.PageNumber.TOTAL_PAGES],
+                            }),
+                        ],
+                    }),
+                ],
+            }),
+        },
+        footers: {
+            default: new docx.Footer({
+                children: [new docx.Paragraph({
+                    children:[new docx.TextRun({
+                        text: footer_text,
+                        size: 20,
+                        color: '000000',
+                        underline: true,
+                        font:'Times'
+                    })]
+                })],
+            }),
+        },
         children: children,
     });
 
