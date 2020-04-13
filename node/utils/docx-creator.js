@@ -175,16 +175,26 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, cb) {
             })
             text_arr.push(text)
             if (d.sup_array && d.sup_array.length > 0) {
-                d.sup_array.map((sup) => {
+                d.sup_array.map((sup, index) => {
                     if (parseInt(sup) <= footnote_count) {
+                        let sup_number = parseInt(sup)
                         let sup_run = new docx.TextRun({
                             text: sup,
-                            children: [new docx.FootnoteReferenceRun(parseInt(sup))],
+                            children: [new docx.FootnoteReferenceRun(sup_number)],
                             superScript: true,
                             size: d.class_style['font-size'].split('px')[0] * 2,
                             font: d.class_style['font-family'],
                         })
                         text_arr.push(sup_run)
+                        if (index !== d.sup_array.length - 1) {
+                            let sup_run = new docx.TextRun({
+                                text: ',',
+                                superScript: true,
+                                size: d.class_style['font-size'].split('px')[0] * 2,
+                                font: d.class_style['font-family'],
+                            })
+                            text_arr.push(sup_run)
+                        }
                         footnote_count++
                     }
                 })
