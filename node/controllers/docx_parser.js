@@ -136,7 +136,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
             })
         })
     } else {
-        HtmlToText.mergeHtmlNodes(output_res, function (err, data) {
+        HtmlToText.mergeHtmlNodes(output_res, function (err, data, footer_text) {
             let sentences = []
             let previous_page_no = -1
             let page_sentences = ''
@@ -160,7 +160,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                 }
             ).then(function (api_res) {
                 if (api_res && api_res.data && api_res.data.data) {
-                    DocxCreator.covertJsonToDoc(data, api_res.data.data, BASE_PATH_NGINX, function (err, filepath) {
+                    DocxCreator.covertJsonToDoc(data, api_res.data.data, BASE_PATH_NGINX,footer_text, function (err, filepath) {
                         if (err) {
                             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                             return res.status(apistatus.http.status).json(apistatus);

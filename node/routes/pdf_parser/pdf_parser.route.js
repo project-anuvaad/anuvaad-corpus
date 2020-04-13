@@ -23,7 +23,7 @@ module.exports = function (router) {
     router.route('/extract-paragraphs')
         .post(pdfParserController.extractParagraphs);
 
-        router.route('/extract-paragraphs-pagewise')
+    router.route('/extract-paragraphs-pagewise')
         .post(pdfParserController.extractParagraphsPerPages);
 
 }

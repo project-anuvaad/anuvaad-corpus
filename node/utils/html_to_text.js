@@ -329,5 +329,5 @@ exports.mergeHtmlNodes = function (items, cb) {
         }
         return false
     })
-    cb(null, out)
+    cb(null, out, footer_text)
 }
