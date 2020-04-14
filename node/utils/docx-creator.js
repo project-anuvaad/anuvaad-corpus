@@ -140,6 +140,8 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, footer_text, cb)
     data.map((d, index) => {
         let remaining_text = ''
         //For handling last page related ner
+        LOG.debug(ner_data.length)
+        LOG.debug(d.page_no)
         if (d.page_no == ner_data.length && !LAST_PAGE_NER_BEGINNING_FOUND) {
             if (d.text.indexOf(LAST_PAGE_NER_BEGINNING) >= 0) {
                 LAST_PAGE_NER_BEGINNING_FOUND = true
