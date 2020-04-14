@@ -15,6 +15,7 @@ const NER_FIRST_PAGE_IDENTIFIERS = {
     'CASE_IDENTIFIER': { align: 'CENTER', position: 4500, is_new_line: true, font_size: 17, font: 'Times' },
     'SLP': { align: 'CENTER', position: 4500, is_new_line: true, font_size: 17, font: 'Times' },
     'JUDGMENT_ORDER_HEADER': { align: 'CENTER', position: 4500, is_new_line: true, font_size: 19, is_bold: true, font: 'Times' },
+    'JUDGE_NAME': { align: 'LEFT', position: 0, is_new_line: true, font_size: 19, is_bold: true, font: 'Times', underline: true },
 }
 
 const NER_LAST_PAGE_IDENTIFIERS = {
@@ -37,6 +38,7 @@ function constructRunForNers(n, identifier_tag, children) {
         size: identifier_tag.font_size * 2,
         font: identifier_tag.font,
         bold: identifier_tag.is_bold ? true : null,
+        underline: identifier_tag.underline ? true : null
     })
     tab_stops.push({
         type: docx.TabStopType[identifier_tag.align],
@@ -79,7 +81,9 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, footer_text, cb)
     let footnote_count = 1
     let FOOTNOTE_RUN_ARRAY = []
     let JUDGMENT_ORDER_HEADER_PAGE_NO = -1
+    let JUDGE_NAME_PAGE_NO = -1
     let JUDGMENT_ORDER_HEADER = ''
+    let JUDGE_NAME = ''
     let JUDGMENT_ORDER_HEADER_FOUND = false
     let LAST_PAGE_NER_BEGINNING = ''
     let LAST_PAGE_NER_BEGINNING_FOUND = false
@@ -96,7 +100,7 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, footer_text, cb)
     }
     styles.push(default_style)
     ner_data.map((ner, index) => {
-        if (JUDGMENT_ORDER_HEADER.length == 0) {
+        if ((JUDGMENT_ORDER_HEADER.length == 0 && JUDGMENT_ORDER_HEADER_PAGE_NO >= index) || (JUDGE_NAME.length == 0)) {
             ner_run_arr = []
             tab_stops = []
             ner.map((n) => {
@@ -107,7 +111,10 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, footer_text, cb)
                 if (n.annotation_tag === 'JUDGMENT_ORDER_HEADER') {
                     JUDGMENT_ORDER_HEADER_PAGE_NO = index + 1
                     JUDGMENT_ORDER_HEADER = n.tagged_value
-                    return
+                }
+                else if (n.annotation_tag === 'JUDGE_NAME' && JUDGMENT_ORDER_HEADER_PAGE_NO >= 0) {
+                    JUDGE_NAME_PAGE_NO = index + 1
+                    JUDGE_NAME = n.tagged_value
                 }
             })
         }
@@ -131,7 +138,7 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, footer_text, cb)
         }
     })
     data.map((d, index) => {
-
+        let remaining_text = ''
         //For handling last page related ner
         if (d.page_no == ner_data.length && !LAST_PAGE_NER_BEGINNING_FOUND) {
             if (d.text.indexOf(LAST_PAGE_NER_BEGINNING) >= 0) {
@@ -144,11 +151,17 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, footer_text, cb)
         }
 
         //For handling forst page related ner
-        if (d.page_no <= JUDGMENT_ORDER_HEADER_PAGE_NO && !JUDGMENT_ORDER_HEADER_FOUND) {
-            if (d.text.indexOf(JUDGMENT_ORDER_HEADER) >= 0) {
+        if (((JUDGE_NAME_PAGE_NO >= 0 && d.page_no <= JUDGE_NAME_PAGE_NO) || (JUDGE_NAME_PAGE_NO === -1 && d.page_no <= JUDGMENT_ORDER_HEADER_PAGE_NO)) && !JUDGMENT_ORDER_HEADER_FOUND) {
+            if (JUDGE_NAME.length > 0 && d.text.indexOf(JUDGE_NAME) >= 0) {
+                remaining_text = d.text.replace(JUDGE_NAME, '')
                 JUDGMENT_ORDER_HEADER_FOUND = true
             }
-            return
+            else if (JUDGE_NAME.length == 0 && d.text.indexOf(JUDGMENT_ORDER_HEADER) >= 0) {
+                remaining_text = d.text.replace(JUDGMENT_ORDER_HEADER, '')
+                JUDGMENT_ORDER_HEADER_FOUND = true
+            }
+            if (remaining_text.trim().length < 1)
+                return
         }
         let style = {
             id: index,
@@ -166,12 +179,13 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, footer_text, cb)
         if (!d.is_footer) {
             let text_arr = []
             let text = new docx.TextRun({
-                text: d.text,
+                text: remaining_text.trim().length > 0 ? remaining_text : d.text,
                 size: d.class_style['font-size'].split('px')[0] * 2,
                 font: d.class_style['font-family'],
                 bold: d.is_bold ? true : null,
                 underline: d.underline ? {} : null
             })
+            remaining_text = ''
             text_arr.push(text)
             if (d.sup_array && d.sup_array.length > 0) {
                 d.sup_array.map((sup, index) => {
@@ -231,7 +245,6 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, footer_text, cb)
         })
     })
     children = children.concat(last_page_runs)
-    LOG.info(footer_text)
     // Create document
     const doc = new docx.Document({
         styles: {
@@ -260,12 +273,12 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, footer_text, cb)
         footers: {
             default: new docx.Footer({
                 children: [new docx.Paragraph({
-                    children:[new docx.TextRun({
+                    children: [new docx.TextRun({
                         text: footer_text,
                         size: 20,
                         color: '000000',
                         underline: true,
-                        font:'Times'
+                        font: 'Times'
                     })]
                 })],
             }),
