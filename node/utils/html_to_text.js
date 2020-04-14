@@ -115,7 +115,8 @@ exports.mergeHtmlNodes = function (items, cb) {
                     if (current_header_end_index == -1 || index - current_header_end_index == 1) {
                         if (obj_to_check[index] && obj_to_check[index].text === obj[index].text && obj[index].text.trim().length > 0) {
                             current_header_end_index = index
-                            header_text = obj[index].text
+                            if (header_text.length == 0)
+                                header_text = obj[index].text
                         }
                     }
                     if (obj_to_check[index]) {
