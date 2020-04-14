@@ -74,7 +74,7 @@ function constructRunForNers(n, identifier_tag, children) {
 
 
 
-exports.covertJsonToDoc = function (data, ner_data, nginx_path, footer_text, cb) {
+exports.covertJsonToDoc = function (data, ner_data, nginx_path, header_text, footer_text, cb) {
     let styles = []
     let children = []
     let last_page_runs = []
@@ -267,20 +267,30 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, footer_text, cb)
                             }),
                         ],
                     }),
+                    new docx.Paragraph({
+                        alignment: docx.AlignmentType.LEFT,
+                        children: [
+                            new docx.TextRun({
+                                text: header_text
+                            }),
+                        ],
+                    }),
                 ],
             }),
         },
         footers: {
             default: new docx.Footer({
-                children: [new docx.Paragraph({
-                    children: [new docx.TextRun({
-                        text: footer_text,
-                        size: 20,
-                        color: '000000',
-                        underline: true,
-                        font: 'Times'
-                    })]
-                })],
+                children: [
+                    new docx.Paragraph({
+                        children: [
+                            new docx.TextRun({
+                                text: footer_text,
+                                size: 20,
+                                color: '000000',
+                                underline: true,
+                                font: 'Times'
+                            })]
+                    })],
             }),
         },
         children: children,

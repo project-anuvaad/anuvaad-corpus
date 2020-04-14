@@ -90,6 +90,7 @@ exports.mergeHtmlNodes = function (items, cb) {
     let page_no_end_index = -1
     let page_no_text = ''
     let footer_text = ''
+    let header_text = ''
     let previous_node = null
     let previous_footer_node = null
     let change_style_map = false
@@ -114,6 +115,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                     if (current_header_end_index == -1 || index - current_header_end_index == 1) {
                         if (obj_to_check[index] && obj_to_check[index].text === obj[index].text && obj[index].text.trim().length > 0) {
                             current_header_end_index = index
+                            header_text = obj[index].text
                         }
                     }
                     if (obj_to_check[index]) {
@@ -152,6 +154,7 @@ exports.mergeHtmlNodes = function (items, cb) {
             }
             if (header_end_index !== -1 && header_end_index !== current_header_end_index) {
                 header_end_index = -1
+                header_text = ''
             } else {
                 header_end_index = current_header_end_index
             }
@@ -330,5 +333,5 @@ exports.mergeHtmlNodes = function (items, cb) {
         }
         return false
     })
-    cb(null, out, footer_text)
+    cb(null, out, header_text, footer_text)
 }
