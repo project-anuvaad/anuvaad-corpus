@@ -142,7 +142,7 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, footer_text, cb)
         //For handling last page related ner
         LOG.debug(ner_data.length)
         LOG.debug(d.page_no)
-        if (d.page_no == ner_data.length && !LAST_PAGE_NER_BEGINNING_FOUND) {
+        if (d.page_no >= ner_data.length && !LAST_PAGE_NER_BEGINNING_FOUND) {
             if (d.text.indexOf(LAST_PAGE_NER_BEGINNING) >= 0) {
                 LAST_PAGE_NER_BEGINNING_FOUND = true
                 return
