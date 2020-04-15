@@ -25,6 +25,31 @@ const NER_LAST_PAGE_IDENTIFIERS = {
     'JUDGMENT_DATE': { align: 'LEFT', is_new_line: true, position: 500, font_size: 17, font: 'Times' },
 }
 
+const HEADER_STYLE = {
+    id: 'header',
+    name: 'header',
+    paragraph: {
+        // indent: {
+        //     left: d.x * 4
+        // },
+        spacing: {
+            before: 340,
+            after: 820,
+        },
+    }
+}
+
+const DEFAULT_STYLE = {
+    id: 'DEFAULT',
+    name: 'DEFAULT',
+    paragraph: {
+        spacing: {
+            before: 200,
+            after: 520,
+        },
+    }
+}
+
 var ner_run_arr = []
 var tab_stops = []
 
@@ -88,17 +113,9 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, header_text, foo
     let LAST_PAGE_NER_BEGINNING = ''
     let LAST_PAGE_NER_BEGINNING_FOUND = false
     let previous_footnote = ''
-    let default_style = {
-        id: 'DEFAULT',
-        name: 'DEFAULT',
-        paragraph: {
-            spacing: {
-                before: 200,
-                after: 520,
-            },
-        }
-    }
-    styles.push(default_style)
+
+    styles.push(DEFAULT_STYLE)
+    styles.push(HEADER_STYLE)
     ner_data.map((ner, index) => {
         if ((JUDGMENT_ORDER_HEADER.length == 0 && JUDGMENT_ORDER_HEADER_PAGE_NO >= index) || (JUDGE_NAME.length == 0)) {
             ner_run_arr = []
@@ -150,7 +167,7 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, header_text, foo
             return true
         }
 
-        //For handling forst page related ner
+        //For handling first page related ner
         if (((JUDGE_NAME_PAGE_NO >= 0 && d.page_no <= JUDGE_NAME_PAGE_NO) || (JUDGE_NAME_PAGE_NO === -1 && d.page_no <= JUDGMENT_ORDER_HEADER_PAGE_NO)) && !JUDGMENT_ORDER_HEADER_FOUND) {
             if (JUDGE_NAME.length > 0 && d.text.indexOf(JUDGE_NAME) >= 0) {
                 remaining_text = d.text.replace(JUDGE_NAME, '')
@@ -268,6 +285,7 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, header_text, foo
                         ],
                     }),
                     new docx.Paragraph({
+                        style: 'header',
                         alignment: docx.AlignmentType.LEFT,
                         children: [
                             new docx.TextRun({
