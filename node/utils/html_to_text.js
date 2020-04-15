@@ -6,6 +6,7 @@ const abbrivations2 = [' no.', ' mr.', ' ft.', ' kg.', ' dr.', ' ms.', ' st.', '
 const abbrivations3 = [' pvt.', ' nos.', ' smt.', ' sec.', ' spl.', ' kgs.', ' ltd.', ' pty.', ' vol.', ' pty.', ' m/s.', ' mrs.', ' i.e.', ' etc.', ' (ex.', ' o.s.', ' anr.', ' ors.']
 const abbrivations4 = [' assn.']
 const abbrivations6 = [' w.e.f.']
+const sentence_ends = ['.', ',', '"', '?', '!']
 
 exports.convertHtmlToJsonPagewise = function (basefolder, inputfilename, session_id, merge, pageno, start_node_index, cb) {
     fs.readFile(basefolder + session_id + "/" + inputfilename, 'utf8', function (err, data) {
@@ -93,6 +94,7 @@ exports.mergeHtmlNodes = function (items, cb) {
     let header_text = ''
     let previous_node = null
     let previous_footer_node = null
+    let variable_header = false
     let change_style_map = false
     let is_super = false
     let is_sub = false
@@ -115,8 +117,10 @@ exports.mergeHtmlNodes = function (items, cb) {
                     if (current_header_end_index == -1 || index - current_header_end_index == 1) {
                         if (obj_to_check[index] && obj_to_check[index].text === obj[index].text && obj[index].text.trim().length > 0) {
                             current_header_end_index = index
-                            if (header_text.length == 0)
+                            if (header_text.length == 0) {
                                 header_text = obj[index].text
+                            }
+
                         }
                     }
                     if (obj_to_check[index]) {
@@ -125,7 +129,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                         if (current_text.length > 0) {
                             let next_text = obj_to_check[index].text.replace(/\d+/g, '');
                             next_text = next_text.replace(/\s+/g, '')
-                            if (['.', ',', '"', '?', '!'].indexOf(next_text) < 0 && next_text === current_text && current_text.trim().length > 0 && index !== current_header_end_index) {
+                            if (sentence_ends.indexOf(next_text) < 0 && next_text === current_text && current_text.trim().length > 0 && index !== current_header_end_index) {
                                 current_page_no_start_index = index
                                 page_no_text = next_text
                             }
@@ -145,7 +149,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                         if (current_text.length > 0) {
                             let next_text = obj_to_check[obj_to_check.length - index - 1].text.replace(/\d+/g, '');
                             next_text = next_text.replace(/\s+/g, '')
-                            if (['.', ',', '"', '?', '!'].indexOf(next_text) < 0 && next_text === current_text && index !== current_footer_start_index && current_text.trim().length > 0) {
+                            if (sentence_ends.indexOf(next_text) < 0 && next_text === current_text && index !== current_footer_start_index && current_text.trim().length > 0) {
                                 current_page_no_end_index = index
                                 page_no_text = next_text
                             }
@@ -154,8 +158,8 @@ exports.mergeHtmlNodes = function (items, cb) {
                 })
             }
             if (header_end_index !== -1 && header_end_index !== current_header_end_index) {
+                variable_header = true
                 header_end_index = -1
-                header_text = ''
             } else {
                 header_end_index = current_header_end_index
             }
@@ -179,6 +183,9 @@ exports.mergeHtmlNodes = function (items, cb) {
             }
         }
     })
+    if (header_end_index == -1 || variable_header) {
+        header_text = ''
+    }
     if (page_no_end_index == -1 && page_no_start_index == -1) {
         page_no_text = ''
     }
@@ -213,7 +220,7 @@ exports.mergeHtmlNodes = function (items, cb) {
             else if (parseInt(it.text) == parseInt(it.page_no) && (index > obj.length - 2 || index < 5)) {
                 return
             }
-            else if ((page_no_start_index !== -1 && index === page_no_start_index) || (page_no_end_index !== -1 && index === obj.length - page_no_end_index - 1) || (key == 1 && page_no_text.trim().length > 0 && ['.', ',', '"', '?', '!'].indexOf(page_no_text) < 0 && it.text.replace(/\d+/g, '').replace(/\s+/g, '') === page_no_text)) {
+            else if ((page_no_start_index !== -1 && index === page_no_start_index) || (page_no_end_index !== -1 && index === obj.length - page_no_end_index - 1) || (key == 1 && page_no_text.trim().length > 0 && sentence_ends.indexOf(page_no_text) < 0 && it.text.replace(/\d+/g, '').replace(/\s+/g, '') === page_no_text)) {
                 return
             }
             else if (header_end_index !== -1 && index <= header_end_index) {
