@@ -274,7 +274,6 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, header_text, foo
             default: new docx.Header({
                 children: [
                     new docx.Paragraph({
-                        style: 'header',
                         alignment: docx.AlignmentType.RIGHT,
                         children: [
                             new docx.TextRun({
