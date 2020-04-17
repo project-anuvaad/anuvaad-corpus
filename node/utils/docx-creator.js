@@ -113,6 +113,7 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, header_text, foo
     let LAST_PAGE_NER_BEGINNING = ''
     let LAST_PAGE_NER_BEGINNING_FOUND = false
     let previous_footnote = ''
+    let foot_notes_array = []
 
     styles.push(DEFAULT_STYLE)
     styles.push(HEADER_STYLE)
@@ -211,11 +212,14 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, header_text, foo
                         let sup_number = parseInt(sup)
                         let sup_run = new docx.TextRun({
                             text: sup,
-                            children: [new docx.FootnoteReferenceRun(sup_number)],
+                            children: foot_notes_array.indexOf(parseInt(sup)) < 0 ? [new docx.FootnoteReferenceRun(sup_number)] :  null,
                             superScript: true,
                             size: d.class_style['font-size'].split('px')[0] * 2,
                             font: d.class_style['font-family'],
                         })
+                        if(foot_notes_array.indexOf(parseInt(sup)) < 0){
+                            foot_notes_array.push(parseInt(sup))
+                        }
                         text_arr.push(sup_run)
                         if (index !== sup_sub_arr.length - 1) {
                             let sup_run = new docx.TextRun({

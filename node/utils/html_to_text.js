@@ -112,6 +112,7 @@ exports.mergeHtmlNodes = function (items, cb) {
     let change_style_map = false
     let is_super = false
     let is_sub = false
+    let same_line = false
     let need_to_add_in_array = true
     let bottom_px = -1
     let footer_coordinate = -1
@@ -224,6 +225,7 @@ exports.mergeHtmlNodes = function (items, cb) {
             change_style_map = false
             is_sub = false
             is_super = false
+            same_line =  false
             need_to_add_in_array = true
             if (it.text.trim().length == 0) {
                 return
@@ -279,7 +281,10 @@ exports.mergeHtmlNodes = function (items, cb) {
                 //Check for sub and super script
                 if (!style_map[class_identifier] && previous_node && previous_node.page_no === it.page_no && ((parseInt(previous_node.y_end) >= parseInt(it.y_end) && parseInt(it.y_end) + parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y_end)) || (parseInt(previous_node.y_end) <= parseInt(it.y_end) && parseInt(it.y_end) <= parseInt(previous_node.y_end) + parseInt(previous_node.class_style['font-size'].split('px')[0]))) && it.text.trim().length > 0) {
                     class_identifier = previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold
-                    if ((parseInt(previous_node.y_end) >= parseInt(it.y_end) && parseInt(it.y_end) + parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y_end))) {
+                    if(isNaN(it.text.trim()) || previous_node.y_end == it.y_end){
+                        same_line = true
+                    }
+                    else if ((parseInt(previous_node.y_end) >= parseInt(it.y_end) && parseInt(it.y_end) + parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y_end))) {
                         is_super = true
                     } else {
                         is_sub = true
@@ -287,7 +292,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                 }
 
                 //Check with previous node class identifier so end the previous node and not merge other nodes in that node
-                if (previous_node && (class_identifier !== previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold || it.underline)) {
+                if (!same_line && previous_node && (class_identifier !== previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold || it.underline)) {
                     if (!previous_node.is_bold && it.is_bold && it.node_index - previous_node.node_index == 1 && (previous_node.class_style['font-size'] + previous_node.class_style['font-family'] == it.class_style['font-size'] + it.class_style['font-family'])) {
                         class_identifier = previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold
                         it.is_bold = false
@@ -307,7 +312,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                     }
                     data.text = data.text.trim()
 
-                    if (is_super || is_sub || (!(data.text.search(sentence_ends_regex) >= 0) || abbrivations2.indexOf(data.text.substring(data.text.length - 4, data.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(data.text.substring(data.text.length - 5, data.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(data.text.substring(data.text.length - 6, data.text.length).toLowerCase()) >= 0 || abbrivations6.indexOf(data.text.substring(data.text.length - 8, data.text.length).toLowerCase()) >= 0)) {
+                    if (same_line || is_super || is_sub || (!(data.text.search(sentence_ends_regex) >= 0) || abbrivations2.indexOf(data.text.substring(data.text.length - 4, data.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(data.text.substring(data.text.length - 5, data.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(data.text.substring(data.text.length - 6, data.text.length).toLowerCase()) >= 0 || abbrivations6.indexOf(data.text.substring(data.text.length - 8, data.text.length).toLowerCase()) >= 0)) {
                         if (!(it.node_index - data.node_index > 2 && it.page_no_end - old_data.data.page_no_end == 0) || (it.page_no_end - old_data.data.page_no_end == 1)) {
                             if (is_sub || is_super) {
                                 if (it.text.trim().length > 1 && isNaN(it.text)) {
@@ -341,7 +346,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                 if (!it.underline)
                     style_map[class_identifier] = { index: output.length - 1, data: it }
             }
-            if (!is_sub && !is_super && !it.underline && it.text.trim().length > 0)
+            if (!same_line && !is_sub && !is_super && !it.underline && it.text.trim().length > 0)
                 previous_node = it
         })
     })
