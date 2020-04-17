@@ -211,7 +211,7 @@ exports.mergeHtmlNodes = function (items, cb) {
         let obj = items[key].html_nodes
         let image_data = items[key].image_data
         let footer_check_node = obj[obj.length - 1]
-        if (image_data.lines && image_data.lines.length > 0) {
+        if (image_data.lines && image_data.lines.length > 0 && parseInt(image_data.lines[0].x) < 150) {
             let margin = (parseInt(footer_check_node.y) - parseInt(image_data.lines[0].y)) / parseInt(footer_check_node.y)
             if (margin > 0 && margin * 100 < 8) {
                 footer_available = true
@@ -277,12 +277,6 @@ exports.mergeHtmlNodes = function (items, cb) {
             if (output && output.length > 0) {
 
                 //Check for sub and super script
-                if(it.page_no ==  12){
-                    LOG.info(it.text)
-                    LOG.info(previous_node.text)
-                    LOG.info(it.y_end)
-                    LOG.info(previous_node.y_end)
-                }
                 if (!style_map[class_identifier] && previous_node && previous_node.page_no === it.page_no && ((parseInt(previous_node.y_end) >= parseInt(it.y_end) && parseInt(it.y_end) + parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y_end)) || (parseInt(previous_node.y_end) <= parseInt(it.y_end) && parseInt(it.y_end) <= parseInt(previous_node.y_end) + parseInt(previous_node.class_style['font-size'].split('px')[0]))) && it.text.trim().length > 0) {
                     class_identifier = previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold
                     if ((parseInt(previous_node.y_end) >= parseInt(it.y_end) && parseInt(it.y_end) + parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y_end))) {
