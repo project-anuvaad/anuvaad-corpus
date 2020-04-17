@@ -2,7 +2,7 @@ import os
 import urllib.request
 from flask import Flask, request, redirect, render_template, jsonify
 from flask import Blueprint, request, current_app as app
-from controllers.sc_judgment_header_ner_eval import api_call
+from controllers.sc_judgment_header_ner_eval import SC_ner_annotation
 import json
 from models.response import CustomResponse
 from models.status import Status
@@ -17,15 +17,15 @@ def ner_sentences():
             Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
         return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
     else:
-        print("else correct")
         output_ner = list()
         for text in data['sentences']:
-            model_dir = 'upload/models/model_1000/' # model dir static
-            result_ner = api_call(model_dir,text)
-            print(result_ner)
-            if result_ner is None or model_dir is None:
+            mix_model_dir = os.getcwd()+'/upload/models/exp_1_mix/'
+            model_dir_order = os.getcwd()+'/upload/models/exp_1_order/'
+            model_dir_judgment = os.getcwd()+'/upload/models/exp_1_judgement/'
+            result_ner = SC_ner_annotation(model_dir_judgment, model_dir_order, mix_model_dir, text).main()
+            if result_ner is None or mix_model_dir is None:
                 return "something went wrong"
-            else:   
+            else: 
                 output_ner.append(result_ner) 
         res = CustomResponse(Status.SUCCESS.value, output_ner)
         return res.getres()
