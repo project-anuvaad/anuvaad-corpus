@@ -1,5 +1,5 @@
 var BaseModel = require('../models/basemodel');
-var PdfParser = require('../models/pdf_parser');
+var PdfToDocProcess = require('../models/pdf_to_doc_process');
 var PdfSentence = require('../models/pdf_sentences');
 var Response = require('../models/response')
 var APIStatus = require('../errors/apistatus')
@@ -34,7 +34,9 @@ exports.extractDocx = function (req, res) {
     let file = req.files.doc_file
     let pdf_parser_process = {}
     pdf_parser_process.session_id = UUIDV4()
-    pdf_parser_process.doc_file = file.name
+    pdf_parser_process.process_name = file.name
+    pdf_parser_process.status = STATUS_PROCESSING
+    pdf_parser_process.created_on = new Date()
     fs.mkdir(BASE_PATH_UPLOAD + pdf_parser_process.session_id, function (e) {
         fs.writeFile(BASE_PATH_UPLOAD + pdf_parser_process.session_id + '/' + pdf_parser_process.doc_file, file.data, function (err) {
             if (err) {
@@ -83,6 +85,7 @@ exports.makeDoc = function (req, res) {
 
 
 exports.convertPdfToDoc = function (req, res) {
+    let userId = req.headers['ad-userid']
     if (!req || !req.body || !req.files || !req.files.pdf_data) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
@@ -90,24 +93,29 @@ exports.convertPdfToDoc = function (req, res) {
     let file = req.files.pdf_data
     let pdf_parser_process = {}
     pdf_parser_process.session_id = UUIDV4()
-    pdf_parser_process.pdf_path = file.name
-    fs.mkdir(BASE_PATH_UPLOAD + pdf_parser_process.session_id, function (e) {
-        fs.writeFile(BASE_PATH_UPLOAD + pdf_parser_process.session_id + '/' + pdf_parser_process.pdf_path, file.data, function (err) {
-            if (err) {
-                LOG.error(err)
-                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                return res.status(apistatus.http.status).json(apistatus);
-            }
-
-            PdfToHtml.convertPdfToHtmlPagewise(BASE_PATH_UPLOAD, pdf_parser_process.pdf_path, 'output.html', pdf_parser_process.session_id, function (err, data) {
+    pdf_parser_process.process_name = file.name
+    pdf_parser_process.status = STATUS_PROCESSING
+    pdf_parser_process.created_by = userId
+    pdf_parser_process.created_on = new Date()
+    BaseModel.saveData(PdfToDocProcess, [pdf_parser_process], function (err, doc) {
+        fs.mkdir(BASE_PATH_UPLOAD + pdf_parser_process.session_id, function (e) {
+            fs.writeFile(BASE_PATH_UPLOAD + pdf_parser_process.session_id + '/' + pdf_parser_process.pdf_path, file.data, function (err) {
                 if (err) {
                     LOG.error(err)
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);
                 }
-                let index = 1
-                let output_res = {}
-                processHtml(pdf_parser_process, index, output_res, false, 1, false, res)
+
+                PdfToHtml.convertPdfToHtmlPagewise(BASE_PATH_UPLOAD, pdf_parser_process.pdf_path, 'output.html', pdf_parser_process.session_id, function (err, data) {
+                    if (err) {
+                        LOG.error(err)
+                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                        return res.status(apistatus.http.status).json(apistatus);
+                    }
+                    let index = 1
+                    let output_res = {}
+                    processHtml(pdf_parser_process, index, output_res, false, 1, false, res)
+                })
             })
         })
     })
@@ -165,8 +173,24 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                             return res.status(apistatus.http.status).json(apistatus);
                         }
-                        let response = new Response(StatusCode.SUCCESS, filepath).getRsp()
-                        return res.status(response.http.status).json(response);
+                        let condition = { session_id: pdf_parser_process.session_id }
+                        BaseModel.findByCondition(PdfToDocProcess, condition, null, null, null, function (err, pdf_to_doc_process) {
+                            if (pdf_to_doc_process && pdf_to_doc_process.length > 0) {
+                                let pdf_to_doc_process_obj = pdf_to_doc_process[0]._doc
+                                pdf_parser_process.status = STATUS_COMPLETED
+                                BaseModel.updateData(PdfToDocProcess, pdf_parser_process, pdf_to_doc_process_obj._id, function (err, doc) {
+                                    if (err) {
+                                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                        return res.status(apistatus.http.status).json(apistatus);
+                                    }
+                                    let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                                    return res.status(response.http.status).json(response);
+                                })
+                            } else {
+                                let response = new Response(StatusCode.SUCCESS, filepath).getRsp()
+                                return res.status(response.http.status).json(response);
+                            }
+                        })
                     })
                 }
             }).catch((e) => {
