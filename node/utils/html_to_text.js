@@ -86,6 +86,13 @@ exports.convertHtmlToJsonPagewise = function (basefolder, inputfilename, session
                         it.text = it.text.replace(/__LINE_BREAK__/g, " ")
                     } 
                 })
+                items.sort(function(a, b){
+                    if(parseInt(a.y) == parseInt(b.y)){
+                        return parseInt(a.x) - parseInt(b.x)
+                    }else{
+                        return parseInt(a.y) - parseInt(b.y)
+                    }
+                });
                 cb(null, items)
             }
         }, function (err) {
