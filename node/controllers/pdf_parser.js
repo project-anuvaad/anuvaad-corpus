@@ -1,5 +1,6 @@
 var BaseModel = require('../models/basemodel');
 var PdfParser = require('../models/pdf_parser');
+var PdfDocProcess = require('../models/pdf_to_doc_process');
 var PdfSentence = require('../models/pdf_sentences');
 var Response = require('../models/response')
 var APIStatus = require('../errors/apistatus')
@@ -23,6 +24,28 @@ const BASE_PATH_UPLOAD = 'corpusfiles/pdfs/'
 const STATUS_PROCESSING = 'PROCESSING'
 const STATUS_COMPLETED = 'COMPLETED'
 const STATUS_PENDING = 'PENDING'
+
+const NER_FIRST_PAGE_IDENTIFIERS = {
+    'REPORTABLE_TYPE': { align: 'CENTER', is_new_line: true, is_bold: true },
+    'JURISDICTION': { align: 'CENTER', is_new_line: true },
+    'FORUM_NAME': { align: 'CENTER', is_new_line: true, is_bold: true },
+    'FIRST_PARTY': { align: 'LEFT' },
+    'FIRST_PARTY_TYPE': { align: 'RIGHT', is_new_line: true },
+    'SECOND_PARTY': { align: 'LEFT' },
+    'SECOND_PARTY_TYPE': { align: 'RIGHT', is_new_line: true },
+    'WITH_HEADER': { align: 'CENTER', is_new_line: true },
+    'CASE_IDENTIFIER': { align: 'CENTER', is_new_line: true },
+    'SLP': { align: 'CENTER', is_new_line: true },
+    'JUDGMENT_ORDER_HEADER': { align: 'CENTER', is_new_line: true, is_bold: true },
+    'JUDGE_NAME': { align: 'LEFT', is_new_line: true, is_bold: true, underline: true },
+}
+
+const NER_LAST_PAGE_IDENTIFIERS = {
+    'JUDGMENT_JUDGE_SIGNATURE': { align: 'RIGHT', is_new_line: true },
+    'JUDGE_NAME': { align: 'RIGHT', is_new_line: true },
+    'JUDGMENT_LOCATION': { align: 'LEFT', is_new_line: true },
+    'JUDGMENT_DATE': { align: 'LEFT', is_new_line: true },
+}
 
 
 exports.extractParagraphsPerPages = function (req, res) {
@@ -53,6 +76,130 @@ exports.extractParagraphsPerPages = function (req, res) {
                 processHtml(pdf_parser_process, index, output_res, true, 1, false, res)
             })
         })
+    })
+}
+
+function makeSentenceObjForNer(n, identifier_tag, ner_sentences, page_no) {
+    let sentence = {}
+    Object.assign(sentence, identifier_tag)
+    sentence.text = n.tagged_value
+    sentence.is_ner = true
+    sentence.page_no = page_no
+    ner_sentences.push(sentence)
+    return ner_sentences
+}
+
+function useNerTags(ner_data, data, cb) {
+    let JUDGMENT_ORDER_HEADER_PAGE_NO = -1
+    let JUDGE_NAME_PAGE_NO = -1
+    let JUDGMENT_ORDER_HEADER = ''
+    let JUDGE_NAME = ''
+    let JUDGMENT_ORDER_HEADER_FOUND = false
+    let LAST_PAGE_NER_BEGINNING = ''
+    let LAST_PAGE_NER_BEGINNING_FOUND = false
+    let ner_sentences = []
+    let last_page_ner_sentences = []
+    ner_data.map((ner, index) => {
+        if ((JUDGMENT_ORDER_HEADER.length == 0 && JUDGMENT_ORDER_HEADER_PAGE_NO >= index) || (JUDGE_NAME.length == 0)) {
+            ner_run_arr = []
+            tab_stops = []
+            ner.map((n) => {
+                if (Object.keys(NER_FIRST_PAGE_IDENTIFIERS).indexOf(n.annotation_tag) >= 0) {
+                    let identifier_tag = NER_FIRST_PAGE_IDENTIFIERS[n.annotation_tag]
+                    ner_sentences = makeSentenceObjForNer(n, identifier_tag, ner_sentences, data[0].page_no)
+                }
+                if (n.annotation_tag === 'JUDGMENT_ORDER_HEADER') {
+                    JUDGMENT_ORDER_HEADER_PAGE_NO = index + 1
+                    JUDGMENT_ORDER_HEADER = n.tagged_value
+                }
+                else if (n.annotation_tag === 'JUDGE_NAME' && JUDGMENT_ORDER_HEADER_PAGE_NO >= 0) {
+                    JUDGE_NAME_PAGE_NO = index + 1
+                    JUDGE_NAME = n.tagged_value
+                }
+            })
+        }
+        else {
+            return
+        }
+    })
+    let last_page_ner = ner_data[ner_data.length - 1]
+    last_page_ner.map((n) => {
+        if (Object.keys(NER_LAST_PAGE_IDENTIFIERS).indexOf(n.annotation_tag) >= 0) {
+            if (LAST_PAGE_NER_BEGINNING.length == 0) {
+                LAST_PAGE_NER_BEGINNING = n.tagged_value
+            }
+            if (n.annotation_tag == 'JUDGMENT_DATE') {
+                let ner_obj = { annotation_tag: 'JUDGMENT_LOCATION', tagged_value: 'New Delhi' }
+                let identifier_tag = NER_LAST_PAGE_IDENTIFIERS[ner_obj.annotation_tag]
+                last_page_ner_sentences = makeSentenceObjForNer(ner_obj, identifier_tag, last_page_ner_sentences, data[data.length-1].page_no)
+            }
+            let identifier_tag = NER_LAST_PAGE_IDENTIFIERS[n.annotation_tag]
+            last_page_ner_sentences = makeSentenceObjForNer(n, identifier_tag, last_page_ner_sentences, data[data.length-1].page_no)
+        }
+    })
+    let sentences = ner_sentences
+    data.map((d, index) => {
+        let remaining_text = ''
+        //For handling last page related ner
+        if (d.page_no >= ner_data.length && !LAST_PAGE_NER_BEGINNING_FOUND) {
+            if (d.text.indexOf(LAST_PAGE_NER_BEGINNING) >= 0) {
+                LAST_PAGE_NER_BEGINNING_FOUND = true
+                return
+            }
+        }
+        if (LAST_PAGE_NER_BEGINNING_FOUND) {
+            return true
+        }
+
+        //For handling first page related ner
+        if (((JUDGE_NAME_PAGE_NO >= 0 && d.page_no <= JUDGE_NAME_PAGE_NO) || (JUDGE_NAME_PAGE_NO === -1 && d.page_no <= JUDGMENT_ORDER_HEADER_PAGE_NO)) && !JUDGMENT_ORDER_HEADER_FOUND) {
+            if (JUDGE_NAME.length > 0 && d.text.indexOf(JUDGE_NAME) >= 0) {
+                remaining_text = d.text.replace(JUDGE_NAME, '')
+                JUDGMENT_ORDER_HEADER_FOUND = true
+            }
+            else if (JUDGE_NAME.length == 0 && d.text.indexOf(JUDGMENT_ORDER_HEADER) >= 0) {
+                remaining_text = d.text.replace(JUDGMENT_ORDER_HEADER, '')
+                JUDGMENT_ORDER_HEADER_FOUND = true
+            }
+            if (remaining_text.trim().length < 1)
+                return
+        }
+        sentences.push(d)
+    })
+    sentences = sentences.concat(last_page_ner_sentences)
+    cb(sentences)
+}
+
+function performNer(data, cb) {
+    let sentences = []
+    let previous_page_no = -1
+    let page_sentences = ''
+    data.map((d, index) => {
+        if (previous_page_no !== d.page_no) {
+            previous_page_no = d.page_no
+            if (page_sentences.length > 0) {
+                sentences.push(page_sentences)
+            }
+            page_sentences = d.text
+        } else {
+            page_sentences += ' ' + d.text
+        }
+    })
+    if (page_sentences.length > 0) {
+        sentences.push(page_sentences)
+    }
+    axios.post(PYTHON_BASE_URL + 'ner',
+        {
+            sentences: sentences
+        }
+    ).then(function (api_res) {
+        if (api_res && api_res.data && api_res.data.data) {
+            cb(null, api_res)
+        } else {
+            cb('err', null)
+        }
+    }).catch((e) => {
+        cb(e, null)
     })
 }
 
@@ -103,80 +250,62 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
             })
         } else {
             HtmlToText.mergeHtmlNodes(output_res, function (err, data, header_text, footer_text) {
-                if (tokenize) {
-                    axios.post(PYTHON_BASE_URL + 'tokenize-sentence',
-                        {
-                            paragraphs: data
-                        }
-                    ).then(function (api_res) {
-                        let sentences = []
-                        if (api_res && api_res.data) {
-                            let index = 0
-                            let sentence_index = 0
-                            async.each(api_res.data.data, (d, cb) => {
-                                data[index].text = d
-                                async.each(d.text, function (tokenized_sentence, callback) {
-                                    let sentence = {}
-                                    sentence.text = tokenized_sentence
-                                    sentence.page_no = d.page_no
-                                    sentence.sentence_index = sentence_index
-                                    sentence.session_id = pdf_parser_process.session_id
-                                    sentence.status = STATUS_PENDING
-                                    sentences.push(sentence)
-                                    sentence_index++
-                                    callback()
-                                }, function (err) {
-                                    index++
-                                    cb()
-                                })
-                            }, function (err) {
-                                BaseModel.saveData(PdfSentence, sentences, function (err, doc) {
-                                    BaseModel.saveData(PdfParser, [pdf_parser_process], function (err, doc) {
-                                        if (err) {
-                                            LOG.error(err)
-                                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                                            return res.status(apistatus.http.status).json(apistatus);
-                                        }
-                                        let response = new Response(StatusCode.SUCCESS, doc).getRsp()
-                                        return res.status(response.http.status).json(response);
-                                    })
-                                })
-                            })
-                        }
-                    })
-                } else {
-                    let sentences = []
-                    let previous_page_no = -1
-                    let page_sentences = ''
-                    data.map((d, index) => {
-                        if (previous_page_no !== d.page_no) {
-                            previous_page_no = d.page_no
-                            if (page_sentences.length > 0) {
-                                sentences.push(page_sentences)
-                            }
-                            page_sentences = d.text
-                        } else {
-                            page_sentences += ' ' + d.text
-                        }
-                    })
-                    if (page_sentences.length > 0) {
-                        sentences.push(page_sentences)
-                    }
-                    axios.post(PYTHON_BASE_URL + 'ner',
-                        {
-                            sentences: sentences
-                        }
-                    ).then(function (api_res) {
-                        if (api_res && api_res.data && api_res.data.data) {
-                            let response = new Response(StatusCode.SUCCESS, data, null, null, null, api_res.data.data).getRsp()
-                            return res.status(response.http.status).json(response);
-                        }
-                    }).catch((e) => {
-                        LOG.error(e)
+                performNer(data, function (err, ner_data) {
+                    if (err) {
+                        LOG.error(err)
                         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                         return res.status(apistatus.http.status).json(apistatus);
+                    }
+                    useNerTags(ner_data.data.data, data, function (data) {
+                        if (tokenize) {
+
+                            axios.post(PYTHON_BASE_URL + 'tokenize-sentence',
+                                {
+                                    paragraphs: data
+                                }
+                            ).then(function (api_res) {
+                                let sentences = []
+                                if (api_res && api_res.data) {
+                                    let index = 0
+                                    let sentence_index = 0
+                                    async.each(api_res.data.data, (d, cb) => {
+                                        // data[index].text = d
+                                        async.each(d.text, function (tokenized_sentence, callback) {
+                                            LOG.info(tokenized_sentence)
+                                            let sentence = {}
+                                            Object.assign(sentence, data[index])
+                                            sentence.text = tokenized_sentence
+                                            sentence.session_id = pdf_parser_process.session_id
+                                            sentence.status = STATUS_PENDING
+                                            sentences.push(sentence)
+                                            sentence_index++
+                                            callback()
+                                        }, function (err) {
+                                            index++
+                                            cb()
+                                        })
+                                    }, function (err) {
+                                        BaseModel.saveData(PdfSentence, sentences, function (err, doc) {
+                                            BaseModel.saveData(PdfParser, [pdf_parser_process], function (err, doc) {
+                                                if (err) {
+                                                    LOG.error(err)
+                                                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                                    return res.status(apistatus.http.status).json(apistatus);
+                                                }
+                                                let response = new Response(StatusCode.SUCCESS, doc).getRsp()
+                                                return res.status(response.http.status).json(response);
+                                            })
+                                        })
+                                    })
+                                }
+                            })
+
+                        } else {
+                            let response = new Response(StatusCode.SUCCESS, data, null, null, null, ner_data.data.data).getRsp()
+                            return res.status(response.http.status).json(response);
+                        }
                     })
-                }
+                })
             })
         }
     }

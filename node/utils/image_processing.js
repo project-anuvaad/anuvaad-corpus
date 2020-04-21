@@ -37,7 +37,7 @@ exports.processImage = function (filepath, cb) {
                 cb(null, {})
             })
         }).catch((e) => {
-            cb(e, null)
+            cb(null, {})
         })
     })
 }
