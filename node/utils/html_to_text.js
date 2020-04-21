@@ -237,7 +237,7 @@ exports.mergeHtmlNodes = function (items, cb) {
             if (it.text.trim().length == 0) {
                 return
             }
-            else if (parseInt(it.text) == parseInt(it.page_no) && (index > obj.length - 2 || index < 5)) {
+            else if (parseInt(it.text.trim()) == parseInt(it.page_no) && (index > obj.length - 4 || index < 5)) {
                 return
             }
             else if ((page_no_start_index !== -1 && index === page_no_start_index) || (page_no_end_index !== -1 && index === obj.length - page_no_end_index - 1) || (key == 1 && page_no_text.trim().length > 0 && sentence_ends.indexOf(page_no_text) < 0 && it.text.replace(/\d+/g, '').replace(/\s+/g, '') === page_no_text)) {
