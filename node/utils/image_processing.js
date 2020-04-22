@@ -30,6 +30,23 @@ exports.processImage = function (filepath, cb) {
                     let lines = res.lines
                     lines.sort((a, b) => b.y - a.y)
                     res.lines = lines
+                } if (res && res.tables && res.tables.length > 0) {
+                    let tables = res.tables
+                    tables.map((table, index) => {
+                        let rect = table.rect
+                        rect.sort((a, b) => {
+                            if (a.y == b.y) {
+                                return b.x - a.x
+                            } else {
+                                return b.y - a.y
+                            }
+
+                        })
+                        table.rect = rect
+                        tables[index] = table
+                    })
+
+                    res.tables = tables
                 }
                 cb(null, res)
             }).catch((e) => {

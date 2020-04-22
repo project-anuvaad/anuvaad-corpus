@@ -107,9 +107,10 @@ function checkForTable(text_node, image_data) {
     if (image_data.tables && Array.isArray(image_data.tables)) {
         image_data.tables.map((table) => {
             if (parseInt(text_node.y) >= table.y && parseInt(text_node.y) <= table.y + table.h) {
+                let max_rect = table.rect[table.rect.length - 1]
                 table.rect.map((rect) => {
                     if ((parseInt(text_node.y) >= table.y + rect.y || table.y + rect.y - parseInt(text_node.y) < 4) && parseInt(text_node.y) <= table.y + rect.y + rect.h - 3 && parseInt(text_node.x) >= table.x + rect.x && parseInt(text_node.x) <= table.x + rect.x + rect.w) {
-                        table_check_obj = { is_table: true, class_identifier: table.x + '_' + table.y + '_' + rect.x + '_' + rect.y }
+                        table_check_obj = { is_table: true, class_identifier: table.x + '_' + table.y + '_' + rect.x + '_' + rect.y, row: rect.index[0], column: rect.index[1], parent_table: table }
                     }
                 })
             }
@@ -305,6 +306,9 @@ exports.mergeHtmlNodes = function (items, cb) {
             if (table_check.is_table) {
                 class_identifier = table_check.class_identifier
                 it.is_table = true
+                it.parent_table = table_check.parent_table
+                it.table_row = table_check.row
+                it.table_column = table_check.column
             }
             if (output && output.length > 0) {
 
@@ -380,11 +384,35 @@ exports.mergeHtmlNodes = function (items, cb) {
                 previous_node = it
         })
     })
-    var out = output.filter((o) => {
+    var out = output.filter((o, index) => {
         o.text = o.text.replace(/\s+/g, " ")
         o.text = o.text.replace(/Digitally signed by.{1,}Reason:/gm, '')
         o.text = o.text.replace(/Signature Not Verified/gm, '')
         o.text = o.text.trim()
+        if (o.is_table) {
+            if (table_index == -1) {
+                table_index = index
+                let table_item = {}
+                Object.assign(table_item, o)
+                let table_items = {}
+                o.parent_table.rect.map((rect) => {
+                    table_items[rect.index[0]] = { [rect.index[1]]: { 'text': '' } }
+                })
+                table_items[o.table_row][o.table_column] = table_item
+                o.table_items = table_items
+                o.text = ''
+                return true
+            } else {
+                let table_items = output[table_index].table_items
+                if (table_items) {
+                    table_items[o.table_row][o.table_column] = o
+                    output[table_index].table_items = table_items
+                }
+                return false
+            }
+        } else {
+            table_index = -1
+        }
         if (o.text.length > 0) {
             return true
         }
