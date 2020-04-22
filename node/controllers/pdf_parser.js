@@ -105,6 +105,9 @@ function useNerTags(ner_data, data, cb) {
             tab_stops = []
             ner.map((n) => {
                 if (Object.keys(NER_FIRST_PAGE_IDENTIFIERS).indexOf(n.annotation_tag) >= 0) {
+                    if(n.annotation_tag === 'JUDGE_NAME' && !(JUDGMENT_ORDER_HEADER_PAGE_NO >= 0 && index + 1 - JUDGMENT_ORDER_HEADER_PAGE_NO <= 1)) {
+                        return
+                    }
                     let identifier_tag = NER_FIRST_PAGE_IDENTIFIERS[n.annotation_tag]
                     ner_sentences = makeSentenceObjForNer(n, identifier_tag, ner_sentences, data[0].page_no)
                 }
@@ -137,6 +140,7 @@ function useNerTags(ner_data, data, cb) {
             last_page_ner_sentences = makeSentenceObjForNer(n, identifier_tag, last_page_ner_sentences, data[data.length - 1].page_no)
         }
     })
+    LOG.info(LAST_PAGE_NER_BEGINNING)
     let sentences = ner_sentences
     data.map((d, index) => {
         let remaining_text = ''
