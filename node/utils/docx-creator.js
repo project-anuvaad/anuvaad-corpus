@@ -123,6 +123,9 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, header_text, foo
             tab_stops = []
             ner.map((n) => {
                 if (Object.keys(NER_FIRST_PAGE_IDENTIFIERS).indexOf(n.annotation_tag) >= 0) {
+                    if(n.annotation_tag === 'JUDGE_NAME' && !(JUDGMENT_ORDER_HEADER_PAGE_NO >= 0 && index + 1 - JUDGMENT_ORDER_HEADER_PAGE_NO <= 1)) {
+                        return
+                    }
                     let identifier_tag = NER_FIRST_PAGE_IDENTIFIERS[n.annotation_tag]
                     children = constructRunForNers(n, identifier_tag, children)
                 }
@@ -130,7 +133,7 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, header_text, foo
                     JUDGMENT_ORDER_HEADER_PAGE_NO = index + 1
                     JUDGMENT_ORDER_HEADER = n.tagged_value
                 }
-                else if (n.annotation_tag === 'JUDGE_NAME' && JUDGMENT_ORDER_HEADER_PAGE_NO >= 0) {
+                else if (n.annotation_tag === 'JUDGE_NAME' && JUDGMENT_ORDER_HEADER_PAGE_NO >= 0 && index + 1 - JUDGMENT_ORDER_HEADER_PAGE_NO <= 1) {
                     JUDGE_NAME_PAGE_NO = index + 1
                     JUDGE_NAME = n.tagged_value
                 }
