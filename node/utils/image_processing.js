@@ -25,13 +25,13 @@ exports.processImage = function (filepath, cb) {
                     timeout: 30000,
                 }
             ).then(function (api_res) {
-                let res = api_res.data.response
+                let res = api_res.data
                 if (res && res.lines && res.lines.length > 0) {
                     let lines = res.lines
                     lines.sort((a, b) => b.y - a.y)
                     res.lines = lines
                 }
-                cb(null, api_res.data.response)
+                cb(null, res)
             }).catch((e) => {
                 LOG.error(e)
                 cb(null, {})
