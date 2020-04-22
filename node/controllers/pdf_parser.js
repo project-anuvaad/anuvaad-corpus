@@ -140,7 +140,6 @@ function useNerTags(ner_data, data, cb) {
             last_page_ner_sentences = makeSentenceObjForNer(n, identifier_tag, last_page_ner_sentences, data[data.length - 1].page_no)
         }
     })
-    LOG.info(LAST_PAGE_NER_BEGINNING)
     let sentences = ner_sentences
     data.map((d, index) => {
         let remaining_text = ''
@@ -154,7 +153,6 @@ function useNerTags(ner_data, data, cb) {
         if (LAST_PAGE_NER_BEGINNING_FOUND) {
             return true
         }
-        LOG.info(JUDGE_NAME_PAGE_NO)
         //For handling first page related ner
         if (((JUDGE_NAME_PAGE_NO >= 0 && d.page_no <= JUDGE_NAME_PAGE_NO) || (JUDGE_NAME_PAGE_NO === -1 && d.page_no <= JUDGMENT_ORDER_HEADER_PAGE_NO)) && !JUDGMENT_ORDER_HEADER_FOUND) {
             if (JUDGE_NAME.length > 0 && d.text.indexOf(JUDGE_NAME) >= 0) {
