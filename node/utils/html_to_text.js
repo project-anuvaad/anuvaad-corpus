@@ -79,17 +79,17 @@ exports.convertHtmlToJsonPagewise = function (basefolder, inputfilename, session
                     if (it.text.indexOf(PAGE_BREAK_IDENTIFIER) >= 0) {
                         let text_array = it.text.split(PAGE_BREAK_IDENTIFIER)
                         if (it.class_style['line-height']) {
-                            it.y_end = parseInt(it.y_end) + parseInt(it.class_style['line-height'].split('px')[0] * (text_array.length-1))
+                            it.y_end = parseInt(it.y_end) + parseInt(it.class_style['line-height'].split('px')[0] * (text_array.length - 1))
                         } else {
-                            it.y_end = parseInt(it.y_end) + parseInt(it.class_style['font-size'].split('px')[0] * (text_array.length-1))
+                            it.y_end = parseInt(it.y_end) + parseInt(it.class_style['font-size'].split('px')[0] * (text_array.length - 1))
                         }
                         it.text = it.text.replace(/__LINE_BREAK__/g, " ")
-                    } 
+                    }
                 })
-                items.sort(function(a, b){
-                    if(parseInt(a.y) == parseInt(b.y)){
+                items.sort(function (a, b) {
+                    if (parseInt(a.y) == parseInt(b.y)) {
                         return parseInt(a.x) - parseInt(b.x)
-                    }else{
+                    } else {
                         return parseInt(a.y) - parseInt(b.y)
                     }
                 });
@@ -99,6 +99,23 @@ exports.convertHtmlToJsonPagewise = function (basefolder, inputfilename, session
             cb(err, null)
         });
     })
+}
+
+
+function checkForTable(text_node, image_data) {
+    let table_check_obj = { is_table: false, class_identifier: null }
+    if (image_data.tables && Array.isArray(image_data.tables)) {
+        image_data.tables.map((table) => {
+            if (parseInt(text_node.y) >= table.y && parseInt(text_node.y) <= table.y + table.h) {
+                table.rect.map((rect) => {
+                    if ((parseInt(text_node.y) >= table.y + rect.y || table.y + rect.y - parseInt(text_node.y) < 4) && parseInt(text_node.y) <= table.y + rect.y + rect.h - 3 && parseInt(text_node.x) >= table.x + rect.x && parseInt(text_node.x) <= table.x + rect.x + rect.w) {
+                        table_check_obj = { is_table: true, class_identifier: table.x + '_' + table.y + '_' + rect.x + '_' + rect.y }
+                    }
+                })
+            }
+        })
+    }
+    return table_check_obj
 }
 
 
@@ -232,7 +249,7 @@ exports.mergeHtmlNodes = function (items, cb) {
             change_style_map = false
             is_sub = false
             is_super = false
-            same_line =  false
+            same_line = false
             need_to_add_in_array = true
             if (it.text.trim().length == 0) {
                 return
@@ -280,15 +297,21 @@ exports.mergeHtmlNodes = function (items, cb) {
                 })
             }
 
+            let table_check = checkForTable(it, image_data)
+
 
             //Make the class identifier to search in map for previously used node
             let class_identifier = it.class_style['font-size'] + it.class_style['font-family'] + it.is_bold
+            if (table_check.is_table) {
+                class_identifier = table_check.class_identifier
+                it.is_table = true
+            }
             if (output && output.length > 0) {
 
                 //Check for sub and super script
-                if (!style_map[class_identifier] && previous_node && previous_node.page_no === it.page_no && ((parseInt(previous_node.y_end) >= parseInt(it.y_end) && parseInt(it.y_end) + parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y_end)) || (parseInt(previous_node.y_end) <= parseInt(it.y_end) && parseInt(it.y_end) <= parseInt(previous_node.y_end) + parseInt(previous_node.class_style['font-size'].split('px')[0]))) && it.text.trim().length > 0) {
+                if (!it.is_table && !style_map[class_identifier] && previous_node && previous_node.page_no === it.page_no && ((parseInt(previous_node.y_end) >= parseInt(it.y_end) && parseInt(it.y_end) + parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y_end)) || (parseInt(previous_node.y_end) <= parseInt(it.y_end) && parseInt(it.y_end) <= parseInt(previous_node.y_end) + parseInt(previous_node.class_style['font-size'].split('px')[0]))) && it.text.trim().length > 0) {
                     class_identifier = previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold
-                    if(isNaN(it.text.trim()) || previous_node.y_end == it.y_end){
+                    if (isNaN(it.text.trim()) || previous_node.y_end == it.y_end) {
                         same_line = true
                     }
                     else if ((parseInt(previous_node.y_end) >= parseInt(it.y_end) && parseInt(it.y_end) + parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y_end))) {
@@ -299,7 +322,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                 }
 
                 //Check with previous node class identifier so end the previous node and not merge other nodes in that node
-                if (!same_line && previous_node && (class_identifier !== previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold || it.underline)) {
+                if (!it.is_table && !same_line && previous_node && (class_identifier !== previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold || it.underline)) {
                     if (!previous_node.is_bold && it.is_bold && it.node_index - previous_node.node_index == 1 && (previous_node.class_style['font-size'] + previous_node.class_style['font-family'] == it.class_style['font-size'] + it.class_style['font-family'])) {
                         class_identifier = previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold
                         it.is_bold = false
@@ -320,7 +343,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                     data.text = data.text.trim()
 
                     if (same_line || is_super || is_sub || (!(data.text.search(sentence_ends_regex) >= 0) || abbrivations2.indexOf(data.text.substring(data.text.length - 4, data.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(data.text.substring(data.text.length - 5, data.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(data.text.substring(data.text.length - 6, data.text.length).toLowerCase()) >= 0 || abbrivations6.indexOf(data.text.substring(data.text.length - 8, data.text.length).toLowerCase()) >= 0)) {
-                        if (!(it.node_index - data.node_index > 2 && it.page_no_end - old_data.data.page_no_end == 0) || (it.page_no_end - old_data.data.page_no_end == 1)) {
+                        if (it.is_table || !((it.node_index - data.node_index > 2) && it.page_no_end - old_data.data.page_no_end == 0) || (it.page_no_end - old_data.data.page_no_end == 1)) {
                             if (is_sub || is_super) {
                                 if (it.text.trim().length > 1 && isNaN(it.text)) {
                                     old_data.data.text += " " + it.text.replace(/\s+/g, " ").trim()
