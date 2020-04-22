@@ -112,7 +112,7 @@ function useNerTags(ner_data, data, cb) {
                     JUDGMENT_ORDER_HEADER_PAGE_NO = index + 1
                     JUDGMENT_ORDER_HEADER = n.tagged_value
                 }
-                else if (n.annotation_tag === 'JUDGE_NAME' && JUDGMENT_ORDER_HEADER_PAGE_NO >= 0) {
+                else if (n.annotation_tag === 'JUDGE_NAME' && JUDGMENT_ORDER_HEADER_PAGE_NO >= 0 && index + 1 - JUDGMENT_ORDER_HEADER_PAGE_NO <= 1) {
                     JUDGE_NAME_PAGE_NO = index + 1
                     JUDGE_NAME = n.tagged_value
                 }
@@ -131,10 +131,10 @@ function useNerTags(ner_data, data, cb) {
             if (n.annotation_tag == 'JUDGMENT_DATE') {
                 let ner_obj = { annotation_tag: 'JUDGMENT_LOCATION', tagged_value: 'New Delhi' }
                 let identifier_tag = NER_LAST_PAGE_IDENTIFIERS[ner_obj.annotation_tag]
-                last_page_ner_sentences = makeSentenceObjForNer(ner_obj, identifier_tag, last_page_ner_sentences, data[data.length-1].page_no)
+                last_page_ner_sentences = makeSentenceObjForNer(ner_obj, identifier_tag, last_page_ner_sentences, data[data.length - 1].page_no)
             }
             let identifier_tag = NER_LAST_PAGE_IDENTIFIERS[n.annotation_tag]
-            last_page_ner_sentences = makeSentenceObjForNer(n, identifier_tag, last_page_ner_sentences, data[data.length-1].page_no)
+            last_page_ner_sentences = makeSentenceObjForNer(n, identifier_tag, last_page_ner_sentences, data[data.length - 1].page_no)
         }
     })
     let sentences = ner_sentences
@@ -150,7 +150,7 @@ function useNerTags(ner_data, data, cb) {
         if (LAST_PAGE_NER_BEGINNING_FOUND) {
             return true
         }
-
+        LOG.info(JUDGE_NAME_PAGE_NO)
         //For handling first page related ner
         if (((JUDGE_NAME_PAGE_NO >= 0 && d.page_no <= JUDGE_NAME_PAGE_NO) || (JUDGE_NAME_PAGE_NO === -1 && d.page_no <= JUDGMENT_ORDER_HEADER_PAGE_NO)) && !JUDGMENT_ORDER_HEADER_FOUND) {
             if (JUDGE_NAME.length > 0 && d.text.indexOf(JUDGE_NAME) >= 0) {
