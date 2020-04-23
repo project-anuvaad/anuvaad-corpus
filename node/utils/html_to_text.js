@@ -404,6 +404,8 @@ exports.mergeHtmlNodes = function (items, cb) {
 
         })
     })
+    let table_index = -1
+    let table_page_no = -1
     var out = output.filter((o, index) => {
         o.text = o.text.replace(/\s+/g, " ")
         o.text = o.text.replace(/Digitally signed by.{1,}Reason:/gm, '')
@@ -411,7 +413,7 @@ exports.mergeHtmlNodes = function (items, cb) {
         o.text = o.text.replace(DIGITAL_SIGN_IDENTIFIER, '')
         o.text = o.text.trim()
         if (o.is_table) {
-            if (table_index == -1) {
+            if (table_index == -1 || o.page_no != table_page_no) {
                 table_index = index
                 let table_item = {}
                 Object.assign(table_item, o)
@@ -422,6 +424,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                 table_items[o.table_row][o.table_column] = table_item
                 o.table_items = table_items
                 o.text = ''
+                table_page_no == o.page_no
                 return true
             } else {
                 let table_items = output[table_index].table_items
