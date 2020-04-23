@@ -105,7 +105,7 @@ function useNerTags(ner_data, data, cb) {
             tab_stops = []
             ner.map((n) => {
                 if (Object.keys(NER_FIRST_PAGE_IDENTIFIERS).indexOf(n.annotation_tag) >= 0) {
-                    if(n.annotation_tag === 'JUDGE_NAME' && !(JUDGMENT_ORDER_HEADER_PAGE_NO >= 0 && index + 1 - JUDGMENT_ORDER_HEADER_PAGE_NO <= 1)) {
+                    if (n.annotation_tag === 'JUDGE_NAME' && !(JUDGMENT_ORDER_HEADER_PAGE_NO >= 0 && index + 1 - JUDGMENT_ORDER_HEADER_PAGE_NO <= 1)) {
                         return
                     }
                     let identifier_tag = NER_FIRST_PAGE_IDENTIFIERS[n.annotation_tag]
@@ -205,6 +205,13 @@ function performNer(data, cb) {
     })
 }
 
+function makeSenteceObj(text, sentence_index) {
+    let sentence = {}
+    sentence.text = text
+    sentence.sentence_index = sentence_index
+    return sentence
+}
+
 function processHtml(pdf_parser_process, index, output_res, merge, start_node_index, tokenize, res) {
     if (fs.existsSync(BASE_PATH_UPLOAD + pdf_parser_process.session_id + "/" + 'output-' + index + '.html')) {
         let image_index = index
@@ -269,25 +276,34 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                 let sentences = []
                                 if (api_res && api_res.data) {
                                     let index = 0
-                                    let sentence_index = 0
+                                    
                                     async.each(api_res.data.data, (d, cb) => {
-                                        // data[index].text = d
+                                        let sentence_index = 0
+                                        let tokenized_sentences = []
                                         async.each(d.text, function (tokenized_sentence, callback) {
-                                            LOG.info(tokenized_sentence)
-                                            let sentence = {}
-                                            Object.assign(sentence, data[index])
-                                            sentence.text = tokenized_sentence
-                                            sentence.session_id = pdf_parser_process.session_id
-                                            sentence.status = STATUS_PENDING
-                                            sentences.push(sentence)
-                                            sentence_index++
+                                            if (data[index].is_table) {
+                                                data[index].is_table
+                                                for (var key in data[index].table_items) {
+                                                    for (var itemkey in data[index].table_items[key]) {
+                                                        let node_data = data[index].table_items[key][itemkey]
+                                                        tokenized_sentences.push(makeSenteceObj(node_data.text, sentence_index))
+                                                        sentence_index++
+                                                    }
+                                                }
+                                            } else {
+                                                tokenized_sentences.push(makeSenteceObj(tokenized_sentence, sentence_index))
+                                                sentence_index++
+                                            }
                                             callback()
                                         }, function (err) {
+                                            data[index].status = STATUS_PENDING
+                                            data[index].session_id = pdf_parser_process.session_id
+                                            data[index].tokenized_sentences = tokenized_sentences
                                             index++
                                             cb()
                                         })
                                     }, function (err) {
-                                        BaseModel.saveData(PdfSentence, sentences, function (err, doc) {
+                                        BaseModel.saveData(PdfSentence, data, function (err, doc) {
                                             BaseModel.saveData(PdfParser, [pdf_parser_process], function (err, doc) {
                                                 if (err) {
                                                     LOG.error(err)
@@ -347,6 +363,41 @@ exports.extractParagraphs = function (req, res) {
 exports.savePdfParserProcess = function (req, res) {
     let userId = req.headers['ad-userid']
     if (!req || !req.body || !req.body.process_name || !req.files || !req.files.pdf_data) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let file = req.files.pdf_data
+    let pdf_parser_process = {}
+    pdf_parser_process.session_id = UUIDV4()
+    pdf_parser_process.process_name = req.body.process_name
+    pdf_parser_process.pdf_path = file.name
+    pdf_parser_process.status = STATUS_COMPLETED
+    pdf_parser_process.created_by = userId
+    pdf_parser_process.created_on = new Date()
+    fs.mkdir(BASE_PATH_UPLOAD + pdf_parser_process.session_id, function (e) {
+        fs.writeFile(BASE_PATH_UPLOAD + pdf_parser_process.session_id + '/' + pdf_parser_process.pdf_path, file.data, function (err) {
+            if (err) {
+                LOG.error(err)
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+            PdfToHtml.convertPdfToHtmlPagewise(BASE_PATH_UPLOAD, pdf_parser_process.pdf_path, 'output.html', pdf_parser_process.session_id, function (err, data) {
+                if (err) {
+                    LOG.error(err)
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
+                let index = 1
+                let output_res = {}
+                processHtml(pdf_parser_process, index, output_res, false, 1, true, res)
+            })
+        })
+    })
+}
+
+exports.translatePdf = function (req, res) {
+    let userId = req.headers['ad-userid']
+    if (!req || !req.body || !req.body.process_name || !req.files || !req.model || !req.files.pdf_data) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
