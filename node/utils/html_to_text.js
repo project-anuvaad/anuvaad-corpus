@@ -436,6 +436,7 @@ exports.mergeHtmlNodes = function (items, cb) {
             }
         } else {
             table_index = -1
+            table_page_no = -1
         }
         if (o.text.length > 0) {
             return true
