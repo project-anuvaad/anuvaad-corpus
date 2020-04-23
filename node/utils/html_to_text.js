@@ -6,8 +6,9 @@ const abbrivations2 = [' no.', ' mr.', ' ft.', ' kg.', ' dr.', ' ms.', ' st.', '
 const abbrivations3 = [' pvt.', ' nos.', ' smt.', ' sec.', ' spl.', ' kgs.', ' ltd.', ' pty.', ' vol.', ' pty.', ' m/s.', ' mrs.', ' i.e.', ' etc.', ' (ex.', ' o.s.', ' anr.', ' ors.']
 const abbrivations4 = [' assn.']
 const abbrivations6 = [' w.e.f.']
-const sentence_ends = ['.', ',', '"', '?', '!', '”']
+const sentence_ends = ['.', '"', '?', '!', '”']
 const PAGE_BREAK_IDENTIFIER = '__LINE_BREAK__'
+const DIGITAL_SIGN_IDENTIFIER = '__DIGITAL_SIGN__'
 
 exports.convertHtmlToJsonPagewise = function (basefolder, inputfilename, session_id, merge, pageno, start_node_index, cb) {
     fs.readFile(basefolder + session_id + "/" + inputfilename, 'utf8', function (err, data) {
@@ -53,7 +54,17 @@ exports.convertHtmlToJsonPagewise = function (basefolder, inputfilename, session
                 let class_style_obj = {}
                 class_style_text = class_style_text.split(';')
                 class_style_text.map((c) => {
-                    class_style_obj[c.split(':')[0]] = c.split(':')[1]
+                    if (c.split(':')[0] == 'font-family') {
+                        if (c.split(':')[1].indexOf('+') >= 0) {
+                            class_style_obj[c.split(':')[0]] = c.split(':')[1].split('+')[1]
+                        } else {
+                            class_style_obj[c.split(':')[0]] = c.split(':')[1]
+                        }
+
+                    } else {
+                        class_style_obj[c.split(':')[0]] = c.split(':')[1]
+                    }
+
                 })
                 obj['class_style'] = class_style_obj
                 obj.node_index = node_index
@@ -86,13 +97,15 @@ exports.convertHtmlToJsonPagewise = function (basefolder, inputfilename, session
                         it.text = it.text.replace(/__LINE_BREAK__/g, " ")
                     }
                 })
-                items.sort(function (a, b) {
-                    if (parseInt(a.y) == parseInt(b.y)) {
-                        return parseInt(a.x) - parseInt(b.x)
-                    } else {
-                        return parseInt(a.y) - parseInt(b.y)
-                    }
-                });
+                // if (items.length > 0 && items[0].page_no == 1) {
+                //     items.sort(function (a, b) {
+                //         if (parseInt(a.y) == parseInt(b.y)) {
+                //             return parseInt(a.x) - parseInt(b.x)
+                //         } else {
+                //             return parseInt(a.y) - parseInt(b.y)
+                //         }
+                //     });
+                // }
                 cb(null, items)
             }
         }, function (err) {
@@ -236,7 +249,7 @@ exports.mergeHtmlNodes = function (items, cb) {
         let obj = items[key].html_nodes
         let image_data = items[key].image_data
         let footer_check_node = obj[obj.length - 1]
-        if (image_data.lines && image_data.lines.length > 0 && parseInt(image_data.lines[0].x) < 150) {
+        if (image_data.lines && image_data.lines.length > 0 && parseInt(image_data.lines[0].x) < 170) {
             let margin = (parseInt(footer_check_node.y) - parseInt(image_data.lines[0].y)) / parseInt(footer_check_node.y)
             if (margin > 0 && margin * 100 < 8) {
                 footer_available = true
@@ -246,12 +259,17 @@ exports.mergeHtmlNodes = function (items, cb) {
         if (obj && obj.length > 0)
             bottom_px = parseInt(obj[obj.length - 1].y)
         obj.map((it, index) => {
+            it.text = it.text.replace(/Digitally signed by.{1,}Reason:/gm, DIGITAL_SIGN_IDENTIFIER)
+            it.text = it.text.replace(/Signature Not Verified/gm, DIGITAL_SIGN_IDENTIFIER)
             change_style_map = false
             is_sub = false
             is_super = false
             same_line = false
             need_to_add_in_array = true
-            if (it.text.trim().length == 0) {
+            if (it.text.indexOf(DIGITAL_SIGN_IDENTIFIER) >= 0) {
+                return
+            }
+            else if (it.text.trim().length == 0) {
                 return
             }
             else if (parseInt(it.text.trim()) == parseInt(it.page_no) && (index > obj.length - 4 || index < 5)) {
@@ -314,7 +332,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                 //Check for sub and super script
                 if (!it.is_table && !style_map[class_identifier] && previous_node && previous_node.page_no === it.page_no && ((parseInt(previous_node.y_end) >= parseInt(it.y_end) && parseInt(it.y_end) + parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y_end)) || (parseInt(previous_node.y_end) <= parseInt(it.y_end) && parseInt(it.y_end) <= parseInt(previous_node.y_end) + parseInt(previous_node.class_style['font-size'].split('px')[0]))) && it.text.trim().length > 0) {
                     class_identifier = previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold
-                    if (isNaN(it.text.trim()) || previous_node.y_end == it.y_end) {
+                    if (isNaN(it.text.trim()) || (previous_node.y_end == it.y_end && parseInt(it.y_end) + parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y_end) + parseInt(previous_node.class_style['font-size'].split('px')[0]))) {
                         same_line = true
                     }
                     else if ((parseInt(previous_node.y_end) >= parseInt(it.y_end) && parseInt(it.y_end) + parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y_end))) {
@@ -329,7 +347,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                     if (!previous_node.is_bold && it.is_bold && it.node_index - previous_node.node_index == 1 && (previous_node.class_style['font-size'] + previous_node.class_style['font-family'] == it.class_style['font-size'] + it.class_style['font-family'])) {
                         class_identifier = previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold
                         it.is_bold = false
-                    } else {
+                    } else if (!is_sub && !is_super) {
                         style_map[previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold] = null
                         change_style_map = true
                     }
@@ -337,9 +355,9 @@ exports.mergeHtmlNodes = function (items, cb) {
                 if (style_map[class_identifier] && it.page_no_end - style_map[class_identifier].data.page_no_end <= 1 && !it.underline) {
                     let old_data = style_map[class_identifier]
                     let data = old_data.data
-
                     //If previous node class identifier is different than the current node then current node is a new sentence
                     if (change_style_map) {
+
                         style_map[class_identifier] = null
                         class_identifier = it.class_style['font-size'] + it.class_style['font-family'] + it.is_bold
                     }
@@ -347,6 +365,7 @@ exports.mergeHtmlNodes = function (items, cb) {
 
                     if (same_line || is_super || is_sub || (!(data.text.search(sentence_ends_regex) >= 0) || abbrivations2.indexOf(data.text.substring(data.text.length - 4, data.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(data.text.substring(data.text.length - 5, data.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(data.text.substring(data.text.length - 6, data.text.length).toLowerCase()) >= 0 || abbrivations6.indexOf(data.text.substring(data.text.length - 8, data.text.length).toLowerCase()) >= 0)) {
                         if (it.is_table || !((it.node_index - data.node_index > 2) && it.page_no_end - old_data.data.page_no_end == 0) || (it.page_no_end - old_data.data.page_no_end == 1)) {
+
                             if (is_sub || is_super) {
                                 if (it.text.trim().length > 1 && isNaN(it.text)) {
                                     old_data.data.text += " " + it.text.replace(/\s+/g, " ").trim()
@@ -379,14 +398,17 @@ exports.mergeHtmlNodes = function (items, cb) {
                 if (!it.underline)
                     style_map[class_identifier] = { index: output.length - 1, data: it }
             }
-            if (!same_line && !is_sub && !is_super && !it.underline && it.text.trim().length > 0)
+            if (!same_line && !is_sub && !is_super && !it.underline && it.text.trim().length > 0) {
                 previous_node = it
+            }
+
         })
     })
     var out = output.filter((o, index) => {
         o.text = o.text.replace(/\s+/g, " ")
         o.text = o.text.replace(/Digitally signed by.{1,}Reason:/gm, '')
         o.text = o.text.replace(/Signature Not Verified/gm, '')
+        o.text = o.text.replace(DIGITAL_SIGN_IDENTIFIER, '')
         o.text = o.text.trim()
         if (o.is_table) {
             if (table_index == -1) {
@@ -395,7 +417,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                 Object.assign(table_item, o)
                 let table_items = {}
                 o.parent_table.rect.map((rect) => {
-                    table_items[rect.index[0]] = { [rect.index[1]]: { 'text': '', 'page_no':o.page_no, node_index:new Date().getTime() } }
+                    table_items[rect.index[0]] = { [rect.index[1]]: { 'text': '', 'page_no': o.page_no, node_index: new Date().getTime() } }
                 })
                 table_items[o.table_row][o.table_column] = table_item
                 o.table_items = table_items
