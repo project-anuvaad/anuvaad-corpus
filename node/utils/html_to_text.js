@@ -107,7 +107,6 @@ function checkForTable(text_node, image_data) {
     if (image_data.tables && Array.isArray(image_data.tables)) {
         image_data.tables.map((table) => {
             if (parseInt(text_node.y) >= table.y && parseInt(text_node.y) <= table.y + table.h) {
-                let max_rect = table.rect[table.rect.length - 1]
                 table.rect.map((rect) => {
                     if ((parseInt(text_node.y) >= table.y + rect.y || table.y + rect.y - parseInt(text_node.y) < 4) && parseInt(text_node.y) <= table.y + rect.y + rect.h - 3 && parseInt(text_node.x) >= table.x + rect.x && parseInt(text_node.x) <= table.x + rect.x + rect.w) {
                         table_check_obj = { is_table: true, class_identifier: table.x + '_' + table.y + '_' + rect.x + '_' + rect.y, row: rect.index[0], column: rect.index[1], parent_table: table }
@@ -396,7 +395,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                 Object.assign(table_item, o)
                 let table_items = {}
                 o.parent_table.rect.map((rect) => {
-                    table_items[rect.index[0]] = { [rect.index[1]]: { 'text': '' } }
+                    table_items[rect.index[0]] = { [rect.index[1]]: { 'text': '', 'page_no':o.page_no, node_index:new Date().getTime() } }
                 })
                 table_items[o.table_row][o.table_column] = table_item
                 o.table_items = table_items
