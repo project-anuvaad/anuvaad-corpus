@@ -123,7 +123,7 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, header_text, foo
             tab_stops = []
             ner.map((n) => {
                 if (Object.keys(NER_FIRST_PAGE_IDENTIFIERS).indexOf(n.annotation_tag) >= 0) {
-                    if(n.annotation_tag === 'JUDGE_NAME' && !(JUDGMENT_ORDER_HEADER_PAGE_NO >= 0 && index + 1 - JUDGMENT_ORDER_HEADER_PAGE_NO <= 1)) {
+                    if (n.annotation_tag === 'JUDGE_NAME' && !(JUDGMENT_ORDER_HEADER_PAGE_NO >= 0 && index + 1 - JUDGMENT_ORDER_HEADER_PAGE_NO <= 1)) {
                         return
                     }
                     let identifier_tag = NER_FIRST_PAGE_IDENTIFIERS[n.annotation_tag]
@@ -197,7 +197,36 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, header_text, foo
                 },
             }
         }
-        if (!d.is_footer) {
+        if (d.is_table) {
+            let table_rows = []
+            for (var key in d.table_items) {
+                let cells = []
+                for (var itemkey in d.table_items[key]) {
+                    cells.push(
+                        new docx.TableCell({
+                            children: [new docx.Paragraph(d.table_items[key][itemkey].text)],
+                            margins: {
+                                top: 100,
+                                bottom: 100,
+                                left: 100,
+                                right: 100,
+                            },
+                        })
+                    )
+                }
+                table_rows.push(new docx.TableRow({
+                    children: cells,
+                }))
+            }
+            children.push(new docx.Table({
+                rows: table_rows,
+                width: {
+                    size: 9000,
+                    type: docx.WidthType.DXA,
+                },
+            }))
+        }
+        else if (!d.is_footer) {
             let text_arr = []
             let text = new docx.TextRun({
                 text: remaining_text.trim().length > 0 ? remaining_text : d.text,
@@ -215,12 +244,12 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, header_text, foo
                         let sup_number = parseInt(sup)
                         let sup_run = new docx.TextRun({
                             text: sup,
-                            children: foot_notes_array.indexOf(parseInt(sup)) < 0 ? [new docx.FootnoteReferenceRun(sup_number)] :  null,
+                            children: foot_notes_array.indexOf(parseInt(sup)) < 0 ? [new docx.FootnoteReferenceRun(sup_number)] : null,
                             superScript: true,
                             size: d.class_style['font-size'].split('px')[0] * 2,
                             font: d.class_style['font-family'],
                         })
-                        if(foot_notes_array.indexOf(parseInt(sup)) < 0){
+                        if (foot_notes_array.indexOf(parseInt(sup)) < 0) {
                             foot_notes_array.push(parseInt(sup))
                         }
                         text_arr.push(sup_run)
