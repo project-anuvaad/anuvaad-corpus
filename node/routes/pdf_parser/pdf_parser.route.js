@@ -11,6 +11,9 @@ module.exports = function (router) {
     router.route('/start-pdf-parse-process')
         .post(pdfParserController.savePdfParserProcess);
 
+    router.route('/translate-pdf')
+        .post(pdfParserController.translatePdf);
+
     router.route('/fetch-pdf-parse-process')
         .get(pdfParserController.fetchPdfParserProcess);
 
