@@ -415,16 +415,23 @@ exports.mergeHtmlNodes = function (items, cb) {
         if (o.is_table) {
             if (table_index == -1 || o.page_no != table_page_no) {
                 table_index = index
+
                 let table_item = {}
                 Object.assign(table_item, o)
                 let table_items = {}
                 o.parent_table.rect.map((rect) => {
-                    table_items[rect.index[0]] = { [rect.index[1]]: { 'text': '', 'page_no': o.page_no, node_index: new Date().getTime() } }
+                    if (o.page_no == 5) {
+                        LOG.info(rect)
+                    }
+                    if (!table_items[rect.index[0]])
+                        table_items[rect.index[0]] = {}
+                    table_items[rect.index[0]][rect.index[1]] = { 'text': '', 'page_no': o.page_no, node_index: new Date().getTime() }
                 })
+
                 table_items[o.table_row][o.table_column] = table_item
                 o.table_items = table_items
                 o.text = ''
-                table_page_no == o.page_no
+                table_page_no = o.page_no
                 return true
             } else {
                 let table_items = output[table_index].table_items
