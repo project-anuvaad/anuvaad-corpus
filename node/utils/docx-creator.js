@@ -240,7 +240,7 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, header_text, foo
             let sup_sub_arr = d.sup_array ? d.sup_array : d.sub_array
             if (sup_sub_arr && sup_sub_arr.length > 0) {
                 sup_sub_arr.map((sup, index) => {
-                    if (parseInt(sup) <= footnote_count) {
+                    if (parseInt(sup) <= footnote_count + 10) {
                         let sup_number = parseInt(sup)
                         let sup_run = new docx.TextRun({
                             text: sup,
@@ -272,12 +272,17 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, header_text, foo
             })
             children.push(text_run)
         } else {
-            if (parseInt(d.text.split(" ")[0]) !== FOOTNOTE_RUN_ARRAY.length + 1) {
+            if (isNaN(d.text.split(" ")[0]) || (parseInt(d.text.split(" ")[0]) > FOOTNOTE_RUN_ARRAY.length + 5)) {
                 previous_footnote = previous_footnote + ' ' + d.text
                 FOOTNOTE_RUN_ARRAY[FOOTNOTE_RUN_ARRAY.length - 1] = new docx.Paragraph(previous_footnote)
             } else {
                 let words_array = d.text.split(' ')
                 let footer_text = words_array.slice(1, words_array.length).join(' ')
+                if (parseInt(d.text.split(" ")[0]) !== FOOTNOTE_RUN_ARRAY.length + 1) {
+                    for (var i = 0; i < parseInt(d.text.split(" ")[0]) - FOOTNOTE_RUN_ARRAY.length - 1; i++) {
+                        FOOTNOTE_RUN_ARRAY.push(new docx.Paragraph(""))
+                    }
+                }
                 FOOTNOTE_RUN_ARRAY.push(new docx.Paragraph(footer_text))
                 previous_footnote = footer_text
             }
