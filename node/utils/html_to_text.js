@@ -251,7 +251,7 @@ exports.mergeHtmlNodes = function (items, cb) {
         let footer_check_node = obj[obj.length - 1]
         if (image_data.lines && image_data.lines.length > 0 && parseInt(image_data.lines[0].x) < 170) {
             let margin = (parseInt(footer_check_node.y) - parseInt(image_data.lines[0].y)) / parseInt(footer_check_node.y)
-            if (margin > 0 && margin * 100 < 8) {
+            if (margin > 0 && margin * 100 < 12) {
                 footer_available = true
                 footer_coordinate = image_data.lines[0].y
             }
@@ -408,9 +408,9 @@ exports.mergeHtmlNodes = function (items, cb) {
     let table_page_no = -1
     var out = output.filter((o, index) => {
         o.text = o.text.replace(/\s+/g, " ")
-        o.text = o.text.replace(/Digitally signed by.{1,}Reason:/gm, '')
-        o.text = o.text.replace(/Signature Not Verified/gm, '')
-        o.text = o.text.replace(DIGITAL_SIGN_IDENTIFIER, '')
+        // o.text = o.text.replace(/Digitally signed by.{1,}Reason:/gm, '')
+        // o.text = o.text.replace(/Signature Not Verified/gm, '')
+        // o.text = o.text.replace(DIGITAL_SIGN_IDENTIFIER, '')
         o.text = o.text.trim()
         if (o.is_table) {
             if (table_index == -1 || o.page_no != table_page_no) {
@@ -420,9 +420,6 @@ exports.mergeHtmlNodes = function (items, cb) {
                 Object.assign(table_item, o)
                 let table_items = {}
                 o.parent_table.rect.map((rect) => {
-                    if (o.page_no == 5) {
-                        LOG.info(rect)
-                    }
                     if (!table_items[rect.index[0]])
                         table_items[rect.index[0]] = {}
                     table_items[rect.index[0]][rect.index[1]] = { 'text': '', 'page_no': o.page_no, node_index: new Date().getTime() }
