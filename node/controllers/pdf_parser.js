@@ -208,13 +208,13 @@ function performNer(data, cb) {
     })
 }
 
-function makeSenteceObj(text, sentence_index, node_index, id) {
+function makeSenteceObj(text, sentence_index, node_index, id, model_id) {
     let sentence = {}
     sentence.text = text
     sentence.sentence_index = sentence_index
     sentence.src = text
-    sentence.id = id
-    sentence.n_id = node_index
+    sentence.id = model_id
+    sentence.n_id = node_index + '__' + id
     sentence.s_id = sentence_index
     return sentence
 }
@@ -295,13 +295,13 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                 for (var key in data[index].table_items) {
                                                     for (var itemkey in data[index].table_items[key]) {
                                                         let node_data = data[index].table_items[key][itemkey]
-                                                        tokenized_sentences.push(makeSenteceObj(node_data.text, sentence_index, data[index].node_index, pdf_parser_process.session_id))
+                                                        tokenized_sentences.push(makeSenteceObj(node_data.text, sentence_index, data[index].node_index, pdf_parser_process.session_id, model.model_id))
                                                         sentence_index++
                                                     }
                                                 }
                                             } else {
                                                 d.text.map(function (tokenized_sentence) {
-                                                    tokenized_sentences.push(makeSenteceObj(tokenized_sentence, sentence_index, data[index].node_index, pdf_parser_process.session_id))
+                                                    tokenized_sentences.push(makeSenteceObj(tokenized_sentence, sentence_index, data[index].node_index, pdf_parser_process.session_id, model.model_id))
                                                     sentence_index++
                                                 })
                                             }
