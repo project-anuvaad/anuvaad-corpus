@@ -8,7 +8,6 @@ Basemodel.saveData = function (schema, data, cb) {
         if (err) {
             return cb(err, null);
         } else {
-            LOG.debug('%s data was successfully stored.', JSON.stringify(docs));
             return cb(null, docs);
         }
     })
