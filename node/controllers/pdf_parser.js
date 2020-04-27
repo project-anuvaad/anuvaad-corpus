@@ -450,7 +450,7 @@ exports.translatePdf = function (req, res) {
                 }
                 let index = 1
                 let output_res = {}
-                processHtml(pdf_parser_process, index, output_res, false, 1, true, true, model, res)
+                processHtml(pdf_parser_process, index, output_res, false, 1, true, true, req.body.model, res)
             })
         })
     })
