@@ -1,5 +1,5 @@
 
 
 exports.KafkTopics = {
-    NMT_TRANSLATE: 'to-nmt',
+    NMT_TRANSLATE: 'nmt_translate',
 }
