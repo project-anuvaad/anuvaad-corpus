@@ -7,7 +7,9 @@ var APIStatus = require('../errors/apistatus')
 var StatusCode = require('../errors/statuscodes').StatusCode
 var LOG = require('../logger/logger').logger
 
+var KafkaTopics = require('../config/kafka-topics').KafkTopics
 var PdfToHtml = require('../utils/pdf_to_html')
+var KafkaProducer = require('../kafka/producer');
 var HtmlToText = require('../utils/html_to_text')
 var ImageProcessing = require('../utils/image_processing')
 var UUIDV4 = require('uuid/v4')
@@ -73,7 +75,7 @@ exports.extractParagraphsPerPages = function (req, res) {
                 }
                 let index = 1
                 let output_res = {}
-                processHtml(pdf_parser_process, index, output_res, true, 1, false, res)
+                processHtml(pdf_parser_process, index, output_res, true, 1, false, null, res)
             })
         })
     })
@@ -205,14 +207,17 @@ function performNer(data, cb) {
     })
 }
 
-function makeSenteceObj(text, sentence_index) {
+function makeSenteceObj(text, sentence_index, node_index) {
     let sentence = {}
     sentence.text = text
     sentence.sentence_index = sentence_index
+    sentence.src = text
+    sentence.n_id = node_index
+    sentence.s_id = sentence_index
     return sentence
 }
 
-function processHtml(pdf_parser_process, index, output_res, merge, start_node_index, tokenize, res) {
+function processHtml(pdf_parser_process, index, output_res, merge, start_node_index, tokenize, translate, model, res) {
     if (fs.existsSync(BASE_PATH_UPLOAD + pdf_parser_process.session_id + "/" + 'output-' + index + '.html')) {
         let image_index = index
         if ((index + '').length == 1) {
@@ -230,7 +235,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                 output_res[index + ''] = { html_nodes: data, image_data: image_data }
                 index += 1
                 start_node_index += data.length
-                processHtml(pdf_parser_process, index, output_res, merge, start_node_index, tokenize, res)
+                processHtml(pdf_parser_process, index, output_res, merge, start_node_index, tokenize, translate, model, res)
             })
         })
     } else {
@@ -267,7 +272,6 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                     }
                     useNerTags(ner_data.data.data, data, function (data) {
                         if (tokenize) {
-
                             axios.post(PYTHON_BASE_URL + 'tokenize-sentence',
                                 {
                                     paragraphs: data
@@ -275,43 +279,65 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                             ).then(function (api_res) {
                                 let sentences = []
                                 if (api_res && api_res.data) {
-                                    let index = 0
-                                    
-                                    async.each(api_res.data.data, (d, cb) => {
-                                        let sentence_index = 0
-                                        let tokenized_sentences = []
-                                        async.each(d.text, function (tokenized_sentence, callback) {
+                                    KafkaProducer.getInstance().getProducer((err, producer) => {
+                                        if (err) {
+                                            LOG.error("Unable to connect to KafkaProducer");
+                                        } else {
+                                            LOG.debug("KafkaProducer connected")
+                                        }
+                                        let index = 0
+                                        async.each(api_res.data.data, (d, cb) => {
+                                            let sentence_index = 0
+                                            let tokenized_sentences = []
                                             if (data[index].is_table) {
-                                                data[index].is_table
                                                 for (var key in data[index].table_items) {
                                                     for (var itemkey in data[index].table_items[key]) {
                                                         let node_data = data[index].table_items[key][itemkey]
-                                                        tokenized_sentences.push(makeSenteceObj(node_data.text, sentence_index))
+                                                        tokenized_sentences.push(makeSenteceObj(node_data.text, sentence_index, data[index].node_index, pdf_parser_process.session_id, model))
                                                         sentence_index++
                                                     }
                                                 }
                                             } else {
-                                                tokenized_sentences.push(makeSenteceObj(tokenized_sentence, sentence_index))
-                                                sentence_index++
+                                                d.text.map(function (tokenized_sentence) {
+                                                    tokenized_sentences.push(makeSenteceObj(tokenized_sentence, sentence_index, data[index].node_index, pdf_parser_process.session_id, model))
+                                                    sentence_index++
+                                                })
                                             }
-                                            callback()
-                                        }, function (err) {
+                                            if (translate && model && producer) {
+                                                let payloads = [
+                                                    {
+                                                        topic: KafkaTopics.NMT_TRANSLATE, messages: JSON.stringify({ 'url_end_point': model.url_end_point, 'message': tokenized_sentences }), partition: 0
+                                                    }
+                                                ]
+                                                producer.send(payloads, function (err, data) {
+                                                    LOG.debug('Produced')
+                                                });
+                                            }
                                             data[index].status = STATUS_PENDING
                                             data[index].session_id = pdf_parser_process.session_id
                                             data[index].tokenized_sentences = tokenized_sentences
                                             index++
                                             cb()
-                                        })
-                                    }, function (err) {
-                                        BaseModel.saveData(PdfSentence, data, function (err, doc) {
-                                            BaseModel.saveData(PdfParser, [pdf_parser_process], function (err, doc) {
+                                        }, function (err) {
+                                            LOG.info('Saving pdf sentences')
+                                            BaseModel.saveData(PdfSentence, data, function (err, doc) {
                                                 if (err) {
                                                     LOG.error(err)
                                                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                                                     return res.status(apistatus.http.status).json(apistatus);
+                                                } else {
+                                                    LOG.info('Saving pdf obj')
+                                                    BaseModel.saveData(PdfParser, [pdf_parser_process], function (err, doc) {
+                                                        if (err) {
+                                                            LOG.error(err)
+                                                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                                            return res.status(apistatus.http.status).json(apistatus);
+                                                        } else {
+                                                            let response = new Response(StatusCode.SUCCESS, doc).getRsp()
+                                                            return res.status(response.http.status).json(response);
+                                                        }
+                                                    })
                                                 }
-                                                let response = new Response(StatusCode.SUCCESS, doc).getRsp()
-                                                return res.status(response.http.status).json(response);
                                             })
                                         })
                                     })
@@ -354,7 +380,7 @@ exports.extractParagraphs = function (req, res) {
                 }
                 let index = 1
                 let output_res = {}
-                processHtml(pdf_parser_process, index, output_res, false, 1, false, res)
+                processHtml(pdf_parser_process, index, output_res, false, 1, false, false, null, res)
             })
         })
     })
@@ -371,7 +397,7 @@ exports.savePdfParserProcess = function (req, res) {
     pdf_parser_process.session_id = UUIDV4()
     pdf_parser_process.process_name = req.body.process_name
     pdf_parser_process.pdf_path = file.name
-    pdf_parser_process.status = STATUS_COMPLETED
+    pdf_parser_process.status = STATUS_PROCESSING
     pdf_parser_process.created_by = userId
     pdf_parser_process.created_on = new Date()
     fs.mkdir(BASE_PATH_UPLOAD + pdf_parser_process.session_id, function (e) {
@@ -389,7 +415,7 @@ exports.savePdfParserProcess = function (req, res) {
                 }
                 let index = 1
                 let output_res = {}
-                processHtml(pdf_parser_process, index, output_res, false, 1, true, res)
+                processHtml(pdf_parser_process, index, output_res, false, 1, true, false, null, res)
             })
         })
     })
@@ -424,7 +450,7 @@ exports.translatePdf = function (req, res) {
                 }
                 let index = 1
                 let output_res = {}
-                processHtml(pdf_parser_process, index, output_res, false, 1, true, res)
+                processHtml(pdf_parser_process, index, output_res, false, 1, true, true, model, res)
             })
         })
     })
