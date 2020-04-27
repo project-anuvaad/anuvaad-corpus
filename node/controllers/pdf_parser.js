@@ -33,6 +33,7 @@ const NER_FIRST_PAGE_IDENTIFIERS = {
     'FORUM_NAME': { align: 'CENTER', is_new_line: true, is_bold: true },
     'FIRST_PARTY': { align: 'LEFT' },
     'FIRST_PARTY_TYPE': { align: 'RIGHT', is_new_line: true },
+    'VERSUS': { align: 'CENTER', is_new_line: true },
     'SECOND_PARTY': { align: 'LEFT' },
     'SECOND_PARTY_TYPE': { align: 'RIGHT', is_new_line: true },
     'WITH_HEADER': { align: 'CENTER', is_new_line: true },
@@ -113,6 +114,10 @@ function useNerTags(ner_data, data, cb) {
                     }
                     let identifier_tag = NER_FIRST_PAGE_IDENTIFIERS[n.annotation_tag]
                     ner_sentences = makeSentenceObjForNer(n, identifier_tag, ner_sentences, data[0].page_no)
+                    if (n.annotation_tag === 'FIRST_PARTY_TYPE') {
+                        let identifier_tag = NER_FIRST_PAGE_IDENTIFIERS['VERSUS']
+                        ner_sentences = makeSentenceObjForNer({ tagged_value: 'Versus' }, identifier_tag, ner_sentences, data[0].page_no)
+                    }
                 }
                 if (n.annotation_tag === 'JUDGMENT_ORDER_HEADER') {
                     JUDGMENT_ORDER_HEADER_PAGE_NO = index + 1
