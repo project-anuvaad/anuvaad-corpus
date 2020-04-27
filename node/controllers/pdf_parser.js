@@ -423,7 +423,7 @@ exports.savePdfParserProcess = function (req, res) {
 
 exports.translatePdf = function (req, res) {
     let userId = req.headers['ad-userid']
-    if (!req || !req.body || !req.body.process_name || !req.files || !req.model || !req.files.pdf_data) {
+    if (!req || !req.body || !req.body.process_name || !req.files || !req.body.model || !req.files.pdf_data) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
