@@ -70,7 +70,7 @@ exports.processTranslatedText = function processTranslatedText(sentences) {
                             }
                         }
                     }
-                    let sentencetoupdate = { table_items: table_items, version: sentencedb.version + 1 }
+                    let sentencetoupdate = { table_items: table_items}
                     BaseModel.findByCondition(PdfSentence, condition, null, null, null, function (err, data) {
                         let sentencedb_check = data[0]._doc
                         if (sentencedb_check.version == sentencedb.version) {
