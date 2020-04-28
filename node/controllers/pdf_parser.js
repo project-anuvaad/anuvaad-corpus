@@ -50,7 +50,7 @@ const NER_LAST_PAGE_IDENTIFIERS = {
     'JUDGMENT_DATE': { align: 'LEFT', is_new_line: true },
 }
 
-function saveTranslatedText(sentence, for_table, cb) {
+function saveTranslatedText(sentence, cb) {
     let n_id = sentence['n_id']
     let condition = { node_index: n_id.split('__')[0], session_id: n_id.split('__')[1] }
     BaseModel.findByCondition(PdfSentence, condition, null, null, null, function (err, data) {
@@ -76,15 +76,16 @@ function saveTranslatedText(sentence, for_table, cb) {
                     if (sentencedb_check.version == sentencedb.version) {
                         BaseModel.updateData(PdfSentence, sentencetoupdate, sentencedb._id, function (err, data) {
                             LOG.info('Data updated for table', sentence)
+                            cb()
                         })
                     }
                     else {
                         LOG.info('Version missmatch for table, trying again old version %s new version %s', sentencedb_check.version, sentencedb.version)
-                        saveTranslatedText(sentence, true, cb)
+                        saveTranslatedText(sentence, cb)
                     }
                 })
             }
-            if (!for_table) {
+            else {
                 let tokenized_sentences = sentencedb.tokenized_sentences
                 tokenized_sentences.map((tokenized_sentence, index) => {
                     if (tokenized_sentence.sentence_index == sentence['s_id']) {
@@ -100,7 +101,7 @@ function saveTranslatedText(sentence, for_table, cb) {
                         })
                     } else {
                         LOG.info('Version missmatch, trying again old version %s new version %s', sentencedb_check.version, sentencedb.version)
-                        saveTranslatedText(sentence, false, cb)
+                        saveTranslatedText(sentence, cb)
                     }
                 })
             }
@@ -110,7 +111,7 @@ function saveTranslatedText(sentence, for_table, cb) {
 
 exports.processTranslatedText = function (sentences) {
     async.each(sentences, (sentence, cb) => {
-        saveTranslatedText(sentence, false, cb)
+        saveTranslatedText(sentence, cb)
     }, function (err) {
         LOG.info('Process completed')
     })
