@@ -7,7 +7,7 @@ var KafkaConsumer = (function () {
 
     function init() {
         return {
-            getConsumer: function (cb) {
+            getConsumer: function (topic, cb) {
 
                 var kafka = require('kafka-node')
                 var options = {
@@ -31,7 +31,7 @@ var KafkaConsumer = (function () {
                     onRebalance: (isAlreadyMember, callback) => { callback(); } // or null
                 };
 
-                var consumerGroup = new kafka.ConsumerGroup(options, 'tokenprocessed');
+                var consumerGroup = new kafka.ConsumerGroup(options, topic);
                 cb(null, consumerGroup)
             },
             getErrorConsumer: function (cb) {
