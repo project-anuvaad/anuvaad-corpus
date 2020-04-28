@@ -51,61 +51,59 @@ const NER_LAST_PAGE_IDENTIFIERS = {
 }
 
 exports.processTranslatedText = function processTranslatedText(sentences) {
-    
-    sentences.map((sentence) => {
-        let n_id = sentence['n_id']
-        LOG.info('Processing data ',n_id)
-        let condition = { node_index: n_id.split('__')[0], session_id: n_id.split('__')[1] }
-        BaseModel.findByCondition(PdfSentence, condition, null, null, null, function (err, data) {
-            if (err || !data || data.length == 0) {
-                LOG.error('Sentence not found', sentence)
-            }
-            else {
-                let sentencedb = data[0]._doc
-                if (sentencedb.is_table) {
-                    let table_items = sentencedb.table_items
-                    for (var key in table_items) {
-                        for (var itemkey in table_items[key]) {
-                            let node_data = table_items[key][itemkey]
-                            if (node_data.sentence_index == sentence['s_id']) {
-                                table_items[key][itemkey]['target'] = sentence['tgt']
-                            }
+    let sentence = sentences[0]
+    let n_id = sentence['n_id']
+    LOG.info('Processing data ', n_id)
+    let condition = { node_index: n_id.split('__')[0], session_id: n_id.split('__')[1] }
+    BaseModel.findByCondition(PdfSentence, condition, null, null, null, function (err, data) {
+        if (err || !data || data.length == 0) {
+            LOG.error('Sentence not found', sentence)
+        }
+        else {
+            let sentencedb = data[0]._doc
+            if (sentencedb.is_table) {
+                let table_items = sentencedb.table_items
+                for (var key in table_items) {
+                    for (var itemkey in table_items[key]) {
+                        let node_data = table_items[key][itemkey]
+                        if (node_data.sentence_index == sentence['s_id']) {
+                            table_items[key][itemkey]['target'] = sentence['tgt']
                         }
                     }
-                    let sentencetoupdate = { table_items: table_items}
-                    BaseModel.findByCondition(PdfSentence, condition, null, null, null, function (err, data) {
-                        let sentencedb_check = data[0]._doc
-                        if (sentencedb_check.version == sentencedb.version) {
-                            BaseModel.updateData(PdfSentence, sentencetoupdate, sentencedb._id, function (err, data) {
-                                LOG.info('Data updated for table', sentence)
-                            })
-                        }
-                        else {
-                            LOG.info('Version missmatch for table, trying again old version %s new version %s', sentencedb_check.version, sentencedb.version)
-                            processTranslatedText(sentences)
-                        }
-                    })
                 }
-                let tokenized_sentences = sentencedb.tokenized_sentences
-                tokenized_sentences.map((tokenized_sentence, index) => {
-                    if (tokenized_sentence.sentence_index == sentence['s_id']) {
-                        tokenized_sentences[index]['target'] = sentence['tgt']
-                    }
-                })
-                let sentencetoupdate = { tokenized_sentences: tokenized_sentences, version: sentencedb.version + 1 }
+                let sentencetoupdate = { table_items: table_items }
                 BaseModel.findByCondition(PdfSentence, condition, null, null, null, function (err, data) {
                     let sentencedb_check = data[0]._doc
                     if (sentencedb_check.version == sentencedb.version) {
                         BaseModel.updateData(PdfSentence, sentencetoupdate, sentencedb._id, function (err, data) {
-                            LOG.info('Data updated', sentence)
+                            LOG.info('Data updated for table', sentence)
                         })
-                    } else {
-                        LOG.info('Version missmatch, trying again old version %s new version %s', sentencedb_check.version, sentencedb.version)
+                    }
+                    else {
+                        LOG.info('Version missmatch for table, trying again old version %s new version %s', sentencedb_check.version, sentencedb.version)
                         processTranslatedText(sentences)
                     }
                 })
             }
-        })
+            let tokenized_sentences = sentencedb.tokenized_sentences
+            tokenized_sentences.map((tokenized_sentence, index) => {
+                if (tokenized_sentence.sentence_index == sentence['s_id']) {
+                    tokenized_sentences[index]['target'] = sentence['tgt']
+                }
+            })
+            let sentencetoupdate = { tokenized_sentences: tokenized_sentences, version: sentencedb.version + 1 }
+            BaseModel.findByCondition(PdfSentence, condition, null, null, null, function (err, data) {
+                let sentencedb_check = data[0]._doc
+                if (sentencedb_check.version == sentencedb.version) {
+                    BaseModel.updateData(PdfSentence, sentencetoupdate, sentencedb._id, function (err, data) {
+                        LOG.info('Data updated', sentence)
+                    })
+                } else {
+                    LOG.info('Version missmatch, trying again old version %s new version %s', sentencedb_check.version, sentencedb.version)
+                    processTranslatedText(sentences)
+                }
+            })
+        }
     })
 }
 
@@ -135,7 +133,7 @@ exports.extractParagraphsPerPages = function (req, res) {
                 }
                 let index = 1
                 let output_res = {}
-                processHtml(pdf_parser_process, index, output_res, true, 1, false, null,null, res)
+                processHtml(pdf_parser_process, index, output_res, true, 1, false, null, null, res)
             })
         })
     })
