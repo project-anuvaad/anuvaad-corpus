@@ -44,9 +44,9 @@ class AnuvaadEngTokenizer(object):
 
     def tokenize(self, text):
         print('--------------Process started-------------')
+        text = self.serialize_with_abbrevations(text)
         text = self.serialize_table_points(text)
         text = self.serialize_pattern(text)
-        text = self.serialize_with_abbrevations(text)
         text = self.serialize_dots(text)
         text = self.serialize_brackets(text)
         text = self.serialize_dot_with_number(text)
