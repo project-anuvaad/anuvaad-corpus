@@ -19,7 +19,6 @@ Basemodel.updateData = function (schema, data, id, cb) {
             LOG.error(err)
             cb(err, null)
         }
-        LOG.debug(doc)
         cb(null, doc)
     });
 }
