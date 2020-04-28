@@ -61,13 +61,30 @@ exports.processTranslatedText = function (sentences) {
             else {
                 let sentencedb = data[0]._doc
                 if (sentencedb.is_table) {
-
-                } else {
-                    let sentencetoupdate = { target: sentence['tgt'] }
+                    let table_items = sentencedb.table_items
+                    for (var key in table_items) {
+                        for (var itemkey in table_items[key]) {
+                            let node_data = table_items[key][itemkey]
+                            if (node_data.sentence_index == sentence['s_id']) {
+                                table_items[key][itemkey]['target'] = sentence['tgt']
+                            }
+                        }
+                    }
+                    let sentencetoupdate = { table_items: table_items }
                     BaseModel.updateData(PdfSentence, sentencetoupdate, sentencedb._id, function (err, data) {
-                        LOG.info('Data updated',sentence)
+                        LOG.info('Data updated for table', sentence)
                     })
                 }
+                let tokenized_sentences = sentencedb.tokenized_sentences
+                tokenized_sentences.map((tokenized_sentence, index) => {
+                    if (tokenized_sentence.sentence_index == sentence['s_id']) {
+                        tokenized_sentences[index]['target'] = sentence['tgt']
+                    }
+                })
+                let sentencetoupdate = { tokenized_sentences: tokenized_sentences }
+                BaseModel.updateData(PdfSentence, sentencetoupdate, sentencedb._id, function (err, data) {
+                    LOG.info('Data updated', sentence)
+                })
             }
         })
     })
@@ -328,7 +345,11 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                         sentence_index++
                                                     }
                                                 }
-                                            } else {
+                                            } else if (data[index].is_ner) {
+                                                tokenized_sentences.push(makeSenteceObj(data[index].text, sentence_index, data[index].node_index, pdf_parser_process.session_id, model.model_id))
+                                                sentence_index++
+                                            }
+                                            else {
                                                 d.text.map(function (tokenized_sentence) {
                                                     tokenized_sentences.push(makeSenteceObj(tokenized_sentence, sentence_index, data[index].node_index, pdf_parser_process.session_id, model.model_id))
                                                     sentence_index++
@@ -344,6 +365,8 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                     LOG.debug('Produced')
                                                 });
                                             }
+                                            data[index].node_index = data[index].node_index + ''
+                                            data[index].version = 0
                                             data[index].status = STATUS_PENDING
                                             data[index].session_id = pdf_parser_process.session_id
                                             data[index].tokenized_sentences = tokenized_sentences
