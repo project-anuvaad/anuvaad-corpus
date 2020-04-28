@@ -133,7 +133,7 @@ exports.extractParagraphsPerPages = function (req, res) {
                 }
                 let index = 1
                 let output_res = {}
-                processHtml(pdf_parser_process, index, output_res, true, 1, false, null, res)
+                processHtml(pdf_parser_process, index, output_res, true, 1, false, null,null, res)
             })
         })
     })
