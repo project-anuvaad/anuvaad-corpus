@@ -80,7 +80,7 @@ function saveTranslatedText(sentence, cb) {
                     }
                     else {
                         LOG.info('Version missmatch for table, trying again old version %s new version %s', sentencedb_check.version, sentencedb.version)
-                        saveTranslatedText(sentences)
+                        saveTranslatedText(sentence)
                     }
                 })
             }
@@ -100,14 +100,14 @@ function saveTranslatedText(sentence, cb) {
                     })
                 } else {
                     LOG.info('Version missmatch, trying again old version %s new version %s', sentencedb_check.version, sentencedb.version)
-                    saveTranslatedText(sentences)
+                    saveTranslatedText(sentence)
                 }
             })
         }
     })
 }
 
-exports.processTranslatedText = function processTranslatedText(sentences) {
+exports.processTranslatedText = function (sentences) {
     async.each(sentences, (sentence, cb) => {
         saveTranslatedText(sentence, cb)
     }, function (err) {
