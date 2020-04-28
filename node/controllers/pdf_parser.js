@@ -357,17 +357,17 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                     for (var itemkey in data[index].table_items[key]) {
                                                         let node_data = data[index].table_items[key][itemkey]
                                                         data[index].table_items[key][itemkey].sentence_index = sentence_index
-                                                        tokenized_sentences.push(makeSenteceObj(node_data.text, sentence_index, data[index].node_index, pdf_parser_process.session_id, model.model_id))
+                                                        tokenized_sentences.push(makeSenteceObj(node_data.text, sentence_index, data[index].node_index, pdf_parser_process.session_id, model ? model.model_id : null))
                                                         sentence_index++
                                                     }
                                                 }
                                             } else if (data[index].is_ner) {
-                                                tokenized_sentences.push(makeSenteceObj(data[index].text, sentence_index, data[index].node_index, pdf_parser_process.session_id, model.model_id))
+                                                tokenized_sentences.push(makeSenteceObj(data[index].text, sentence_index, data[index].node_index, pdf_parser_process.session_id, model ? model.model_id : null))
                                                 sentence_index++
                                             }
                                             else {
                                                 d.text.map(function (tokenized_sentence) {
-                                                    tokenized_sentences.push(makeSenteceObj(tokenized_sentence, sentence_index, data[index].node_index, pdf_parser_process.session_id, model.model_id))
+                                                    tokenized_sentences.push(makeSenteceObj(tokenized_sentence, sentence_index, data[index].node_index, pdf_parser_process.session_id, model ? model.model_id : null))
                                                     sentence_index++
                                                 })
                                             }
