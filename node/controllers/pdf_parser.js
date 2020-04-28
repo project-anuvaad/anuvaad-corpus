@@ -50,8 +50,7 @@ const NER_LAST_PAGE_IDENTIFIERS = {
     'JUDGMENT_DATE': { align: 'LEFT', is_new_line: true },
 }
 
-exports.processTranslatedText = function processTranslatedText(sentences) {
-    let sentence = sentences[0]
+function saveTranslatedText(sentence, cb) {
     let n_id = sentence['n_id']
     LOG.info('Processing data ', n_id)
     let condition = { node_index: n_id.split('__')[0], session_id: n_id.split('__')[1] }
@@ -81,7 +80,7 @@ exports.processTranslatedText = function processTranslatedText(sentences) {
                     }
                     else {
                         LOG.info('Version missmatch for table, trying again old version %s new version %s', sentencedb_check.version, sentencedb.version)
-                        processTranslatedText(sentences)
+                        saveTranslatedText(sentences)
                     }
                 })
             }
@@ -97,13 +96,22 @@ exports.processTranslatedText = function processTranslatedText(sentences) {
                 if (sentencedb_check.version == sentencedb.version) {
                     BaseModel.updateData(PdfSentence, sentencetoupdate, sentencedb._id, function (err, data) {
                         LOG.info('Data updated', sentence)
+                        cb()
                     })
                 } else {
                     LOG.info('Version missmatch, trying again old version %s new version %s', sentencedb_check.version, sentencedb.version)
-                    processTranslatedText(sentences)
+                    saveTranslatedText(sentences)
                 }
             })
         }
+    })
+}
+
+exports.processTranslatedText = function processTranslatedText(sentences) {
+    async.each(sentences, (sentence, cb) => {
+        saveTranslatedText(sentence, cb)
+    }, function (err) {
+        LOG.info('Process completed')
     })
 }
 
