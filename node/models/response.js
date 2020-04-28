@@ -9,13 +9,14 @@ function Response(statuscode, data) {
     this.data = data;
 }
 
-function Response(statuscode, data, count, sum, pending, ner) {
+function Response(statuscode, data, count, sum, pending, ner, model) {
     this.statuscode = statuscode;
     this.data = data;
     this.count = count;
     this.sum = sum
     this.pending = pending
     this.ner = ner
+    this.model = model
 }
 
 Response.prototype.getRsp = function () {
@@ -34,6 +35,9 @@ Response.prototype.getRsp = function () {
     }
     if(this.ner){
         result.ner = this.ner
+    }
+    if(this.model){
+        result.model = this.model
     }
     return result
 };

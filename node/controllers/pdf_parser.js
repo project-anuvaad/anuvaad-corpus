@@ -506,6 +506,7 @@ exports.translatePdf = function (req, res) {
     pdf_parser_process.pdf_path = file.name
     pdf_parser_process.status = STATUS_COMPLETED
     pdf_parser_process.created_by = userId
+    pdf_parser_process.model = model
     pdf_parser_process.created_on = new Date()
     fs.mkdir(BASE_PATH_UPLOAD + pdf_parser_process.session_id, function (e) {
         fs.writeFile(BASE_PATH_UPLOAD + pdf_parser_process.session_id + '/' + pdf_parser_process.pdf_path, file.data, function (err) {
@@ -574,14 +575,17 @@ exports.fetchPdfSentences = function (req, res) {
             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
             return res.status(apistatus.http.status).json(apistatus);
         }
-        BaseModel.findByCondition(PdfSentence, condition, pagesize, pageno, 'sentence_index', function (err, models) {
-            if (err) {
-                LOG.error(err)
-                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                return res.status(apistatus.http.status).json(apistatus);
-            }
-            let response = new Response(StatusCode.SUCCESS, models, count).getRsp()
-            return res.status(response.http.status).json(response);
+        BaseModel.findByCondition(PdfParser, condition, null, null, null, function (err, models) {
+            let pdf_process = models[0]._doc
+            BaseModel.findByCondition(PdfSentence, condition, pagesize, pageno, 'sentence_index', function (err, models) {
+                if (err) {
+                    LOG.error(err)
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
+                let response = new Response(StatusCode.SUCCESS, models, count, null, null, null, pdf_process.model).getRsp()
+                return res.status(response.http.status).json(response);
+            })
         })
     })
 }
