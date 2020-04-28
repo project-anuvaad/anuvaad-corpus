@@ -79,7 +79,7 @@ exports.processTranslatedText = function processTranslatedText(sentences) {
                             })
                         }
                         else {
-                            LOG.info('Version missmatch, trying again')
+                            LOG.info('Version missmatch, trying again new version %s old version %s', sentencedb_check.version, sentencedb.version)
                             processTranslatedText(sentences)
                         }
                     })
@@ -98,7 +98,7 @@ exports.processTranslatedText = function processTranslatedText(sentences) {
                             LOG.info('Data updated', sentence)
                         })
                     } else {
-                        LOG.info('Version missmatch, trying again')
+                        LOG.info('Version missmatch, trying again new version %s old version %s', sentencedb_check.version, sentencedb.version)
                         processTranslatedText(sentences)
                     }
                 })
