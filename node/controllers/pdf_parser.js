@@ -51,8 +51,10 @@ const NER_LAST_PAGE_IDENTIFIERS = {
 }
 
 exports.processTranslatedText = function processTranslatedText(sentences) {
+    
     sentences.map((sentence) => {
         let n_id = sentence['n_id']
+        LOG.info('Processing data ',n_id)
         let condition = { node_index: n_id.split('__')[0], session_id: n_id.split('__')[1] }
         BaseModel.findByCondition(PdfSentence, condition, null, null, null, function (err, data) {
             if (err || !data || data.length == 0) {
@@ -73,13 +75,13 @@ exports.processTranslatedText = function processTranslatedText(sentences) {
                     let sentencetoupdate = { table_items: table_items}
                     BaseModel.findByCondition(PdfSentence, condition, null, null, null, function (err, data) {
                         let sentencedb_check = data[0]._doc
-                        if (sentencedb_check.version == sentencedb.version) {
+                        if (sentencedb_check.version <= sentencedb.version) {
                             BaseModel.updateData(PdfSentence, sentencetoupdate, sentencedb._id, function (err, data) {
                                 LOG.info('Data updated for table', sentence)
                             })
                         }
                         else {
-                            LOG.info('Version missmatch, trying again new version %s old version %s', sentencedb_check.version, sentencedb.version)
+                            LOG.info('Version missmatch for table, trying again old version %s new version %s', sentencedb_check.version, sentencedb.version)
                             processTranslatedText(sentences)
                         }
                     })
@@ -98,7 +100,7 @@ exports.processTranslatedText = function processTranslatedText(sentences) {
                             LOG.info('Data updated', sentence)
                         })
                     } else {
-                        LOG.info('Version missmatch, trying again new version %s old version %s', sentencedb_check.version, sentencedb.version)
+                        LOG.info('Version missmatch, trying again old version %s new version %s', sentencedb_check.version, sentencedb.version)
                         processTranslatedText(sentences)
                     }
                 })
