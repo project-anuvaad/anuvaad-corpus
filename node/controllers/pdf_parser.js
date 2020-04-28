@@ -62,48 +62,36 @@ function saveTranslatedText(sentence, cb) {
             let sentencedb = data[0]._doc
             if (sentencedb.is_table) {
                 let table_items = sentencedb.table_items
+                let query_param = {}
                 for (var key in table_items) {
                     for (var itemkey in table_items[key]) {
                         let node_data = table_items[key][itemkey]
                         if (node_data.sentence_index == sentence['s_id']) {
-                            table_items[key][itemkey]['target'] = sentence['tgt']
+                            let query_key = 'table_items.' + key + '.' + itemkey + '.target'
+                            query_param = { [query_key]: sentence['tgt'] }
                         }
                     }
                 }
-                let sentencetoupdate = { table_items: table_items, version: sentencedb.version + 1  }
-                BaseModel.findByCondition(PdfSentence, condition, null, null, null, function (err, data) {
-                    let sentencedb_check = data[0]._doc
-                    if (sentencedb_check.version == sentencedb.version) {
-                        BaseModel.updateData(PdfSentence, sentencetoupdate, sentencedb._id, function (err, data) {
-                            LOG.info('Data updated for table', sentence)
-                            cb()
-                        })
-                    }
-                    else {
-                        LOG.info('Version missmatch for table, trying again old version %s new version %s', sentencedb_check.version, sentencedb.version)
-                        saveTranslatedText(sentence, cb)
-                    }
+                BaseModel.updateData(PdfSentence, query_param, sentencedb._id, function (err, data) {
+                    LOG.info('Data updated for table', sentence)
                 })
             }
-            else {
-                let tokenized_sentences = sentencedb.tokenized_sentences
-                tokenized_sentences.map((tokenized_sentence, index) => {
-                    if (tokenized_sentence.sentence_index == sentence['s_id']) {
-                        tokenized_sentences[index]['target'] = sentence['tgt']
-                    }
+            let tokenized_sentences = sentencedb.tokenized_sentences
+            let query_param = {}
+            let data_available = false
+            tokenized_sentences.map((tokenized_sentence, index) => {
+                if (tokenized_sentence.sentence_index == sentence['s_id']) {
+                    let query_key = 'tokenized_sentences.' + index + '.target'
+                    query_param = { [query_key]: sentence['tgt'] }
+                    data_available = true
+                }
+            })
+            if (data_available) {
+                BaseModel.updateData(PdfSentence, query_param, sentencedb._id, function (err, data) {
+                    cb()
                 })
-                let sentencetoupdate = { tokenized_sentences: tokenized_sentences, version: sentencedb.version + 1 }
-                BaseModel.findByCondition(PdfSentence, condition, null, null, null, function (err, data) {
-                    let sentencedb_check = data[0]._doc
-                    if (sentencedb_check.version == sentencedb.version) {
-                        BaseModel.updateData(PdfSentence, sentencetoupdate, sentencedb._id, function (err, data) {
-                            cb()
-                        })
-                    } else {
-                        LOG.info('Version missmatch, trying again old version %s new version %s', sentencedb_check.version, sentencedb.version)
-                        saveTranslatedText(sentence, cb)
-                    }
-                })
+            }else{
+                cb()
             }
         }
     })
