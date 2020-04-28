@@ -52,7 +52,6 @@ const NER_LAST_PAGE_IDENTIFIERS = {
 
 function saveTranslatedText(sentence, for_table, cb) {
     let n_id = sentence['n_id']
-    LOG.info('Processing data ', n_id)
     let condition = { node_index: n_id.split('__')[0], session_id: n_id.split('__')[1] }
     BaseModel.findByCondition(PdfSentence, condition, null, null, null, function (err, data) {
         if (err || !data || data.length == 0) {
@@ -97,7 +96,6 @@ function saveTranslatedText(sentence, for_table, cb) {
                     let sentencedb_check = data[0]._doc
                     if (sentencedb_check.version == sentencedb.version) {
                         BaseModel.updateData(PdfSentence, sentencetoupdate, sentencedb._id, function (err, data) {
-                            LOG.info('Data updated', sentence)
                             cb()
                         })
                     } else {
