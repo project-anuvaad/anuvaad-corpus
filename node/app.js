@@ -11,10 +11,12 @@ var jaeger_collector = require('./utils/jaeger-collector')
 var APP_CONFIG = require('./config/config').config
 var APIStatus = require('./errors/apistatus')
 var WorkspaceController = require('./controllers/workspace')
+var PdfParserController = require('./controllers/pdf_parser')
 var Response = require('./models/response')
 var daemon = require('./controllers/daemon/daemon');
 var KafkaConsumer = require('./kafka/consumer');
 var StatusCode = require('./errors/statuscodes').StatusCode
+var KafkTopics = require('./config/kafka-topics').KafkTopics
 
 // Imports the Google Cloud client library
 const { Storage } = require('@google-cloud/storage');
@@ -56,7 +58,39 @@ process.on('SIGINT', function () {
   process.exit(0);
 });
 
-KafkaConsumer.getInstance().getConsumer((err, consumer) => {
+KafkaConsumer.getInstance().getConsumer(KafkTopics.NMT_TRANSLATE_PROCESSED, (err, consumer) => {
+  if (err) {
+    LOG.error("Unable to connect to KafkaConsumer");
+  } else {
+    LOG.debug("KafkaConsumer connected")
+    consumer.on('message', function (message) {
+      let data = JSON.parse(message.value)
+      if (data && data.out) {
+        let out = data.out
+        let response = out.response_body
+        if (response) {
+          let status = out.status
+          if (status) {
+            if (status.statusCode == 200) {
+                PdfParserController.processTranslatedText(response)
+            } else {
+              LOG.error('Status not 200', data)
+            }
+          } else {
+            LOG.error('Status not present', data)
+          }
+        } else {
+          LOG.error('Response not present', data)
+        }
+
+      } else {
+        LOG.error('Data missing for message', data)
+      }
+    })
+  }
+})
+
+KafkaConsumer.getInstance().getConsumer(KafkTopics.TOKEN_PROCESSESED, (err, consumer) => {
   if (err) {
     LOG.error("Unable to connect to KafkaConsumer");
   } else {
@@ -155,7 +189,7 @@ function startApp() {
   app.set('trust proxy', 1);
 
   app.use(helmet())
-  app.use(bodyParser({limit: '50mb'}))
+  app.use(bodyParser({ limit: '50mb' }))
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({
     extended: false

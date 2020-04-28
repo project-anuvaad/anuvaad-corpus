@@ -50,6 +50,29 @@ const NER_LAST_PAGE_IDENTIFIERS = {
     'JUDGMENT_DATE': { align: 'LEFT', is_new_line: true },
 }
 
+exports.processTranslatedText = function (sentences) {
+    sentences.map((sentence) => {
+        let n_id = sentence['n_id']
+        let condition = { node_index: n_id.split('__')[0], session_id: n_id.split('__')[1] }
+        BaseModel.findByCondition(PdfSentence, condition, null, null, null, function (err, data) {
+            if (err || !data || data.length == 0) {
+                LOG.error('Sentence not found', sentence)
+            }
+            else {
+                let sentencedb = data[0]._doc
+                if (sentencedb.is_table) {
+
+                } else {
+                    let sentencetoupdate = { target: sentence['tgt'] }
+                    BaseModel.updateData(PdfSentence, sentencetoupdate, sentencedb._id, function (err, data) {
+                        LOG.info('Data updated',sentence)
+                    })
+                }
+            }
+        })
+    })
+}
+
 
 exports.extractParagraphsPerPages = function (req, res) {
     if (!req || !req.body || !req.files || !req.files.pdf_data) {
@@ -221,6 +244,7 @@ function makeSenteceObj(text, sentence_index, node_index, id, model_id) {
     sentence.id = model_id
     sentence.n_id = node_index + '__' + id
     sentence.s_id = sentence_index
+    sentence.version = 0
     return sentence
 }
 
