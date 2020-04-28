@@ -497,7 +497,16 @@ exports.translatePdf = function (req, res) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
-    let model = JSON.parse(req.body.model)
+    let model = {}
+    if(typeof req.body.model == "string"){
+        model = JSON.parse(req.body.model)
+    }else{
+        model = req.body.model 
+    }
+    if(!model.model_id){
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    } 
     let file = req.files.pdf_data
     let pdf_parser_process = {}
     pdf_parser_process.session_id = UUIDV4()
