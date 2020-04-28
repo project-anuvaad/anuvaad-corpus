@@ -109,7 +109,9 @@ function saveTranslatedText(sentence, cb) {
 
 exports.processTranslatedText = function (sentences) {
     async.each(sentences, (sentence, cb) => {
-        saveTranslatedText(sentence, cb)
+        saveTranslatedText(sentence, function () {
+            cb()
+        })
     }, function (err) {
         LOG.info('Process completed')
     })
