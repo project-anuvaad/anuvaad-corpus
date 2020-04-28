@@ -57,6 +57,7 @@ function saveTranslatedText(sentence, cb) {
     BaseModel.findByCondition(PdfSentence, condition, null, null, null, function (err, data) {
         if (err || !data || data.length == 0) {
             LOG.error('Sentence not found', sentence)
+            cb()
         }
         else {
             let sentencedb = data[0]._doc
@@ -80,7 +81,7 @@ function saveTranslatedText(sentence, cb) {
                     }
                     else {
                         LOG.info('Version missmatch for table, trying again old version %s new version %s', sentencedb_check.version, sentencedb.version)
-                        saveTranslatedText(sentence)
+                        saveTranslatedText(sentence, cb)
                     }
                 })
             }
@@ -100,7 +101,7 @@ function saveTranslatedText(sentence, cb) {
                     })
                 } else {
                     LOG.info('Version missmatch, trying again old version %s new version %s', sentencedb_check.version, sentencedb.version)
-                    saveTranslatedText(sentence)
+                    saveTranslatedText(sentence, cb)
                 }
             })
         }
@@ -109,9 +110,7 @@ function saveTranslatedText(sentence, cb) {
 
 exports.processTranslatedText = function (sentences) {
     async.each(sentences, (sentence, cb) => {
-        saveTranslatedText(sentence, function () {
-            cb()
-        })
+        saveTranslatedText(sentence, cb)
     }, function (err) {
         LOG.info('Process completed')
     })
