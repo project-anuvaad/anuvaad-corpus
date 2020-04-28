@@ -50,7 +50,7 @@ const NER_LAST_PAGE_IDENTIFIERS = {
     'JUDGMENT_DATE': { align: 'LEFT', is_new_line: true },
 }
 
-exports.processTranslatedText = function (sentences) {
+exports.processTranslatedText = function processTranslatedText(sentences) {
     sentences.map((sentence) => {
         let n_id = sentence['n_id']
         let condition = { node_index: n_id.split('__')[0], session_id: n_id.split('__')[1] }
@@ -70,9 +70,18 @@ exports.processTranslatedText = function (sentences) {
                             }
                         }
                     }
-                    let sentencetoupdate = { table_items: table_items }
-                    BaseModel.updateData(PdfSentence, sentencetoupdate, sentencedb._id, function (err, data) {
-                        LOG.info('Data updated for table', sentence)
+                    let sentencetoupdate = { table_items: table_items, version: sentencedb.version + 1 }
+                    BaseModel.findByCondition(PdfSentence, condition, null, null, null, function (err, data) {
+                        let sentencedb_check = data[0]._doc
+                        if (sentencedb_check.version == sentencedb.version) {
+                            BaseModel.updateData(PdfSentence, sentencetoupdate, sentencedb._id, function (err, data) {
+                                LOG.info('Data updated for table', sentence)
+                            })
+                        }
+                        else {
+                            LOG.info('Version missmatch, trying again')
+                            processTranslatedText(sentences)
+                        }
                     })
                 }
                 let tokenized_sentences = sentencedb.tokenized_sentences
@@ -81,9 +90,17 @@ exports.processTranslatedText = function (sentences) {
                         tokenized_sentences[index]['target'] = sentence['tgt']
                     }
                 })
-                let sentencetoupdate = { tokenized_sentences: tokenized_sentences }
-                BaseModel.updateData(PdfSentence, sentencetoupdate, sentencedb._id, function (err, data) {
-                    LOG.info('Data updated', sentence)
+                let sentencetoupdate = { tokenized_sentences: tokenized_sentences, version: sentencedb.version + 1 }
+                BaseModel.findByCondition(PdfSentence, condition, null, null, null, function (err, data) {
+                    let sentencedb_check = data[0]._doc
+                    if (sentencedb_check.version == sentencedb.version) {
+                        BaseModel.updateData(PdfSentence, sentencetoupdate, sentencedb._id, function (err, data) {
+                            LOG.info('Data updated', sentence)
+                        })
+                    } else {
+                        LOG.info('Version missmatch, trying again')
+                        processTranslatedText(sentences)
+                    }
                 })
             }
         })
