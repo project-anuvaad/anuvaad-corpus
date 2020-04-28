@@ -368,6 +368,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                 for (var key in data[index].table_items) {
                                                     for (var itemkey in data[index].table_items[key]) {
                                                         let node_data = data[index].table_items[key][itemkey]
+                                                        data[index].table_items[key][itemkey].sentence_index = sentence_index
                                                         tokenized_sentences.push(makeSenteceObj(node_data.text, sentence_index, data[index].node_index, pdf_parser_process.session_id, model.model_id))
                                                         sentence_index++
                                                     }
