@@ -90,7 +90,7 @@ function saveTranslatedText(sentence, cb) {
                 BaseModel.updateData(PdfSentence, query_param, sentencedb._id, function (err, data) {
                     cb()
                 })
-            }else{
+            } else {
                 cb()
             }
         }
@@ -280,7 +280,7 @@ function makeSenteceObj(text, sentence_index, node_index, id, model_id) {
     return sentence
 }
 
-function processHtml(pdf_parser_process, index, output_res, merge, start_node_index, tokenize, translate, model, res) {
+function processHtml(pdf_parser_process, index, output_res, merge, start_node_index, tokenize, translate, model, res, dontsendres) {
     if (fs.existsSync(BASE_PATH_UPLOAD + pdf_parser_process.session_id + "/" + 'output-' + index + '.html')) {
         let image_index = index
         if ((index + '').length == 1) {
@@ -291,8 +291,8 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
         ImageProcessing.processImage(BASE_PATH_UPLOAD + '/' + pdf_parser_process.session_id + '/output' + image_index + '.png', function (err, image_data) {
             if (err) {
                 LOG.error(err)
-                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                return res.status(apistatus.http.status).json(apistatus);
+                // let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                // return res.status(apistatus.http.status).json(apistatus);
             }
             HtmlToText.convertHtmlToJsonPagewise(BASE_PATH_UPLOAD, 'output-' + index + '.html', pdf_parser_process.session_id, merge, index, start_node_index, function (err, data) {
                 output_res[index + ''] = { html_nodes: data, image_data: image_data }
@@ -397,16 +397,33 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                     return res.status(apistatus.http.status).json(apistatus);
                                                 } else {
                                                     LOG.info('Saving pdf obj')
-                                                    BaseModel.saveData(PdfParser, [pdf_parser_process], function (err, doc) {
-                                                        if (err) {
-                                                            LOG.error(err)
-                                                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                                                            return res.status(apistatus.http.status).json(apistatus);
-                                                        } else {
-                                                            let response = new Response(StatusCode.SUCCESS, doc).getRsp()
-                                                            return res.status(response.http.status).json(response);
-                                                        }
-                                                    })
+                                                    if (dontsendres) {
+                                                        let condition = { session_id: pdf_parser_process.session_id }
+                                                        BaseModel.findByCondition(PdfParser, condition, null, null, null, function (err, data) {
+                                                            if (data && data.length > 0) {
+                                                                let pdfobj = data[0]._doc
+                                                                let updateObj = { status: STATUS_COMPLETED }
+                                                                BaseModel.updateData(PdfParser, updateObj, pdfobj._id, function (err, doc) {
+                                                                    if (err) {
+                                                                        LOG.error(err)
+                                                                    } else {
+                                                                        LOG.info('Data updated')
+                                                                    }
+                                                                })
+                                                            }
+                                                        })
+                                                    } else {
+                                                        BaseModel.saveData(PdfParser, [pdf_parser_process], function (err, doc) {
+                                                            if (err) {
+                                                                LOG.error(err)
+                                                                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                                                return res.status(apistatus.http.status).json(apistatus);
+                                                            } else {
+                                                                let response = new Response(StatusCode.SUCCESS, doc).getRsp()
+                                                                return res.status(response.http.status).json(response);
+                                                            }
+                                                        })
+                                                    }
                                                 }
                                             })
                                         })
@@ -483,9 +500,19 @@ exports.savePdfParserProcess = function (req, res) {
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);
                 }
-                let index = 1
-                let output_res = {}
-                processHtml(pdf_parser_process, index, output_res, false, 1, true, false, null, res)
+                BaseModel.saveData(PdfParser, [pdf_parser_process], function (err, doc) {
+                    if (err) {
+                        LOG.error(err)
+                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                        return res.status(apistatus.http.status).json(apistatus);
+                    } else {
+                        let index = 1
+                        let output_res = {}
+                        processHtml(pdf_parser_process, index, output_res, false, 1, true, false, null, res, true)
+                        let response = new Response(StatusCode.SUCCESS, doc).getRsp()
+                        return res.status(response.http.status).json(response);
+                    }
+                })
             })
         })
     })
@@ -498,15 +525,15 @@ exports.translatePdf = function (req, res) {
         return res.status(apistatus.http.status).json(apistatus);
     }
     let model = {}
-    if(typeof req.body.model == "string"){
+    if (typeof req.body.model == "string") {
         model = JSON.parse(req.body.model)
-    }else{
-        model = req.body.model 
+    } else {
+        model = req.body.model
     }
-    if(!model.model_id){
+    if (!model.model_id) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
-    } 
+    }
     let file = req.files.pdf_data
     let pdf_parser_process = {}
     pdf_parser_process.session_id = UUIDV4()
