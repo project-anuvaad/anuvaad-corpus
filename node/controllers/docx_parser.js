@@ -94,6 +94,7 @@ exports.convertPdfToDoc = function (req, res) {
     let pdf_parser_process = {}
     pdf_parser_process.session_id = UUIDV4()
     pdf_parser_process.process_name = file.name
+    pdf_parser_process.pdf_path = escape(file.name)
     pdf_parser_process.status = STATUS_PROCESSING
     pdf_parser_process.created_by = userId
     pdf_parser_process.created_on = new Date()
