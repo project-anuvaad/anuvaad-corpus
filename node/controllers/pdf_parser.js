@@ -298,7 +298,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                 output_res[index + ''] = { html_nodes: data, image_data: image_data }
                 index += 1
                 start_node_index += data.length
-                processHtml(pdf_parser_process, index, output_res, merge, start_node_index, tokenize, translate, model, res)
+                processHtml(pdf_parser_process, index, output_res, merge, start_node_index, tokenize, translate, model, res, dontsendres)
             })
         })
     } else {
@@ -396,8 +396,9 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                                                     return res.status(apistatus.http.status).json(apistatus);
                                                 } else {
-                                                    LOG.info('Saving pdf obj')
+                                                    
                                                     if (dontsendres) {
+                                                        LOG.info('Updating pdf obj')
                                                         let condition = { session_id: pdf_parser_process.session_id }
                                                         BaseModel.findByCondition(PdfParser, condition, null, null, null, function (err, data) {
                                                             if (data && data.length > 0) {
@@ -413,6 +414,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                             }
                                                         })
                                                     } else {
+                                                        LOG.info('Saving pdf obj')
                                                         BaseModel.saveData(PdfParser, [pdf_parser_process], function (err, doc) {
                                                             if (err) {
                                                                 LOG.error(err)
