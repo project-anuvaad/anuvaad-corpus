@@ -9,7 +9,7 @@ function Response(statuscode, data) {
     this.data = data;
 }
 
-function Response(statuscode, data, count, sum, pending, ner, model) {
+function Response(statuscode, data, count, sum, pending, ner, model, pdf_process) {
     this.statuscode = statuscode;
     this.data = data;
     this.count = count;
@@ -17,6 +17,7 @@ function Response(statuscode, data, count, sum, pending, ner, model) {
     this.pending = pending
     this.ner = ner
     this.model = model
+    this.pdf_process = pdf_process
 }
 
 Response.prototype.getRsp = function () {
@@ -38,6 +39,9 @@ Response.prototype.getRsp = function () {
     }
     if(this.model){
         result.model = this.model
+    }
+    if(this.pdf_process){
+        result.pdf_process = this.pdf_process
     }
     return result
 };
