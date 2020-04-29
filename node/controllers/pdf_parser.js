@@ -452,7 +452,7 @@ exports.extractParagraphs = function (req, res) {
     let file = req.files.pdf_data
     let pdf_parser_process = {}
     pdf_parser_process.session_id = UUIDV4()
-    pdf_parser_process.pdf_path = file.name
+    pdf_parser_process.pdf_path = escape(file.name)
     fs.mkdir(BASE_PATH_UPLOAD + pdf_parser_process.session_id, function (e) {
         fs.writeFile(BASE_PATH_UPLOAD + pdf_parser_process.session_id + '/' + pdf_parser_process.pdf_path, file.data, function (err) {
             if (err) {
@@ -485,7 +485,7 @@ exports.savePdfParserProcess = function (req, res) {
     let pdf_parser_process = {}
     pdf_parser_process.session_id = UUIDV4()
     pdf_parser_process.process_name = req.body.process_name
-    pdf_parser_process.pdf_path = file.name
+    pdf_parser_process.pdf_path = escape(file.name)
     pdf_parser_process.status = STATUS_PROCESSING
     pdf_parser_process.created_by = userId
     pdf_parser_process.created_on = new Date()
@@ -540,7 +540,7 @@ exports.translatePdf = function (req, res) {
     let pdf_parser_process = {}
     pdf_parser_process.session_id = UUIDV4()
     pdf_parser_process.process_name = req.body.process_name
-    pdf_parser_process.pdf_path = file.name
+    pdf_parser_process.pdf_path = escape(file.name)
     pdf_parser_process.source_lang = req.body.source_lang
     pdf_parser_process.target_lang = req.body.target_lang
     pdf_parser_process.status = STATUS_PROCESSING
