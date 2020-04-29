@@ -632,7 +632,7 @@ exports.fetchPdfSentences = function (req, res) {
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);
                 }
-                let response = new Response(StatusCode.SUCCESS, models, count, null, null, null, pdf_process.model).getRsp()
+                let response = new Response(StatusCode.SUCCESS, models, count, null, null, null, pdf_process.model,pdf_process).getRsp()
                 return res.status(response.http.status).json(response);
             })
         })
