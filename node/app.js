@@ -17,6 +17,7 @@ var daemon = require('./controllers/daemon/daemon');
 var KafkaConsumer = require('./kafka/consumer');
 var StatusCode = require('./errors/statuscodes').StatusCode
 var KafkTopics = require('./config/kafka-topics').KafkTopics
+var redis = require("./db/redis");
 
 // Imports the Google Cloud client library
 const { Storage } = require('@google-cloud/storage');

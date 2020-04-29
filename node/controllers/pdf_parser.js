@@ -396,7 +396,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                                                     return res.status(apistatus.http.status).json(apistatus);
                                                 } else {
-                                                    
+
                                                     if (dontsendres) {
                                                         LOG.info('Updating pdf obj')
                                                         let condition = { session_id: pdf_parser_process.session_id }
@@ -640,5 +640,20 @@ exports.fetchPdfSentences = function (req, res) {
 }
 
 exports.updatePdfSentences = function (req, res) {
-
+    if (!req || !req.body || !req.body.sentences) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    async.each(req.body.sentences, (sentence, cb) => {
+        let update_obj = { table_items: sentence.table_items, tokenized_sentences: sentence.tokenized_sentences }
+        BaseModel.updateData(PdfSentence, update_obj, sentence._id, function (err, doc) {
+            if (err) {
+                LOG.error(err)
+            }
+            cb()
+        })
+    }, function (err) {
+        let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+        return res.status(response.http.status).json(response);
+    })
 }
