@@ -541,7 +541,7 @@ exports.translatePdf = function (req, res) {
     pdf_parser_process.pdf_path = file.name
     pdf_parser_process.source_lang = req.body.source_lang
     pdf_parser_process.target_lang = req.body.target_lang
-    pdf_parser_process.status = STATUS_COMPLETED
+    pdf_parser_process.status = STATUS_PROCESSING
     pdf_parser_process.created_by = userId
     pdf_parser_process.model = model
     pdf_parser_process.created_on = new Date()
@@ -558,9 +558,19 @@ exports.translatePdf = function (req, res) {
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);
                 }
-                let index = 1
-                let output_res = {}
-                processHtml(pdf_parser_process, index, output_res, false, 1, true, true, model, res)
+                BaseModel.saveData(PdfParser, [pdf_parser_process], function (err, doc) {
+                    if (err) {
+                        LOG.error(err)
+                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                        return res.status(apistatus.http.status).json(apistatus);
+                    } else {
+                        let index = 1
+                        let output_res = {}
+                        processHtml(pdf_parser_process, index, output_res, false, 1, true, true, model, res, true)
+                        let response = new Response(StatusCode.SUCCESS, doc).getRsp()
+                        return res.status(response.http.status).json(response);
+                    }
+                })
             })
         })
     })
