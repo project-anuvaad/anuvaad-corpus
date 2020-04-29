@@ -5,6 +5,8 @@
         "LOG_DIRECTORY": "../app_log/aidemo-dev",
         "MONGO_URL":"mongodb://localhost/preprocessing",
         "ELASTIC_URL":"http://localhost:9200",
-        "KAFKA_URL":"172.17.18.200:9092"
+        "KAFKA_URL":"172.17.18.200:9092",
+        "REDIS_URL":"127.0.0.1",
+        "REDIS_PORT":"6379"
     }
 }

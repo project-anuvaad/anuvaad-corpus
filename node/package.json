@@ -51,6 +51,7 @@
     "passport-http-bearer": "^1.0.1",
     "path": "^0.12.7",
     "pdf-image": "^2.0.0",
+    "redis": "^3.0.2",
     "uuid": "^3.1.0"
   },
   "author": "KD",
