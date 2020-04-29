@@ -67,8 +67,8 @@ function saveTranslatedText(sentence, cb) {
                     for (var itemkey in table_items[key]) {
                         let node_data = table_items[key][itemkey]
                         if (node_data.sentence_index == sentence['s_id']) {
-                            let query_key = 'table_items.' + key + '.' + itemkey + '.target'
-                            query_param = { [query_key]: sentence['tgt'] }
+                            let query_key = 'table_items.' + key + '.' + itemkey + ''
+                            query_param = { [query_key + '.target']: sentence['tgt'], [query_key + '.tagged_src']: sentence['tagged_src'], [query_key + '.tagged_tgt']: sentence['tagged_tgt'] }
                         }
                     }
                 }
@@ -81,8 +81,8 @@ function saveTranslatedText(sentence, cb) {
             let data_available = false
             tokenized_sentences.map((tokenized_sentence, index) => {
                 if (tokenized_sentence.sentence_index == sentence['s_id']) {
-                    let query_key = 'tokenized_sentences.' + index + '.target'
-                    query_param = { [query_key]: sentence['tgt'] }
+                    let query_key = 'tokenized_sentences.' + index
+                    query_param = { [query_key + '.target']: sentence['tgt'], [query_key + '.tagged_src']: sentence['tagged_src'], [query_key + '.tagged_tgt']: sentence['tagged_tgt'] }
                     data_available = true
                 }
             })
@@ -632,7 +632,7 @@ exports.fetchPdfSentences = function (req, res) {
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);
                 }
-                let response = new Response(StatusCode.SUCCESS, models, count, null, null, null, pdf_process.model,pdf_process).getRsp()
+                let response = new Response(StatusCode.SUCCESS, models, count, null, null, null, pdf_process.model, pdf_process).getRsp()
                 return res.status(response.http.status).json(response);
             })
         })
