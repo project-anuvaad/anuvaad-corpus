@@ -25,6 +25,7 @@ const BASE_PATH_NGINX = 'nginx/'
 const BASE_PATH_UPLOAD = 'corpusfiles/pdfs/'
 const STATUS_PROCESSING = 'PROCESSING'
 const STATUS_COMPLETED = 'COMPLETED'
+const STATUS_TRANSLATING = 'TRANSLATING'
 const STATUS_PENDING = 'PENDING'
 
 const NER_FIRST_PAGE_IDENTIFIERS = {
@@ -273,7 +274,7 @@ function makeSenteceObj(text, sentence_index, node_index, id, model_id) {
     sentence.text = text
     sentence.sentence_index = sentence_index
     sentence.src = text
-    sentence.id = model_id
+    sentence.id = parseInt(model_id)
     sentence.n_id = node_index + '__' + id
     sentence.s_id = sentence_index
     sentence.version = 0
@@ -403,7 +404,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                         BaseModel.findByCondition(PdfParser, condition, null, null, null, function (err, data) {
                                                             if (data && data.length > 0) {
                                                                 let pdfobj = data[0]._doc
-                                                                let updateObj = { status: STATUS_COMPLETED }
+                                                                let updateObj = { status: STATUS_TRANSLATING }
                                                                 BaseModel.updateData(PdfParser, updateObj, pdfobj._id, function (err, doc) {
                                                                     if (err) {
                                                                         LOG.error(err)
