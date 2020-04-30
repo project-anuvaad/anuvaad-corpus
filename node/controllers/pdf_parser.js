@@ -373,14 +373,30 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                 })
                                             }
                                             if (translate && model && producer) {
-                                                let payloads = [
-                                                    {
-                                                        topic: KafkaTopics.NMT_TRANSLATE, messages: JSON.stringify({ 'url_end_point': model.url_end_point, 'message': tokenized_sentences }), partition: 0
+                                                if (tokenized_sentences.length > 25) {
+                                                    var i, j, temparray, chunk = 25;
+                                                    for (i = 0, j = tokenized_sentences.length; i < j; i += chunk) {
+                                                        temparray = tokenized_sentences.slice(i, i + chunk);
+                                                        let payloads = [
+                                                            {
+                                                                topic: KafkaTopics.NMT_TRANSLATE, messages: JSON.stringify({ 'url_end_point': model.url_end_point, 'message': temparray }), partition: 0
+                                                            }
+                                                        ]
+                                                        producer.send(payloads, function (err, data) {
+                                                            LOG.debug('Produced')
+                                                        });
                                                     }
-                                                ]
-                                                producer.send(payloads, function (err, data) {
-                                                    LOG.debug('Produced')
-                                                });
+                                                    
+                                                }else{
+                                                    let payloads = [
+                                                        {
+                                                            topic: KafkaTopics.NMT_TRANSLATE, messages: JSON.stringify({ 'url_end_point': model.url_end_point, 'message': tokenized_sentences }), partition: 0
+                                                        }
+                                                    ]
+                                                    producer.send(payloads, function (err, data) {
+                                                        LOG.debug('Produced')
+                                                    });
+                                                }
                                             }
                                             data[index].node_index = data[index].node_index + ''
                                             data[index].version = 0
