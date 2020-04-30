@@ -89,6 +89,31 @@ function saveTranslatedText(sentence, cb) {
             })
             if (data_available) {
                 BaseModel.updateData(PdfSentence, query_param, sentencedb._id, function (err, data) {
+                    BaseModel.findByCondition(PdfSentence, { session_id: sentencedb.session_id }, null, null, null, function (err, doc) {
+                        let data_completed = true
+                        if (!err && doc && doc.length > 0) {
+                            doc.map((data) => {
+                                if (data._doc.tokenized_sentences) {
+                                    data._doc.tokenized_sentences.map((sentence) => {
+                                        if (!("target" in sentence)) {
+                                            data_completed = false
+                                            break
+                                        }
+                                    })
+                                }
+                            })
+                            if (data_completed) {
+                                BaseModel.findByCondition(PdfParser, { session_id: sentencedb.session_id }, null, null, null, function (err, pdf_process) {
+                                    if (pdf_process) {
+                                        let pdf_obj = pdf_process[0]._doc
+                                        BaseModel.updateData(PdfParser, { status: STATUS_COMPLETED }, pdf_obj._id, function (err, doc) {
+                                            LOG.info('PDF process completed')
+                                        })
+                                    }
+                                })
+                            }
+                        }
+                    })
                     cb()
                 })
             } else {
@@ -281,7 +306,7 @@ function makeSenteceObj(text, sentence_index, node_index, id, model_id) {
     return sentence
 }
 
-function processHtml(pdf_parser_process, index, output_res, merge, start_node_index, tokenize, translate, model, res, dontsendres) {
+function processHtml(pdf_parser_process, index, output_res, merge, start_node_index, tokenize, translate, model, res, dontsendres, userId) {
     if (fs.existsSync(BASE_PATH_UPLOAD + pdf_parser_process.session_id + "/" + 'output-' + index + '.html')) {
         let image_index = index
         if ((index + '').length == 1) {
@@ -299,7 +324,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                 output_res[index + ''] = { html_nodes: data, image_data: image_data }
                 index += 1
                 start_node_index += data.length
-                processHtml(pdf_parser_process, index, output_res, merge, start_node_index, tokenize, translate, model, res, dontsendres)
+                processHtml(pdf_parser_process, index, output_res, merge, start_node_index, tokenize, translate, model, res, dontsendres, userId)
             })
         })
     } else {
@@ -386,8 +411,8 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                             LOG.debug('Produced')
                                                         });
                                                     }
-                                                    
-                                                }else{
+
+                                                } else {
                                                     let payloads = [
                                                         {
                                                             topic: KafkaTopics.NMT_TRANSLATE, messages: JSON.stringify({ 'url_end_point': model.url_end_point, 'message': tokenized_sentences }), partition: 0
@@ -585,7 +610,7 @@ exports.translatePdf = function (req, res) {
                     } else {
                         let index = 1
                         let output_res = {}
-                        processHtml(pdf_parser_process, index, output_res, false, 1, true, true, model, res, true)
+                        processHtml(pdf_parser_process, index, output_res, false, 1, true, true, model, res, true, userId)
                         let response = new Response(StatusCode.SUCCESS, doc).getRsp()
                         return res.status(response.http.status).json(response);
                     }
