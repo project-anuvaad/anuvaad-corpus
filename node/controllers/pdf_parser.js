@@ -97,7 +97,6 @@ function saveTranslatedText(sentence, cb) {
                                     data._doc.tokenized_sentences.map((sentence) => {
                                         if (!("target" in sentence)) {
                                             data_completed = false
-                                            break
                                         }
                                     })
                                 }
