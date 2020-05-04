@@ -23,6 +23,16 @@ Basemodel.updateData = function (schema, data, id, cb) {
     });
 }
 
+Basemodel.findById = function (schema, id, cb) {
+    schema.findById(id, function (err, data) {
+        if (err) {
+            LOG.error("Unable to find data due to [%s]", JSON.stringify(err));
+            return cb(err, null);
+        }
+        return cb(null, data);
+    })
+}
+
 Basemodel.findByCondition = function (schema, condition, pagesize, pageno, sort_column, cb) {
     if (!sort_column) {
         sort_column = '_id'
