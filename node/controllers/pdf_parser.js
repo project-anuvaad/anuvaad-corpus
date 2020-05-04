@@ -295,7 +295,7 @@ function performNer(data, cb) {
     })
 }
 
-function makeSenteceObj(text, sentence_index, node_index, id, model_id, userId) {
+function makeSenteceObj(text, sentence_index, node_index, id, model_id) {
     let sentence = {}
     sentence.text = text
     sentence.sentence_index = sentence_index
@@ -384,23 +384,21 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                     for (var itemkey in data[index].table_items[key]) {
                                                         let node_data = data[index].table_items[key][itemkey]
                                                         data[index].table_items[key][itemkey].sentence_index = sentence_index
-                                                        let sentence_obj = makeSenteceObj(node_data.text, sentence_index, data[index].node_index, pdf_parser_process.session_id, model ? model.model_id : null, userId)
-                                                        tokenized_sentences.push(sentence_obj)
+                                                        tokenized_sentences.push(makeSenteceObj(node_data.text, sentence_index, data[index].node_index, pdf_parser_process.session_id, model ? model.model_id : null))
                                                         sentence_index++
                                                     }
                                                 }
                                             } else if (data[index].is_ner) {
-                                                let sentence_obj = makeSenteceObj(data[index].text, sentence_index, data[index].node_index, pdf_parser_process.session_id, model ? model.model_id : null, userId)
-                                                tokenized_sentences.push(sentence_obj)
+                                                tokenized_sentences.push(makeSenteceObj(data[index].text, sentence_index, data[index].node_index, pdf_parser_process.session_id, model ? model.model_id : null))
                                                 sentence_index++
                                             }
                                             else {
                                                 d.text.map(function (tokenized_sentence) {
-                                                    let sentence_obj = makeSenteceObj(tokenized_sentence, sentence_index, data[index].node_index, pdf_parser_process.session_id, model ? model.model_id : null, userId)
-                                                    tokenized_sentences.push(sentence_obj)
+                                                    tokenized_sentences.push(makeSenteceObj(tokenized_sentence, sentence_index, data[index].node_index, pdf_parser_process.session_id, model ? model.model_id : null))
                                                     sentence_index++
                                                 })
                                             }
+                                            LOG.info('Tokenized sentences initial', tokenized_sentences)
                                             if (translate && model && producer) {
                                                 async_lib.waterfall([
                                                     function (callback) {
@@ -422,6 +420,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                         } else {
                                                             let kafka_sentences = []
                                                             let index = 0
+                                                            LOG.info('Tokenized sentences', tokenized_sentences)
                                                             async_lib.each(tokenized_sentences, (sentence, cb) => {
                                                                 SentencesRedis.fetchSentence(sentence, userId, function (err, doc) {
                                                                     LOG.info('actual sentence',sentence)
