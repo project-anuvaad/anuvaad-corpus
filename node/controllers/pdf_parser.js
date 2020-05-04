@@ -419,22 +419,22 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                             callback()
                                                         } else {
                                                             let kafka_sentences = []
-                                                            let index = 0
+                                                            let tokenized_sentences_index = 0
                                                             LOG.info('Tokenized sentences', tokenized_sentences)
-                                                            async_lib.each(tokenized_sentences, (sentence, cb) => {
+                                                            async_lib.each(tokenized_sentences, (sentence, rediscb) => {
                                                                 SentencesRedis.fetchSentence(sentence, userId, function (err, doc) {
-                                                                    LOG.info('actual sentence',sentence)
+                                                                    LOG.info('actual sentence', sentence)
                                                                     if (doc) {
-                                                                        LOG.info('sentence found in redis',doc)
+                                                                        LOG.info('sentence found in redis', doc)
                                                                         let saved_sentence = JSON.parse(doc)
-                                                                        tokenized_sentences[index].target = saved_sentence['target']
-                                                                        tokenized_sentences[index].tagged_src = saved_sentence.tagged_src
-                                                                        tokenized_sentences[index].tagged_tgt = saved_sentence.tagged_tgt
+                                                                        tokenized_sentences[tokenized_sentences_index].target = saved_sentence['target']
+                                                                        tokenized_sentences[tokenized_sentences_index].tagged_src = saved_sentence.tagged_src
+                                                                        tokenized_sentences[tokenized_sentences_index].tagged_tgt = saved_sentence.tagged_tgt
                                                                     } else {
                                                                         kafka_sentences.push(sentence)
                                                                     }
-                                                                    index++;
-                                                                    cb()
+                                                                    tokenized_sentences_index++;
+                                                                    rediscb()
                                                                 })
 
                                                             }, function (err) {
@@ -451,6 +451,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                         }
                                                     }
                                                 ], function () {
+                                                    LOG.info('Current node index', index)
                                                     data[index].node_index = data[index].node_index + ''
                                                     data[index].version = 0
                                                     data[index].status = STATUS_PENDING
@@ -460,6 +461,14 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                     cb()
                                                 })
 
+                                            } else {
+                                                data[index].node_index = data[index].node_index + ''
+                                                data[index].version = 0
+                                                data[index].status = STATUS_PENDING
+                                                data[index].session_id = pdf_parser_process.session_id
+                                                data[index].tokenized_sentences = tokenized_sentences
+                                                index++
+                                                cb()
                                             }
 
                                         }, function (err) {
