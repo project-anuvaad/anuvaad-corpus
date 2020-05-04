@@ -295,7 +295,7 @@ function performNer(data, cb) {
     })
 }
 
-async function makeSenteceObj(text, sentence_index, node_index, id, model_id, userId) {
+function makeSenteceObj(text, sentence_index, node_index, id, model_id, userId) {
     let sentence = {}
     sentence.text = text
     sentence.sentence_index = sentence_index
@@ -304,21 +304,20 @@ async function makeSenteceObj(text, sentence_index, node_index, id, model_id, us
     sentence.n_id = node_index + '__' + id
     sentence.s_id = sentence_index
     sentence.version = 0
-    return new Promise(resolve => {
-        SentencesRedis.fetchSentence(sentence, userId, function (err, doc) {
-            if (doc) {
-                let saved_sentence = JSON.parse(doc)
-                sentence.target = saved_sentence['target']
-                sentence.tagged_src = saved_sentence.tagged_src
-                sentence.tagged_tgt = saved_sentence.tagged_tgt
-            }
-            resolve(sentence);
-        })
-    })
 
+    SentencesRedis.fetchSentence(sentence, userId, function (err, doc) {
+        if (doc) {
+            let saved_sentence = JSON.parse(doc)
+            sentence.target = saved_sentence['target']
+            sentence.tagged_src = saved_sentence.tagged_src
+            sentence.tagged_tgt = saved_sentence.tagged_tgt
+        }
+        // resolve(sentence);
+    })
+    return sentence
 }
 
-async function processHtml(pdf_parser_process, index, output_res, merge, start_node_index, tokenize, translate, model, res, dontsendres, userId) {
+function processHtml(pdf_parser_process, index, output_res, merge, start_node_index, tokenize, translate, model, res, dontsendres, userId) {
     if (fs.existsSync(BASE_PATH_UPLOAD + pdf_parser_process.session_id + "/" + 'output-' + index + '.html')) {
         let image_index = index
         if ((index + '').length == 1) {
@@ -387,7 +386,7 @@ async function processHtml(pdf_parser_process, index, output_res, merge, start_n
                                             LOG.debug("KafkaProducer connected")
                                         }
                                         let index = 0
-                                        async_lib.each(api_res.data.data, async (d, cb) => {
+                                        async_lib.each(api_res.data.data, (d, cb) => {
                                             let sentence_index = 0
                                             let tokenized_sentences = []
                                             if (data[index].is_table) {
@@ -395,19 +394,19 @@ async function processHtml(pdf_parser_process, index, output_res, merge, start_n
                                                     for (var itemkey in data[index].table_items[key]) {
                                                         let node_data = data[index].table_items[key][itemkey]
                                                         data[index].table_items[key][itemkey].sentence_index = sentence_index
-                                                        let sentence_obj = await makeSenteceObj(node_data.text, sentence_index, data[index].node_index, pdf_parser_process.session_id, model ? model.model_id : null, userId)
+                                                        let sentence_obj = makeSenteceObj(node_data.text, sentence_index, data[index].node_index, pdf_parser_process.session_id, model ? model.model_id : null, userId)
                                                         tokenized_sentences.push(sentence_obj)
                                                         sentence_index++
                                                     }
                                                 }
                                             } else if (data[index].is_ner) {
-                                                let sentence_obj = await makeSenteceObj(data[index].text, sentence_index, data[index].node_index, pdf_parser_process.session_id, model ? model.model_id : null, userId)
+                                                let sentence_obj = makeSenteceObj(data[index].text, sentence_index, data[index].node_index, pdf_parser_process.session_id, model ? model.model_id : null, userId)
                                                 tokenized_sentences.push(sentence_obj)
                                                 sentence_index++
                                             }
                                             else {
-                                                d.text.map(async function (tokenized_sentence) {
-                                                    let sentence_obj = await makeSenteceObj(tokenized_sentence, sentence_index, data[index].node_index, pdf_parser_process.session_id, model ? model.model_id : null, userId)
+                                                d.text.map(function (tokenized_sentence) {
+                                                    let sentence_obj = makeSenteceObj(tokenized_sentence, sentence_index, data[index].node_index, pdf_parser_process.session_id, model ? model.model_id : null, userId)
                                                     tokenized_sentences.push(sentence_obj)
                                                     sentence_index++
                                                 })
