@@ -6,6 +6,7 @@ var PdfSentence = require('../models/pdf_sentences');
 var Response = require('../models/response')
 var APIStatus = require('../errors/apistatus')
 var StatusCode = require('../errors/statuscodes').StatusCode
+var mongoose = require("../db/mongoose");
 var LOG = require('../logger/logger').logger
 
 var KafkaTopics = require('../config/kafka-topics').KafkTopics
@@ -689,9 +690,10 @@ exports.updatePdfSentences = function (req, res) {
         return res.status(apistatus.http.status).json(apistatus);
     }
     async.each(req.body.sentences, (sentence, cb) => {
-        BaseModel.findByCondition(PdfSentence, { _id: sentence._id }, null, null, null, function (err, doc) {
-            if (doc && doc.length > 0) {
-                let sentencedb = doc[0]._doc
+        let id = mongoose.Types.ObjectId(sentence._id)
+        BaseModel.findById(PdfSentence, id, function (err, doc) {
+            if (doc) {
+                let sentencedb = doc._doc
                 if (sentencedb.is_table) {
                     for (var key in sentence.table_items) {
                         for (var col in sentence.table_items[key]) {
@@ -705,8 +707,8 @@ exports.updatePdfSentences = function (req, res) {
                     }
                 } else {
                     sentence.tokenized_sentences.map((sentence_obj, index) => {
-                        if (sentence_obj.target !== sentencedb.tokenized_sentence[index].target) {
-                            let sentence_to_save = { source: sentence_obj.source, tagged_src: sentence_obj.tagged_src, tagged_tgt: sentence_obj.tagged_tgt, target: sentence_obj.target }
+                        if (sentence_obj.target !== sentencedb.tokenized_sentences[index].target) {
+                            let sentence_to_save = { source: sentence_obj.src, tagged_src: sentence_obj.tagged_src, tagged_tgt: sentence_obj.tagged_tgt, target: sentence_obj.target }
                             SentencesRedis.saveSentence(sentence_to_save, userId, function (err, doc) {
                                 LOG.info('data saved in redis')
                             })
