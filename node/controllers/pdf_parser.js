@@ -304,16 +304,6 @@ function makeSenteceObj(text, sentence_index, node_index, id, model_id, userId) 
     sentence.n_id = node_index + '__' + id
     sentence.s_id = sentence_index
     sentence.version = 0
-
-    SentencesRedis.fetchSentence(sentence, userId, function (err, doc) {
-        if (doc) {
-            let saved_sentence = JSON.parse(doc)
-            sentence.target = saved_sentence['target']
-            sentence.tagged_src = saved_sentence.tagged_src
-            sentence.tagged_tgt = saved_sentence.tagged_tgt
-        }
-        // resolve(sentence);
-    })
     return sentence
 }
 
@@ -412,39 +402,65 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                 })
                                             }
                                             if (translate && model && producer) {
-                                                if (tokenized_sentences.length > 25) {
-                                                    var i, j, temparray, chunk = 25;
-                                                    for (i = 0, j = tokenized_sentences.length; i < j; i += chunk) {
-                                                        temparray = tokenized_sentences.slice(i, i + chunk);
-                                                        temparray.filter(sent => !sent.target)
-                                                        let payloads = [
-                                                            {
-                                                                topic: KafkaTopics.NMT_TRANSLATE, messages: JSON.stringify({ 'url_end_point': model.url_end_point, 'message': temparray }), partition: 0
+                                                async_lib.waterfall([
+                                                    function (callback) {
+                                                        if (tokenized_sentences.length > 25) {
+                                                            var i, j, temparray, chunk = 25;
+                                                            for (i = 0, j = tokenized_sentences.length; i < j; i += chunk) {
+                                                                temparray = tokenized_sentences.slice(i, i + chunk);
+                                                                temparray.filter(sent => !sent.target)
+                                                                let payloads = [
+                                                                    {
+                                                                        topic: KafkaTopics.NMT_TRANSLATE, messages: JSON.stringify({ 'url_end_point': model.url_end_point, 'message': temparray }), partition: 0
+                                                                    }
+                                                                ]
+                                                                producer.send(payloads, function (err, data) {
+                                                                    LOG.debug('Produced')
+                                                                });
                                                             }
-                                                        ]
-                                                        producer.send(payloads, function (err, data) {
-                                                            LOG.debug('Produced')
-                                                        });
-                                                    }
+                                                            callback()
+                                                        } else {
+                                                            let kafka_sentences = []
+                                                            let index = 0
+                                                            async_lib.each(tokenized_sentences, (sentence, cb) => {
+                                                                SentencesRedis.fetchSentence(sentence, userId, function (err, doc) {
+                                                                    if (doc) {
+                                                                        let saved_sentence = JSON.parse(doc)
+                                                                        tokenized_sentences[index].target = saved_sentence['target']
+                                                                        tokenized_sentences[index].tagged_src = saved_sentence.tagged_src
+                                                                        tokenized_sentences[index].tagged_tgt = saved_sentence.tagged_tgt
+                                                                    } else {
+                                                                        kafka_sentences.push(sentence)
+                                                                    }
+                                                                    index++;
+                                                                    cb()
+                                                                })
 
-                                                } else {
-                                                    let payloads = [
-                                                        {
-                                                            topic: KafkaTopics.NMT_TRANSLATE, messages: JSON.stringify({ 'url_end_point': model.url_end_point, 'message': tokenized_sentences }), partition: 0
+                                                            }, function (err) {
+                                                                let payloads = [
+                                                                    {
+                                                                        topic: KafkaTopics.NMT_TRANSLATE, messages: JSON.stringify({ 'url_end_point': model.url_end_point, 'message': kafka_sentences }), partition: 0
+                                                                    }
+                                                                ]
+                                                                producer.send(payloads, function (err, data) {
+                                                                    LOG.debug('Produced')
+                                                                });
+                                                                callback()
+                                                            })
                                                         }
-                                                    ]
-                                                    producer.send(payloads, function (err, data) {
-                                                        LOG.debug('Produced')
-                                                    });
-                                                }
+                                                    }
+                                                ], function () {
+                                                    data[index].node_index = data[index].node_index + ''
+                                                    data[index].version = 0
+                                                    data[index].status = STATUS_PENDING
+                                                    data[index].session_id = pdf_parser_process.session_id
+                                                    data[index].tokenized_sentences = tokenized_sentences
+                                                    index++
+                                                    cb()
+                                                })
+
                                             }
-                                            data[index].node_index = data[index].node_index + ''
-                                            data[index].version = 0
-                                            data[index].status = STATUS_PENDING
-                                            data[index].session_id = pdf_parser_process.session_id
-                                            data[index].tokenized_sentences = tokenized_sentences
-                                            index++
-                                            cb()
+
                                         }, function (err) {
                                             LOG.info('Saving pdf sentences')
                                             BaseModel.saveData(PdfSentence, data, function (err, doc) {
