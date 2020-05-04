@@ -4,7 +4,7 @@ var LOG = require('../logger/logger').logger
 
 
 exports.saveSentence = function (sentence, userid, cb) {
-    redis_client.set(userid + '_' + crypto.createHash('sha256').update(sentence.source).digest('hex'), sentence, function (err, doc) {
+    redis_client.set(userid + '_' + crypto.createHash('sha256').update(sentence.source).digest('hex'), JSON.stringify(sentence), function (err, doc) {
         if (err) {
             LOG.error(err)
             cb(err, null)
