@@ -399,6 +399,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                 })
                                             }
                                             LOG.info('Tokenized sentences initial', tokenized_sentences)
+                                            LOG.info('Current index',index)
                                             if (translate && model && producer) {
                                                 async_lib.waterfall([
                                                     function (callback) {
