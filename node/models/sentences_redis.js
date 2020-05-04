@@ -15,7 +15,7 @@ exports.saveSentence = function (sentence, userid, cb) {
 }
 
 exports.fetchSentence = function (sentence, userid, cb) {
-    redis_client.get(userid + '_' + crypto.createHash('sha256').update(sentence.source).digest('hex'), function (err, doc) {
+    redis_client.get(userid + '_' + crypto.createHash('sha256').update(sentence.src).digest('hex'), function (err, doc) {
         if (err) {
             LOG.error(err)
             cb(err, null)
