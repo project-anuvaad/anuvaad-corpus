@@ -1,6 +1,7 @@
 var BaseModel = require('../models/basemodel');
 var PdfParser = require('../models/pdf_parser');
 var PdfDocProcess = require('../models/pdf_to_doc_process');
+var SentencesRedis = require('../models/sentences_redis');
 var PdfSentence = require('../models/pdf_sentences');
 var Response = require('../models/response')
 var APIStatus = require('../errors/apistatus')
@@ -487,6 +488,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
 
 exports.extractParagraphs = function (req, res) {
     if (!req || !req.body || !req.files || !req.files.pdf_data) {
+        LOG.info('test')
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
@@ -681,17 +683,47 @@ exports.fetchPdfSentences = function (req, res) {
 }
 
 exports.updatePdfSentences = function (req, res) {
+    let userId = req.headers['ad-userid']
     if (!req || !req.body || !req.body.sentences) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
     async.each(req.body.sentences, (sentence, cb) => {
-        let update_obj = { table_items: sentence.table_items, tokenized_sentences: sentence.tokenized_sentences }
-        BaseModel.updateData(PdfSentence, update_obj, sentence._id, function (err, doc) {
-            if (err) {
-                LOG.error(err)
+        BaseModel.findByCondition(PdfSentence, { _id: sentence._id }, null, null, null, function (err, doc) {
+            if (doc && doc.length > 0) {
+                let sentencedb = doc[0]._doc
+                if (sentencedb.is_table) {
+                    for (var key in sentence.table_items) {
+                        for (var col in sentence.table_items[key]) {
+                            if (sentence.table_items[key][col].target !== sentencedb.table_items[key][col].target) {
+                                let sentence_to_save = { source: sentence.table_items[key][col].source, tagged_src: sentence.table_items[key][col].tagged_src, tagged_tgt: sentence.table_items[key][col].tagged_tgt, target: sentence.table_items[key][col].target }
+                                SentencesRedis.saveSentence(sentence_to_save, userId, function (err, doc) {
+                                    LOG.info('data saved in redis')
+                                })
+                            }
+                        }
+                    }
+                } else {
+                    sentence.tokenized_sentences.map((sentence_obj, index) => {
+                        if (sentence_obj.target !== sentencedb.tokenized_sentence[index].target) {
+                            let sentence_to_save = { source: sentence_obj.source, tagged_src: sentence_obj.tagged_src, tagged_tgt: sentence_obj.tagged_tgt, target: sentence_obj.target }
+                            SentencesRedis.saveSentence(sentence_to_save, userId, function (err, doc) {
+                                LOG.info('data saved in redis')
+                            })
+                        }
+                    })
+                }
+                let update_obj = { table_items: sentence.table_items, tokenized_sentences: sentence.tokenized_sentences }
+                BaseModel.updateData(PdfSentence, update_obj, sentence._id, function (err, doc) {
+                    if (err) {
+                        LOG.error(err)
+                    }
+                    cb()
+                })
             }
-            cb()
+            else {
+                cb()
+            }
         })
     }, function (err) {
         let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
