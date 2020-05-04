@@ -424,7 +424,9 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                             let index = 0
                                                             async_lib.each(tokenized_sentences, (sentence, cb) => {
                                                                 SentencesRedis.fetchSentence(sentence, userId, function (err, doc) {
+                                                                    LOG.info('actual sentence',sentence)
                                                                     if (doc) {
+                                                                        LOG.info('sentence found in redis',doc)
                                                                         let saved_sentence = JSON.parse(doc)
                                                                         tokenized_sentences[index].target = saved_sentence['target']
                                                                         tokenized_sentences[index].tagged_src = saved_sentence.tagged_src
