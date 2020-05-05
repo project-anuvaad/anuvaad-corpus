@@ -63,7 +63,16 @@ function saveTranslatedText(sentence, cb) {
         }
         else {
             let sentencedb = data[0]._doc
-            if (sentencedb.is_table) {
+            if (sentencedb.is_footer) {
+                let splitted_arr = sentencedb.text.split(' ')
+                if (splitted_arr && splitted_arr.length > 0) {
+                    let first_text = splitted_arr[0]
+                    if (!isNaN(first_text)) {
+                        sentence['tgt'] = first_text + ' ' + sentence['tgt']
+                    } 
+                }
+            }
+            else if (sentencedb.is_table) {
                 let table_items = sentencedb.table_items
                 let query_param = {}
                 for (var key in table_items) {
@@ -307,11 +316,11 @@ function makeSenteceObj(node_data, text, sentence_index, node_index, id, model_i
             let first_text = splitted_arr[0]
             if (!isNaN(first_text)) {
                 sentence.src = text.substr((text).indexOf(' ') + 1)
-            }else{
+            } else {
                 sentence.src = text
             }
         }
-    }else{
+    } else {
         sentence.src = text
     }
     sentence.id = parseInt(model_id)
@@ -404,7 +413,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                         sentence_index++
                                                     }
                                                 }
-                                            } else if (data[tokenized_node_index].is_ner) {
+                                            } else if (data[tokenized_node_index].is_ner || data[tokenized_node_index].is_footer) {
                                                 tokenized_sentences.push(makeSenteceObj(data[tokenized_node_index], data[tokenized_node_index].text, sentence_index, data[tokenized_node_index].node_index, pdf_parser_process.session_id, model ? model.model_id : null))
                                                 sentence_index++
                                             }
