@@ -1,7 +1,7 @@
 var axios = require('axios');
 var LOG = require('../logger/logger').logger
 var fs = require("fs");
-const BASE_PATH = 'http://52.11.90.50'
+const BASE_PATH = 'http://52.11.90.50/imageprocessing'
 
 
 exports.processImage = function (filepath, cb) {
