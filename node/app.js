@@ -88,6 +88,12 @@ KafkaConsumer.getInstance().getConsumer(KafkTopics.NMT_TRANSLATE_PROCESSED, (err
         LOG.error('Data missing for message', data)
       }
     })
+    consumer.on('offsetOutOfRange', function (err) {
+      LOG.error(err)
+    })
+    consumer.on('error', function (err) {
+      LOG.error(err)
+    })
   }
 })
 
