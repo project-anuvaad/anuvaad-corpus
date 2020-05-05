@@ -380,6 +380,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                         async_lib.each(api_res.data.data, (d, cb) => {
                                             let sentence_index = 0
                                             let tokenized_sentences = []
+                                            const tokenized_node_index = index
                                             if (data[index].is_table) {
                                                 for (var key in data[index].table_items) {
                                                     for (var itemkey in data[index].table_items[key]) {
@@ -449,11 +450,11 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                         }
                                                     }
                                                 ], function () {
-                                                    data[sentence_node_index].node_index = data[sentence_node_index].node_index + ''
-                                                    data[sentence_node_index].version = 0
-                                                    data[sentence_node_index].status = STATUS_PENDING
-                                                    data[sentence_node_index].session_id = pdf_parser_process.session_id
-                                                    data[sentence_node_index].tokenized_sentences = tokenized_sentences
+                                                    data[tokenized_node_index].node_index = data[sentence_node_index].node_index + ''
+                                                    data[tokenized_node_index].version = 0
+                                                    data[tokenized_node_index].status = STATUS_PENDING
+                                                    data[tokenized_node_index].session_id = pdf_parser_process.session_id
+                                                    data[tokenized_node_index].tokenized_sentences = tokenized_sentences
                                                     sentence_node_index++
                                                     cb()
                                                 })
