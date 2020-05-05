@@ -247,7 +247,7 @@ function useNerTags(ner_data, data, cb) {
         if (((JUDGE_NAME_PAGE_NO >= 0 && d.page_no <= JUDGE_NAME_PAGE_NO) || (JUDGE_NAME_PAGE_NO === -1 && d.page_no <= JUDGMENT_ORDER_HEADER_PAGE_NO)) && !JUDGMENT_ORDER_HEADER_FOUND) {
             if (JUDGE_NAME.length > 0 && d.text.indexOf(JUDGE_NAME) >= 0) {
                 remaining_text = d.text.replace(JUDGE_NAME, '')
-                d.text =  remaining_text
+                d.text = remaining_text
                 JUDGMENT_ORDER_HEADER_FOUND = true
             }
             else if (JUDGE_NAME.length == 0 && d.text.indexOf(JUDGMENT_ORDER_HEADER) >= 0) {
@@ -297,11 +297,23 @@ function performNer(data, cb) {
     })
 }
 
-function makeSenteceObj(text, sentence_index, node_index, id, model_id) {
+function makeSenteceObj(node_data, text, sentence_index, node_index, id, model_id) {
     let sentence = {}
     sentence.text = text
     sentence.sentence_index = sentence_index
-    sentence.src = text
+    if (node_data.is_footer) {
+        let splitted_arr = text.split(' ')
+        if (splitted_arr && splitted_arr.length > 0) {
+            let first_text = splitted_arr[0]
+            if (!isNaN(first_text)) {
+                sentence.src = text.substr((text).indexOf(' ') + 1)
+            }else{
+                sentence.src = text
+            }
+        }
+    }else{
+        sentence.src = text
+    }
     sentence.id = parseInt(model_id)
     sentence.n_id = node_index + '__' + id
     sentence.s_id = sentence_index
@@ -388,17 +400,17 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                     for (var itemkey in tokenized_data.table_items[key]) {
                                                         let node_data = tokenized_data.table_items[key][itemkey]
                                                         tokenized_data.table_items[key][itemkey].sentence_index = sentence_index
-                                                        tokenized_sentences.push(makeSenteceObj(node_data.text, sentence_index, tokenized_data.node_index, pdf_parser_process.session_id, model ? model.model_id : null))
+                                                        tokenized_sentences.push(makeSenteceObj(node_data, node_data.text, sentence_index, tokenized_data.node_index, pdf_parser_process.session_id, model ? model.model_id : null))
                                                         sentence_index++
                                                     }
                                                 }
                                             } else if (data[tokenized_node_index].is_ner) {
-                                                tokenized_sentences.push(makeSenteceObj(data[tokenized_node_index].text, sentence_index, data[tokenized_node_index].node_index, pdf_parser_process.session_id, model ? model.model_id : null))
+                                                tokenized_sentences.push(makeSenteceObj(data[tokenized_node_index], data[tokenized_node_index].text, sentence_index, data[tokenized_node_index].node_index, pdf_parser_process.session_id, model ? model.model_id : null))
                                                 sentence_index++
                                             }
                                             else {
                                                 d.text.map(function (tokenized_sentence) {
-                                                    tokenized_sentences.push(makeSenteceObj(tokenized_sentence, sentence_index, data[tokenized_node_index].node_index, pdf_parser_process.session_id, model ? model.model_id : null))
+                                                    tokenized_sentences.push(makeSenteceObj(data[tokenized_node_index], tokenized_sentence, sentence_index, data[tokenized_node_index].node_index, pdf_parser_process.session_id, model ? model.model_id : null))
                                                     sentence_index++
                                                 })
                                             }
@@ -461,11 +473,11 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                 })
 
                                             } else {
-                                                data[index-1].node_index = data[index-1].node_index + ''
-                                                data[index-1].version = 0
-                                                data[index-1].status = STATUS_PENDING
-                                                data[index-1].session_id = pdf_parser_process.session_id
-                                                data[index-1].tokenized_sentences = tokenized_sentences
+                                                data[index - 1].node_index = data[index - 1].node_index + ''
+                                                data[index - 1].version = 0
+                                                data[index - 1].status = STATUS_PENDING
+                                                data[index - 1].session_id = pdf_parser_process.session_id
+                                                data[index - 1].tokenized_sentences = tokenized_sentences
                                                 cb()
                                             }
 
