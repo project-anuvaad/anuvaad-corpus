@@ -381,22 +381,23 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                             let sentence_index = 0
                                             let tokenized_sentences = []
                                             const tokenized_node_index = index
-                                            if (data[index].is_table) {
-                                                for (var key in data[index].table_items) {
-                                                    for (var itemkey in data[index].table_items[key]) {
-                                                        let node_data = data[index].table_items[key][itemkey]
-                                                        data[index].table_items[key][itemkey].sentence_index = sentence_index
-                                                        tokenized_sentences.push(makeSenteceObj(node_data.text, sentence_index, data[index].node_index, pdf_parser_process.session_id, model ? model.model_id : null))
+                                            if (data[tokenized_node_index].is_table) {
+                                                let tokenized_data = data[tokenized_node_index]
+                                                for (var key in tokenized_data.table_items) {
+                                                    for (var itemkey in tokenized_data.table_items[key]) {
+                                                        let node_data = tokenized_data.table_items[key][itemkey]
+                                                        tokenized_data.table_items[key][itemkey].sentence_index = sentence_index
+                                                        tokenized_sentences.push(makeSenteceObj(node_data.text, sentence_index, tokenized_data.node_index, pdf_parser_process.session_id, model ? model.model_id : null))
                                                         sentence_index++
                                                     }
                                                 }
-                                            } else if (data[index].is_ner) {
-                                                tokenized_sentences.push(makeSenteceObj(data[index].text, sentence_index, data[index].node_index, pdf_parser_process.session_id, model ? model.model_id : null))
+                                            } else if (data[tokenized_node_index].is_ner) {
+                                                tokenized_sentences.push(makeSenteceObj(data[tokenized_node_index].text, sentence_index, data[tokenized_node_index].node_index, pdf_parser_process.session_id, model ? model.model_id : null))
                                                 sentence_index++
                                             }
                                             else {
                                                 d.text.map(function (tokenized_sentence) {
-                                                    tokenized_sentences.push(makeSenteceObj(tokenized_sentence, sentence_index, data[index].node_index, pdf_parser_process.session_id, model ? model.model_id : null))
+                                                    tokenized_sentences.push(makeSenteceObj(tokenized_sentence, sentence_index, data[tokenized_node_index].node_index, pdf_parser_process.session_id, model ? model.model_id : null))
                                                     sentence_index++
                                                 })
                                             }
