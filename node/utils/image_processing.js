@@ -1,7 +1,7 @@
 var axios = require('axios');
 var LOG = require('../logger/logger').logger
 var fs = require("fs");
-const BASE_PATH = 'http://52.11.90.50/imageprocessing'
+const BASE_PATH = 'http://52.11.90.50'
 
 
 exports.processImage = function (filepath, cb) {
@@ -15,7 +15,7 @@ exports.processImage = function (filepath, cb) {
                 timeout: 30000,
             }
         ).then(function (api_res) {
-            axios.post(BASE_PATH + '/api/v1/rect/extract', {
+            axios.post(BASE_PATH + '/imageprocessing/api/v1/rect/extract', {
                 image_file_id: api_res.data.filepath
             }
                 , {
