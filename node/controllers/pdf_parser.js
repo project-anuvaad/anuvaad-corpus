@@ -376,7 +376,6 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                             LOG.debug("KafkaProducer connected")
                                         }
                                         let index = 0
-                                        let sentence_node_index = 0
                                         async_lib.each(api_res.data.data, (d, cb) => {
                                             let sentence_index = 0
                                             let tokenized_sentences = []
@@ -451,17 +450,16 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                         }
                                                     }
                                                 ], function () {
-                                                    data[tokenized_node_index].node_index = data[sentence_node_index].node_index + ''
+                                                    data[tokenized_node_index].node_index = data[tokenized_node_index].node_index + ''
                                                     data[tokenized_node_index].version = 0
                                                     data[tokenized_node_index].status = STATUS_PENDING
                                                     data[tokenized_node_index].session_id = pdf_parser_process.session_id
                                                     data[tokenized_node_index].tokenized_sentences = tokenized_sentences
-                                                    sentence_node_index++
                                                     cb()
                                                 })
 
                                             } else {
-                                                data[index-1].node_index = data[index].node_index + ''
+                                                data[index-1].node_index = data[index-1].node_index + ''
                                                 data[index-1].version = 0
                                                 data[index-1].status = STATUS_PENDING
                                                 data[index-1].session_id = pdf_parser_process.session_id
