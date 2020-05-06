@@ -241,7 +241,8 @@ function useNerTags(ner_data, data, cb) {
     })
     let sentences = ner_sentences
     data.map((d, index) => {
-        let remaining_text = ''
+        let remaining_text = []
+        let remaining_text_str = ''
         //For handling last page related ner
         if (d.page_no >= ner_data.length && !LAST_PAGE_NER_BEGINNING_FOUND) {
             if (d.text.indexOf(LAST_PAGE_NER_BEGINNING) >= 0) {
@@ -258,6 +259,7 @@ function useNerTags(ner_data, data, cb) {
                 remaining_text = d.text.split(JUDGE_NAME)
                 if(remaining_text.length > 0){
                     d.text = remaining_text[1]
+                    remaining_text_str = remaining_text[1]
                 }
                 JUDGMENT_ORDER_HEADER_FOUND = true
             }
@@ -265,10 +267,11 @@ function useNerTags(ner_data, data, cb) {
                 remaining_text = d.text.split(JUDGMENT_ORDER_HEADER)
                 if(remaining_text.length > 0){
                     d.text = remaining_text[1]
+                    remaining_text_str = remaining_text[1]
                 }
                 JUDGMENT_ORDER_HEADER_FOUND = true
             }
-            if (remaining_text.trim().length < 1)
+            if (remaining_text_str.length < 1)
                 return
         }
         sentences.push(d)
