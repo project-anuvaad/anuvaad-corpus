@@ -325,7 +325,7 @@ function performNer(data, cb) {
         {
             sentences: sentences
         }, {
-        timeout: 30000,
+        timeout: 3000000,
     }
     ).then(function (api_res) {
         if (api_res && api_res.data && api_res.data.data) {
