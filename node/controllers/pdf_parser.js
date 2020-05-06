@@ -225,6 +225,26 @@ function useNerTags(ner_data, data, cb) {
         }
     })
     let last_page_ner = ner_data[ner_data.length - 1]
+    let judgment_location_obj = []
+    if (ner_data.length > 1) {
+        let previous_last_page_ner = ner_data[ner_data.length - 2]
+        previous_last_page_ner.map((n) => {
+            if (Object.keys(NER_LAST_PAGE_IDENTIFIERS).indexOf(n.annotation_tag) >= 0) {
+                if (LAST_PAGE_NER_BEGINNING.length == 0) {
+                    LAST_PAGE_NER_BEGINNING = n.tagged_value
+                }
+                if (n.annotation_tag == 'JUDGMENT_DATE') {
+                    let ner_obj = { annotation_tag: 'JUDGMENT_LOCATION', tagged_value: 'New Delhi' }
+                    let identifier_tag = NER_LAST_PAGE_IDENTIFIERS[ner_obj.annotation_tag]
+                    judgment_location_obj = makeSentenceObjForNer(ner_obj, identifier_tag, judgment_location_obj, data[data.length - 1].page_no)
+                    judgment_location_obj = makeSentenceObjForNer(n, NER_LAST_PAGE_IDENTIFIERS[n.annotation_tag], judgment_location_obj, data[data.length - 1].page_no)
+                } else {
+                    let identifier_tag = NER_LAST_PAGE_IDENTIFIERS[n.annotation_tag]
+                    last_page_ner_sentences = makeSentenceObjForNer(n, identifier_tag, last_page_ner_sentences, data[data.length - 1].page_no)
+                }
+            }
+        })
+    }
     last_page_ner.map((n) => {
         if (Object.keys(NER_LAST_PAGE_IDENTIFIERS).indexOf(n.annotation_tag) >= 0) {
             if (LAST_PAGE_NER_BEGINNING.length == 0) {
@@ -233,18 +253,21 @@ function useNerTags(ner_data, data, cb) {
             if (n.annotation_tag == 'JUDGMENT_DATE') {
                 let ner_obj = { annotation_tag: 'JUDGMENT_LOCATION', tagged_value: 'New Delhi' }
                 let identifier_tag = NER_LAST_PAGE_IDENTIFIERS[ner_obj.annotation_tag]
-                last_page_ner_sentences = makeSentenceObjForNer(ner_obj, identifier_tag, last_page_ner_sentences, data[data.length - 1].page_no)
+                judgment_location_obj = makeSentenceObjForNer(ner_obj, identifier_tag, judgment_location_obj, data[data.length - 1].page_no)
+                judgment_location_obj = makeSentenceObjForNer(n, NER_LAST_PAGE_IDENTIFIERS[n.annotation_tag], judgment_location_obj, data[data.length - 1].page_no)
+            } else {
+                let identifier_tag = NER_LAST_PAGE_IDENTIFIERS[n.annotation_tag]
+                last_page_ner_sentences = makeSentenceObjForNer(n, identifier_tag, last_page_ner_sentences, data[data.length - 1].page_no)
             }
-            let identifier_tag = NER_LAST_PAGE_IDENTIFIERS[n.annotation_tag]
-            last_page_ner_sentences = makeSentenceObjForNer(n, identifier_tag, last_page_ner_sentences, data[data.length - 1].page_no)
         }
     })
+    last_page_ner_sentences = last_page_ner_sentences.concat(judgment_location_obj)
     let sentences = ner_sentences
     data.map((d, index) => {
         let remaining_text = []
         let remaining_text_str = ''
         //For handling last page related ner
-        if (d.page_no >= ner_data.length && !LAST_PAGE_NER_BEGINNING_FOUND) {
+        if (d.page_no >= ner_data.length - 1 && !LAST_PAGE_NER_BEGINNING_FOUND) {
             if (d.text.indexOf(LAST_PAGE_NER_BEGINNING) >= 0) {
                 LAST_PAGE_NER_BEGINNING_FOUND = true
                 return
@@ -301,7 +324,9 @@ function performNer(data, cb) {
     axios.post(PYTHON_BASE_URL + 'ner',
         {
             sentences: sentences
-        }
+        }, {
+        timeout: 30000,
+    }
     ).then(function (api_res) {
         if (api_res && api_res.data && api_res.data.data) {
             cb(null, api_res)
