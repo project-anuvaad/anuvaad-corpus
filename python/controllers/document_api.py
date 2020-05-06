@@ -13,6 +13,7 @@ from models.status import Status
 from models.response import CustomResponse
 import utils.docx_translate_helper as docx_helper
 from utils.anuvaad_tokenizer import AnuvaadEngTokenizer
+from utils.anuvaad_hindi_tokenizer import AnuvaadHinTokenizer
 from models.translation_process import TranslationProcess
 from models.user_high_court import Userhighcourt
 from models.high_court import Highcourt
@@ -244,7 +245,29 @@ def tokenize_sentence():
         if 'text' in paragraph:
             tokenized_data = {}
             tokenized_data['text'] = tokenizer.tokenize(paragraph['text'])
-            tokenized_data['page_no'] = paragraph['page_no']
+            if 'page_no' in paragraph:
+                tokenized_data['page_no'] = paragraph['page_no']
+            response.append(tokenized_data)
+        else:
+            response.append(tokenizer.tokenize(paragraph))
+    res = CustomResponse(Status.SUCCESS.value, response)
+    return res.getres()
+
+@document_api.route('/tokenize-hindi-sentence', methods=['POST'])
+def tokenize_sentence():
+    body = request.get_json()
+    if body['paragraphs'] is None or not isinstance(body['paragraphs'], list):
+        res = CustomResponse(
+            Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
+        return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
+    response = []
+    for paragraph in body['paragraphs']:
+        tokenizer = AnuvaadHinTokenizer()
+        if 'text' in paragraph:
+            tokenized_data = {}
+            tokenized_data['text'] = tokenizer.tokenize(paragraph['text'])
+            if 'page_no' in paragraph:
+                tokenized_data['page_no'] = paragraph['page_no']
             response.append(tokenized_data)
         else:
             response.append(tokenizer.tokenize(paragraph))
