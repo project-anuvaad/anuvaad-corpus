@@ -1,4 +1,4 @@
-# Anuvaad Toolkit: Anuvaad English Tokenizer extending nltk tokenizer
+# Anuvaad Toolkit: Anuvaad Hindi Tokenizer
 #
 # Author: Aroop <aroop.ghosh@tarento.com>
 # URL: <http://developers.anuvaad.org/>
@@ -10,7 +10,7 @@ from nltk.tokenize import sent_tokenize
 """
 Utility tokenizer class for anuvaad project
 """
-class AnuvaadEngTokenizer(object):
+class AnuvaadHinTokenizer(object):
     """
     Default abbrevations
     """
@@ -29,10 +29,6 @@ class AnuvaadEngTokenizer(object):
     def __init__(self, abbrevations=None):
         if abbrevations is not None:
             self._abbrevations_without_space.append(abbrevations)
-        punkt_param = PunktParameters()
-        with open('utils/tokenizer_data/starter.txt', encoding='utf8') as f:
-            text = f.read()
-        punkt_param.sent_starters = text.split('\n')
         self._regex_search_texts = []
         self._dot_abbrevations = []
         self._table_points_abbrevations = []
@@ -40,13 +36,14 @@ class AnuvaadEngTokenizer(object):
         self._dot_with_char_abbrevations = []
         self._dot_with_number_abbrevations = []
         self._dot_with_beginning_number_abbrevations = []
-        self._tokenizer = PunktSentenceTokenizer(train_text=punkt_param,lang_vars=SentenceEndLangVars())
+        self._tokenizer = PunktSentenceTokenizer(lang_vars=SentenceEndLangVars())
 
     def tokenize(self, text):
         print('--------------Process started-------------')
-        text = self.serialize_with_abbrevations(text)
+        # text = self.serialize_with_abbrevations(text)
         text = self.serialize_table_points(text)
         text = self.serialize_pattern(text)
+        text = self.serialize_end(text)
         text = self.serialize_dots(text)
         text = self.serialize_brackets(text)
         text = self.serialize_dot_with_number(text)
@@ -57,17 +54,28 @@ class AnuvaadEngTokenizer(object):
         output = []
         for se in sentences:
             se = self.deserialize_pattern(se)
+            se = self.deserialize_end(se)
             se = self.deserialize_dots(se)
             se = self.deserialize_brackets(se)
             se = self.deserialize_dot_with_number(se)
             se = self.deserialize_dot_with_number_beginning(se)
             se = self.deserialize_quotes_with_number(se)
-            se = self.deserialize_with_abbrevations(se)
+            # se = self.deserialize_with_abbrevations(se)
             se = self.deserialize_bullet_points(se)
             se = self.deserialize_table_points(se)
             output.append(se)
         print('--------------Process finished-------------')
         return output
+
+    def serialize_end(self, text):
+        pattern = re.compile(r'[।]')
+        text = pattern.sub(' END__END', text)
+        return text
+
+    def deserialize_end(self, text):
+        pattern = re.compile(re.escape(' END__END'), re.IGNORECASE)
+        text = pattern.sub('।', text)
+        return text
 
     def serialize_bullet_points(self, text):
         pattern = re.compile(r'(?!^)[•]')
@@ -82,7 +90,7 @@ class AnuvaadEngTokenizer(object):
         return text
 
     def serialize_table_points(self, text):
-        patterns = re.findall(r'(?:(?:(?:[ ][(](?:(?:[0,9]|[i]|[x]|[v]){1,3}|[a-zA-Z]{1,1})[)])|(?:[ ](?:(?:[0-9]|[i]|[x]|[v]){1,3}|[a-zA-Z]{1,1})[.])))',text)
+        patterns = re.findall(r'(?:(?:(?:[ ][(](?:(?:[0,9]|[i]|[x]|[v]){1,3}|[a-zA-Z\u0900-\u097F]{1,1})[)])|(?:[ ](?:(?:[0-9]|[i]|[x]|[v]){1,3}|[a-zA-Z\u0900-\u097F]{1,1})[.])))',text)
         index = 0
         if patterns is not None and isinstance(patterns, list):
             for pattern in patterns:
@@ -103,7 +111,7 @@ class AnuvaadEngTokenizer(object):
         return text
 
     def serialize_brackets(self, text):
-        patterns = re.findall(r'([(][0-9a-zA-Z.-]{1,}[)])',text)
+        patterns = re.findall(r'([(][0-9a-zA-Z.-\u0900-\u097F]{1,}[)])',text)
         index = 0
         if patterns is not None and isinstance(patterns, list):
             for pattern in patterns:
@@ -123,7 +131,7 @@ class AnuvaadEngTokenizer(object):
         return text
 
     def serialize_quotes_with_number(self, text):
-        patterns = re.findall(r'([ ][“][0-9a-zA-Z]{1,}[.])',text)
+        patterns = re.findall(r'([ ][“][0-9a-zA-Z\u0900-\u097F]{1,}[.])',text)
         index = 0
         if patterns is not None and isinstance(patterns, list):
             for pattern in patterns:
@@ -193,7 +201,7 @@ class AnuvaadEngTokenizer(object):
         return text
 
     def serialize_pattern(self, text):
-        patterns = re.findall(r'(?:[a-zA-Z][.]){2,}',text)
+        patterns = re.findall(r'([\u0900-\u097F][.]){2,}',text)
         index = 0
         if patterns is not None and isinstance(patterns, list):
             for pattern in patterns:
@@ -248,9 +256,9 @@ class SentenceEndLangVars(PunktLanguageVars):
     # # punkt = PunktTrainer()
     # # punkt.train(text,finalize=False, verbose=False)
     # # punkt.finalize_training(verbose=True)
-# text = ''
-# with open('data5.txt', encoding='utf8') as f:
-#     text = f.read()
-# tokenizer = AnuvaadEngTokenizer()
-# tokenizer.tokenize(text)
+# text = 'वाशिंगटन: दुनिया के सबसे (शक्तिशाली. देश) के राष्ट्रपति बराक ओबामा ने प्रधानमंत्री नरेंद्र मोदी के संदर्भ में \'टाइम\' पत्रिका में लिखा, "नरेंद्र मोदी ने अपने बाल्यकाल में अपने परिवार की सहायता करने के लिए अपने पिता की चाय बेचने में मदद की थी। आज वह दुनिया के सबसे बड़े लोकतंत्र के नेता हैं और गरीबी से प्रधानमंत्री तक की उनकी जिंदगी की कहानी भारत के उदय की गतिशीलता और क्षमता को परिलक्षित करती है।'
+# # with open('data5.txt', encoding='utf8') as f:
+# #     text = f.read()
+# tokenizer = AnuvaadHinTokenizer()
+# print(tokenizer.tokenize(text))
     
