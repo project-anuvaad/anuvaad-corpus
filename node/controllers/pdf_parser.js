@@ -255,13 +255,17 @@ function useNerTags(ner_data, data, cb) {
         //For handling first page related ner
         if (((JUDGE_NAME_PAGE_NO >= 0 && d.page_no <= JUDGE_NAME_PAGE_NO) || (JUDGE_NAME_PAGE_NO === -1 && d.page_no <= JUDGMENT_ORDER_HEADER_PAGE_NO)) && !JUDGMENT_ORDER_HEADER_FOUND) {
             if (JUDGE_NAME.length > 0 && d.text.indexOf(JUDGE_NAME) >= 0) {
-                remaining_text = d.text.substr(d.text.indexOf(JUDGE_NAME) + 1)
-                d.text = remaining_text
+                remaining_text = d.text.split(JUDGE_NAME)
+                if(remaining_text.length > 0){
+                    d.text = remaining_text[1]
+                }
                 JUDGMENT_ORDER_HEADER_FOUND = true
             }
             else if (JUDGE_NAME.length == 0 && d.text.indexOf(JUDGMENT_ORDER_HEADER) >= 0) {
-                remaining_text = d.text.substr(d.text.indexOf(JUDGMENT_ORDER_HEADER) + 1)
-                d.text = remaining_text
+                remaining_text = d.text.split(JUDGMENT_ORDER_HEADER)
+                if(remaining_text.length > 0){
+                    d.text = remaining_text[1]
+                }
                 JUDGMENT_ORDER_HEADER_FOUND = true
             }
             if (remaining_text.trim().length < 1)
