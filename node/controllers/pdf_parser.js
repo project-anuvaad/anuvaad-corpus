@@ -194,41 +194,59 @@ function useNerTags(ner_data, data, cb) {
     let LAST_PAGE_NER_BEGINNING_FOUND = false
     let ner_sentences = []
     let last_page_ner_sentences = []
-    ner_data.map((ner, index) => {
-        if ((JUDGMENT_ORDER_HEADER.length == 0 && JUDGMENT_ORDER_HEADER_PAGE_NO >= index) || (JUDGE_NAME.length == 0)) {
-            ner_run_arr = []
-            tab_stops = []
-            ner.map((n) => {
-                if (Object.keys(NER_FIRST_PAGE_IDENTIFIERS).indexOf(n.annotation_tag) >= 0) {
-                    if (n.annotation_tag === 'JUDGE_NAME' && !(JUDGMENT_ORDER_HEADER_PAGE_NO >= 0 && index + 1 - JUDGMENT_ORDER_HEADER_PAGE_NO <= 1)) {
-                        return
+    if (ner_data && ner_data.length > 0) {
+        ner_data.map((ner, index) => {
+            if ((JUDGMENT_ORDER_HEADER.length == 0 && JUDGMENT_ORDER_HEADER_PAGE_NO >= index) || (JUDGE_NAME.length == 0)) {
+                ner_run_arr = []
+                tab_stops = []
+                ner.map((n) => {
+                    if (Object.keys(NER_FIRST_PAGE_IDENTIFIERS).indexOf(n.annotation_tag) >= 0) {
+                        if (n.annotation_tag === 'JUDGE_NAME' && !(JUDGMENT_ORDER_HEADER_PAGE_NO >= 0 && index + 1 - JUDGMENT_ORDER_HEADER_PAGE_NO <= 1)) {
+                            return
+                        }
+                        let identifier_tag = NER_FIRST_PAGE_IDENTIFIERS[n.annotation_tag]
+                        ner_sentences = makeSentenceObjForNer(n, identifier_tag, ner_sentences, data[0].page_no)
+                        if (n.annotation_tag === 'FIRST_PARTY_TYPE') {
+                            let identifier_tag = NER_FIRST_PAGE_IDENTIFIERS['VERSUS']
+                            ner_sentences = makeSentenceObjForNer({ tagged_value: 'Versus' }, identifier_tag, ner_sentences, data[0].page_no)
+                        }
                     }
-                    let identifier_tag = NER_FIRST_PAGE_IDENTIFIERS[n.annotation_tag]
-                    ner_sentences = makeSentenceObjForNer(n, identifier_tag, ner_sentences, data[0].page_no)
-                    if (n.annotation_tag === 'FIRST_PARTY_TYPE') {
-                        let identifier_tag = NER_FIRST_PAGE_IDENTIFIERS['VERSUS']
-                        ner_sentences = makeSentenceObjForNer({ tagged_value: 'Versus' }, identifier_tag, ner_sentences, data[0].page_no)
+                    if (n.annotation_tag === 'JUDGMENT_ORDER_HEADER') {
+                        JUDGMENT_ORDER_HEADER_PAGE_NO = index + 1
+                        JUDGMENT_ORDER_HEADER = n.tagged_value
                     }
-                }
-                if (n.annotation_tag === 'JUDGMENT_ORDER_HEADER') {
-                    JUDGMENT_ORDER_HEADER_PAGE_NO = index + 1
-                    JUDGMENT_ORDER_HEADER = n.tagged_value
-                }
-                else if (n.annotation_tag === 'JUDGE_NAME' && JUDGMENT_ORDER_HEADER_PAGE_NO >= 0 && index + 1 - JUDGMENT_ORDER_HEADER_PAGE_NO <= 1) {
-                    JUDGE_NAME_PAGE_NO = index + 1
-                    JUDGE_NAME = n.tagged_value
+                    else if (n.annotation_tag === 'JUDGE_NAME' && JUDGMENT_ORDER_HEADER_PAGE_NO >= 0 && index + 1 - JUDGMENT_ORDER_HEADER_PAGE_NO <= 1) {
+                        JUDGE_NAME_PAGE_NO = index + 1
+                        JUDGE_NAME = n.tagged_value
+                    }
+                })
+            }
+            else {
+                return
+            }
+        })
+        let last_page_ner = ner_data[ner_data.length - 1]
+        let judgment_location_obj = []
+        if (ner_data.length > 1) {
+            let previous_last_page_ner = ner_data[ner_data.length - 2]
+            previous_last_page_ner.map((n) => {
+                if (Object.keys(NER_LAST_PAGE_IDENTIFIERS).indexOf(n.annotation_tag) >= 0) {
+                    if (LAST_PAGE_NER_BEGINNING.length == 0) {
+                        LAST_PAGE_NER_BEGINNING = n.tagged_value
+                    }
+                    if (n.annotation_tag == 'JUDGMENT_DATE') {
+                        let ner_obj = { annotation_tag: 'JUDGMENT_LOCATION', tagged_value: 'New Delhi' }
+                        let identifier_tag = NER_LAST_PAGE_IDENTIFIERS[ner_obj.annotation_tag]
+                        judgment_location_obj = makeSentenceObjForNer(ner_obj, identifier_tag, judgment_location_obj, data[data.length - 1].page_no)
+                        judgment_location_obj = makeSentenceObjForNer(n, NER_LAST_PAGE_IDENTIFIERS[n.annotation_tag], judgment_location_obj, data[data.length - 1].page_no)
+                    } else {
+                        let identifier_tag = NER_LAST_PAGE_IDENTIFIERS[n.annotation_tag]
+                        last_page_ner_sentences = makeSentenceObjForNer(n, identifier_tag, last_page_ner_sentences, data[data.length - 1].page_no)
+                    }
                 }
             })
         }
-        else {
-            return
-        }
-    })
-    let last_page_ner = ner_data[ner_data.length - 1]
-    let judgment_location_obj = []
-    if (ner_data.length > 1) {
-        let previous_last_page_ner = ner_data[ner_data.length - 2]
-        previous_last_page_ner.map((n) => {
+        last_page_ner.map((n) => {
             if (Object.keys(NER_LAST_PAGE_IDENTIFIERS).indexOf(n.annotation_tag) >= 0) {
                 if (LAST_PAGE_NER_BEGINNING.length == 0) {
                     LAST_PAGE_NER_BEGINNING = n.tagged_value
@@ -244,58 +262,44 @@ function useNerTags(ner_data, data, cb) {
                 }
             }
         })
+        last_page_ner_sentences = last_page_ner_sentences.concat(judgment_location_obj)
     }
-    last_page_ner.map((n) => {
-        if (Object.keys(NER_LAST_PAGE_IDENTIFIERS).indexOf(n.annotation_tag) >= 0) {
-            if (LAST_PAGE_NER_BEGINNING.length == 0) {
-                LAST_PAGE_NER_BEGINNING = n.tagged_value
-            }
-            if (n.annotation_tag == 'JUDGMENT_DATE') {
-                let ner_obj = { annotation_tag: 'JUDGMENT_LOCATION', tagged_value: 'New Delhi' }
-                let identifier_tag = NER_LAST_PAGE_IDENTIFIERS[ner_obj.annotation_tag]
-                judgment_location_obj = makeSentenceObjForNer(ner_obj, identifier_tag, judgment_location_obj, data[data.length - 1].page_no)
-                judgment_location_obj = makeSentenceObjForNer(n, NER_LAST_PAGE_IDENTIFIERS[n.annotation_tag], judgment_location_obj, data[data.length - 1].page_no)
-            } else {
-                let identifier_tag = NER_LAST_PAGE_IDENTIFIERS[n.annotation_tag]
-                last_page_ner_sentences = makeSentenceObjForNer(n, identifier_tag, last_page_ner_sentences, data[data.length - 1].page_no)
-            }
-        }
-    })
-    last_page_ner_sentences = last_page_ner_sentences.concat(judgment_location_obj)
     let sentences = ner_sentences
     data.map((d, index) => {
         let remaining_text = []
         let remaining_text_str = ''
         //For handling last page related ner
-        if (d.page_no >= ner_data.length - 1 && !LAST_PAGE_NER_BEGINNING_FOUND) {
-            if (d.text.indexOf(LAST_PAGE_NER_BEGINNING) >= 0) {
-                LAST_PAGE_NER_BEGINNING_FOUND = true
-                return
-            }
-        }
-        if (LAST_PAGE_NER_BEGINNING_FOUND) {
-            return true
-        }
-        //For handling first page related ner
-        if (((JUDGE_NAME_PAGE_NO >= 0 && d.page_no <= JUDGE_NAME_PAGE_NO) || (JUDGE_NAME_PAGE_NO === -1 && d.page_no <= JUDGMENT_ORDER_HEADER_PAGE_NO)) && !JUDGMENT_ORDER_HEADER_FOUND) {
-            if (JUDGE_NAME.length > 0 && d.text.indexOf(JUDGE_NAME) >= 0) {
-                remaining_text = d.text.split(JUDGE_NAME)
-                if (remaining_text.length > 0) {
-                    d.text = remaining_text[1]
-                    remaining_text_str = remaining_text[1]
+        if (ner_data && ner_data.length > 0) {
+            if (d.page_no >= ner_data.length - 1 && !LAST_PAGE_NER_BEGINNING_FOUND) {
+                if (d.text.indexOf(LAST_PAGE_NER_BEGINNING) >= 0) {
+                    LAST_PAGE_NER_BEGINNING_FOUND = true
+                    return
                 }
-                JUDGMENT_ORDER_HEADER_FOUND = true
             }
-            else if (JUDGE_NAME.length == 0 && d.text.indexOf(JUDGMENT_ORDER_HEADER) >= 0) {
-                remaining_text = d.text.split(JUDGMENT_ORDER_HEADER)
-                if (remaining_text.length > 0) {
-                    d.text = remaining_text[1]
-                    remaining_text_str = remaining_text[1]
+            if (LAST_PAGE_NER_BEGINNING_FOUND) {
+                return true
+            }
+            //For handling first page related ner
+            if (((JUDGE_NAME_PAGE_NO >= 0 && d.page_no <= JUDGE_NAME_PAGE_NO) || (JUDGE_NAME_PAGE_NO === -1 && d.page_no <= JUDGMENT_ORDER_HEADER_PAGE_NO)) && !JUDGMENT_ORDER_HEADER_FOUND) {
+                if (JUDGE_NAME.length > 0 && d.text.indexOf(JUDGE_NAME) >= 0) {
+                    remaining_text = d.text.split(JUDGE_NAME)
+                    if (remaining_text.length > 0) {
+                        d.text = remaining_text[1]
+                        remaining_text_str = remaining_text[1]
+                    }
+                    JUDGMENT_ORDER_HEADER_FOUND = true
                 }
-                JUDGMENT_ORDER_HEADER_FOUND = true
+                else if (JUDGE_NAME.length == 0 && d.text.indexOf(JUDGMENT_ORDER_HEADER) >= 0) {
+                    remaining_text = d.text.split(JUDGMENT_ORDER_HEADER)
+                    if (remaining_text.length > 0) {
+                        d.text = remaining_text[1]
+                        remaining_text_str = remaining_text[1]
+                    }
+                    JUDGMENT_ORDER_HEADER_FOUND = true
+                }
+                if (remaining_text_str.length < 1)
+                    return
             }
-            if (remaining_text_str.length < 1)
-                return
         }
         sentences.push(d)
     })
@@ -321,7 +325,7 @@ function performNer(data, cb) {
     if (page_sentences.length > 0) {
         sentences.push(page_sentences)
     }
-    axios.post(PYTHON_BASE_URL + 'ner',
+    axios.post(PYTHON_BASE_URL + 'nersaas',
         {
             sentences: sentences
         }, {
@@ -334,7 +338,7 @@ function performNer(data, cb) {
             cb('err', null)
         }
     }).catch((e) => {
-        cb(e, null)
+        cb(e, [])
     })
 }
 
@@ -410,12 +414,12 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
         } else {
             HtmlToText.mergeHtmlNodes(output_res, function (err, data, header_text, footer_text) {
                 performNer(data, function (err, ner_data) {
-                    if (err) {
-                        LOG.error(err)
-                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                        return res.status(apistatus.http.status).json(apistatus);
-                    }
-                    useNerTags(ner_data.data.data, data, function (data) {
+                    // if (err) {
+                    //     LOG.error(err)
+                    //     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                    //     return res.status(apistatus.http.status).json(apistatus);
+                    // }
+                    useNerTags(ner_data && ner_data.length > 0 ? ner_data.data.data : [], data, function (data) {
                         if (tokenize) {
                             axios.post(PYTHON_BASE_URL + 'tokenize-sentence',
                                 {
@@ -568,7 +572,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                             })
 
                         } else {
-                            let response = new Response(StatusCode.SUCCESS, data, null, null, null, ner_data.data.data).getRsp()
+                            let response = new Response(StatusCode.SUCCESS, data, null, null, null, ner_data && ner_data.length > 0 ? ner_data.data.data : []).getRsp()
                             return res.status(response.http.status).json(response);
                         }
                     })
