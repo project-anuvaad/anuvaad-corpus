@@ -111,10 +111,11 @@ class AnuvaadHinTokenizer(object):
         return text
 
     def serialize_brackets(self, text):
-        patterns = re.findall(r'([(][0-9a-zA-Z.-\u0900-\u097F]{1,}[)])',text)
+        patterns = re.findall(r'(?:[(](?:[0-9\u0900-\u097Fa-zA-Z.-]|[ ]){1,}[)])',text)
         index = 0
         if patterns is not None and isinstance(patterns, list):
             for pattern in patterns:
+                print(pattern)
                 pattern_obj = re.compile(re.escape(pattern))
                 self._brackets_abbrevations.append(pattern)
                 text = pattern_obj.sub('WW_'+str(index)+'_WW', text)
@@ -249,16 +250,16 @@ class AnuvaadHinTokenizer(object):
 
 class SentenceEndLangVars(PunktLanguageVars):
     text = []
-    with open('utils/tokenizer_data/end.txt', encoding='utf8') as f:
+    with open('tokenizer_data/end.txt', encoding='utf8') as f:
         text = f.read()
     sent_end_chars = text.split('\n')
     
     # # punkt = PunktTrainer()
     # # punkt.train(text,finalize=False, verbose=False)
     # # punkt.finalize_training(verbose=True)
-# text = 'वाशिंगटन: दुनिया के सबसे (शक्तिशाली. देश) के राष्ट्रपति बराक ओबामा ने प्रधानमंत्री नरेंद्र मोदी के संदर्भ में \'टाइम\' पत्रिका में लिखा, "नरेंद्र मोदी ने अपने बाल्यकाल में अपने परिवार की सहायता करने के लिए अपने पिता की चाय बेचने में मदद की थी। आज वह दुनिया के सबसे बड़े लोकतंत्र के नेता हैं और गरीबी से प्रधानमंत्री तक की उनकी जिंदगी की कहानी भारत के उदय की गतिशीलता और क्षमता को परिलक्षित करती है।'
-# # with open('data5.txt', encoding='utf8') as f:
-# #     text = f.read()
-# tokenizer = AnuvaadHinTokenizer()
-# print(tokenizer.tokenize(text))
+text = 'वाशिंगटन: दुनिया के सबसे (शक्तिशाली. देश) के राष्ट्रपति बराक ओबामा ने प्रधानमंत्री नरेंद्र मोदी के संदर्भ में \'टाइम\' पत्रिका में लिखा, "नरेंद्र मोदी ने अपने बाल्यकाल में अपने परिवार की सहायता करने के लिए अपने पिता की चाय बेचने में मदद की थी। आज वह दुनिया के सबसे बड़े लोकतंत्र के नेता हैं और गरीबी से प्रधानमंत्री तक की उनकी जिंदगी की कहानी भारत के उदय की गतिशीलता और क्षमता को परिलक्षित करती है।'
+# with open('data5.txt', encoding='utf8') as f:
+#     text = f.read()
+tokenizer = AnuvaadHinTokenizer()
+print(tokenizer.tokenize(text))
     
