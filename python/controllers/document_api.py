@@ -254,7 +254,7 @@ def tokenize_sentence():
     return res.getres()
 
 @document_api.route('/tokenize-hindi-sentence', methods=['POST'])
-def tokenize_sentence():
+def tokenize_hin_sentence():
     body = request.get_json()
     if body['paragraphs'] is None or not isinstance(body['paragraphs'], list):
         res = CustomResponse(
