@@ -788,43 +788,49 @@ exports.updatePdfSentences = function (req, res) {
     async_lib.each(req.body.sentences, (sentence, cb) => {
         let id = mongoose.Types.ObjectId(sentence._id)
         BaseModel.findByCondition(PdfParser, { session_id: sentence.session_id }, null, null, null, function (err, pdfparser) {
-            let pdf_parser_process = pdfparser[0]._doc
-            BaseModel.findById(PdfSentence, id, function (err, doc) {
-                if (doc) {
-                    let sentencedb = doc._doc
-                    if (sentencedb.is_table) {
-                        for (var key in sentence.table_items) {
-                            for (var col in sentence.table_items[key]) {
-                                if (sentence.table_items[key][col].target !== sentencedb.table_items[key][col].target) {
-                                    let sentence_to_save = { source: sentence.table_items[key][col].source, tagged_src: sentence.table_items[key][col].tagged_src, tagged_tgt: sentence.table_items[key][col].tagged_tgt, target: sentence.table_items[key][col].target }
+            if (pdfparser && pdfparser.length > 0) {
+                let pdf_parser_process = pdfparser[0]._doc
+                BaseModel.findById(PdfSentence, id, function (err, doc) {
+                    if (doc) {
+                        let sentencedb = doc._doc
+                        if (sentencedb.is_table) {
+                            for (var key in sentence.table_items) {
+                                for (var col in sentence.table_items[key]) {
+                                    if (sentence.table_items[key][col].target !== sentencedb.table_items[key][col].target) {
+                                        let sentence_to_save = { source: sentence.table_items[key][col].source, tagged_src: sentence.table_items[key][col].tagged_src, tagged_tgt: sentence.table_items[key][col].tagged_tgt, target: sentence.table_items[key][col].target }
+                                        LOG.info(sentence_to_save)
+                                        LOG.info(sentence.table_items)
+                                        SentencesRedis.saveSentence(sentence_to_save, userId + '_' + pdf_parser_process.target_lang, function (err, doc) {
+                                            LOG.info('data saved in redis')
+                                        })
+                                    }
+                                }
+                            }
+                        } else {
+                            sentence.tokenized_sentences.map((sentence_obj, index) => {
+                                if (sentence_obj.target !== sentencedb.tokenized_sentences[index].target) {
+                                    let sentence_to_save = { source: sentence_obj.src, tagged_src: sentence_obj.tagged_src, tagged_tgt: sentence_obj.tagged_tgt, target: sentence_obj.target }
                                     SentencesRedis.saveSentence(sentence_to_save, userId + '_' + pdf_parser_process.target_lang, function (err, doc) {
                                         LOG.info('data saved in redis')
                                     })
                                 }
-                            }
+                            })
                         }
-                    } else {
-                        sentence.tokenized_sentences.map((sentence_obj, index) => {
-                            if (sentence_obj.target !== sentencedb.tokenized_sentences[index].target) {
-                                let sentence_to_save = { source: sentence_obj.src, tagged_src: sentence_obj.tagged_src, tagged_tgt: sentence_obj.tagged_tgt, target: sentence_obj.target }
-                                SentencesRedis.saveSentence(sentence_to_save, userId + '_' + pdf_parser_process.target_lang, function (err, doc) {
-                                    LOG.info('data saved in redis')
-                                })
+                        let update_obj = { table_items: sentence.table_items, tokenized_sentences: sentence.tokenized_sentences }
+                        BaseModel.updateData(PdfSentence, update_obj, sentence._id, function (err, doc) {
+                            if (err) {
+                                LOG.error(err)
                             }
+                            cb()
                         })
                     }
-                    let update_obj = { table_items: sentence.table_items, tokenized_sentences: sentence.tokenized_sentences }
-                    BaseModel.updateData(PdfSentence, update_obj, sentence._id, function (err, doc) {
-                        if (err) {
-                            LOG.error(err)
-                        }
+                    else {
                         cb()
-                    })
-                }
-                else {
-                    cb()
-                }
-            })
+                    }
+                })
+            }else{
+                cb()
+            }
         })
     }, function (err) {
         let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
