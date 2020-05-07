@@ -798,6 +798,8 @@ exports.updatePdfSentences = function (req, res) {
                                 for (var col in sentence.table_items[key]) {
                                     if (sentence.table_items[key][col].target !== sentencedb.table_items[key][col].target) {
                                         let sentence_to_save = { source: sentence.table_items[key][col].src, tagged_src: sentence.table_items[key][col].tagged_src, tagged_tgt: sentence.table_items[key][col].tagged_tgt, target: sentence.table_items[key][col].target }
+                                        LOG.info(sentence_to_save)
+                                        LOG.info(userId + '_' + pdf_parser_process.target_lang)
                                         SentencesRedis.saveSentence(sentence_to_save, userId + '_' + pdf_parser_process.target_lang, function (err, doc) {
                                             LOG.info('data saved in redis')
                                         })
