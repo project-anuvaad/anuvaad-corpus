@@ -338,6 +338,7 @@ function performNer(data, cb) {
             cb('err', null)
         }
     }).catch((e) => {
+        LOG.error(e)
         cb(e, [])
     })
 }
@@ -419,7 +420,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                     //     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                     //     return res.status(apistatus.http.status).json(apistatus);
                     // }
-                    useNerTags(ner_data && ner_data.length > 0 ? ner_data.data.data : [], data, function (data) {
+                    useNerTags(ner_data && ner_data.data && ner_data.data.data && ner_data.data.data.length > 0 ? ner_data.data.data : [], data, function (data) {
                         if (tokenize) {
                             axios.post(PYTHON_BASE_URL + 'tokenize-sentence',
                                 {
@@ -572,7 +573,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                             })
 
                         } else {
-                            let response = new Response(StatusCode.SUCCESS, data, null, null, null, ner_data && ner_data.length > 0 ? ner_data.data.data : []).getRsp()
+                            let response = new Response(StatusCode.SUCCESS, data, null, null, null, ner_data && ner_data.data && ner_data.data.data && ner_data.data.data.length > 0 ? ner_data.data.data : []).getRsp()
                             return res.status(response.http.status).json(response);
                         }
                     })
