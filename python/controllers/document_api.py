@@ -518,6 +518,9 @@ def tokenize(text, lang, tokenizer):
             return tokenizer.tokenize(text)
 
         return sent_tokenize(text)
+    elif lang == 'hi':
+        hin_tokenizer = AnuvaadHinTokenizer()
+        return hin_tokenizer.tokenize(text)
     else:
         return sentence_tokenize.sentence_split(text, lang=lang)
 
