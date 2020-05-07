@@ -325,7 +325,7 @@ function performNer(data, cb) {
     if (page_sentences.length > 0) {
         sentences.push(page_sentences)
     }
-    axios.post(PYTHON_BASE_URL + 'nersaas',
+    axios.post(PYTHON_BASE_URL + 'ner',
         {
             sentences: sentences
         }, {
