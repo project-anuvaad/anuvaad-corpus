@@ -727,8 +727,9 @@ exports.fetchPdfParserProcess = function (req, res) {
     var pagesize = req.query.pagesize
     var pageno = req.query.pageno
     let condition = {}
+    condition = { created_by: userId }
     if (status) {
-        condition = { status: status, created_by: userId }
+        condition['status'] = status
     }
     PdfParser.countDocuments(condition, function (err, count) {
         if (err) {
