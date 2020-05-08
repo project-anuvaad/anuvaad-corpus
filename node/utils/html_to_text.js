@@ -406,7 +406,19 @@ exports.mergeHtmlNodes = function (items, cb) {
     })
     let table_index = -1
     let table_page_no = -1
+    let previous_footer = {}
     var out = output.filter((o, index) => {
+        if (o.is_footer) {
+            if (previous_footer && previous_footer.page_no == o.page_no) {
+                if (isNaN(o.text.split(' ')[0])) {
+                    output[index - 1].text = output[index - 1].text + ' ' + o.text
+                    return false
+                }
+                previous_footer = o
+            } else {
+                previous_footer = o
+            }
+        }
         o.text = o.text.replace(/\s+/g, " ")
         // o.text = o.text.replace(/Digitally signed by.{1,}Reason:/gm, '')
         // o.text = o.text.replace(/Signature Not Verified/gm, '')
@@ -436,7 +448,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                     if (table_items[o.table_row]) {
                         table_items[o.table_row][o.table_column] = o
                     }
-                    else{
+                    else {
                         table_items[o.table_row] = {}
                         table_items[o.table_row][o.table_column] = o
                     }
