@@ -121,7 +121,7 @@ function constructRunForNerSentences(n, key, children) {
     })
     ner_run_arr.push(tab_run)
     ner_run_arr.push(ner_run)
-    if (identifier_tag.is_new_line) {
+    if (n.is_new_line) {
         let text_run =
             new docx.Paragraph({
                 style: 'DEFAULT',
