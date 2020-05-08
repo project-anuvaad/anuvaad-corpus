@@ -138,7 +138,6 @@ function constructRunForNerSentences(n, key, children) {
 exports.covertJsonToDocForSentences = function (data, text_key, nginx_path, cb) {
     let styles = []
     let children = []
-    let last_page_runs = []
     let footnote_count = 1
     let FOOTNOTE_RUN_ARRAY = []
     let previous_footnote = ''
@@ -147,7 +146,8 @@ exports.covertJsonToDocForSentences = function (data, text_key, nginx_path, cb) 
     styles.push(DEFAULT_STYLE)
     styles.push(HEADER_STYLE)
 
-    data.map((d, index) => {
+    data.map((d_doc, index) => {
+        let d = d_doc._doc
         let remaining_text = ''
         if (d.is_ner) {
             children = constructRunForNerSentences(d, text_key, children)
