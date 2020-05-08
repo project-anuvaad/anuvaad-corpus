@@ -533,6 +533,9 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                             if (header_text && header_text.length > 0) {
                                                 data.unshift({ text: header_text, is_header: true, session_id: pdf_parser_process.session_id, status: STATUS_PENDING, tokenized_sentences: [] })
                                             }
+                                            if (footer_text && footer_text.length > 0) {
+                                                data.push({ text: footer_text, is_footer_text: true, session_id: pdf_parser_process.session_id, status: STATUS_PENDING, tokenized_sentences: [] })
+                                            }
                                             BaseModel.saveData(PdfSentence, data, function (err, doc) {
                                                 if (err) {
                                                     LOG.error(err)

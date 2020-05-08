@@ -149,6 +149,7 @@ exports.covertJsonToDocForSentences = function (data, text_key, nginx_path, cb) 
     let previous_footnote = ''
     let foot_notes_array = []
     let header_text = ''
+    let footer_text = ''
 
     styles.push(DEFAULT_STYLE)
     styles.push(HEADER_STYLE)
@@ -173,6 +174,9 @@ exports.covertJsonToDocForSentences = function (data, text_key, nginx_path, cb) 
         }
         if(d.is_header){
             header_text = d.text
+        }
+        else if(d.is_footer_text){
+            footer_text = d.text
         }
         else if (d.is_ner) {
             d[text_key] = ''
@@ -328,6 +332,21 @@ exports.covertJsonToDocForSentences = function (data, text_key, nginx_path, cb) 
                         ],
                     }),
                 ],
+            }),
+        },
+        footers: {
+            default: new docx.Footer({
+                children: [
+                    new docx.Paragraph({
+                        children: [
+                            new docx.TextRun({
+                                text: footer_text,
+                                size: 20,
+                                color: '000000',
+                                underline: true,
+                                font: 'Times'
+                            })]
+                    })],
             }),
         },
         children: children,
