@@ -175,6 +175,10 @@ exports.covertJsonToDocForSentences = function (data, text_key, nginx_path, cb) 
             header_text = d.text
         }
         else if (d.is_ner) {
+            d[text_key] = ''
+            d.tokenized_sentences.map((sen) => {
+                d[text_key] += sen[text_key] + ' '
+            })
             children = constructRunForNerSentences(d, text_key, children)
         }
         else if (d.is_table) {
