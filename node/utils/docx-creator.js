@@ -5,8 +5,14 @@ var UUIDV4 = require('uuid/v4')
 
 const POSITIONS = {
     'CENTER': 4500,
-    'LEFT': 500,
+    'LEFT': 350,
     'RIGHT': docx.TabStopPosition.MAX,
+}
+
+const FONT_SIZES = {
+    'CENTER': 17,
+    'LEFT': 13,
+    'RIGHT': 13,
 }
 
 const NER_FIRST_PAGE_IDENTIFIERS = {
@@ -110,7 +116,7 @@ function constructRunForNerSentences(n, key, children) {
     })
     let ner_run = new docx.TextRun({
         text: n[key] + ' ',
-        size: 15 * 2,
+        size: FONT_SIZES[n.align] * 2,
         font: 'Times',
         bold: n.is_bold ? true : null,
         underline: n.underline ? true : null
@@ -142,6 +148,7 @@ exports.covertJsonToDocForSentences = function (data, text_key, nginx_path, cb) 
     let FOOTNOTE_RUN_ARRAY = []
     let previous_footnote = ''
     let foot_notes_array = []
+    let header_text = ''
 
     styles.push(DEFAULT_STYLE)
     styles.push(HEADER_STYLE)
@@ -149,9 +156,7 @@ exports.covertJsonToDocForSentences = function (data, text_key, nginx_path, cb) 
     data.map((d_doc, index) => {
         let d = d_doc._doc
         let remaining_text = ''
-        if (d.is_ner) {
-            children = constructRunForNerSentences(d, text_key, children)
-        }
+        
 
         let style = {
             id: index,
@@ -166,7 +171,13 @@ exports.covertJsonToDocForSentences = function (data, text_key, nginx_path, cb) 
                 },
             }
         }
-        if (d.is_table) {
+        if(d.is_header){
+            header_text = d.text
+        }
+        else if (d.is_ner) {
+            children = constructRunForNerSentences(d, text_key, children)
+        }
+        else if (d.is_table) {
             let table_rows = []
             for (var key in d.table_items) {
                 let cells = []
@@ -200,11 +211,12 @@ exports.covertJsonToDocForSentences = function (data, text_key, nginx_path, cb) 
             d.tokenized_sentences.map((sen) => {
                 d[text_key] += sen[text_key] + ' '
             })
+            LOG.info(d)
             let text_arr = []
             let text = new docx.TextRun({
                 text: remaining_text.trim().length > 0 ? remaining_text : d[text_key],
-                size: d.class_style['font-size'].split('px')[0] * 2,
-                font: d.class_style['font-family'],
+                size: 17 * 2,
+                font: 'Times',
                 bold: d.is_bold ? true : null,
                 underline: d.underline ? {} : null
             })
@@ -312,21 +324,6 @@ exports.covertJsonToDocForSentences = function (data, text_key, nginx_path, cb) 
                         ],
                     }),
                 ],
-            }),
-        },
-        footers: {
-            default: new docx.Footer({
-                children: [
-                    new docx.Paragraph({
-                        children: [
-                            new docx.TextRun({
-                                text: footer_text,
-                                size: 20,
-                                color: '000000',
-                                underline: true,
-                                font: 'Times'
-                            })]
-                    })],
             }),
         },
         children: children,
