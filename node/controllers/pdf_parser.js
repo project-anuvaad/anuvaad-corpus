@@ -18,6 +18,7 @@ var UUIDV4 = require('uuid/v4')
 var fs = require('fs');
 var axios = require('axios');
 var async_lib = require('async')
+var DocxCreator = require('../utils/docx-creator')
 
 const PYTHON_BASE_URL = process.env.PYTHON_URL ? process.env.PYTHON_URL : 'http://auth.anuvaad.org/'
 
@@ -839,5 +840,28 @@ exports.updatePdfSentences = function (req, res) {
     }, function (err) {
         let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
         return res.status(response.http.status).json(response);
+    })
+}
+
+exports.makeDocFromSentences = function (req, res) {
+    if (!req || !req.body || !req.body.session_id) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let condition = { session_id: req.body.session_id }
+    BaseModel.findByCondition(PdfSentence, condition, null, null, 'sentence_index', function (err, models) {
+        if (err) {
+            LOG.error(err)
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+        DocxCreator.covertJsonToDocForSentences(models, 'target', BASE_PATH_NGINX, function (err, filepath) {
+            if (err) {
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+            let response = new Response(StatusCode.SUCCESS, filepath).getRsp()
+            return res.status(response.http.status).json(response);
+        })
     })
 }

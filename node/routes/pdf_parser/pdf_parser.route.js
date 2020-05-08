@@ -29,4 +29,7 @@ module.exports = function (router) {
     router.route('/extract-paragraphs-pagewise')
         .post(pdfParserController.extractParagraphsPerPages);
 
+    router.route('/make-doc-from-sentences')
+        .post(pdfParserController.makeDocFromSentences);
+
 }

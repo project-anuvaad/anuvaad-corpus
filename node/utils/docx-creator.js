@@ -3,12 +3,19 @@ var fs = require('fs');
 var LOG = require('../logger/logger').logger
 var UUIDV4 = require('uuid/v4')
 
+const POSITIONS = {
+    'CENTER': 4500,
+    'LEFT': 500,
+    'RIGHT': docx.TabStopPosition.MAX,
+}
+
 const NER_FIRST_PAGE_IDENTIFIERS = {
     'REPORTABLE_TYPE': { align: 'CENTER', position: 4500, is_new_line: true, font_size: 19, is_bold: true, font: 'Times' },
     'JURISDICTION': { align: 'CENTER', position: 4500, is_new_line: true, font_size: 18, font: 'Times' },
     'FORUM_NAME': { align: 'CENTER', position: 4500, is_new_line: true, font_size: 19, is_bold: true, font: 'Times' },
     'FIRST_PARTY': { align: 'LEFT', position: 500, font_size: 12, font: 'Times' },
     'FIRST_PARTY_TYPE': { align: 'RIGHT', is_new_line: true, position: docx.TabStopPosition.MAX, font_size: 12, font: 'Times' },
+    'VERSUS': { align: 'CENTER', is_new_line: true, position: 4500, font_size: 12, font: 'Times' },
     'SECOND_PARTY': { align: 'LEFT', position: 500, font_size: 12, font: 'Times' },
     'SECOND_PARTY_TYPE': { align: 'RIGHT', is_new_line: true, position: docx.TabStopPosition.MAX, font_size: 12, font: 'Times' },
     'WITH_HEADER': { align: 'CENTER', position: 4500, is_new_line: true, font_size: 17, font: 'Times' },
@@ -95,6 +102,245 @@ function constructRunForNers(n, identifier_tag, children) {
         tab_stops = []
     }
     return children
+}
+
+function constructRunForNerSentences(n, key, children) {
+    let tab_run = new docx.TextRun({
+        text: '\t',
+    })
+    let ner_run = new docx.TextRun({
+        text: n[key] + ' ',
+        size: 15 * 2,
+        font: 'Times',
+        bold: n.is_bold ? true : null,
+        underline: n.underline ? true : null
+    })
+    tab_stops.push({
+        type: docx.TabStopType[n.align],
+        position: POSITIONS[n.align],
+    })
+    ner_run_arr.push(tab_run)
+    ner_run_arr.push(ner_run)
+    if (identifier_tag.is_new_line) {
+        let text_run =
+            new docx.Paragraph({
+                style: 'DEFAULT',
+                children: ner_run_arr,
+                tabStops: tab_stops,
+            })
+        children.push(text_run)
+        ner_run_arr = []
+        tab_stops = []
+    }
+    return children
+}
+
+exports.covertJsonToDocForSentences = function (data, text_key, nginx_path, cb) {
+    let styles = []
+    let children = []
+    let last_page_runs = []
+    let footnote_count = 1
+    let FOOTNOTE_RUN_ARRAY = []
+    let previous_footnote = ''
+    let foot_notes_array = []
+
+    styles.push(DEFAULT_STYLE)
+    styles.push(HEADER_STYLE)
+
+    data.map((d, index) => {
+        let remaining_text = ''
+        if (d.is_ner) {
+            children = constructRunForNerSentences(d, text_key, children)
+        }
+
+        let style = {
+            id: index,
+            name: index,
+            paragraph: {
+                // indent: {
+                //     left: d.x * 4
+                // },
+                spacing: {
+                    before: 540,
+                    after: 520,
+                },
+            }
+        }
+        if (d.is_table) {
+            let table_rows = []
+            for (var key in d.table_items) {
+                let cells = []
+                for (var itemkey in d.table_items[key]) {
+                    cells.push(
+                        new docx.TableCell({
+                            children: [new docx.Paragraph(d.table_items[key][itemkey][text_key])],
+                            margins: {
+                                top: 100,
+                                bottom: 100,
+                                left: 100,
+                                right: 100,
+                            },
+                        })
+                    )
+                }
+                table_rows.push(new docx.TableRow({
+                    children: cells,
+                }))
+            }
+            children.push(new docx.Table({
+                rows: table_rows,
+                width: {
+                    size: 9000,
+                    type: docx.WidthType.DXA,
+                },
+            }))
+        }
+        else if (!d.is_footer) {
+            d[text_key] = ''
+            d.tokenized_sentences.map((sen) => {
+                d[text_key] += sen[text_key] + ' '
+            })
+            let text_arr = []
+            let text = new docx.TextRun({
+                text: remaining_text.trim().length > 0 ? remaining_text : d[text_key],
+                size: d.class_style['font-size'].split('px')[0] * 2,
+                font: d.class_style['font-family'],
+                bold: d.is_bold ? true : null,
+                underline: d.underline ? {} : null
+            })
+            remaining_text = ''
+            text_arr.push(text)
+            let sup_sub_arr = d.sup_array ? d.sup_array : d.sub_array
+            if (sup_sub_arr && sup_sub_arr.length > 0) {
+                sup_sub_arr.map((sup, index) => {
+                    if (parseInt(sup) <= footnote_count + 10) {
+                        let sup_number = parseInt(sup)
+                        let sup_run = new docx.TextRun({
+                            text: sup,
+                            children: foot_notes_array.indexOf(parseInt(sup)) < 0 ? [new docx.FootnoteReferenceRun(sup_number)] : null,
+                            superScript: true,
+                            size: d.class_style['font-size'].split('px')[0] * 2,
+                            font: d.class_style['font-family'],
+                        })
+                        if (foot_notes_array.indexOf(parseInt(sup)) < 0) {
+                            foot_notes_array.push(parseInt(sup))
+                        }
+                        text_arr.push(sup_run)
+                        if (index !== sup_sub_arr.length - 1) {
+                            let sup_run = new docx.TextRun({
+                                text: ',',
+                                superScript: true,
+                                size: d.class_style['font-size'].split('px')[0] * 2,
+                                font: d.class_style['font-family'],
+                            })
+                            text_arr.push(sup_run)
+                        }
+                        footnote_count++
+                    }
+                })
+            }
+            let text_run = new docx.Paragraph({
+                style: index,
+                children: text_arr
+            })
+            children.push(text_run)
+        } else {
+            d[text_key] = ''
+            d.tokenized_sentences.map((sen) => {
+                d[text_key] += sen[text_key] + ' '
+            })
+            if (isNaN(d[text_key].split(" ")[0]) || (parseInt(d[text_key].split(" ")[0]) > FOOTNOTE_RUN_ARRAY.length + 5)) {
+                previous_footnote = previous_footnote + ' ' + d[text_key]
+                FOOTNOTE_RUN_ARRAY[FOOTNOTE_RUN_ARRAY.length - 1] = new docx.Paragraph(previous_footnote)
+            } else {
+                let words_array = d.text.split(' ')
+                let footer_text = words_array.slice(1, words_array.length).join(' ')
+                if (parseInt(d[text_key].split(" ")[0]) !== FOOTNOTE_RUN_ARRAY.length + 1) {
+                    for (var i = 0; i < parseInt(d[text_key].split(" ")[0]) - FOOTNOTE_RUN_ARRAY.length - 1; i++) {
+                        FOOTNOTE_RUN_ARRAY.push(new docx.Paragraph(""))
+                    }
+                }
+                FOOTNOTE_RUN_ARRAY.push(new docx.Paragraph(footer_text))
+                previous_footnote = footer_text
+            }
+
+        }
+        styles.push(style)
+        styles.push({
+            id: 'VERSUS',
+            name: 'VERSUS',
+            paragraph: {
+                indent: {
+                    left: 4200
+                },
+                spacing: {
+                    before: 240,
+                    after: 320,
+                },
+            }
+        })
+    })
+    // Create document
+    const doc = new docx.Document({
+        styles: {
+            paragraphStyles: styles
+        },
+        footnotes: FOOTNOTE_RUN_ARRAY
+    });
+    doc.addSection({
+        headers: {
+            default: new docx.Header({
+                children: [
+                    new docx.Paragraph({
+                        alignment: docx.AlignmentType.RIGHT,
+                        children: [
+                            new docx.TextRun({
+                                children: ["Page Number ", docx.PageNumber.CURRENT],
+                            }),
+                            new docx.TextRun({
+                                children: [" of ", docx.PageNumber.TOTAL_PAGES],
+                            }),
+                        ],
+                    }),
+                    new docx.Paragraph({
+                        style: 'header',
+                        alignment: docx.AlignmentType.LEFT,
+                        children: [
+                            new docx.TextRun({
+                                text: header_text
+                            }),
+                        ],
+                    }),
+                ],
+            }),
+        },
+        footers: {
+            default: new docx.Footer({
+                children: [
+                    new docx.Paragraph({
+                        children: [
+                            new docx.TextRun({
+                                text: footer_text,
+                                size: 20,
+                                color: '000000',
+                                underline: true,
+                                font: 'Times'
+                            })]
+                    })],
+            }),
+        },
+        children: children,
+    });
+
+    // Used to export the file into a .docx file
+    docx.Packer.toBuffer(doc).then((buffer) => {
+        let file_name = UUIDV4() + (new Date().getMilliseconds()) + ".docx"
+        fs.writeFileSync(nginx_path + file_name, buffer);
+        cb(null, file_name)
+    }).catch(e => {
+        LOG.error(e)
+        cb(e, null)
+    });
 }
 
 
