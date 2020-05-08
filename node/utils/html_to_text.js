@@ -433,7 +433,13 @@ exports.mergeHtmlNodes = function (items, cb) {
             } else {
                 let table_items = output[table_index].table_items
                 if (table_items) {
-                    table_items[o.table_row][o.table_column] = o
+                    if (table_items[o.table_row]) {
+                        table_items[o.table_row][o.table_column] = o
+                    }
+                    else{
+                        table_items[o.table_row] = {}
+                        table_items[o.table_row][o.table_column] = o
+                    }
                     output[table_index].table_items = table_items
                 }
                 return false
