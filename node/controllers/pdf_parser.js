@@ -487,9 +487,13 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                                 SentencesRedis.fetchSentence(sentence, userId + '_' + pdf_parser_process.target_lang, function (err, doc) {
                                                                     if (doc) {
                                                                         let saved_sentence = JSON.parse(doc)
-                                                                        tokenized_sentences[tokenized_sentences_index].target = saved_sentence['target']
-                                                                        tokenized_sentences[tokenized_sentences_index].tagged_src = saved_sentence.tagged_src
-                                                                        tokenized_sentences[tokenized_sentences_index].tagged_tgt = saved_sentence.tagged_tgt
+                                                                        if (saved_sentence.target.length > 0 && saved_sentence.target.trim().length > 0) {
+                                                                            tokenized_sentences[tokenized_sentences_index].target = saved_sentence['target']
+                                                                            tokenized_sentences[tokenized_sentences_index].tagged_src = saved_sentence.tagged_src
+                                                                            tokenized_sentences[tokenized_sentences_index].tagged_tgt = saved_sentence.tagged_tgt
+                                                                        }else{
+                                                                            kafka_sentences.push(sentence)
+                                                                        }
                                                                     } else {
                                                                         kafka_sentences.push(sentence)
                                                                     }
