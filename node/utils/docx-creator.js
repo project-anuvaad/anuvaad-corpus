@@ -141,7 +141,7 @@ function constructRunForNerSentences(n, key, children) {
     return children
 }
 
-exports.covertJsonToDocForSentences = function (data, text_key, nginx_path, cb) {
+exports.covertJsonToDocForSentences = function (data, text_key, nginx_path, name, cb) {
     let styles = []
     let children = []
     let footnote_count = 1
@@ -157,7 +157,7 @@ exports.covertJsonToDocForSentences = function (data, text_key, nginx_path, cb) 
     data.map((d_doc, index) => {
         let d = d_doc._doc
         let remaining_text = ''
-        
+
 
         let style = {
             id: index,
@@ -172,10 +172,10 @@ exports.covertJsonToDocForSentences = function (data, text_key, nginx_path, cb) 
                 },
             }
         }
-        if(d.is_header){
+        if (d.is_header) {
             header_text = d.text
         }
-        else if(d.is_footer_text){
+        else if (d.is_footer_text) {
             footer_text = d.text
         }
         else if (d.is_ner) {
@@ -354,7 +354,7 @@ exports.covertJsonToDocForSentences = function (data, text_key, nginx_path, cb) 
 
     // Used to export the file into a .docx file
     docx.Packer.toBuffer(doc).then((buffer) => {
-        let file_name = UUIDV4() + (new Date().getMilliseconds()) + ".docx"
+        let file_name = name + '_' + UUIDV4() + (new Date().getMilliseconds()) + ".docx"
         fs.writeFileSync(nginx_path + file_name, buffer);
         cb(null, file_name)
     }).catch(e => {
