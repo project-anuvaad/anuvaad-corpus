@@ -488,6 +488,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                                     if (doc) {
                                                                         let saved_sentence = JSON.parse(doc)
                                                                         if (saved_sentence.target && saved_sentence.target.length > 0 && saved_sentence.target.trim().length > 0) {
+                                                                            LOG.info('Sentence found from redis',saved_sentence)
                                                                             tokenized_sentences[tokenized_sentences_index].target = saved_sentence['target']
                                                                             tokenized_sentences[tokenized_sentences_index].tagged_src = saved_sentence.tagged_src
                                                                             tokenized_sentences[tokenized_sentences_index].tagged_tgt = saved_sentence.tagged_tgt
@@ -810,8 +811,6 @@ exports.updatePdfSentences = function (req, res) {
                                 for (var col in sentence.table_items[key]) {
                                     if (sentence.table_items[key][col].target !== sentencedb.table_items[key][col].target && sentence.table_items[key][col].target && sentence.table_items[key][col].target.trim().length > 0) {
                                         const sentence_to_save = { source: sentence.table_items[key][col].text, tagged_src: sentence.table_items[key][col].tagged_src, tagged_tgt: sentence.table_items[key][col].tagged_tgt, target: sentence.table_items[key][col].target }
-                                        LOG.info(sentence_to_save)
-                                        LOG.info(userId + '_' + pdf_parser_process.target_lang)
                                         SentencesRedis.saveSentence(sentence_to_save, userId + '_' + pdf_parser_process.target_lang, function (err, doc) {
                                             LOG.info('data saved in redis')
                                         })
