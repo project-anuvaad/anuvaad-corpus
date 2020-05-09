@@ -487,7 +487,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                                 SentencesRedis.fetchSentence(sentence, userId + '_' + pdf_parser_process.target_lang, function (err, doc) {
                                                                     if (doc) {
                                                                         let saved_sentence = JSON.parse(doc)
-                                                                        if (saved_sentence.target.length > 0 && saved_sentence.target.trim().length > 0) {
+                                                                        if (saved_sentence.target && saved_sentence.target.length > 0 && saved_sentence.target.trim().length > 0) {
                                                                             tokenized_sentences[tokenized_sentences_index].target = saved_sentence['target']
                                                                             tokenized_sentences[tokenized_sentences_index].tagged_src = saved_sentence.tagged_src
                                                                             tokenized_sentences[tokenized_sentences_index].tagged_tgt = saved_sentence.tagged_tgt
@@ -808,7 +808,7 @@ exports.updatePdfSentences = function (req, res) {
                         if (sentencedb.is_table) {
                             for (var key in sentence.table_items) {
                                 for (var col in sentence.table_items[key]) {
-                                    if (sentence.table_items[key][col].target !== sentencedb.table_items[key][col].target) {
+                                    if (sentence.table_items[key][col].target !== sentencedb.table_items[key][col].target && sentence.table_items[key][col].target && sentence.table_items[key][col].target.trim().length > 0) {
                                         const sentence_to_save = { source: sentence.table_items[key][col].text, tagged_src: sentence.table_items[key][col].tagged_src, tagged_tgt: sentence.table_items[key][col].tagged_tgt, target: sentence.table_items[key][col].target }
                                         LOG.info(sentence_to_save)
                                         LOG.info(userId + '_' + pdf_parser_process.target_lang)
@@ -820,7 +820,7 @@ exports.updatePdfSentences = function (req, res) {
                             }
                         } else {
                             sentence.tokenized_sentences.map((sentence_obj, index) => {
-                                if (sentence_obj.target !== sentencedb.tokenized_sentences[index].target) {
+                                if (sentence_obj.target !== sentencedb.tokenized_sentences[index].target && sentence_obj.target && sentence_obj.target.trim().length > 0 ) {
                                     let sentence_to_save = { source: sentence_obj.src, tagged_src: sentence_obj.tagged_src, tagged_tgt: sentence_obj.tagged_tgt, target: sentence_obj.target }
                                     SentencesRedis.saveSentence(sentence_to_save, userId + '_' + pdf_parser_process.target_lang, function (err, doc) {
                                         LOG.info('data saved in redis')
