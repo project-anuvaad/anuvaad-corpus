@@ -488,11 +488,24 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                                     if (doc) {
                                                                         let saved_sentence = JSON.parse(doc)
                                                                         if (saved_sentence.target && saved_sentence.target.length > 0 && saved_sentence.target.trim().length > 0) {
-                                                                            LOG.info('Sentence found from redis',saved_sentence)
+                                                                            LOG.info('Sentence found from redis', saved_sentence)
                                                                             tokenized_sentences[tokenized_sentences_index].target = saved_sentence['target']
                                                                             tokenized_sentences[tokenized_sentences_index].tagged_src = saved_sentence.tagged_src
                                                                             tokenized_sentences[tokenized_sentences_index].tagged_tgt = saved_sentence.tagged_tgt
-                                                                        }else{
+                                                                            if (data[tokenized_node_index].is_table) {
+                                                                                let tokenized_data = data[tokenized_node_index]
+                                                                                for (var key in tokenized_data.table_items) {
+                                                                                    for (var itemkey in tokenized_data.table_items[key]) {
+                                                                                        let node_data = tokenized_data.table_items[key][itemkey]
+                                                                                        if (node_data.sentence_index == sentence.sentence_index) {
+                                                                                            data[tokenized_node_index].table_items[key][itemkey].target = saved_sentence['target']
+                                                                                            data[tokenized_node_index].table_items[key][itemkey].tagged_src = saved_sentence.tagged_src
+                                                                                            data[tokenized_node_index].table_items[key][itemkey].tagged_tgt = saved_sentence.tagged_tgt
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        } else {
                                                                             kafka_sentences.push(sentence)
                                                                         }
                                                                     } else {
@@ -819,7 +832,7 @@ exports.updatePdfSentences = function (req, res) {
                             }
                         } else {
                             sentence.tokenized_sentences.map((sentence_obj, index) => {
-                                if (sentence_obj.target !== sentencedb.tokenized_sentences[index].target && sentence_obj.target && sentence_obj.target.trim().length > 0 ) {
+                                if (sentence_obj.target !== sentencedb.tokenized_sentences[index].target && sentence_obj.target && sentence_obj.target.trim().length > 0) {
                                     let sentence_to_save = { source: sentence_obj.src, tagged_src: sentence_obj.tagged_src, tagged_tgt: sentence_obj.tagged_tgt, target: sentence_obj.target }
                                     SentencesRedis.saveSentence(sentence_to_save, userId + '_' + pdf_parser_process.target_lang, function (err, doc) {
                                         LOG.info('data saved in redis')
