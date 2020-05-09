@@ -192,7 +192,7 @@ exports.covertJsonToDocForSentences = function (data, text_key, nginx_path, cb) 
                 for (var itemkey in d.table_items[key]) {
                     cells.push(
                         new docx.TableCell({
-                            children: [new docx.Paragraph(d.table_items[key][itemkey][text_key])],
+                            children: [new docx.Paragraph(d.table_items[key][itemkey][text_key] ? d.table_items[key][itemkey][text_key] : ' ')],
                             margins: {
                                 top: 100,
                                 bottom: 100,
