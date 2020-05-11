@@ -14,9 +14,9 @@ class AnuvaadHinTokenizer(object):
     """
     Default abbrevations
     """
-    _abbrevations_with_space_pattern = [r'^W[.]E[.]F[.][ ]|[ ]W[.]E[.]F[.][ ]',r'^O[.]A[.][ ]|[ ]O[.]A[.][ ]',r'^Sr[.][ ]|[ ]Sr[.][ ]',r'^NO[.][ ]|[ ]NO[.][ ]',r'^Pvt[.][ ]|[ ]Pvt[.][ ]', r'^NOS[.][ ]|[ ]NOS[.][ ]',r'^Smt[.][ ]|[ ]Smt[.][ ]',r'^Sec[.][ ]|[ ]Sec[.][ ]',r'^Spl[.][ ]|[ ]Spl[.][ ]',r'^Mr[.][ ]|[ ]Mr[.][ ]',r'^ft[.][ ]|[ ]ft[.][ ]',r'^kgs[.][ ]|[ ]kgs[.][ ]',r'^kg[.][ ]|[ ]kg[.][ ]',r'^Dr[.][ ]|[ ]Dr[.][ ]',r'^Ms[.][ ]|[ ]Ms[.][ ]',r'^Ltd[.][ ]|[ ]Ltd[.][ ]',r'^Pty[.][ ]|[ ]Pty[.][ ]',r'^Assn[.][ ]|[ ]Assn[.][ ]',r'^St[.][ ]|[ ]St[.][ ]',r'^Vol[.][ ]|[ ]Vol[.][ ]',r'^pp[.][ ]|[ ]pp[.][ ]',r'^Co[.][ ]|[ ]Co[.][ ]',r'^Pty[.][ ]|[ ]Pty[.][ ]',r'^rs[.][ ]|[ ]rs[.][ ]',r'^Sh[.][ ]|[ ]Sh[.][ ]',r'^M/S[.][ ]|[ ]M/S[.][ ]',r'^Mrs[.][ ]|[ ]Mrs[.][ ]',r'^Vs[.][ ]|[ ]Vs[.][ ]',r'^viz[.][ ]|[ ]viz[.][ ]',r'^ex[.][ ]|[ ]ex[.][ ]',r'^etc[.][ ]|[ ]etc[.][ ]',r'^i[.]e[.][ ]|[ ]i[.]e[.][ ]']
-    _abbrevations_with_space = ['W.E.F. ','O.A. ','Sr. ','NO. ','Pvt. ', 'NOS. ','Smt. ','Sec. ','Spl. ','Mr. ','ft. ','kgs. ','kg. ','Dr. ','Ms. ','Ltd. ','Pty. ','Assn. ','St. ','Vol. ','pp. ','Co. ','Pty. ','Rs. ','Sh. ','M/S. ','Mrs. ','Vs. ','viz. ','ex. ','etc. ','i.e. ']
-    _abbrevations_without_space = ['Crl.']
+    # _abbrevations_with_space_pattern = [r'^W[.]E[.]F[.][ ]|[ ]W[.]E[.]F[.][ ]',r'^O[.]A[.][ ]|[ ]O[.]A[.][ ]',r'^Sr[.][ ]|[ ]Sr[.][ ]',r'^NO[.][ ]|[ ]NO[.][ ]',r'^Pvt[.][ ]|[ ]Pvt[.][ ]', r'^NOS[.][ ]|[ ]NOS[.][ ]',r'^Smt[.][ ]|[ ]Smt[.][ ]',r'^Sec[.][ ]|[ ]Sec[.][ ]',r'^Spl[.][ ]|[ ]Spl[.][ ]',r'^Mr[.][ ]|[ ]Mr[.][ ]',r'^ft[.][ ]|[ ]ft[.][ ]',r'^kgs[.][ ]|[ ]kgs[.][ ]',r'^kg[.][ ]|[ ]kg[.][ ]',r'^Dr[.][ ]|[ ]Dr[.][ ]',r'^Ms[.][ ]|[ ]Ms[.][ ]',r'^Ltd[.][ ]|[ ]Ltd[.][ ]',r'^Pty[.][ ]|[ ]Pty[.][ ]',r'^Assn[.][ ]|[ ]Assn[.][ ]',r'^St[.][ ]|[ ]St[.][ ]',r'^Vol[.][ ]|[ ]Vol[.][ ]',r'^pp[.][ ]|[ ]pp[.][ ]',r'^Co[.][ ]|[ ]Co[.][ ]',r'^Pty[.][ ]|[ ]Pty[.][ ]',r'^rs[.][ ]|[ ]rs[.][ ]',r'^Sh[.][ ]|[ ]Sh[.][ ]',r'^M/S[.][ ]|[ ]M/S[.][ ]',r'^Mrs[.][ ]|[ ]Mrs[.][ ]',r'^Vs[.][ ]|[ ]Vs[.][ ]',r'^viz[.][ ]|[ ]viz[.][ ]',r'^ex[.][ ]|[ ]ex[.][ ]',r'^etc[.][ ]|[ ]etc[.][ ]',r'^i[.]e[.][ ]|[ ]i[.]e[.][ ]']
+    # _abbrevations_with_space = ['W.E.F. ','O.A. ','Sr. ','NO. ','Pvt. ', 'NOS. ','Smt. ','Sec. ','Spl. ','Mr. ','ft. ','kgs. ','kg. ','Dr. ','Ms. ','Ltd. ','Pty. ','Assn. ','St. ','Vol. ','pp. ','Co. ','Pty. ','Rs. ','Sh. ','M/S. ','Mrs. ','Vs. ','viz. ','ex. ','etc. ','i.e. ']
+    # _abbrevations_without_space = ['Crl.']
     _tokenizer = None
     _regex_search_texts = []
     _table_points_abbrevations = []
@@ -64,7 +64,7 @@ class AnuvaadHinTokenizer(object):
             # se = self.deserialize_with_abbrevations(se)
             se = self.deserialize_bullet_points(se)
             se = self.deserialize_table_points(se)
-            output.append(se)
+            output.append(se.strip())
         print('--------------Process finished-------------')
         return output
 
@@ -100,14 +100,13 @@ class AnuvaadHinTokenizer(object):
         return text
 
     def serialize_table_points(self, text):
-        patterns = re.findall(r'(?:(?:(?:[ ][(](?:(?:[0,9]|[i]|[x]|[v]){1,3}|[a-zA-Z\u0900-\u097F]{1,1})[)])|(?:[ ](?:(?:[0-9]|[i]|[x]|[v]){1,3}|[a-zA-Z\u0900-\u097F]{1,1})[.])))',text)
+        patterns = re.findall(r'(?:(?:(?:[ ][(]?(?:(?:[0,9]|[i]|[x]|[v]){1,3}|[a-zA-Z\u0900-\u097F]{1,1})[)])|(?:[ ](?:(?:[0-9]|[i]|[x]|[v]){1,3}|[a-zA-Z\u0900-\u097F]{1,1})[.])))',text)
         index = 0
         if patterns is not None and isinstance(patterns, list):
             for pattern in patterns:
-                print(pattern)
                 pattern_obj = re.compile(re.escape(pattern))
                 self._table_points_abbrevations.append(pattern)
-                text = pattern_obj.sub('TT__TT RR_'+str(index)+'_RR', text)
+                text = pattern_obj.sub(' TT__TT RR_'+str(index)+'_RR', text)
                 index+=1
         return text
 

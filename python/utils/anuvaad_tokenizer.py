@@ -65,7 +65,7 @@ class AnuvaadEngTokenizer(object):
             se = self.deserialize_with_abbrevations(se)
             se = self.deserialize_bullet_points(se)
             se = self.deserialize_table_points(se)
-            output.append(se)
+            output.append(se.strip())
         print('--------------Process finished-------------')
         return output
 
@@ -82,14 +82,13 @@ class AnuvaadEngTokenizer(object):
         return text
 
     def serialize_table_points(self, text):
-        patterns = re.findall(r'(?:(?:(?:[ ][(](?:(?:[0,9]|[i]|[x]|[v]){1,3}|[a-zA-Z]{1,1})[)])|(?:[ ](?:(?:[0-9]|[i]|[x]|[v]){1,3}|[a-zA-Z]{1,1})[.])))',text)
+        patterns = re.findall(r'(?:(?:(?:[ ][(]?(?:(?:[0,9]|[i]|[x]|[v]){1,3}|[a-zA-Z]{1,1})[)])|(?:[ ](?:(?:[0-9]|[i]|[x]|[v]){1,3}|[a-zA-Z]{1,1})[.])))',text)
         index = 0
         if patterns is not None and isinstance(patterns, list):
             for pattern in patterns:
-                print(pattern)
                 pattern_obj = re.compile(re.escape(pattern))
                 self._table_points_abbrevations.append(pattern)
-                text = pattern_obj.sub('TT__TT RR_'+str(index)+'_RR', text)
+                text = pattern_obj.sub(' TT__TT RR_'+str(index)+'_RR', text)
                 index+=1
         return text
 
