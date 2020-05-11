@@ -195,42 +195,66 @@ function useNerTags(ner_data, data, cb) {
     let LAST_PAGE_NER_BEGINNING_FOUND = false
     let ner_sentences = []
     let last_page_ner_sentences = []
+    let ner_not_available =true
     if (ner_data && ner_data.length > 0) {
         ner_data.map((ner, index) => {
-            if ((JUDGMENT_ORDER_HEADER.length == 0 && JUDGMENT_ORDER_HEADER_PAGE_NO >= index) || (JUDGE_NAME.length == 0)) {
-                ner_run_arr = []
-                tab_stops = []
-                ner.map((n) => {
-                    if (Object.keys(NER_FIRST_PAGE_IDENTIFIERS).indexOf(n.annotation_tag) >= 0) {
-                        if (n.annotation_tag === 'JUDGE_NAME' && !(JUDGMENT_ORDER_HEADER_PAGE_NO >= 0 && index + 1 - JUDGMENT_ORDER_HEADER_PAGE_NO <= 1)) {
-                            return
+            if (ner && ner.length > 0) {
+                ner_not_available = false
+                if ((JUDGMENT_ORDER_HEADER.length == 0 && JUDGMENT_ORDER_HEADER_PAGE_NO >= index) || (JUDGE_NAME.length == 0)) {
+                    ner_run_arr = []
+                    tab_stops = []
+                    ner.map((n) => {
+                        if (Object.keys(NER_FIRST_PAGE_IDENTIFIERS).indexOf(n.annotation_tag) >= 0) {
+                            if (n.annotation_tag === 'JUDGE_NAME' && !(JUDGMENT_ORDER_HEADER_PAGE_NO >= 0 && index + 1 - JUDGMENT_ORDER_HEADER_PAGE_NO <= 1)) {
+                                return
+                            }
+                            let identifier_tag = NER_FIRST_PAGE_IDENTIFIERS[n.annotation_tag]
+                            ner_sentences = makeSentenceObjForNer(n, identifier_tag, ner_sentences, data[0].page_no)
+                            if (n.annotation_tag === 'FIRST_PARTY_TYPE') {
+                                let identifier_tag = NER_FIRST_PAGE_IDENTIFIERS['VERSUS']
+                                ner_sentences = makeSentenceObjForNer({ tagged_value: 'Versus' }, identifier_tag, ner_sentences, data[0].page_no)
+                            }
                         }
-                        let identifier_tag = NER_FIRST_PAGE_IDENTIFIERS[n.annotation_tag]
-                        ner_sentences = makeSentenceObjForNer(n, identifier_tag, ner_sentences, data[0].page_no)
-                        if (n.annotation_tag === 'FIRST_PARTY_TYPE') {
-                            let identifier_tag = NER_FIRST_PAGE_IDENTIFIERS['VERSUS']
-                            ner_sentences = makeSentenceObjForNer({ tagged_value: 'Versus' }, identifier_tag, ner_sentences, data[0].page_no)
+                        if (n.annotation_tag === 'JUDGMENT_ORDER_HEADER') {
+                            JUDGMENT_ORDER_HEADER_PAGE_NO = index + 1
+                            JUDGMENT_ORDER_HEADER = n.tagged_value
                         }
-                    }
-                    if (n.annotation_tag === 'JUDGMENT_ORDER_HEADER') {
-                        JUDGMENT_ORDER_HEADER_PAGE_NO = index + 1
-                        JUDGMENT_ORDER_HEADER = n.tagged_value
-                    }
-                    else if (n.annotation_tag === 'JUDGE_NAME' && JUDGMENT_ORDER_HEADER_PAGE_NO >= 0 && index + 1 - JUDGMENT_ORDER_HEADER_PAGE_NO <= 1) {
-                        JUDGE_NAME_PAGE_NO = index + 1
-                        JUDGE_NAME = n.tagged_value
-                    }
-                })
-            }
-            else {
-                return
+                        else if (n.annotation_tag === 'JUDGE_NAME' && JUDGMENT_ORDER_HEADER_PAGE_NO >= 0 && index + 1 - JUDGMENT_ORDER_HEADER_PAGE_NO <= 1) {
+                            JUDGE_NAME_PAGE_NO = index + 1
+                            JUDGE_NAME = n.tagged_value
+                        }
+                    })
+                }
+                else {
+                    return
+                }
             }
         })
         let last_page_ner = ner_data[ner_data.length - 1]
         let judgment_location_obj = []
         if (ner_data.length > 1) {
             let previous_last_page_ner = ner_data[ner_data.length - 2]
-            previous_last_page_ner.map((n) => {
+            if (previous_last_page_ner && previous_last_page_ner.length > 0) {
+                previous_last_page_ner.map((n) => {
+                    if (Object.keys(NER_LAST_PAGE_IDENTIFIERS).indexOf(n.annotation_tag) >= 0) {
+                        if (LAST_PAGE_NER_BEGINNING.length == 0) {
+                            LAST_PAGE_NER_BEGINNING = n.tagged_value
+                        }
+                        if (n.annotation_tag == 'JUDGMENT_DATE') {
+                            let ner_obj = { annotation_tag: 'JUDGMENT_LOCATION', tagged_value: 'New Delhi' }
+                            let identifier_tag = NER_LAST_PAGE_IDENTIFIERS[ner_obj.annotation_tag]
+                            judgment_location_obj = makeSentenceObjForNer(ner_obj, identifier_tag, judgment_location_obj, data[data.length - 1].page_no)
+                            judgment_location_obj = makeSentenceObjForNer(n, NER_LAST_PAGE_IDENTIFIERS[n.annotation_tag], judgment_location_obj, data[data.length - 1].page_no)
+                        } else {
+                            let identifier_tag = NER_LAST_PAGE_IDENTIFIERS[n.annotation_tag]
+                            last_page_ner_sentences = makeSentenceObjForNer(n, identifier_tag, last_page_ner_sentences, data[data.length - 1].page_no)
+                        }
+                    }
+                })
+            }
+        }
+        if (last_page_ner && last_page_ner.length > 0) {
+            last_page_ner.map((n) => {
                 if (Object.keys(NER_LAST_PAGE_IDENTIFIERS).indexOf(n.annotation_tag) >= 0) {
                     if (LAST_PAGE_NER_BEGINNING.length == 0) {
                         LAST_PAGE_NER_BEGINNING = n.tagged_value
@@ -247,22 +271,6 @@ function useNerTags(ner_data, data, cb) {
                 }
             })
         }
-        last_page_ner.map((n) => {
-            if (Object.keys(NER_LAST_PAGE_IDENTIFIERS).indexOf(n.annotation_tag) >= 0) {
-                if (LAST_PAGE_NER_BEGINNING.length == 0) {
-                    LAST_PAGE_NER_BEGINNING = n.tagged_value
-                }
-                if (n.annotation_tag == 'JUDGMENT_DATE') {
-                    let ner_obj = { annotation_tag: 'JUDGMENT_LOCATION', tagged_value: 'New Delhi' }
-                    let identifier_tag = NER_LAST_PAGE_IDENTIFIERS[ner_obj.annotation_tag]
-                    judgment_location_obj = makeSentenceObjForNer(ner_obj, identifier_tag, judgment_location_obj, data[data.length - 1].page_no)
-                    judgment_location_obj = makeSentenceObjForNer(n, NER_LAST_PAGE_IDENTIFIERS[n.annotation_tag], judgment_location_obj, data[data.length - 1].page_no)
-                } else {
-                    let identifier_tag = NER_LAST_PAGE_IDENTIFIERS[n.annotation_tag]
-                    last_page_ner_sentences = makeSentenceObjForNer(n, identifier_tag, last_page_ner_sentences, data[data.length - 1].page_no)
-                }
-            }
-        })
         last_page_ner_sentences = last_page_ner_sentences.concat(judgment_location_obj)
     }
     let sentences = ner_sentences
@@ -270,7 +278,7 @@ function useNerTags(ner_data, data, cb) {
         let remaining_text = []
         let remaining_text_str = ''
         //For handling last page related ner
-        if (ner_data && ner_data.length > 0) {
+        if (ner_data && ner_data.length > 0 && !ner_not_available) {
             if (d.page_no >= ner_data.length - 1 && !LAST_PAGE_NER_BEGINNING_FOUND) {
                 if (d.text.indexOf(LAST_PAGE_NER_BEGINNING) >= 0) {
                     LAST_PAGE_NER_BEGINNING_FOUND = true
@@ -439,163 +447,163 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                         } else {
                                             LOG.debug("KafkaProducer connected")
                                         }
-                                        let index = 0
-                                        async_lib.each(api_res.data.data, (d, cb) => {
-                                            let sentence_index = 0
-                                            let tokenized_sentences = []
-                                            const tokenized_node_index = index
-                                            if (data[tokenized_node_index].is_table) {
-                                                let tokenized_data = data[tokenized_node_index]
-                                                for (var key in tokenized_data.table_items) {
-                                                    for (var itemkey in tokenized_data.table_items[key]) {
-                                                        let node_data = tokenized_data.table_items[key][itemkey]
-                                                        tokenized_data.table_items[key][itemkey].sentence_index = sentence_index
-                                                        tokenized_sentences.push(makeSenteceObj(node_data, node_data.text, sentence_index, tokenized_data.node_index, pdf_parser_process.session_id, model ? model.model_id : null))
-                                                        sentence_index++
-                                                    }
-                                                }
-                                            } else if (data[tokenized_node_index].is_ner || data[tokenized_node_index].is_footer) {
-                                                tokenized_sentences.push(makeSenteceObj(data[tokenized_node_index], data[tokenized_node_index].text, sentence_index, data[tokenized_node_index].node_index, pdf_parser_process.session_id, model ? model.model_id : null))
-                                                sentence_index++
-                                            }
-                                            else {
-                                                d.text.map(function (tokenized_sentence) {
-                                                    tokenized_sentences.push(makeSenteceObj(data[tokenized_node_index], tokenized_sentence, sentence_index, data[tokenized_node_index].node_index, pdf_parser_process.session_id, model ? model.model_id : null))
+                                    let index = 0
+                                    async_lib.each(api_res.data.data, (d, cb) => {
+                                        let sentence_index = 0
+                                        let tokenized_sentences = []
+                                        const tokenized_node_index = index
+                                        if (data[tokenized_node_index].is_table) {
+                                            let tokenized_data = data[tokenized_node_index]
+                                            for (var key in tokenized_data.table_items) {
+                                                for (var itemkey in tokenized_data.table_items[key]) {
+                                                    let node_data = tokenized_data.table_items[key][itemkey]
+                                                    tokenized_data.table_items[key][itemkey].sentence_index = sentence_index
+                                                    tokenized_sentences.push(makeSenteceObj(node_data, node_data.text, sentence_index, tokenized_data.node_index, pdf_parser_process.session_id, model ? model.model_id : null))
                                                     sentence_index++
-                                                })
+                                                }
                                             }
-                                            index++
-                                            if (translate && model && producer) {
-                                                async_lib.waterfall([
-                                                    function (callback) {
-                                                        if (tokenized_sentences.length > 25) {
-                                                            var i, j, temparray, chunk = 25;
-                                                            for (i = 0, j = tokenized_sentences.length; i < j; i += chunk) {
-                                                                temparray = tokenized_sentences.slice(i, i + chunk);
-                                                                temparray.filter(sent => !sent.target)
-                                                                let payloads = [
-                                                                    {
-                                                                        topic: KafkaTopics.NMT_TRANSLATE, messages: JSON.stringify({ 'url_end_point': model.url_end_point, 'message': temparray }), partition: 0
-                                                                    }
-                                                                ]
-                                                                producer.send(payloads, function (err, data) {
-                                                                    LOG.debug('Produced')
-                                                                });
+                                        } else if (data[tokenized_node_index].is_ner || data[tokenized_node_index].is_footer) {
+                                            tokenized_sentences.push(makeSenteceObj(data[tokenized_node_index], data[tokenized_node_index].text, sentence_index, data[tokenized_node_index].node_index, pdf_parser_process.session_id, model ? model.model_id : null))
+                                            sentence_index++
+                                        }
+                                        else {
+                                            d.text.map(function (tokenized_sentence) {
+                                                tokenized_sentences.push(makeSenteceObj(data[tokenized_node_index], tokenized_sentence, sentence_index, data[tokenized_node_index].node_index, pdf_parser_process.session_id, model ? model.model_id : null))
+                                                sentence_index++
+                                            })
+                                        }
+                                        index++
+                                        if (translate && model && producer) {
+                                        async_lib.waterfall([
+                                            function (callback) {
+                                                if (tokenized_sentences.length > 25) {
+                                                    var i, j, temparray, chunk = 25;
+                                                    for (i = 0, j = tokenized_sentences.length; i < j; i += chunk) {
+                                                        temparray = tokenized_sentences.slice(i, i + chunk);
+                                                        temparray.filter(sent => !sent.target)
+                                                        let payloads = [
+                                                            {
+                                                                topic: KafkaTopics.NMT_TRANSLATE, messages: JSON.stringify({ 'url_end_point': model.url_end_point, 'message': temparray }), partition: 0
                                                             }
-                                                            callback()
-                                                        } else {
-                                                            let kafka_sentences = []
-                                                            let tokenized_sentences_index = 0
-                                                            async_lib.each(tokenized_sentences, (sentence, rediscb) => {
-                                                                SentencesRedis.fetchSentence(sentence, userId + '_' + pdf_parser_process.target_lang, function (err, doc) {
-                                                                    if (doc) {
-                                                                        let saved_sentence = JSON.parse(doc)
-                                                                        if (saved_sentence.target && saved_sentence.target.length > 0 && saved_sentence.target.trim().length > 0) {
-                                                                            LOG.info('Sentence found from redis', saved_sentence)
-                                                                            tokenized_sentences[tokenized_sentences_index].target = saved_sentence['target']
-                                                                            tokenized_sentences[tokenized_sentences_index].tagged_src = saved_sentence.tagged_src
-                                                                            tokenized_sentences[tokenized_sentences_index].tagged_tgt = saved_sentence.tagged_tgt
-                                                                            if (data[tokenized_node_index].is_table) {
-                                                                                let tokenized_data = data[tokenized_node_index]
-                                                                                for (var key in tokenized_data.table_items) {
-                                                                                    for (var itemkey in tokenized_data.table_items[key]) {
-                                                                                        let node_data = tokenized_data.table_items[key][itemkey]
-                                                                                        if (node_data.sentence_index == sentence.sentence_index) {
-                                                                                            data[tokenized_node_index].table_items[key][itemkey].target = saved_sentence['target']
-                                                                                            data[tokenized_node_index].table_items[key][itemkey].tagged_src = saved_sentence.tagged_src
-                                                                                            data[tokenized_node_index].table_items[key][itemkey].tagged_tgt = saved_sentence.tagged_tgt
-                                                                                        }
-                                                                                    }
+                                                        ]
+                                                        producer.send(payloads, function (err, data) {
+                                                            LOG.debug('Produced')
+                                                        });
+                                                    }
+                                                    callback()
+                                                } else {
+                                                    let kafka_sentences = []
+                                                    let tokenized_sentences_index = 0
+                                                    async_lib.each(tokenized_sentences, (sentence, rediscb) => {
+                                                        SentencesRedis.fetchSentence(sentence, userId + '_' + pdf_parser_process.target_lang, function (err, doc) {
+                                                            if (doc) {
+                                                                let saved_sentence = JSON.parse(doc)
+                                                                if (saved_sentence.target && saved_sentence.target.length > 0 && saved_sentence.target.trim().length > 0) {
+                                                                    LOG.info('Sentence found from redis', saved_sentence)
+                                                                    tokenized_sentences[tokenized_sentences_index].target = saved_sentence['target']
+                                                                    tokenized_sentences[tokenized_sentences_index].tagged_src = saved_sentence.tagged_src
+                                                                    tokenized_sentences[tokenized_sentences_index].tagged_tgt = saved_sentence.tagged_tgt
+                                                                    if (data[tokenized_node_index].is_table) {
+                                                                        let tokenized_data = data[tokenized_node_index]
+                                                                        for (var key in tokenized_data.table_items) {
+                                                                            for (var itemkey in tokenized_data.table_items[key]) {
+                                                                                let node_data = tokenized_data.table_items[key][itemkey]
+                                                                                if (node_data.sentence_index == sentence.sentence_index) {
+                                                                                    data[tokenized_node_index].table_items[key][itemkey].target = saved_sentence['target']
+                                                                                    data[tokenized_node_index].table_items[key][itemkey].tagged_src = saved_sentence.tagged_src
+                                                                                    data[tokenized_node_index].table_items[key][itemkey].tagged_tgt = saved_sentence.tagged_tgt
                                                                                 }
                                                                             }
-                                                                        } else {
-                                                                            kafka_sentences.push(sentence)
                                                                         }
-                                                                    } else {
-                                                                        kafka_sentences.push(sentence)
                                                                     }
-                                                                    tokenized_sentences_index++;
-                                                                    rediscb()
-                                                                })
+                                                                } else {
+                                                                    kafka_sentences.push(sentence)
+                                                                }
+                                                            } else {
+                                                                kafka_sentences.push(sentence)
+                                                            }
+                                                            tokenized_sentences_index++;
+                                                            rediscb()
+                                                        })
 
-                                                            }, function (err) {
-                                                                let payloads = [
-                                                                    {
-                                                                        topic: KafkaTopics.NMT_TRANSLATE, messages: JSON.stringify({ 'url_end_point': model.url_end_point, 'message': kafka_sentences }), partition: 0
-                                                                    }
-                                                                ]
-                                                                producer.send(payloads, function (err, data) {
-                                                                    LOG.debug('Produced')
-                                                                });
-                                                                callback()
+                                                    }, function (err) {
+                                                        let payloads = [
+                                                            {
+                                                                topic: KafkaTopics.NMT_TRANSLATE, messages: JSON.stringify({ 'url_end_point': model.url_end_point, 'message': kafka_sentences }), partition: 0
+                                                            }
+                                                        ]
+                                                        producer.send(payloads, function (err, data) {
+                                                            LOG.debug('Produced')
+                                                        });
+                                                        callback()
+                                                    })
+                                                }
+                                            }
+                                        ], function () {
+                                            data[tokenized_node_index].node_index = data[tokenized_node_index].node_index + ''
+                                            data[tokenized_node_index].version = 0
+                                            data[tokenized_node_index].status = STATUS_PENDING
+                                            data[tokenized_node_index].session_id = pdf_parser_process.session_id
+                                            data[tokenized_node_index].tokenized_sentences = tokenized_sentences
+                                            cb()
+                                        })
+
+                                        } else {
+                                            data[index - 1].node_index = data[index - 1].node_index + ''
+                                            data[index - 1].version = 0
+                                            data[index - 1].status = STATUS_PENDING
+                                            data[index - 1].session_id = pdf_parser_process.session_id
+                                            data[index - 1].tokenized_sentences = tokenized_sentences
+                                            cb()
+                                        }
+
+                                    }, function (err) {
+                                        LOG.info('Saving pdf sentences')
+                                        if (header_text && header_text.length > 0) {
+                                            data.unshift({ text: header_text, is_header: true, session_id: pdf_parser_process.session_id, status: STATUS_PENDING, tokenized_sentences: [] })
+                                        }
+                                        if (footer_text && footer_text.length > 0) {
+                                            data.push({ text: footer_text, is_footer_text: true, session_id: pdf_parser_process.session_id, status: STATUS_PENDING, tokenized_sentences: [] })
+                                        }
+                                        BaseModel.saveData(PdfSentence, data, function (err, doc) {
+                                            if (err) {
+                                                LOG.error(err)
+                                                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                                return res.status(apistatus.http.status).json(apistatus);
+                                            } else {
+
+                                                if (dontsendres) {
+                                                    LOG.info('Updating pdf obj')
+                                                    let condition = { session_id: pdf_parser_process.session_id }
+                                                    BaseModel.findByCondition(PdfParser, condition, null, null, null, function (err, data) {
+                                                        if (data && data.length > 0) {
+                                                            let pdfobj = data[0]._doc
+                                                            let updateObj = { status: STATUS_TRANSLATING }
+                                                            BaseModel.updateData(PdfParser, updateObj, pdfobj._id, function (err, doc) {
+                                                                if (err) {
+                                                                    LOG.error(err)
+                                                                } else {
+                                                                    LOG.info('Data updated')
+                                                                }
                                                             })
                                                         }
-                                                    }
-                                                ], function () {
-                                                    data[tokenized_node_index].node_index = data[tokenized_node_index].node_index + ''
-                                                    data[tokenized_node_index].version = 0
-                                                    data[tokenized_node_index].status = STATUS_PENDING
-                                                    data[tokenized_node_index].session_id = pdf_parser_process.session_id
-                                                    data[tokenized_node_index].tokenized_sentences = tokenized_sentences
-                                                    cb()
-                                                })
-
-                                            } else {
-                                                data[index - 1].node_index = data[index - 1].node_index + ''
-                                                data[index - 1].version = 0
-                                                data[index - 1].status = STATUS_PENDING
-                                                data[index - 1].session_id = pdf_parser_process.session_id
-                                                data[index - 1].tokenized_sentences = tokenized_sentences
-                                                cb()
-                                            }
-
-                                        }, function (err) {
-                                            LOG.info('Saving pdf sentences')
-                                            if (header_text && header_text.length > 0) {
-                                                data.unshift({ text: header_text, is_header: true, session_id: pdf_parser_process.session_id, status: STATUS_PENDING, tokenized_sentences: [] })
-                                            }
-                                            if (footer_text && footer_text.length > 0) {
-                                                data.push({ text: footer_text, is_footer_text: true, session_id: pdf_parser_process.session_id, status: STATUS_PENDING, tokenized_sentences: [] })
-                                            }
-                                            BaseModel.saveData(PdfSentence, data, function (err, doc) {
-                                                if (err) {
-                                                    LOG.error(err)
-                                                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                                                    return res.status(apistatus.http.status).json(apistatus);
+                                                    })
                                                 } else {
-
-                                                    if (dontsendres) {
-                                                        LOG.info('Updating pdf obj')
-                                                        let condition = { session_id: pdf_parser_process.session_id }
-                                                        BaseModel.findByCondition(PdfParser, condition, null, null, null, function (err, data) {
-                                                            if (data && data.length > 0) {
-                                                                let pdfobj = data[0]._doc
-                                                                let updateObj = { status: STATUS_TRANSLATING }
-                                                                BaseModel.updateData(PdfParser, updateObj, pdfobj._id, function (err, doc) {
-                                                                    if (err) {
-                                                                        LOG.error(err)
-                                                                    } else {
-                                                                        LOG.info('Data updated')
-                                                                    }
-                                                                })
-                                                            }
-                                                        })
-                                                    } else {
-                                                        LOG.info('Saving pdf obj')
-                                                        BaseModel.saveData(PdfParser, [pdf_parser_process], function (err, doc) {
-                                                            if (err) {
-                                                                LOG.error(err)
-                                                                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                                                                return res.status(apistatus.http.status).json(apistatus);
-                                                            } else {
-                                                                let response = new Response(StatusCode.SUCCESS, doc).getRsp()
-                                                                return res.status(response.http.status).json(response);
-                                                            }
-                                                        })
-                                                    }
+                                                    LOG.info('Saving pdf obj')
+                                                    BaseModel.saveData(PdfParser, [pdf_parser_process], function (err, doc) {
+                                                        if (err) {
+                                                            LOG.error(err)
+                                                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                                            return res.status(apistatus.http.status).json(apistatus);
+                                                        } else {
+                                                            let response = new Response(StatusCode.SUCCESS, doc).getRsp()
+                                                            return res.status(response.http.status).json(response);
+                                                        }
+                                                    })
                                                 }
-                                            })
+                                            }
                                         })
+                                    })
                                     })
                                 }
                             })
