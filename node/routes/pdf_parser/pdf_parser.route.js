@@ -32,4 +32,7 @@ module.exports = function (router) {
     router.route('/make-doc-from-sentences')
         .post(pdfParserController.makeDocFromSentences);
 
+    router.route('/extract-pdf-paragraphs')
+        .post(pdfParserController.extractPdfParagraphs);
+
 }
