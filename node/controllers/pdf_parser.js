@@ -168,7 +168,7 @@ exports.extractParagraphsPerPages = function (req, res) {
                 }
                 let index = 1
                 let output_res = {}
-                processHtml(pdf_parser_process, index, output_res, true, 1, false, null, null, res)
+                processHtml(pdf_parser_process, index, output_res, true, 1, false, null, null, res, false)
             })
         })
     })
@@ -308,7 +308,7 @@ function useNerTags(ner_data, data, cb) {
     cb(sentences)
 }
 
-function performNer(data, cb) {
+function performNer(data, dont_use_ner, cb) {
     let sentences = []
     let previous_page_no = -1
     let page_sentences = ''
@@ -325,23 +325,26 @@ function performNer(data, cb) {
     })
     if (page_sentences.length > 0) {
         sentences.push(page_sentences)
-    }
-    axios.post(PYTHON_BASE_URL + 'ner',
-        {
-            sentences: sentences
-        }, {
-        timeout: 3000000,
-    }
-    ).then(function (api_res) {
-        if (api_res && api_res.data && api_res.data.data) {
-            cb(null, api_res)
-        } else {
-            cb('err', null)
+    } if (dont_use_ner) {
+        cb(null, [])
+    } else {
+        axios.post(PYTHON_BASE_URL + 'ner',
+            {
+                sentences: sentences
+            }, {
+            timeout: 3000000,
         }
-    }).catch((e) => {
-        LOG.error(e)
-        cb(e, [])
-    })
+        ).then(function (api_res) {
+            if (api_res && api_res.data && api_res.data.data) {
+                cb(null, api_res)
+            } else {
+                cb('err', null)
+            }
+        }).catch((e) => {
+            LOG.error(e)
+            cb(e, [])
+        })
+    }
 }
 
 function makeSenteceObj(node_data, text, sentence_index, node_index, id, model_id) {
@@ -368,7 +371,7 @@ function makeSenteceObj(node_data, text, sentence_index, node_index, id, model_i
     return sentence
 }
 
-function processHtml(pdf_parser_process, index, output_res, merge, start_node_index, tokenize, translate, model, res, dontsendres, userId) {
+function processHtml(pdf_parser_process, index, output_res, merge, start_node_index, tokenize, translate, model, res, dontsendres, userId, dont_use_ner) {
     if (fs.existsSync(BASE_PATH_UPLOAD + pdf_parser_process.session_id + "/" + 'output-' + index + '.html')) {
         let image_index = index
         if ((index + '').length == 1) {
@@ -386,7 +389,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                 output_res[index + ''] = { html_nodes: data, image_data: image_data }
                 index += 1
                 start_node_index += data.length
-                processHtml(pdf_parser_process, index, output_res, merge, start_node_index, tokenize, translate, model, res, dontsendres, userId)
+                processHtml(pdf_parser_process, index, output_res, merge, start_node_index, tokenize, translate, model, res, dontsendres, userId, dont_use_ner)
             })
         })
     } else {
@@ -415,7 +418,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
             })
         } else {
             HtmlToText.mergeHtmlNodes(output_res, function (err, data, header_text, footer_text) {
-                performNer(data, function (err, ner_data) {
+                performNer(data, dont_use_ner, function (err, ner_data) {
                     // if (err) {
                     //     LOG.error(err)
                     //     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
@@ -610,7 +613,6 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
 
 exports.extractParagraphs = function (req, res) {
     if (!req || !req.body || !req.files || !req.files.pdf_data) {
-        LOG.info('test')
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
@@ -634,7 +636,7 @@ exports.extractParagraphs = function (req, res) {
                 }
                 let index = 1
                 let output_res = {}
-                processHtml(pdf_parser_process, index, output_res, false, 1, false, false, null, res)
+                processHtml(pdf_parser_process, index, output_res, false, 1, false, false, null, res, false, null, req.body.dont_use_ner)
             })
         })
     })
@@ -876,7 +878,7 @@ exports.makeDocFromSentences = function (req, res) {
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
-            DocxCreator.covertJsonToDocForSentences(models, 'target', BASE_PATH_NGINX,pdf_parser_obj.process_name, function (err, filepath) {
+            DocxCreator.covertJsonToDocForSentences(models, 'target', BASE_PATH_NGINX, pdf_parser_obj.process_name, function (err, filepath) {
                 if (err) {
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);
