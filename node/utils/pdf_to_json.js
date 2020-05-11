@@ -31,11 +31,11 @@ exports.converPdfToJson = function (filepath, cb) {
                 cb(null, res.lines_data)
             }).catch((e) => {
                 LOG.error(e)
-                cb(null, {})
+                cb(e, {})
             })
         }).catch((e) => {
             LOG.error(e)
-            cb(null, {})
+            cb(e, {})
         })
     })
 }
