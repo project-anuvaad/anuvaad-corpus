@@ -131,7 +131,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
         } else if ((index + '').length == 2) {
             image_index = '0' + index
         }
-        ImageProcessing.processImage(BASE_PATH_UPLOAD + '/' + pdf_parser_process.session_id + '/output' + image_index + '.png', function (err, image_data) {
+        ImageProcessing.processImage(BASE_PATH_UPLOAD + '/' + pdf_parser_process.session_id + '/output' + image_index + '.png','output' + image_index + '.png', function (err, image_data) {
             if (err) {
                 LOG.error(err)
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
