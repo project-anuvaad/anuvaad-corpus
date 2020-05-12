@@ -19,6 +19,7 @@ class AnuvaadHinTokenizer(object):
     # _abbrevations_without_space = ['Crl.']
     _tokenizer = None
     _regex_search_texts = []
+    _date_abbrevations  = []
     _table_points_abbrevations = []
     _brackets_abbrevations = []
     _dot_with_char_abbrevations = []
@@ -31,6 +32,7 @@ class AnuvaadHinTokenizer(object):
             self._abbrevations_without_space.append(abbrevations)
         self._regex_search_texts = []
         self._dot_abbrevations = []
+        self._date_abbrevations = []
         self._table_points_abbrevations = []
         self._brackets_abbrevations = []
         self._dot_with_char_abbrevations = []
@@ -41,6 +43,7 @@ class AnuvaadHinTokenizer(object):
     def tokenize(self, text):
         print('--------------Process started-------------')
         # text = self.serialize_with_abbrevations(text)
+        text = self.serialize_dates(text)
         text = self.serialize_table_points(text)
         text = self.serialize_pattern(text)
         text = self.serialize_end(text)
@@ -54,6 +57,7 @@ class AnuvaadHinTokenizer(object):
         sentences = self._tokenizer.tokenize(text)
         output = []
         for se in sentences:
+            se = self.deserialize_dates(se)
             se = self.deserialize_pattern(se)
             se = self.deserialize_end(se)
             se = self.deserialize_dots(se)
@@ -136,6 +140,26 @@ class AnuvaadHinTokenizer(object):
         if self._brackets_abbrevations is not None and isinstance(self._brackets_abbrevations, list):
             for pattern in self._brackets_abbrevations:
                 pattern_obj = re.compile(re.escape('WW_'+str(index)+'_WW'), re.IGNORECASE)
+                text = pattern_obj.sub(pattern, text)
+                index+=1
+        return text
+    
+    def serialize_dates(self, text):
+        patterns = re.findall(r'[0-9]{,2}[.][0-9]{,2}[.][0-9]{2,4}',text)
+        index = 0
+        if patterns is not None and isinstance(patterns, list):
+            for pattern in patterns:
+                pattern_obj = re.compile(re.escape(pattern))
+                self._date_abbrevations.append(pattern)
+                text = pattern_obj.sub('DD_'+str(index)+'_DD', text)
+                index+=1
+        return text
+
+    def deserialize_dates(self, text):
+        index = 0
+        if self._date_abbrevations is not None and isinstance(self._date_abbrevations, list):
+            for pattern in self._date_abbrevations:
+                pattern_obj = re.compile(re.escape('DD_'+str(index)+'_DD'), re.IGNORECASE)
                 text = pattern_obj.sub(pattern, text)
                 index+=1
         return text
