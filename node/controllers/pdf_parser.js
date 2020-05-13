@@ -262,7 +262,7 @@ function useNerTags(ner_data, data, cb) {
                     if (LAST_PAGE_NER_BEGINNING.length == 0) {
                         LAST_PAGE_NER_BEGINNING = n.tagged_value
                     }
-                    if (n.annotation_tag == 'JUDGMENT_DATE') {
+                    if (n.annotation_tag == 'J_JUDGMENT_DATE') {
                         let ner_obj = { annotation_tag: 'JUDGMENT_LOCATION', tagged_value: 'New Delhi' }
                         let identifier_tag = NER_LAST_PAGE_IDENTIFIERS[ner_obj.annotation_tag]
                         judgment_location_obj = makeSentenceObjForNer(ner_obj, identifier_tag, judgment_location_obj, data[data.length - 1].page_no)
