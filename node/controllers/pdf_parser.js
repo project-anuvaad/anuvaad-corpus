@@ -23,6 +23,7 @@ var async_lib = require('async')
 var DocxCreator = require('../utils/docx-creator')
 
 const PYTHON_BASE_URL = process.env.PYTHON_URL ? process.env.PYTHON_URL : 'http://auth.anuvaad.org/'
+const NER_BASE_URL = process.env.NER_BASE_URL ? process.env.NER_BASE_URL : 'http://auth.anuvaad.org/'
 
 
 var COMPONENT = "pdf_parser";
@@ -338,7 +339,7 @@ function performNer(data, dont_use_ner, cb) {
     } if (dont_use_ner) {
         cb(null, [])
     } else {
-        axios.post(PYTHON_BASE_URL + 'v0/ner',
+        axios.post(NER_BASE_URL + 'v0/ner',
             {
                 sentences: sentences
             }, {
@@ -409,7 +410,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                 if (output_res[key + '']['html_nodes'] && output_res[key + '']['html_nodes'].length > 0)
                     sentences.push(output_res[key + '']['html_nodes'][0].text)
             })
-            axios.post(PYTHON_BASE_URL + 'v0/ner',
+            axios.post(NER_BASE_URL + 'v0/ner',
                 {
                     sentences: sentences
                 }
