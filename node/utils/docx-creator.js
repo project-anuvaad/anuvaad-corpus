@@ -24,17 +24,17 @@ const NER_FIRST_PAGE_IDENTIFIERS = {
     'VERSUS': { align: 'CENTER', is_new_line: true, position: 4500, font_size: 12, font: 'Times' },
     'SECOND_PARTY': { align: 'LEFT', position: 500, font_size: 12, font: 'Times' },
     'SECOND_PARTY_TYPE': { align: 'RIGHT', is_new_line: true, position: docx.TabStopPosition.MAX, font_size: 12, font: 'Times' },
-    'WITH_HEADER': { align: 'CENTER', position: 4500, is_new_line: true, font_size: 17, font: 'Times' },
+    'AND_IN_WITH_HEADER': { align: 'CENTER', position: 4500, is_new_line: true, font_size: 17, font: 'Times' },
     'CASE_IDENTIFIER': { align: 'CENTER', position: 4500, is_new_line: true, font_size: 17, font: 'Times' },
     'SLP': { align: 'CENTER', position: 4500, is_new_line: true, font_size: 17, font: 'Times' },
     'JUDGMENT_ORDER_HEADER': { align: 'CENTER', position: 4500, is_new_line: true, font_size: 19, is_bold: true, font: 'Times' },
-    'JUDGE_NAME': { align: 'LEFT', position: 0, is_new_line: true, font_size: 19, is_bold: true, font: 'Times', underline: true },
+    'J_AUTHOR_JUDGE': { align: 'LEFT', position: 0, is_new_line: true, font_size: 19, is_bold: true, font: 'Times', underline: true },
 }
 
 const NER_LAST_PAGE_IDENTIFIERS = {
-    'JUDGMENT_JUDGE_SIGNATURE': { align: 'RIGHT', is_new_line: true, position: docx.TabStopPosition.MAX, font_size: 17, font: 'Times' },
+    'J_JUDGMENT_JUDGE_SIGNATURE': { align: 'RIGHT', is_new_line: true, position: docx.TabStopPosition.MAX, font_size: 17, font: 'Times' },
     'JUDGE_NAME': { align: 'RIGHT', is_new_line: true, position: docx.TabStopPosition.MAX, font_size: 17, font: 'Times' },
-    'JUDGMENT_LOCATION': { align: 'LEFT', is_new_line: true, position: 500, font_size: 17, font: 'Times' },
+    'J_JUDGMENT_DATE': { align: 'LEFT', is_new_line: true, position: 500, font_size: 17, font: 'Times' },
     'JUDGMENT_DATE': { align: 'LEFT', is_new_line: true, position: 500, font_size: 17, font: 'Times' },
 }
 

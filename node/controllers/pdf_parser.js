@@ -42,18 +42,18 @@ const NER_FIRST_PAGE_IDENTIFIERS = {
     'VERSUS': { align: 'CENTER', is_new_line: true },
     'SECOND_PARTY': { align: 'LEFT' },
     'SECOND_PARTY_TYPE': { align: 'RIGHT', is_new_line: true },
-    'WITH_HEADER': { align: 'CENTER', is_new_line: true },
+    'AND_IN_WITH_HEADER': { align: 'CENTER', is_new_line: true },
     'CASE_IDENTIFIER': { align: 'CENTER', is_new_line: true },
     'SLP': { align: 'CENTER', is_new_line: true },
     'JUDGMENT_ORDER_HEADER': { align: 'CENTER', is_new_line: true, is_bold: true },
-    'JUDGE_NAME': { align: 'LEFT', is_new_line: true, is_bold: true, underline: true },
+    'J_AUTHOR_JUDGE': { align: 'LEFT', is_new_line: true, is_bold: true, underline: true },
 }
 
 const NER_LAST_PAGE_IDENTIFIERS = {
-    'JUDGMENT_JUDGE_SIGNATURE': { align: 'RIGHT', is_new_line: true },
+    'J_JUDGMENT_JUDGE_SIGNATURE': { align: 'RIGHT', is_new_line: true },
     'JUDGE_NAME': { align: 'RIGHT', is_new_line: true },
     'JUDGMENT_LOCATION': { align: 'LEFT', is_new_line: true },
-    'JUDGMENT_DATE': { align: 'LEFT', is_new_line: true },
+    'J_JUDGMENT_DATE': { align: 'LEFT', is_new_line: true },
 }
 
 function saveTranslatedText(sentence, cb) {
@@ -338,7 +338,7 @@ function performNer(data, dont_use_ner, cb) {
     } if (dont_use_ner) {
         cb(null, [])
     } else {
-        axios.post(PYTHON_BASE_URL + 'ner',
+        axios.post(PYTHON_BASE_URL + 'v0/ner',
             {
                 sentences: sentences
             }, {
@@ -409,7 +409,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                 if (output_res[key + '']['html_nodes'] && output_res[key + '']['html_nodes'].length > 0)
                     sentences.push(output_res[key + '']['html_nodes'][0].text)
             })
-            axios.post(PYTHON_BASE_URL + 'ner',
+            axios.post(PYTHON_BASE_URL + 'v0/ner',
                 {
                     sentences: sentences
                 }
