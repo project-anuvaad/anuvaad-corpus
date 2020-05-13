@@ -415,7 +415,7 @@ exports.covertJsonToDoc = function (data, ner_data, nginx_path, header_text, foo
             if (LAST_PAGE_NER_BEGINNING.length == 0) {
                 LAST_PAGE_NER_BEGINNING = n.tagged_value
             }
-            if (n.annotation_tag == 'JUDGMENT_DATE') {
+            if (n.annotation_tag == 'J_JUDGMENT_DATE') {
                 let ner_obj = { annotation_tag: 'JUDGMENT_LOCATION', tagged_value: 'New Delhi' }
                 let identifier_tag = NER_LAST_PAGE_IDENTIFIERS[ner_obj.annotation_tag]
                 last_page_runs = constructRunForNers(ner_obj, identifier_tag, last_page_runs)
