@@ -334,12 +334,14 @@ exports.mergeHtmlNodes = function (items, cb) {
                     class_identifier = previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold
                     if (isNaN(it.text.trim()) || (previous_node.y_end == it.y_end && parseInt(it.y_end) + parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y_end) + parseInt(previous_node.class_style['font-size'].split('px')[0]))) {
                         same_line = true
-                    }
-                    else if ((parseInt(previous_node.y_end) >= parseInt(it.y_end) && parseInt(it.y_end) + parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y_end))) {
+                    }else{
                         is_super = true
-                    } else {
-                        is_sub = true
                     }
+                    // else if ((parseInt(previous_node.y_end) >= parseInt(it.y_end) && parseInt(it.y_end) + parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y_end))) {
+                    //     is_super = true
+                    // } else {
+                    //     is_sub = true
+                    // }
                 }
 
                 //Check with previous node class identifier so end the previous node and not merge other nodes in that node
