@@ -34,8 +34,8 @@ const NER_FIRST_PAGE_IDENTIFIERS = {
 const NER_LAST_PAGE_IDENTIFIERS = {
     'J_JUDGMENT_JUDGE_SIGNATURE': { align: 'RIGHT', is_new_line: true, position: docx.TabStopPosition.MAX, font_size: 17, font: 'Times' },
     'JUDGE_NAME': { align: 'RIGHT', is_new_line: true, position: docx.TabStopPosition.MAX, font_size: 17, font: 'Times' },
+    'JUDGMENT_LOCATION': { align: 'LEFT', is_new_line: true, position: 500, font_size: 17, font: 'Times' },
     'J_JUDGMENT_DATE': { align: 'LEFT', is_new_line: true, position: 500, font_size: 17, font: 'Times' },
-    'JUDGMENT_DATE': { align: 'LEFT', is_new_line: true, position: 500, font_size: 17, font: 'Times' },
 }
 
 const HEADER_STYLE = {
