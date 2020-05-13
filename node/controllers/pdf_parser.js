@@ -346,7 +346,7 @@ function performNer(data, dont_use_ner, cb) {
             timeout: 3000000,
         }
         ).then(function (api_res) {
-            if (api_res && api_res.data && api_res.data.data) {
+            if (api_res && api_res.data && api_res.data.ner_result) {
                 cb(null, api_res)
             } else {
                 cb('err', null)
@@ -415,8 +415,8 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                     sentences: sentences
                 }
             ).then(function (api_res) {
-                if (api_res && api_res.data && api_res.data.data) {
-                    api_res.data.data.map((d, index) => {
+                if (api_res && api_res.data && api_res.data.ner_result) {
+                    api_res.data.ner_result.map((d, index) => {
                         output_res[(index + 1) + '']['ner'] = d
                     })
                     let response = new Response(StatusCode.SUCCESS, output_res).getRsp()
@@ -435,7 +435,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                     //     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                     //     return res.status(apistatus.http.status).json(apistatus);
                     // }
-                    useNerTags(ner_data && ner_data.data && ner_data.data.data && ner_data.data.data.length > 0 ? ner_data.data.data : [], data, function (data) {
+                    useNerTags(ner_data && ner_data.data && ner_data.data.ner_result && ner_data.data.ner_result.length > 0 ? ner_data.data.ner_result : [], data, function (data) {
                         if (tokenize) {
                             axios.post(PYTHON_BASE_URL + 'tokenize-sentence',
                                 {
@@ -612,7 +612,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                             })
 
                         } else {
-                            let response = new Response(StatusCode.SUCCESS, data, null, null, null, ner_data && ner_data.data && ner_data.data.data && ner_data.data.data.length > 0 ? ner_data.data.data : []).getRsp()
+                            let response = new Response(StatusCode.SUCCESS, data, null, null, null, ner_data && ner_data.data && ner_data.data.ner_result && ner_data.data.ner_result.length > 0 ? ner_data.data.ner_result : []).getRsp()
                             return res.status(response.http.status).json(response);
                         }
                     })
