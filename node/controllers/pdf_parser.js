@@ -884,7 +884,7 @@ exports.updatePdfSentences = function (req, res) {
                             for (var key in sentence.table_items) {
                                 for (var col in sentence.table_items[key]) {
                                     if (sentence.table_items[key][col].target !== sentencedb.table_items[key][col].target && sentence.table_items[key][col].target && sentence.table_items[key][col].target.trim().length > 0) {
-                                        const sentence_to_save = { source: sentence.table_items[key][col].text, tagged_src: sentence.table_items[key][col].tagged_src, tagged_tgt: sentence.table_items[key][col].tagged_tgt, target: sentence.table_items[key][col].target }
+                                        const sentence_to_save = { source: sentence.table_items[key][col].text, tagged_src: sentence.table_items[key][col].tagged_src, tagged_tgt: sentence.table_items[key][col].tagged_tgt, target: sentence.table_items[key][col].target, created_on: new Date() }
                                         SentencesRedis.saveSentence(sentence_to_save, userId + '_' + pdf_parser_process.target_lang, function (err, doc) {
                                             LOG.info('data saved in redis')
                                         })
@@ -894,7 +894,7 @@ exports.updatePdfSentences = function (req, res) {
                         } else {
                             sentence.tokenized_sentences.map((sentence_obj, index) => {
                                 if (sentence_obj.target !== sentencedb.tokenized_sentences[index].target && sentence_obj.target && sentence_obj.target.trim().length > 0) {
-                                    let sentence_to_save = { source: sentence_obj.src, tagged_src: sentence_obj.tagged_src, tagged_tgt: sentence_obj.tagged_tgt, target: sentence_obj.target }
+                                    let sentence_to_save = { source: sentence_obj.src, tagged_src: sentence_obj.tagged_src, tagged_tgt: sentence_obj.tagged_tgt, target: sentence_obj.target, created_on: new Date() }
                                     SentencesRedis.saveSentence(sentence_to_save, userId + '_' + pdf_parser_process.target_lang, function (err, doc) {
                                         LOG.info('data saved in redis')
                                     })
