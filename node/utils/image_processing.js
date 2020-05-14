@@ -1,7 +1,7 @@
 var axios = require('axios');
 var LOG = require('../logger/logger').logger
 var fs = require("fs");
-const BASE_PATH = 'http://auth.anuvaad.org'
+const BASE_PATH = process.env.NER_BASE_URL ? process.env.NER_BASE_URL : 'http://auth.anuvaad.org'
 const BASE_PATH_NGINX = 'nginx/'
 var UUIDV4 = require('uuid/v4')
 
