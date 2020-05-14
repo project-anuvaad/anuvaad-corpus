@@ -16,7 +16,7 @@ const FONT_SIZES = {
 }
 
 const NER_FIRST_PAGE_IDENTIFIERS = {
-    'REPORTABLE_TYPE': { align: 'CENTER', position: 4500, is_new_line: true, font_size: 19, is_bold: true, font: 'Times' },
+    'REPORTABLE_TYPE': { align: 'RIGHT', position: docx.TabStopPosition.MAX, is_new_line: true, font_size: 19, is_bold: true, font: 'Times' },
     'JURISDICTION': { align: 'CENTER', position: 4500, is_new_line: true, font_size: 18, font: 'Times' },
     'FORUM_NAME': { align: 'CENTER', position: 4500, is_new_line: true, font_size: 19, is_bold: true, font: 'Times' },
     'FIRST_PARTY': { align: 'LEFT', position: 500, font_size: 12, font: 'Times' },

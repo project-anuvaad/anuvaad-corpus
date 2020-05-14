@@ -35,7 +35,7 @@ const STATUS_TRANSLATING = 'TRANSLATING'
 const STATUS_PENDING = 'PENDING'
 
 const NER_FIRST_PAGE_IDENTIFIERS = {
-    'REPORTABLE_TYPE': { align: 'CENTER', is_new_line: true, is_bold: true },
+    'REPORTABLE_TYPE': { align: 'RIGHT', is_new_line: true, is_bold: true },
     'JURISDICTION': { align: 'CENTER', is_new_line: true },
     'FORUM_NAME': { align: 'CENTER', is_new_line: true, is_bold: true },
     'FIRST_PARTY': { align: 'LEFT' },
