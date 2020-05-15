@@ -701,6 +701,65 @@ exports.extractPdfParagraphs = function (req, res) {
     })
 }
 
+exports.extractPdfToSentences = function (req, res) {
+    if (!req || !req.body || !req.files || !req.files.pdf_data || !req.body.lang) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let file = req.files.pdf_data
+    let pdf_parser_process = {}
+    pdf_parser_process.session_id = UUIDV4()
+    pdf_parser_process.pdf_path = escape(file.name)
+    fs.mkdir(BASE_PATH_UPLOAD + pdf_parser_process.session_id, function (e) {
+        fs.writeFile(BASE_PATH_UPLOAD + pdf_parser_process.session_id + '/' + pdf_parser_process.pdf_path, file.data, function (err) {
+            if (err) {
+                LOG.error(err)
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+            if (lang == 'hi') {
+                PdfToText.converPdfToJson(BASE_PATH_UPLOAD + pdf_parser_process.session_id + '/' + pdf_parser_process.pdf_path, function (err, data) {
+                    if (err) {
+                        LOG.error(err)
+                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                        return res.status(apistatus.http.status).json(apistatus);
+                    }
+                    let previous_height = -1;
+                    data.map((page_wise) => {
+                        page_wise.map((d) => {
+                            if (previous_height == -1) {
+                                previous_height = d.height
+                            } else if (Math.abs(previous_height - d.height) <= 10) {
+                                d.height = previous_height
+                            }
+                            d.node_index = d.pdf_index
+                            d.page_no_end = d.page_no
+                            d.class_style = { 'font-size': d.height + 'px', 'font-family': 'Times' }
+                            previous_height = d.height
+                        })
+
+                    })
+                    PdfJsonToText.mergeJsonNodes(data, [], function (err, out, header_text, footer_text) {
+                        let response = new Response(StatusCode.SUCCESS, out).getRsp()
+                        return res.status(response.http.status).json(response);
+                    })
+                })
+            } else {
+                PdfToHtml.convertPdfToHtmlPagewise(BASE_PATH_UPLOAD, pdf_parser_process.pdf_path, 'output.html', pdf_parser_process.session_id, function (err, data) {
+                    if (err) {
+                        LOG.error(err)
+                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                        return res.status(apistatus.http.status).json(apistatus);
+                    }
+                    let index = 1
+                    let output_res = {}
+                    processHtml(pdf_parser_process, index, output_res, false, 1, false, false, null, res, false, null, false)
+                })
+            }
+        })
+    })
+}
+
 exports.savePdfParserProcess = function (req, res) {
     let userId = req.headers['ad-userid']
     if (!req || !req.body || !req.body.process_name || !req.files || !req.files.pdf_data) {
