@@ -740,8 +740,25 @@ exports.extractPdfToSentences = function (req, res) {
 
                     })
                     PdfJsonToText.mergeJsonNodes(data, [], function (err, out, header_text, footer_text) {
-                        let response = new Response(StatusCode.SUCCESS, out).getRsp()
-                        return res.status(response.http.status).json(response);
+                        axios.post(PYTHON_BASE_URL + 'tokenize-hindi-sentence',
+                            {
+                                paragraphs: data
+                            }
+                        ).then(function (api_res) {
+                            let sentences = []
+                            if (api_res && api_res.data) {
+                                api_res.data.data.map((d) => {
+                                    sentences.push(d.text)
+                                })
+                            }
+                            let response = new Response(StatusCode.SUCCESS, sentences).getRsp()
+                            return res.status(response.http.status).json(response);
+                        }).catch(e => {
+                            LOG.error(e)
+                            let response = new Response(StatusCode.SUCCESS, out).getRsp()
+                            return res.status(response.http.status).json(response);
+                        })
+
                     })
                 })
             } else {
