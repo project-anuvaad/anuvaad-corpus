@@ -717,7 +717,7 @@ exports.extractPdfToSentences = function (req, res) {
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
-            if (lang == 'hi') {
+            if (req.body.lang == 'hi') {
                 PdfToText.converPdfToJson(BASE_PATH_UPLOAD + pdf_parser_process.session_id + '/' + pdf_parser_process.pdf_path, function (err, data) {
                     if (err) {
                         LOG.error(err)
