@@ -742,7 +742,7 @@ exports.extractPdfToSentences = function (req, res) {
                     PdfJsonToText.mergeJsonNodes(data, [], function (err, out, header_text, footer_text) {
                         axios.post(PYTHON_BASE_URL + 'tokenize-hindi-sentence',
                             {
-                                paragraphs: data
+                                paragraphs: out
                             }
                         ).then(function (api_res) {
                             let sentences = []
