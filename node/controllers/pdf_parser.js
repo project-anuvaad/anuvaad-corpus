@@ -779,7 +779,7 @@ exports.extractPdfToSentences = function (req, res) {
                     }
                     let index = 1
                     let output_res = {}
-                    processHtml(pdf_parser_process, index, output_res, false, 1, false, false, null, res, false, null, false, true)
+                    processHtml(pdf_parser_process, index, output_res, false, 1, true, false, null, res, false, null, false, true)
                 })
             }
         })
