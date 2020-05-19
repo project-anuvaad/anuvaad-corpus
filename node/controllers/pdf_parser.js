@@ -11,6 +11,7 @@ var LOG = require('../logger/logger').logger
 
 var KafkaTopics = require('../config/kafka-topics').KafkTopics
 var PdfToHtml = require('../utils/pdf_to_html')
+var TranslateAnuvaad = require('../utils/translate_anuvaad')
 var PdfToText = require('../utils/pdf_to_json')
 var KafkaProducer = require('../kafka/producer');
 var HtmlToText = require('../utils/html_to_text')
@@ -782,7 +783,7 @@ exports.extractPdfToSentences = function (req, res) {
                     }
                     let index = 1
                     let output_res = {}
-                    processHtml(pdf_parser_process, index, output_res, false, 1, true, false, null, res, false, null, false, true)
+                    processHtml(pdf_parser_process, index, output_res, false, 1, true, false, null, res, false, null, true, true)
                 })
             }
         })
@@ -801,22 +802,56 @@ exports.mergeSplitSentence = function (req, res) {
             return res.status(apistatus.http.status).json(apistatus);
         }
         let sentences = req.body.sentences
-        if (sentences.length == 1) {
-            sentences.map((sentence) => {
-                BaseModel.findByCondition(PdfParser, { session_id: sentence.session_id }, null, null, null, function (err, doc) {
-                    if (doc && doc.length > 0) {
-                        let pdf_parser = doc[0]._doc
-                        let updated_tokenized_sentences = []
-                        let beginning_found = false
-                        sentence.tokenized_sentences.map((tokenized_sentence) => {
-                            if(tokenized_sentence.s_id == req.body.beginning_sentence.s_id){
-                                beginning_found = true
-                            }
-                        })
-                    }
-                })
-            })
+        BaseModel.findByCondition(PdfParser, { session_id: sentence.session_id }, null, null, null, function (err, doc) {
+            if (doc && doc.length > 0) {
+                let pdf_parser = doc[0]._doc
+                //For handling same paragraph sentence merge
+                if (sentences.length == 1) {
+                    handleSameParaMergeReq(sentences, pdf_parser)
+                }
+            }
+        })
+    }
+}
+
+function handleSameParaMergeReq(sentences, pdf_parser) {
+    let sentence = sentences[0]
+    let updated_tokenized_sentences = []
+    let beginning_found = false
+    let end_found = false
+    let sentence_to_be_translated = {}
+    let sentence_to_be_translated_index = -1
+    sentence.tokenized_sentences.map((tokenized_sentence, index) => {
+        if (tokenized_sentence.s_id == req.body.beginning_sentence.s_id) {
+            beginning_found = true
+            sentence_to_be_translated_index = index
         }
+        if (!beginning_found || end_found) {
+            updated_tokenized_sentences.push(tokenized_sentence)
+        }
+        else if (beginning_found && !end_found) {
+            updated_tokenized_sentences[updated_tokenized_sentences.length - 1].text += tokenized_sentence.text
+            updated_tokenized_sentences[updated_tokenized_sentences.length - 1].src += tokenized_sentence.src
+            sentence_to_be_translated = updated_tokenized_sentences[updated_tokenized_sentences.length - 1]
+        }
+        if (tokenized_sentence.s_id == req.body.end_sentence.s_id) {
+            end_found = true
+        }
+    })
+    if (sentence_before_translation != -1) {
+        TranslateAnuvaad.translateFromAnuvaad([sentence_to_be_translated], pdf_parser.model ? pdf_parser.model.url_end_point : null, function (err, translation) {
+            if (err) {
+                LOG.error(err)
+            }
+            else {
+                let translated_sentence = translation[0]
+                let sentence_before_translation = updated_tokenized_sentences[sentence_to_be_translated_index]
+                sentence_before_translation.tagged_src = translated_sentence.tagged_src
+                sentence_before_translation.tagged_tgt = translated_sentence.tagged_tgt
+                sentence_before_translation.target = translated_sentence.tgt
+                updated_tokenized_sentences[sentence_to_be_translated_index] = sentence_before_translation
+            }
+        })
     }
 }
 
