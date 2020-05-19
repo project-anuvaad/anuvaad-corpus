@@ -38,4 +38,7 @@ module.exports = function (router) {
     router.route('/extract-pdf-to-sentences')
         .post(pdfParserController.extractPdfToSentences);
 
+    router.route('/merge-split-sentence')
+        .post(pdfParserController.mergeSplitSentence);
+
 }
