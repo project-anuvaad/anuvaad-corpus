@@ -448,8 +448,8 @@ def send_nodes(nodes, basename, model_id, url_end_point, targetLang, sourceLang,
                     i = 0
                     for token in tokens:
                         if i == 25:
-                            log.info('send_nodes : in 25 final msg is == ' + str(msg))
                             msg_ = {'url_end_point': url_end_point, 'message': messages}
+                            log.info('send_nodes : in 25 final msg is == ' + str(msg_))
                             producer.send(TOPIC, value=msg_)
                             producer.flush()
                             messages = []
