@@ -52,11 +52,12 @@ def extract_tokens(regexRules, text):
 
 def apply_regex_rules(text, regexRules):
     all_tokens = list()
-    for rule in regexRules:
-        text = text.lower()
-        tokens = [x.group() for x in re.finditer(rule, text)]
-        for t in tokens:
-            all_tokens.append(t)
+    if text is not None:
+        for rule in regexRules:
+            text = text.lower()
+            tokens = [x.group() for x in re.finditer(rule, text)]
+            for t in tokens:
+                all_tokens.append(t)
     return all_tokens
 
 
