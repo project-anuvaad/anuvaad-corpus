@@ -33,6 +33,9 @@ const STATUS_PROCESSING = 'PROCESSING'
 const STATUS_COMPLETED = 'COMPLETED'
 const STATUS_TRANSLATING = 'TRANSLATING'
 const STATUS_PENDING = 'PENDING'
+const TOKENIZED_HINDI_ENDPOINT = 'tokenize-hindi-sentence'
+const NER_END_POINT = 'v0/ner'
+const TOKENIZED_ENDPOINT = 'tokenize-sentence'
 
 const NER_FIRST_PAGE_IDENTIFIERS = {
     'REPORTABLE_TYPE': { align: 'RIGHT', is_new_line: true, is_bold: true },
@@ -339,7 +342,7 @@ function performNer(data, dont_use_ner, cb) {
     } if (dont_use_ner) {
         cb(null, [])
     } else {
-        axios.post(NER_BASE_URL + 'v0/ner',
+        axios.post(NER_BASE_URL + NER_END_POINT,
             {
                 sentences: sentences
             }, {
@@ -410,7 +413,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                 if (output_res[key + '']['html_nodes'] && output_res[key + '']['html_nodes'].length > 0)
                     sentences.push(output_res[key + '']['html_nodes'][0].text)
             })
-            axios.post(NER_BASE_URL + 'v0/ner',
+            axios.post(NER_BASE_URL + NER_END_POINT,
                 {
                     sentences: sentences
                 }
@@ -437,7 +440,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                     // }
                     useNerTags(ner_data && ner_data.data && ner_data.data.ner_result && ner_data.data.ner_result.length > 0 ? ner_data.data.ner_result : [], data, function (data) {
                         if (tokenize) {
-                            axios.post(PYTHON_BASE_URL + 'tokenize-sentence',
+                            axios.post(PYTHON_BASE_URL + TOKENIZED_ENDPOINT,
                                 {
                                     paragraphs: data
                                 }
@@ -749,7 +752,7 @@ exports.extractPdfToSentences = function (req, res) {
 
                     })
                     PdfJsonToText.mergeJsonNodes(data, [], function (err, out, header_text, footer_text) {
-                        axios.post(PYTHON_BASE_URL + 'tokenize-hindi-sentence',
+                        axios.post(PYTHON_BASE_URL + TOKENIZED_HINDI_ENDPOINT,
                             {
                                 paragraphs: out
                             }
@@ -784,6 +787,37 @@ exports.extractPdfToSentences = function (req, res) {
             }
         })
     })
+}
+
+exports.mergeSplitSentence = function (req, res) {
+    let userId = req.headers['ad-userid']
+    if (!req || !req.body || !req.body.sentences || !req.body.operation_type || !req.body.beginning_sentence) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    if (req.body.operation_type === 'merge') {
+        if (!req.body.end_sentence) {
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+        let sentences = req.body.sentences
+        if (sentences.length == 1) {
+            sentences.map((sentence) => {
+                BaseModel.findByCondition(PdfParser, { session_id: sentence.session_id }, null, null, null, function (err, doc) {
+                    if (doc && doc.length > 0) {
+                        let pdf_parser = doc[0]._doc
+                        let updated_tokenized_sentences = []
+                        let beginning_found = false
+                        sentence.tokenized_sentences.map((tokenized_sentence) => {
+                            if(tokenized_sentence.s_id == req.body.beginning_sentence.s_id){
+                                beginning_found = true
+                            }
+                        })
+                    }
+                })
+            })
+        }
+    }
 }
 
 exports.savePdfParserProcess = function (req, res) {
@@ -969,7 +1003,7 @@ exports.updatePdfSentences = function (req, res) {
                             for (var key in sentence.table_items) {
                                 for (var col in sentence.table_items[key]) {
                                     if (sentence.table_items[key][col].target !== sentencedb.table_items[key][col].target && sentence.table_items[key][col].target && sentence.table_items[key][col].target.trim().length > 0) {
-                                        const sentence_to_save = { source: sentence.table_items[key][col].text, tagged_src: sentence.table_items[key][col].tagged_src, tagged_tgt: sentence.table_items[key][col].tagged_tgt, target: sentence.table_items[key][col].target, created_on: new Date(),userId: userId }
+                                        const sentence_to_save = { source: sentence.table_items[key][col].text, tagged_src: sentence.table_items[key][col].tagged_src, tagged_tgt: sentence.table_items[key][col].tagged_tgt, target: sentence.table_items[key][col].target, created_on: new Date(), userId: userId }
                                         SentencesRedis.saveSentence(sentence_to_save, userId + '_' + pdf_parser_process.target_lang, function (err, doc) {
                                             LOG.info('data saved in redis')
                                         })
@@ -979,7 +1013,7 @@ exports.updatePdfSentences = function (req, res) {
                         } else {
                             sentence.tokenized_sentences.map((sentence_obj, index) => {
                                 if (sentence_obj.target !== sentencedb.tokenized_sentences[index].target && sentence_obj.target && sentence_obj.target.trim().length > 0) {
-                                    let sentence_to_save = { source: sentence_obj.src, tagged_src: sentence_obj.tagged_src, tagged_tgt: sentence_obj.tagged_tgt, target: sentence_obj.target, created_on: new Date(),userId: userId }
+                                    let sentence_to_save = { source: sentence_obj.src, tagged_src: sentence_obj.tagged_src, tagged_tgt: sentence_obj.tagged_tgt, target: sentence_obj.target, created_on: new Date(), userId: userId }
                                     SentencesRedis.saveSentence(sentence_to_save, userId + '_' + pdf_parser_process.target_lang, function (err, doc) {
                                         LOG.info('data saved in redis')
                                     })
