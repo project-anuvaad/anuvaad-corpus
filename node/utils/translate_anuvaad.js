@@ -5,6 +5,7 @@ var UUIDV4 = require('uuid/v4')
 
 
 exports.translateFromAnuvaad = function (sentences, url_end_point, cb) {
+    LOG.info(NMT_BASE_URL + '/' + (url_end_point ? url_end_point : 'translate-anuvaad'))
     axios.post(NMT_BASE_URL + '/' + (url_end_point ? url_end_point : 'translate-anuvaad'),
         sentences
         , {
