@@ -1,6 +1,6 @@
 var axios = require('axios');
 var LOG = require('../logger/logger').logger
-const NMT_BASE_URL = process.env.NMT_BASE_URL ? process.env.NMT_BASE_URL : 'https://auth.anuvaad.org'
+const NMT_BASE_URL = process.env.NMT_URL ? process.env.NMT_URL : 'http://52.40.71.62:3003/translator'
 var UUIDV4 = require('uuid/v4')
 
 
