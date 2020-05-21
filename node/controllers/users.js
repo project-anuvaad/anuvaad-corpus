@@ -172,7 +172,7 @@ exports.createUser = function (req, res) {
 
 
 exports.signUpUser = function (req, res) {
-    if (!req.body || !req.body.password || !req.body.email) {
+    if (!req.body || !req.body.password || !req.body.email || !req.body.firstname || !req.body.lastname) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
