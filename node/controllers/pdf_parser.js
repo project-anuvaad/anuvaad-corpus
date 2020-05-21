@@ -841,6 +841,8 @@ function handleSentenceSplitReq(sentences, start_sentence, selected_text, pdf_pa
             tokenized_sentence.src = selected_text
             remaining_text_node.text = remaining_text
             remaining_text_node.src = remaining_text
+            remaining_text_node.sentence_index = tokenized_sentence.sentence_index + .1
+            LOG.info(remaining_text_node.sentence_index)
             remaining_text_node.s_id = UUIDV4()
             updated_tokenized_sentences.push(tokenized_sentence)
             updated_tokenized_sentences.push(remaining_text_node)
