@@ -827,6 +827,7 @@ function handleSentenceSplitReq(sentences, start_sentence, selected_text, pdf_pa
     let updated_tokenized_sentences = []
     let sentence_to_be_translated = []
     let sentence_to_be_translated_index = -1
+    let sentence_index = 0
     sentence.tokenized_sentences.map((tokenized_sentence, index) => {
         if (tokenized_sentence.s_id == start_sentence.s_id) {
             if (selected_text.length == tokenized_sentence.text.length) {
@@ -839,10 +840,12 @@ function handleSentenceSplitReq(sentences, start_sentence, selected_text, pdf_pa
             let remaining_text_node = Object.assign({}, tokenized_sentence)
             tokenized_sentence.text = selected_text
             tokenized_sentence.src = selected_text
+            tokenized_sentence.sentence_index = sentence_index
+            sentence_index++
             remaining_text_node.text = remaining_text
             remaining_text_node.src = remaining_text
-            remaining_text_node.sentence_index = tokenized_sentence.sentence_index + .1
-            LOG.info(remaining_text_node.sentence_index)
+            remaining_text_node.sentence_index = sentence_index
+            sentence_index++
             remaining_text_node.s_id = UUIDV4()
             updated_tokenized_sentences.push(tokenized_sentence)
             updated_tokenized_sentences.push(remaining_text_node)
@@ -850,7 +853,9 @@ function handleSentenceSplitReq(sentences, start_sentence, selected_text, pdf_pa
             sentence_to_be_translated.push(remaining_text_node)
         }
         else {
+            tokenized_sentence.sentence_index = sentence_index
             updated_tokenized_sentences.push(tokenized_sentence)
+            sentence_index++
         }
     })
     if (sentence_to_be_translated_index != -1) {
