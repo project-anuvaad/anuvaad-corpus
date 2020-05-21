@@ -1,6 +1,6 @@
 var axios = require('axios');
 var LOG = require('../logger/logger').logger
-const NMT_BASE_URL = process.env.NMT_URL ? process.env.NMT_URL : 'http://52.40.71.62:3003/translator'
+const NMT_BASE_URL = process.env.NMT_URL ? process.env.NMT_URL : 'https://auth.anuvaad.org'
 var UUIDV4 = require('uuid/v4')
 
 
@@ -11,6 +11,7 @@ exports.translateFromAnuvaad = function (sentences, url_end_point, cb) {
         , {
             headers: {
                 'Content-Type': `application/json`,
+                'Authorization':'Bearer a30b0a4766fb418d863a0c2facede4e6|839ceaef0b054bb19034943975a0fb56'
             },
             timeout: 30000,
         }
