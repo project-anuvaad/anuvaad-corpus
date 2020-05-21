@@ -902,7 +902,13 @@ function handleMultiParaMergeReq(sentences, start_sentence, end_sentence, pdf_pa
     let end_found = false
     let sentence_to_be_translated = {}
     let sentence_to_be_translated_index = -1
-    sentences.map((sentence) => {
+    let sup_array = []
+    sentences.map((sentence, index) => {
+        if (sentences.length > 2 && index !== sentences.length - 1) {
+            if (sentence.sup_array) {
+                sup_array.push(sentence.sup_array)
+            }
+        }
         sentence.tokenized_sentences.map((tokenized_sentence, index) => {
             if (tokenized_sentence.s_id == start_sentence.s_id && tokenized_sentence.n_id == start_sentence.n_id) {
                 beginning_found = true
@@ -924,6 +930,10 @@ function handleMultiParaMergeReq(sentences, start_sentence, end_sentence, pdf_pa
             }
         })
     })
+    if (!remaining_tokenized_sentence || remaining_tokenized_sentence.length == 0) {
+        if (sentences[sentences.length - 1].sup_array)
+            sup_array.push(sentences[sentences.length - 1].sup_array)
+    }
     if (sentence_to_be_translated_index != -1) {
         TranslateAnuvaad.translateFromAnuvaad([sentence_to_be_translated], pdf_parser.model ? pdf_parser.model.url_end_point : null, function (err, translation) {
             if (err) {
@@ -942,7 +952,11 @@ function handleMultiParaMergeReq(sentences, start_sentence, end_sentence, pdf_pa
                     let index = 0
                     async_lib.each(sentences, (sentence, cb) => {
                         if (index == 0) {
-                            BaseModel.updateData(PdfSentence, { tokenized_sentences: updated_tokenized_sentences }, sentence._id, function (err, data) {
+                            let update_query = { tokenized_sentences: updated_tokenized_sentences }
+                            if(sup_array.length > 0){
+                                update_query['sup_array'] = sup_array
+                            }
+                            BaseModel.updateData(PdfSentence, update_query, sentence._id, function (err, data) {
                                 if (err) {
                                     LOG.error(err)
                                 } else {
