@@ -829,6 +829,11 @@ function handleSentenceSplitReq(sentences, start_sentence, selected_text, pdf_pa
     let sentence_to_be_translated_index = -1
     sentence.tokenized_sentences.map((tokenized_sentence, index) => {
         if (tokenized_sentence.s_id == start_sentence.s_id) {
+            if (selected_text.length == tokenized_sentence.text.length) {
+                LOG.info('Nothing to update', tokenized_sentence)
+                let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                return res.status(response.http.status).json(response);
+            }
             sentence_to_be_translated_index = index
             let remaining_text = tokenized_sentence.text.substr(selected_text.length)
             let remaining_text_node = Object.assign({}, tokenized_sentence)
