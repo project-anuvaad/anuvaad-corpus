@@ -906,7 +906,7 @@ function handleMultiParaMergeReq(sentences, start_sentence, end_sentence, pdf_pa
     sentences.map((sentence, index) => {
         if (sentences.length > 2 && index !== sentences.length - 1) {
             if (sentence.sup_array) {
-                sup_array.push(sentence.sup_array)
+                sup_array = sup_array.concat(sentence.sup_array)
             }
         }
         sentence.tokenized_sentences.map((tokenized_sentence, index) => {
@@ -932,7 +932,7 @@ function handleMultiParaMergeReq(sentences, start_sentence, end_sentence, pdf_pa
     })
     if (!remaining_tokenized_sentence || remaining_tokenized_sentence.length == 0) {
         if (sentences[sentences.length - 1].sup_array)
-            sup_array.push(sentences[sentences.length - 1].sup_array)
+            sup_array = sup_array.concat(sentences[sentences.length - 1].sup_array)
     }
     if (sentence_to_be_translated_index != -1) {
         TranslateAnuvaad.translateFromAnuvaad([sentence_to_be_translated], pdf_parser.model ? pdf_parser.model.url_end_point : null, function (err, translation) {
