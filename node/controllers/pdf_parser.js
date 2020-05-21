@@ -904,7 +904,7 @@ function handleMultiParaMergeReq(sentences, start_sentence, end_sentence, pdf_pa
     let sentence_to_be_translated_index = -1
     let sup_array = []
     sentences.map((sentence, sentindex) => {
-        if (sentences.length > 2 && sentindex !== sentences.length - 1) {
+        if (sentences.length > 1 && sentindex !== sentences.length - 1) {
             if (sentence.sup_array) {
                 sup_array = sup_array.concat(sentence.sup_array)
             }
@@ -927,14 +927,13 @@ function handleMultiParaMergeReq(sentences, start_sentence, end_sentence, pdf_pa
             }
             if (tokenized_sentence.s_id == end_sentence.s_id && tokenized_sentence.n_id == end_sentence.n_id) {
                 end_found = true
-                if(index == sentence.tokenized_sentences.length - 1 && sentindex == sentences.length - 1){
-                    if (sentence.sup_array) {
-                        sup_array = sup_array.concat(sentence.sup_array)
-                    }
-                }
             }
         })
     })
+    if (!remaining_tokenized_sentence || remaining_tokenized_sentence.length == 0) {
+        if (sentences[sentences.length - 1].sup_array)
+            sup_array = sup_array.concat(sentences[sentences.length - 1].sup_array)
+    }
     if (sentence_to_be_translated_index != -1) {
         TranslateAnuvaad.translateFromAnuvaad([sentence_to_be_translated], pdf_parser.model ? pdf_parser.model.url_end_point : null, function (err, translation) {
             if (err) {
@@ -954,7 +953,7 @@ function handleMultiParaMergeReq(sentences, start_sentence, end_sentence, pdf_pa
                     async_lib.each(sentences, (sentence, cb) => {
                         if (index == 0) {
                             let update_query = { tokenized_sentences: updated_tokenized_sentences }
-                            if(sup_array.length > 0){
+                            if (sup_array.length > 0) {
                                 update_query['sup_array'] = sup_array
                             }
                             BaseModel.updateData(PdfSentence, update_query, sentence._id, function (err, data) {
@@ -990,7 +989,11 @@ function handleMultiParaMergeReq(sentences, start_sentence, end_sentence, pdf_pa
                         return res.status(response.http.status).json(response);
                     })
                 } else {
-                    BaseModel.updateData(PdfSentence, { tokenized_sentences: updated_tokenized_sentences }, sentences[0]._id, function (err, data) {
+                    let update_query = { tokenized_sentences: updated_tokenized_sentences }
+                    if (sup_array.length > 0) {
+                        update_query['sup_array'] = sup_array
+                    }
+                    BaseModel.updateData(PdfSentence, update_query, sentences[0]._id, function (err, data) {
                         LOG.info('Data updated', sentence)
                         BaseModel.updateData(PdfSentence, { tokenized_sentences: remaining_tokenized_sentence }, sentences[sentences.length - 1]._id, function (err, data) {
                             LOG.info('Data updated', sentence)
