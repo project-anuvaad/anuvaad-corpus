@@ -99,7 +99,6 @@ exports.listRoles = function (req, res) {
 }
 
 exports.updateUserStatus = function (req, res) {
-    LOG.info(req.headers['ad-role'])
     if (!req.body || !req.body.status || !req.body.username) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
