@@ -28,7 +28,7 @@ const INTERACTIVE_EDITOR_ROLE = 'interactive-editor'
 
 
 exports.listUsers = function (req, res) {
-    axios.get(USERS_REQ_URL + '?count=1000').then((api_res) => {
+    axios.get(USERS_REQ_URL + '?count=100000').then((api_res) => {
         if (api_res.data && api_res.data.users && Array.isArray(api_res.data.users)) {
             let userIds = []
             api_res.data.users.map((u) => {
