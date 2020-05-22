@@ -34,6 +34,7 @@ exports.listUsers = function (req, res) {
             api_res.data.users.map((u) => {
                 userIds.push(u.id)
             })
+            LOG.info(userIds)
             axios.post(PROFILE_REQ_URL, { userids: userIds }).then((api_res) => {
                 if (api_res.data) {
                     if (api_res.data.data && Array.isArray(api_res.data.data)) {
