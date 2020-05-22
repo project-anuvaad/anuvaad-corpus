@@ -838,12 +838,12 @@ function handleSentenceSplitReq(sentences, start_sentence, selected_text, pdf_pa
             sentence_to_be_translated_index = index
             let remaining_text = tokenized_sentence.text.substr(selected_text.length)
             let remaining_text_node = Object.assign({}, tokenized_sentence)
-            tokenized_sentence.text = selected_text
-            tokenized_sentence.src = selected_text
+            tokenized_sentence.text = selected_text.trim()
+            tokenized_sentence.src = selected_text.trim()
             tokenized_sentence.sentence_index = sentence_index
             sentence_index++
-            remaining_text_node.text = remaining_text
-            remaining_text_node.src = remaining_text
+            remaining_text_node.text = remaining_text.trim()
+            remaining_text_node.src = remaining_text.trim()
             remaining_text_node.sentence_index = sentence_index
             sentence_index++
             remaining_text_node.s_id = UUIDV4()
