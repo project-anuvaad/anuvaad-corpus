@@ -50,7 +50,7 @@ var html_content = `<!DOCTYPE html>
         </tr>
         <tr bgcolor="#f1f5f7">
             <td align="center" style="color:black;padding: 10px 0 5px 0; ">
-                <h1 style="color:#003366 ;margin-bottom: 10px; font-family: Arial, Helvetica, sans-serif;">Create Password</h1>
+                <h1 style="color:#003366 ;margin-bottom: 10px; font-family: Arial, Helvetica, sans-serif;">Activate your Account</h1>
                 <p style="font-size: 8x; align-items:center;font-style: italic;">You've received this email because you have registered on 
                 <br/> <a href="https://users.anuvaad.org" target="_blank" style="text-decoration: none;color:#1ca9c9">users.anuvaad.org.</a>  If it's not you, please click here to 
                 <a href="" target="_blank" style="text-decoration:none;color:#1ca9c9">unsubscribe.</a></p>
@@ -60,7 +60,7 @@ var html_content = `<!DOCTYPE html>
         </tr>
         <tr bgcolor="#f1f5f7">
             <td align="center" style="padding: 5px 0 100px 0;">
-                <p style="font-size: 16px; font-family: Arial, Helvetica, sans-serif;">Please click here to confirm yourself and create your password.</p>
+                <p style="font-size: 16px; font-family: Arial, Helvetica, sans-serif;">Please click here to confirm yourself and activate your account.</p>
                 <a href="$REG_URL$"> 
                 <button  variant="contained" aria-label="edit" style=
                     "cursor:pointer;width: 66%; height:42px; margin-Bottom: 2%; margin-Top: 5px;
