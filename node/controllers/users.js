@@ -185,7 +185,7 @@ exports.activateAccount = function (req, res) {
         let api_req = {}
         api_req.status = true
         axios.put(USERS_REQ_URL + '/' + req.body.u_id + '/status', api_req).then((api_res) => {
-            BaseModel.updateData(UserRegister, { status: STATUS_ACTIVATED }, doc[0]._doc._id, function (err, doc) {
+            BaseModel.updateData(UserRegister, { status: STATUS_ACTIVATED, activated_on: new Date() }, doc[0]._doc._id, function (err, doc) {
                 let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
                 return res.status(response.http.status).json(response);
             })
