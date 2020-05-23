@@ -267,7 +267,7 @@ exports.signUpUser = function (req, res) {
                         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                         return res.status(apistatus.http.status).json(apistatus);
                     }
-                    let url = BASE_URL + '/activate/' + id + '/' + r_id
+                    let url = BASE_URL + 'activate/' + id + '/' + r_id
                     var html_content_data = html_content.replace('$REG_URL$',url)
                     Mailer.send_email(user.email, 'Welcome to Anuvaad', html_content_data)
                     let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
