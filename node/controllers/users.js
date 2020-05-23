@@ -6,18 +6,23 @@
  */
 var Users = require('../models/users');
 var UserHighCourt = require('../models/user_high_court');
+var BaseModel = require('../models/basemodel');
+var UserRegister = require('../models/user_register');
 var Response = require('../models/response')
 var APIStatus = require('../errors/apistatus')
 var StatusCode = require('../errors/statuscodes').StatusCode
 var Status = require('../utils/status').Status
 var LOG = require('../logger/logger').logger
+var Mailer = require('../utils/mailer')
 var UUIDV4 = require('uuid/v4')
 var async = require('async');
 var axios = require('axios');
 const { exec } = require('child_process');
+const STATUS_PENDING = 'PENDING'
 
 
 var COMPONENT = "users";
+const BASE_URL = process.env.APPLICATION_URL ? process.env.APPLICATION_URL : 'https://developers.anuvaad.org/'
 const ES_SERVER_URL = process.env.GATEWAY_URL ? process.env.GATEWAY_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/admin/'
 const USERS_REQ_URL = ES_SERVER_URL + 'users'
 const CREDENTIALS_URL = ES_SERVER_URL + 'credentials'
@@ -25,6 +30,52 @@ const SCOPE_URL = ES_SERVER_URL + 'scopes?count=1000'
 const PROFILE_BASE_URL = process.env.PYTHON_URL ? process.env.PYTHON_URL : 'http://nlp-nmt-160078446.us-west-2.elb.amazonaws.com/corpus/'
 const PROFILE_REQ_URL = PROFILE_BASE_URL + 'get-profiles'
 const INTERACTIVE_EDITOR_ROLE = 'interactive-editor'
+
+var html_content = `<!DOCTYPE html>
+<html>
+
+<head>
+   
+</head>
+
+<body style="margin: 0; padding: 10px;">
+    <table align="center" border="0" cellpadding="0" cellspacing="0" width="630"
+        style="font-family: Arial, Helvetica, sans-serif;">
+        <tr bgcolor="#f1f5f7">
+            <td align="center" style=" padding:  0px 0 30px 0;">
+
+                <img src="https://auth.anuvaad.org/download/anuvaad_logo.png" alt="anuvaad logo" width="630" height="250px"
+                    style="display: block;" />
+            </td>
+        </tr>
+        <tr bgcolor="#f1f5f7">
+            <td align="center" style="color:black;padding: 10px 0 5px 0; ">
+                <h1 style="color:#003366 ;margin-bottom: 10px; font-family: Arial, Helvetica, sans-serif;">Create Password</h1>
+                <p style="font-size: 8x; align-items:center;font-style: italic;">You've received this email because you have registered on 
+                <br/> <a href="https://users.anuvaad.org" target="_blank" style="text-decoration: none;color:#1ca9c9">users.anuvaad.org.</a>  If it's not you, please click here to 
+                <a href="" target="_blank" style="text-decoration:none;color:#1ca9c9">unsubscribe.</a></p>
+                <br/>
+                <hr style="height:2px; border-width: 0; width: 80%; background-Color:  #D8D8D8; color: #D8D8D8;border: 0;">
+            </td>
+        </tr>
+        <tr bgcolor="#f1f5f7">
+            <td align="center" style="padding: 5px 0 100px 0;">
+                <p style="font-size: 16px; font-family: Arial, Helvetica, sans-serif;">Please click here to confirm yourself and create your password.</p>
+                <a href="$REG_URL$"> 
+                <button  variant="contained" aria-label="edit" style=
+                    "cursor:pointer;width: 66%; height:42px; margin-Bottom: 2%; margin-Top: 5px;
+                    background-Color: #1ca9c9; color: white; border-radius:25px ;border:0; font-size:15px ; font-family: Arial, Helvetica, sans-serif;"
+                  >
+                        Confirm Email</button>
+                    </a>
+                <!-- <button type="button" class="btn btn-success btn-lg" ><b>Sign Up</b></button>   -->
+                <p style="font-size: 15px; font-family: Arial, Helvetica, sans-serif;">You can also paste the below link on your browser tab <br/>and open it to create a password.</p>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>`
 
 
 exports.listUsers = function (req, res) {
@@ -198,20 +249,32 @@ exports.signUpUser = function (req, res) {
             base_auth.consumerId = id
             base_auth.type = 'basic-auth'
             axios.post(CREDENTIALS_URL, base_auth).then((api_res) => {
-                if (high_court_code) {
-                    let user_high_court_obj = { high_court_code: high_court_code, user_id: id }
-                    UserHighCourt.saveUserHighCourt(user_high_court_obj, function (error, results) {
-                        if (error) {
-                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                            return res.status(apistatus.http.status).json(apistatus);
-                        }
-                        let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
-                        return res.status(response.http.status).json(response);
-                    })
-                } else {
+                // if (high_court_code) {
+                //     let user_high_court_obj = { high_court_code: high_court_code, user_id: id }
+                //     UserHighCourt.saveUserHighCourt(user_high_court_obj, function (error, results) {
+                //         if (error) {
+                //             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                //             return res.status(apistatus.http.status).json(apistatus);
+                //         }
+                //         let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                //         return res.status(response.http.status).json(response);
+                //     })
+                // } else {
+                let r_id = UUIDV4()
+                let user_register = { user_id: id, r_id: r_id, created_on: new Date(), status: STATUS_PENDING }
+                BaseModel.saveData(UserRegister, [user_register], function (err, doc) {
+                    if (err) {
+                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                        return res.status(apistatus.http.status).json(apistatus);
+                    }
+                    let url = BASE_URL + '/activate?u_id=' + id + '&r_id=' + r_id
+                    var html_content = html_content.replace('$REG_URL$',url)
+                    Mailer.send_email(user.email, 'Welcome to Anuvaad', html_content)
                     let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
                     return res.status(response.http.status).json(response);
-                }
+                })
+
+                // }
             }).catch((e) => {
                 let apistatus = new APIStatus(e.response.status == 409 ? StatusCode.ERR_DATA_EXIST : StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
