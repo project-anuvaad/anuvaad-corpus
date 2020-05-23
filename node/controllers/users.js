@@ -53,8 +53,8 @@ var html_content = `<!DOCTYPE html>
             <td align="center" style="color:black;padding: 10px 0 5px 0; ">
                 <h1 style="color:#003366 ;margin-bottom: 10px; font-family: Arial, Helvetica, sans-serif;">Activate your Account</h1>
                 <p style="font-size: 8x; align-items:center;font-style: italic;">You've received this email because you have registered on 
-                <br/> <a href="https://users.anuvaad.org" target="_blank" style="text-decoration: none;color:#1ca9c9">users.anuvaad.org.</a>  If it's not you, please click here to 
-                <a href="" target="_blank" style="text-decoration:none;color:#1ca9c9">unsubscribe.</a></p>
+                <br/> <a href="https://users.anuvaad.org" target="_blank" style="text-decoration: none;color:#1ca9c9">anuvaad.org.</a> 
+                </p>
                 <br/>
                 <hr style="height:2px; border-width: 0; width: 80%; background-Color:  #D8D8D8; color: #D8D8D8;border: 0;">
             </td>
@@ -70,7 +70,6 @@ var html_content = `<!DOCTYPE html>
                         Confirm Email</button>
                     </a>
                 <!-- <button type="button" class="btn btn-success btn-lg" ><b>Sign Up</b></button>   -->
-                <p style="font-size: 15px; font-family: Arial, Helvetica, sans-serif;">You can also paste the below link on your browser tab <br/>and open it to activate your account.</p>
             </td>
         </tr>
     </table>
