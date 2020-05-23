@@ -268,8 +268,8 @@ exports.signUpUser = function (req, res) {
                         return res.status(apistatus.http.status).json(apistatus);
                     }
                     let url = BASE_URL + '/activate?u_id=' + id + '&r_id=' + r_id
-                    var html_content = html_content.replace('$REG_URL$',url)
-                    Mailer.send_email(user.email, 'Welcome to Anuvaad', html_content)
+                    var html_content_data = html_content.replace('$REG_URL$',url)
+                    Mailer.send_email(user.email, 'Welcome to Anuvaad', html_content_data)
                     let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
                     return res.status(response.http.status).json(response);
                 })
