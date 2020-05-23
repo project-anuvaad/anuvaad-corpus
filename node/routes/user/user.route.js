@@ -22,4 +22,7 @@ module.exports = function (router) {
 
     router.route('/update-user-status')
         .post(userController.updateUserStatus);
+
+    router.route('/activate-account')
+        .post(userController.activateAccount);
 }
