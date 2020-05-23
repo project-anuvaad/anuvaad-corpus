@@ -19,6 +19,7 @@ var async = require('async');
 var axios = require('axios');
 const { exec } = require('child_process');
 const STATUS_PENDING = 'PENDING'
+const STATUS_ACTIVATED = 'ACTIVATED'
 
 
 var COMPONENT = "users";
@@ -168,6 +169,35 @@ exports.updateUserStatus = function (req, res) {
     })
 }
 
+exports.activateAccount = function (req, res) {
+    if (!req || !req.body || !req.body.u_id || !req.body.r_id) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    BaseModel.findByCondition(UserRegister, { user_id: req.body.u_id, r_id: req.body.r_id, status: STATUS_PENDING }, null, null, null, function (err, doc) {
+        if (err) {
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+        else if (!doc || doc.length == 0) {
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+        let api_req = {}
+        api_req.status = true
+        axios.put(USERS_REQ_URL + '/' + req.body.u_id + '/status', api_req).then((api_res) => {
+            BaseModel.updateData(UserRegister, { status: STATUS_ACTIVATED }, doc[0]._doc._id, function (err, doc) {
+                let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                return res.status(response.http.status).json(response);
+            })
+        }).catch((e) => {
+            LOG.error(e)
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        })
+    })
+}
+
 exports.createUser = function (req, res) {
     if (!req.body || !req.body.username || !req.body.password || !req.body.roles) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
@@ -268,7 +298,7 @@ exports.signUpUser = function (req, res) {
                         return res.status(apistatus.http.status).json(apistatus);
                     }
                     let url = BASE_URL + 'activate/' + id + '/' + r_id
-                    var html_content_data = html_content.replace('$REG_URL$',url)
+                    var html_content_data = html_content.replace('$REG_URL$', url)
                     Mailer.send_email(user.email, 'Welcome to Anuvaad', html_content_data)
                     let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
                     return res.status(response.http.status).json(response);
