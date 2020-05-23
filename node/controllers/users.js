@@ -70,7 +70,7 @@ var html_content = `<!DOCTYPE html>
                         Confirm Email</button>
                     </a>
                 <!-- <button type="button" class="btn btn-success btn-lg" ><b>Sign Up</b></button>   -->
-                <p style="font-size: 15px; font-family: Arial, Helvetica, sans-serif;">You can also paste the below link on your browser tab <br/>and open it to create a password.</p>
+                <p style="font-size: 15px; font-family: Arial, Helvetica, sans-serif;">You can also paste the below link on your browser tab <br/>and open it to activate your account.</p>
             </td>
         </tr>
     </table>
