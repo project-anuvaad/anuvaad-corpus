@@ -20,6 +20,7 @@ var axios = require('axios');
 const { exec } = require('child_process');
 const STATUS_PENDING = 'PENDING'
 const STATUS_ACTIVATED = 'ACTIVATED'
+const STATUS_DELETED = 'DELETED'
 
 
 var COMPONENT = "users";
@@ -336,16 +337,18 @@ exports.signUpUser = function (req, res) {
                             axios.post(CREDENTIALS_URL, base_auth).then((api_res) => {
                                 let r_id = UUIDV4()
                                 let user_register = { user_id: id, r_id: r_id, email: user.email, created_on: new Date(), status: STATUS_PENDING }
-                                BaseModel.saveData(UserRegister, [user_register], function (err, doc) {
-                                    if (err) {
-                                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                                        return res.status(apistatus.http.status).json(apistatus);
-                                    }
-                                    let url = BASE_URL + 'activate/' + id + '/' + r_id
-                                    var html_content_data = html_content.replace('$REG_URL$', url)
-                                    Mailer.send_email(user.email, 'Welcome to Anuvaad', html_content_data)
-                                    let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
-                                    return res.status(response.http.status).json(response);
+                                BaseModel.updateData(UserRegister, { status: STATUS_DELETED, activated_on: new Date() }, doc[0]._doc._id, function (err, doc) {
+                                    BaseModel.saveData(UserRegister, [user_register], function (err, doc) {
+                                        if (err) {
+                                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                            return res.status(apistatus.http.status).json(apistatus);
+                                        }
+                                        let url = BASE_URL + 'activate/' + id + '/' + r_id
+                                        var html_content_data = html_content.replace('$REG_URL$', url)
+                                        Mailer.send_email(user.email, 'Welcome to Anuvaad', html_content_data)
+                                        let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                                        return res.status(response.http.status).json(response);
+                                    })
                                 })
                             }).catch((e) => {
                                 LOG.error(e)
