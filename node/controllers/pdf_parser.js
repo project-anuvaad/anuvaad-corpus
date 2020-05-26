@@ -184,7 +184,7 @@ exports.extractParagraphsPerPages = function (req, res) {
 function makeSentenceObjForNer(n, identifier_tag, ner_sentences, page_no) {
     let sentence = {}
     Object.assign(sentence, identifier_tag)
-    sentence.text = n.tagged_value
+    sentence.text = sentenceCase(n.tagged_value)
     sentence.is_ner = true
     sentence.page_no = page_no
     sentence.node_index = UUIDV4()
@@ -1311,4 +1311,14 @@ exports.makeDocFromSentences = function (req, res) {
             })
         })
     })
+}
+
+
+function sentenceCase(str) {
+    if ((str === null) || (str === ''))
+        return false;
+    else
+        str = str.toString();
+
+    return str.replace(/\w\S*/g, function (txt) { return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase(); });
 }
