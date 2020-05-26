@@ -297,7 +297,7 @@ exports.signUpUser = function (req, res) {
                 //     })
                 // } else {
                 let r_id = UUIDV4()
-                let user_register = { user_id: id, r_id: r_id, created_on: new Date(), status: STATUS_PENDING }
+                let user_register = { user_id: id, r_id: r_id, email: user.email, created_on: new Date(), status: STATUS_PENDING }
                 BaseModel.saveData(UserRegister, [user_register], function (err, doc) {
                     if (err) {
                         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
