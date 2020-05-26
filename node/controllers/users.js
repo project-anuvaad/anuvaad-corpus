@@ -348,14 +348,17 @@ exports.signUpUser = function (req, res) {
                                     return res.status(response.http.status).json(response);
                                 })
                             }).catch((e) => {
+                                LOG.error(e)
                                 let apistatus = new APIStatus(e.response.status == 409 ? StatusCode.ERR_DATA_EXIST : StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                                 return res.status(apistatus.http.status).json(apistatus);
                             })
                         }).catch((e) => {
+                            LOG.error(e)
                             let apistatus = new APIStatus(e.response.status == 409 ? StatusCode.ERR_DATA_EXIST : StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                             return res.status(apistatus.http.status).json(apistatus);
                         })
                     }).catch((e) => {
+                        LOG.error(e)
                         let apistatus = new APIStatus(e.response.status == 409 ? StatusCode.ERR_DATA_EXIST : StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                         return res.status(apistatus.http.status).json(apistatus);
                     })
