@@ -312,6 +312,7 @@ exports.signUpUser = function (req, res) {
 
                 // }
             }).catch((e) => {
+
                 let apistatus = new APIStatus(e.response.status == 409 ? StatusCode.ERR_DATA_EXIST : StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             })
@@ -320,8 +321,53 @@ exports.signUpUser = function (req, res) {
             return res.status(apistatus.http.status).json(apistatus);
         })
     }).catch((e) => {
-        let apistatus = new APIStatus(e.response.status == 409 ? StatusCode.ERR_DATA_EXIST : StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-        return res.status(apistatus.http.status).json(apistatus);
+        if (e.response.status == 409) {
+            BaseModel.findByCondition(UserRegister, { email: user.email, status: STATUS_PENDING }, null, null, null, function (err, doc) {
+                if (doc && doc.length > 0) {
+                    axios.put(USERS_REQ_URL + '/' + user_to_be_saved.email, user_to_be_saved).then((api_res) => {
+                        let id = api_res.data.id
+                        let base_auth = {}
+                        base_auth.credential = {}
+                        base_auth.credential.scopes = [INTERACTIVE_EDITOR_ROLE]
+                        base_auth.credential.password = user.password
+                        base_auth.consumerId = id
+                        base_auth.type = 'basic-auth'
+                        axios.delete(CREDENTIALS_URL + '/' + 'basic-auth' + '/' + id).then((api_res) => {
+                            axios.post(CREDENTIALS_URL, base_auth).then((api_res) => {
+                                let r_id = UUIDV4()
+                                let user_register = { user_id: id, r_id: r_id, email: user.email, created_on: new Date(), status: STATUS_PENDING }
+                                BaseModel.saveData(UserRegister, [user_register], function (err, doc) {
+                                    if (err) {
+                                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                        return res.status(apistatus.http.status).json(apistatus);
+                                    }
+                                    let url = BASE_URL + 'activate/' + id + '/' + r_id
+                                    var html_content_data = html_content.replace('$REG_URL$', url)
+                                    Mailer.send_email(user.email, 'Welcome to Anuvaad', html_content_data)
+                                    let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                                    return res.status(response.http.status).json(response);
+                                })
+                            }).catch((e) => {
+                                let apistatus = new APIStatus(e.response.status == 409 ? StatusCode.ERR_DATA_EXIST : StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                                return res.status(apistatus.http.status).json(apistatus);
+                            })
+                        }).catch((e) => {
+                            let apistatus = new APIStatus(e.response.status == 409 ? StatusCode.ERR_DATA_EXIST : StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                            return res.status(apistatus.http.status).json(apistatus);
+                        })
+                    }).catch((e) => {
+                        let apistatus = new APIStatus(e.response.status == 409 ? StatusCode.ERR_DATA_EXIST : StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                        return res.status(apistatus.http.status).json(apistatus);
+                    })
+                } else {
+                    let apistatus = new APIStatus(e.response.status == 409 ? StatusCode.ERR_DATA_EXIST : StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
+            })
+        } else {
+            let apistatus = new APIStatus(e.response.status == 409 ? StatusCode.ERR_DATA_EXIST : StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
     })
 }
 
