@@ -66,7 +66,7 @@ var html_content = `<!DOCTYPE html>
                 border-radius:25px ;border:0;
                 color: #ffffff;
                 display: inline-block;
-                font-family: 'Cabin',Helvetica,Arial,sans-serif;
+                font-family: Arial, Helvetica, sans-serif;
                 font-size: 14px;
                 font-weight: regular;
                 line-height: 42px;
