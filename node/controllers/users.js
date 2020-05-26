@@ -324,7 +324,7 @@ exports.signUpUser = function (req, res) {
         if (e.response.status == 409) {
             BaseModel.findByCondition(UserRegister, { email: user.email, status: STATUS_PENDING }, null, null, null, function (err, doc) {
                 if (doc && doc.length > 0) {
-                    axios.put(USERS_REQ_URL + '/' + user_to_be_saved.email, user_to_be_saved).then((api_res) => {
+                    axios.put(USERS_REQ_URL + '/' + user_to_be_saved.email, { firstname: user.firstname, lastname: user.lastname }).then((api_res) => {
                         let id = api_res.data.id
                         let base_auth = {}
                         base_auth.credential = {}
