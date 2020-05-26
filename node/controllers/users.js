@@ -36,7 +36,7 @@ var html_content = `<!DOCTYPE html>
 <html>
 
 <head>
-   
+  
 </head>
 
 <body style="margin: 0; padding: 10px;">
@@ -62,12 +62,19 @@ var html_content = `<!DOCTYPE html>
         <tr bgcolor="#f1f5f7">
             <td align="center" style="padding: 5px 0 100px 0;">
                 <p style="font-size: 16px; font-family: Arial, Helvetica, sans-serif;">Please click here to confirm yourself and activate your account.</p>
-                <a href="$REG_URL$" style="cursor:pointer"> 
-                <button  variant="contained" aria-label="edit" style=
-                    "cursor:pointer;width: 66%; height:42px; margin-Bottom: 2%; margin-Top: 5px;
-                    background-Color: #1ca9c9; color: white; border-radius:25px ;border:0; font-size:15px ; font-family: Arial, Helvetica, sans-serif;"
-                  >
-                        Confirm Email</button>
+                <a href="$REG_URL$" style="background-Color: #1ca9c9;
+                border-radius:25px ;border:0;
+                color: #ffffff;
+                display: inline-block;
+                font-family: 'Cabin',Helvetica,Arial,sans-serif;
+                font-size: 14px;
+                font-weight: regular;
+                line-height: 42px;
+                text-align: center;
+                text-decoration: none;
+                width: 66%;"> 
+                
+                        Confirm Email
                     </a>
                 <!-- <button type="button" class="btn btn-success btn-lg" ><b>Sign Up</b></button>   -->
             </td>
