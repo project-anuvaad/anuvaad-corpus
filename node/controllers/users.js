@@ -261,8 +261,15 @@ exports.createUser = function (req, res) {
 
 
 exports.signUpUser = function (req, res) {
+    var mailformat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
     if (!req.body || !req.body.password || !req.body.email || !req.body.firstname || !req.body.lastname) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    } else if (!req.body.email.match(mailformat) || req.body.email.length > 90) {
+        let apistatus = new APIStatus(StatusCode.ERR_INVALID_EMAIL, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }else if(req.body.firstname.length > 20 || req.body.lastname.length > 20){
+        let apistatus = new APIStatus(StatusCode.ERR_INVALID_NAME, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
     let user = req.body
