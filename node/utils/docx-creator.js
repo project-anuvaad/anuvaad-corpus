@@ -273,7 +273,7 @@ exports.covertJsonToDocForSentences = function (data, text_key, nginx_path, name
                 previous_footnote = previous_footnote + ' ' + d[text_key]
                 FOOTNOTE_RUN_ARRAY[FOOTNOTE_RUN_ARRAY.length - 1] = new docx.Paragraph(previous_footnote)
             } else {
-                let words_array = d.text.split(' ')
+                let words_array = d[text_key].split(' ')
                 let footer_text = words_array.slice(1, words_array.length).join(' ')
                 if (parseInt(d[text_key].split(" ")[0]) !== FOOTNOTE_RUN_ARRAY.length + 1) {
                     for (var i = 0; i < parseInt(d[text_key].split(" ")[0]) - FOOTNOTE_RUN_ARRAY.length - 1; i++) {
