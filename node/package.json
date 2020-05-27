@@ -40,7 +40,7 @@
     "lodash": "^4.17.14",
     "log4js": "^5.1.0",
     "method-override": "^2.3.10",
-    "mongoose": "^5.5.11",
+    "mongoose": "^5.7.5",
     "multer": "^1.4.1",
     "node-cron": "^2.0.3",
     "node-tsv-json": "^0.2.1",
