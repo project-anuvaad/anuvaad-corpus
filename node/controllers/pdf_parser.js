@@ -184,7 +184,7 @@ exports.extractParagraphsPerPages = function (req, res) {
 function makeSentenceObjForNer(n, identifier_tag, ner_sentences, page_no) {
     let sentence = {}
     Object.assign(sentence, identifier_tag)
-    sentence.text = sentenceCase(n.tagged_value)
+    sentence.text = n.tagged_value
     sentence.is_ner = true
     sentence.page_no = page_no
     sentence.node_index = UUIDV4()
@@ -379,7 +379,11 @@ function makeSenteceObj(node_data, text, sentence_index, node_index, id, model_i
             }
         }
     } else {
-        sentence.src = text
+        if(node_data.is_ner){
+            sentence.src = sentenceCase(text)
+        }else{
+            sentence.src = text
+        }
     }
     sentence.id = parseInt(model_id)
     sentence.n_id = node_index + '__' + id
