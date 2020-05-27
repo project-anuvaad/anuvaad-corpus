@@ -8,6 +8,21 @@ var userController = require('../../controllers/users');
 
 
 module.exports = function (router) {
-    router.route('/sample-api')
-        .get(userController.sample);
+    router.route('/list-users')
+        .get(userController.listUsers);
+
+    router.route('/list-roles')
+        .get(userController.listRoles);
+
+    router.route('/create-user')
+        .post(userController.createUser);
+
+    router.route('/signup-user')
+        .post(userController.signUpUser);
+
+    router.route('/update-user-status')
+        .post(userController.updateUserStatus);
+
+    router.route('/activate-account')
+        .post(userController.activateAccount);
 }

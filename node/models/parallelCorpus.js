@@ -16,7 +16,7 @@ ParallelCorpus.fetchAll = function(cb){
             LOG.error("Unable to find ParallelCorpus due to [%s]", JSON.stringify(err));
             return cb(err, null);
         }
-        LOG.info("[%s] ParallelCorpus found",corpus);
+        LOG.debug("[%s] ParallelCorpus found",corpus);
         return cb(null, corpus);
     })
 }
@@ -27,7 +27,7 @@ ParallelCorpus.findById = function(id,cb){
             LOG.error("Unable to find ParallelCorpus by id = [%s] due to [%s]", id, JSON.stringify(err));
             return cb(err, null);
         }
-        LOG.info("[%s] ParallelCorpus found with id ", corpus, id);
+        LOG.debug("[%s] ParallelCorpus found with id ", corpus, id);
         return cb(null, corpus);
     })
 }

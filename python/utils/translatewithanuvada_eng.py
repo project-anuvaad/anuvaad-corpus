@@ -12,12 +12,12 @@ import requests
 
 BATCH_SIZE = 20
 
-def translatewithanuvadaeng(fname, outputpath):
+def translatewithanuvadaeng(fname, outputpath, model_id):
     try:
         with open(outputpath, 'w', encoding='utf-8') as f_eng:
             with codecs.open(fname, encoding='utf-8', errors='ignore') as f:
                 flist = f.readlines()
-                translatebigtext(f_eng, flist, 0)
+                translatebigtext(f_eng, flist, 0, model_id)
                 f_eng.close()
     except Exception as e:
         print(e)
@@ -26,7 +26,7 @@ def translatewithanuvadaeng(fname, outputpath):
         # for s in flist:
 
 
-def translatebigtext(f_eng, flist, index):
+def translatebigtext(f_eng, flist, index, model_id):
     global BATCH_SIZE
     endCount = BATCH_SIZE*index + BATCH_SIZE
     callnext = True
@@ -42,9 +42,9 @@ def translatebigtext(f_eng, flist, index):
     englist = flist[BATCH_SIZE*index:endCount]
     engarr = []
     for eng in englist:
-        engarr.append({'src': eng, 'id': 1})
+        engarr.append({'src': eng, 'id': int(model_id)})
     # print(hindiarr)
-    res = requests.post('http://18.236.30.130:3003/translator/translation_en', json=engarr)
+    res = requests.post('http://52.40.71.62:3003/translator/translation_en', json=engarr)
     dictFromServer = res.json()
     print(dictFromServer)
     if dictFromServer and 'response_body' in dictFromServer and dictFromServer['response_body'] is not None:
@@ -60,6 +60,6 @@ def translatebigtext(f_eng, flist, index):
             f_eng.write('\n')
     if callnext:
         index += 1
-        translatebigtext(f_eng, flist, index)
+        translatebigtext(f_eng, flist, index, model_id)
     else:
         f_eng.close()
