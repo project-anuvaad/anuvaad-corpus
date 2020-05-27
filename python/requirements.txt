@@ -75,7 +75,7 @@ pathlib2==2.3.4
 pdf2image==1.5.4
 pexpect==4.7.0
 pickleshare==0.7.5
-Pillow==6.0.0
+Pillow==6.2.2
 plac==0.9.6
 pluggy==0.12.0
 preshed==3.0.2
