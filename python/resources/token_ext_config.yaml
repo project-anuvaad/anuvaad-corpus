@@ -1,0 +1,21 @@
+
+regex_rules:
+
+  - (?:([a-z0-9]*\.)[a-z0-9]+(\.)*)+             # regex pattern to exclusively search for pattern like  "c.r.p.c..........."
+  - (?:([a-z0-9]*\.)([a-z0-9]+(\.))([a-z0-9]+))  #  regex pattern to exclusively search for pattern like  "a.b.c"
+  - (?:([a-z0-9]*\.)([a-z0-9]+(\.))+)            #  regex pattern to exclusively search for pattern like  "a.b.c. , 12.02.2019"
+  - (?:([a-z]{0-4}\.)+)                          #  regex pattern to exclusively search for pattern like  "it. , mr. , dr. " of length in between 1-4.
+  - (?:([a-z0-9]*\.)+)                           #  regex pattern to exclusively search for pattern like  "5. , 63. 23. "
+
+
+token_length_max: 50
+
+token_length_min: 3
+
+remove_negative_tokens: True
+
+# Insertion order of token length : asc.(True), desc.(False), random (None)
+token_insertion_order: True
+
+
+

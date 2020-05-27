@@ -14,19 +14,19 @@ Jobs.fetchAll = function(cb){
             LOG.error("Unable to find corpus due to [%s]", JSON.stringify(err));
             return cb(err, null);
         }
-        LOG.info("[%s] Corpus found",corpus);
+        LOG.debug("[%s] Corpus found",corpus);
         return cb(null, corpus);
     })
 }
 
 Jobs.saveJob = async function(job, cb){
     Jobs.collection.insert(job,function(err,docs){
-        LOG.info('Saving job [%s]', JSON.stringify(job))
+        LOG.debug('Saving job [%s]', JSON.stringify(job))
         if (err) {
             // TODO: handle error
             return cb(err, null);
         } else {
-            LOG.info('%s job was successfully stored.', JSON.stringify(docs));
+            LOG.debug('%s job was successfully stored.', JSON.stringify(docs));
             return cb(null, docs);
         }
     })

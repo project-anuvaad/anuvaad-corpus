@@ -1,9 +1,16 @@
 import redis
 import json
+import os
 
-redis_cli = redis.StrictRedis(host="localhost", port=6379, charset="utf-8", decode_responses=True)
+redis_ip = 'REDIS_URL'
+default_value = 'localhost'
+redis_server = os.environ.get(redis_ip, default_value)
+express_gateway_schema = os.environ.get('EXPRESS_GATEWAY_SCHEMA','AG')
 
-BASIC_AUTH_PREFIX = "AG-basic-auth:"
+
+redis_cli = redis.StrictRedis(host=redis_server, port=6379, charset="utf-8", decode_responses=True)
+redis_server = os.environ.get(redis_ip, default_value)
+BASIC_AUTH_PREFIX = express_gateway_schema+"-basic-auth:"
 SCOPES = "scopes"
 
 

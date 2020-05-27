@@ -13,6 +13,6 @@ var config = require('../config/config').config;
 var LOG = require('../logger/logger').logger;
 
 
-var client = new Client({ node: config.ELASTIC_URL })
+var client = new Client({ node: process.env.ES_HOSTS ? 'http://' + process.env.ES_HOSTS + ':9200' : config.ELASTIC_URL })
 
 module.exports = client;

@@ -1,19 +1,86 @@
 from flask import Blueprint, jsonify, request, current_app as app
 import logging
 import requests
+import time
 from models.status import Status
+from models.user_high_court import Userhighcourt
 from models.response import CustomResponse
 from db.redis_client import get_user_roles_basic_auth
 import json
 import time
 import utils.run_on_shell as shell
 import base64
+import os
 
-ES_SERVER_URL = 'http://localhost:9876/'
-PROFILE_REQ_URL = ES_SERVER_URL + 'users/'
+GATEWAY_SERVER_URL = os.environ.get('GATEWAY_URL', 'http://localhost:9876/')
+PROFILE_REQ_URL = GATEWAY_SERVER_URL + 'users/'
 log = logging.getLogger('file')
 
 admin_api = Blueprint('admin_api', __name__)
+
+
+@admin_api.route("/create-user-oauth", methods=['POST'])
+def create_user_oauth():
+    log.info('create_user_oauth : started')
+    body = request.get_json()
+    user_name = body['username']
+
+    try:
+
+        response = shell.create_oauth(user_name)
+        res = CustomResponse(Status.SUCCESS.value, response)
+        return res.getres()
+    except Exception as e:
+        log.info('create_user_oauth : error ' + str(e))
+        res = CustomResponse(Status.ERROR_GATEWAY.value, None)
+        return res.getres()
+
+
+@admin_api.route("/create-user", methods=['POST'])
+def create_user_basic_auth():
+    log.info('create_user_basic_auth : started')
+    body = request.get_json()
+    user_name = body['username']
+    firstname = body['firstname']
+    lastname = body['lastname']
+    password = body['password']
+    scope = body['roles']
+    high_court_code = body['high_court_code']
+
+    try:
+        profile = requests.get(PROFILE_REQ_URL + user_name)
+        try:
+            profile = profile.json()
+            if profile['isActive']:
+                # _id = profile['']
+                log.info('create_user_oauth : profile is = : ' + str(profile))
+                res = CustomResponse(Status.USER_ALREADY_EXISTS.value, None)
+                return res.getres()
+        except:
+            pass
+
+        log.info('here')
+        create_response = shell.create_user(user_name, firstname, lastname)
+        log.info('user created')
+        shell_response = shell.create_basic_auth_credentials(user_name, password)
+        log.info('basic auth created')
+        response = shell.create_oauth(user_name)
+        log.info('oauth created')
+        user = shell.get_user_info(user_name)
+        log.info(str(user))
+        scope_response = shell.scope_add(user['id'], scope)
+        time.sleep(3)
+        log.info('scope added')
+        if high_court_code is not None:
+            user_high_court = Userhighcourt(high_court_code=high_court_code, user_id=user['id'])
+            user_high_court.save()
+        res = CustomResponse(Status.SUCCESS.value, response)
+        return res.getres()
+
+    except Exception as e:
+        log.info(' create_user : error ' + str(e))
+        res = CustomResponse(Status.ERROR_GATEWAY.value, None)
+        return res.getres()
 
 
 @admin_api.route("/update-password", methods=['POST'])
@@ -34,8 +101,14 @@ def update_password():
         log.info('update_password : password is too weak, at least provide 6 characters')
         res = CustomResponse(Status.ERROR_WEAK_PASSWORD.value, None)
         return res.getres()
+    
+    profile = requests.get(PROFILE_REQ_URL + user_id).content
+    profile = json.loads(profile)
+    roles_ = get_user_roles_basic_auth(user_id)
+
+
     data = {"status": "false"}
-    req = ES_SERVER_URL + 'credentials/basic-auth/' + user_id + '/status'
+    req = GATEWAY_SERVER_URL + 'credentials/basic-auth/' + user_id + '/status'
     response = requests.put(req, json=data)
     res = response.json()
     status = res['status']
@@ -43,11 +116,59 @@ def update_password():
     if not status == 'Deactivated':
         res = CustomResponse(Status.ERROR_GATEWAY.value, None)
         return res.getres()
-    shell_response = shell.create_basic_auth_credentials(user_id, new_password)
-    if shell_response['isActive']:
-        res = CustomResponse(Status.SUCCESS.value, None)
+    
+    data = {"credential": {"password":new_password,"scopes":roles_},"consumerId":user_id,"type":"basic-auth"}
+    req = GATEWAY_SERVER_URL + 'credentials'
+    response = requests.post(req, json=data)
+    res = CustomResponse(Status.SUCCESS.value, None)
+    return res.getres()
+    # if shell_response['isActive']:
+    #     res = CustomResponse(Status.SUCCESS.value, None)
+    #     return res.getres()
+    # res = CustomResponse(Status.FAILURE.value, None)
+    # return res.getres()
+
+@admin_api.route("/update-password-admin", methods=['POST'])
+def update_password_admin():
+    log.info('update_password : started')
+    body = request.get_json()
+    user_id = body['user_id']
+    high_court_code = body['high_court_code']
+    new_password = body['new_password']
+    log.info("high_court_code == " + high_court_code)
+    if high_court_code is not None:
+        userHighCourt = Userhighcourt.objects(user_id=user_id)
+        if userHighCourt is not None  and len(userHighCourt) > 0:
+            log.info('high court with user exist '+str(len(userHighCourt)))
+            userHighCourt.update(set__high_court_code=high_court_code)
+        else:
+            log.info('saving high court with user')
+            user_high_court = Userhighcourt(high_court_code=high_court_code, user_id=user_id)
+            user_high_court.save()
+    profile = requests.get(PROFILE_REQ_URL + user_id).content
+    profile = json.loads(profile)
+    roles_ = get_user_roles_basic_auth(user_id)
+    
+    data = {"status": "false"}
+    req = GATEWAY_SERVER_URL + 'credentials/basic-auth/' + user_id + '/status'
+    response = requests.put(req, json=data)
+    res = response.json()
+    status = res['status']
+    log.info("status == " + status)
+    if not status == 'Deactivated':
+        res = CustomResponse(Status.ERROR_GATEWAY.value, None)
         return res.getres()
-    res = CustomResponse(Status.FAILURE.value, None)
+    
+    data = {"credential": {"password":new_password,"scopes":roles_},"consumerId":user_id,"type":"basic-auth"}
+    if new_password is not None or new_password.__len__() == 0:
+        if new_password.__len__() < 6:
+            log.info('update_password : password is too weak, at least provide 6 characters')
+            res = CustomResponse(Status.ERROR_WEAK_PASSWORD.value, None)
+            return res.getres()
+        else:
+            req = GATEWAY_SERVER_URL + 'credentials'
+            response = requests.post(req, json=data)
+    res = CustomResponse(Status.SUCCESS.value, None)
     return res.getres()
 
 
@@ -63,7 +184,7 @@ def roles():
             if not body['role-type'] == '':
 
                 try:
-                    response = requests.post(ES_SERVER_URL + 'scopes')
+                    response = requests.post(GATEWAY_SERVER_URL + 'scopes')
                     res = CustomResponse(Status.SUCCESS.value, json.loads(response))
 
                 except:
@@ -101,6 +222,32 @@ def get_user_profile():
         return res.getres()
     log.error('get_user_profile : Error : userid not provided')
     res = CustomResponse(Status.FAILURE.value, 'please provide valid userid ')
+    return res.getres()
+
+
+@admin_api.route('/get-profiles', methods=['POST'])
+def get_user_profiles():
+    log.info('get_user_profile : started at ' + str(getcurrenttime()))
+    body = request.get_json()
+    if body['userids'] is None or not isinstance(body['userids'], list):
+        res = CustomResponse(
+            Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
+        return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
+    user_profiles = []
+    for user_id in body['userids']:
+        log.info('get_user_profile : userid = ' + user_id)
+        res = None
+        try:
+            profile = requests.get(PROFILE_REQ_URL + user_id).content
+            profile = json.loads(profile)
+            roles_ = get_user_roles_basic_auth(user_id)
+            profile['roles'] = roles_
+            user_profiles.append(profile)
+        except Exception as e:
+            log.error(e)
+            res = CustomResponse(Status.FAILURE.value,
+                                 'user does not exists with user-id :' + request.headers.get('ad-userid'))
+    res = CustomResponse(Status.SUCCESS.value, user_profiles)
     return res.getres()
 
 
