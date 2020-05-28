@@ -39,6 +39,8 @@ const TOKENIZED_HINDI_ENDPOINT = 'tokenize-hindi-sentence'
 const NER_END_POINT = 'v0/ner'
 const TOKENIZED_ENDPOINT = 'tokenize-sentence'
 
+const  AVERAGE_TRANSLATION_TIME  = 20
+
 const NER_FIRST_PAGE_IDENTIFIERS = {
     'REPORTABLE_TYPE': { align: 'RIGHT', is_new_line: true, is_bold: true },
     'JURISDICTION': { align: 'CENTER', is_new_line: true },
@@ -603,7 +605,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                                         let pdfobj = data[0]._doc
                                                                         let updateObj = { status: STATUS_TRANSLATING}
                                                                         if(totalcount){
-                                                                            updateObj['eta'] = totalcount * 10
+                                                                            updateObj['eta'] = totalcount * AVERAGE_TRANSLATION_TIME
                                                                         }
                                                                         BaseModel.updateData(PdfParser, updateObj, pdfobj._id, function (err, doc) {
                                                                             if (err) {
