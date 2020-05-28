@@ -39,7 +39,7 @@ const TOKENIZED_HINDI_ENDPOINT = 'tokenize-hindi-sentence'
 const NER_END_POINT = 'v0/ner'
 const TOKENIZED_ENDPOINT = 'tokenize-sentence'
 
-const  AVERAGE_TRANSLATION_TIME  = 20
+const  AVERAGE_TRANSLATION_TIME  = 15
 
 const NER_FIRST_PAGE_IDENTIFIERS = {
     'REPORTABLE_TYPE': { align: 'RIGHT', is_new_line: true, is_bold: true },
@@ -525,6 +525,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                                             if (saved_sentence.target && saved_sentence.target.length > 0 && saved_sentence.target.trim().length > 0) {
                                                                                 LOG.info('Sentence found from redis', saved_sentence)
                                                                                 tokenized_sentences[tokenized_sentences_index].target = saved_sentence['target']
+                                                                                tokenized_sentences[tokenized_sentences_index].status = STATUS_TRANSLATED
                                                                                 tokenized_sentences[tokenized_sentences_index].tagged_src = saved_sentence.tagged_src
                                                                                 tokenized_sentences[tokenized_sentences_index].tagged_tgt = saved_sentence.tagged_tgt
                                                                                 if (data[tokenized_node_index].is_table) {
