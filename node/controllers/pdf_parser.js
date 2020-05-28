@@ -379,9 +379,9 @@ function makeSenteceObj(node_data, text, sentence_index, node_index, id, model_i
             }
         }
     } else {
-        if(node_data.is_ner){
+        if (node_data.is_ner) {
             sentence.src = sentenceCase(text)
-        }else{
+        } else {
             sentence.src = text
         }
     }
@@ -816,6 +816,16 @@ exports.mergeSplitSentence = function (req, res) {
                 } else {
                     handleMultiParaMergeReq(sentences, req.body.start_sentence, req.body.end_sentence, pdf_parser, res)
                 }
+            } else if (req.body.operation_type === 'merge-individual') {
+                if (!req.body.end_sentence) {
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
+                if (sentences.length == 1) {
+                    handleSameParaMergeIndReq(sentences, req.body.start_sentence, req.body.end_sentence, pdf_parser, res)
+                } else {
+                    handleMultiParaMergeIndReq(sentences, req.body.start_sentence, req.body.end_sentence, pdf_parser, res)
+                }
             } else {
                 if (!req.body.selected_text) {
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
@@ -890,6 +900,125 @@ function handleSentenceSplitReq(sentences, start_sentence, selected_text, pdf_pa
                         let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
                         return res.status(response.http.status).json(response);
                     })
+                })
+
+            }
+        })
+    } else {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+}
+
+function handleMultiParaMergeIndReq(sentences, start_sentence, end_sentence, pdf_parser, res) {
+    let sentence = sentences[0]
+    let updated_tokenized_sentences = []
+    let remaining_tokenized_sentence = []
+    let beginning_found = false
+    let end_found = false
+    let sentence_to_be_translated = {}
+    let sentence_to_be_translated_index = -1
+    let sup_array = []
+    sentences.map((sentence, sentindex) => {
+        if (sentences.length > 1 && sentindex !== sentences.length - 1) {
+            if (sentence.sup_array) {
+                sup_array = sup_array.concat(sentence.sup_array)
+            }
+        }
+        sentence.tokenized_sentences.map((tokenized_sentence, index) => {
+            if (tokenized_sentence.s_id == start_sentence.s_id && tokenized_sentence.n_id == start_sentence.n_id) {
+                beginning_found = true
+                sentence_to_be_translated_index = index
+                updated_tokenized_sentences.push(tokenized_sentence)
+            }
+            else if (sentindex == 0) {
+                updated_tokenized_sentences.push(tokenized_sentence)
+            }
+            else if (tokenized_sentence.s_id == end_sentence.s_id && tokenized_sentence.n_id == end_sentence.n_id) {
+                updated_tokenized_sentences[sentence_to_be_translated_index].text += ' ' + tokenized_sentence.text
+                updated_tokenized_sentences[sentence_to_be_translated_index].src += ' ' + tokenized_sentence.src
+                sentence_to_be_translated = updated_tokenized_sentences[sentence_to_be_translated_index]
+            }
+            else {
+                remaining_tokenized_sentence.push(tokenized_sentence)
+            }
+        })
+    })
+    if (!remaining_tokenized_sentence || remaining_tokenized_sentence.length == 0) {
+        if (sentences[sentences.length - 1].sup_array)
+            sup_array = sup_array.concat(sentences[sentences.length - 1].sup_array)
+    }
+    if (sentence_to_be_translated_index != -1) {
+        TranslateAnuvaad.translateFromAnuvaad([sentence_to_be_translated], pdf_parser.model ? pdf_parser.model.url_end_point : null, function (err, translation) {
+            if (err) {
+                LOG.error(err)
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+            else {
+                let translated_sentence = translation[0]
+                let sentence_before_translation = updated_tokenized_sentences[sentence_to_be_translated_index]
+                sentence_before_translation.tagged_src = translated_sentence.tagged_src
+                sentence_before_translation.tagged_tgt = translated_sentence.tagged_tgt
+                sentence_before_translation.target = translated_sentence.tgt
+                updated_tokenized_sentences[sentence_to_be_translated_index] = sentence_before_translation
+                let update_query = { tokenized_sentences: updated_tokenized_sentences }
+                if (sup_array.length > 0) {
+                    update_query['sup_array'] = sup_array
+                }
+                BaseModel.updateData(PdfSentence, update_query, sentences[0]._id, function (err, data) {
+                    LOG.info('Data updated', sentence)
+                    BaseModel.updateData(PdfSentence, { tokenized_sentences: remaining_tokenized_sentence }, sentences[sentences.length - 1]._id, function (err, data) {
+                        LOG.info('Data updated', sentence)
+                        let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                        return res.status(response.http.status).json(response);
+                    })
+                })
+
+            }
+        })
+    } else {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+}
+
+function handleSameParaMergeIndReq(sentences, start_sentence, end_sentence, pdf_parser, res) {
+    let sentence = sentences[0]
+    let updated_tokenized_sentences = []
+    let sentence_to_be_translated = {}
+    let sentence_to_be_translated_index = -1
+    sentence.tokenized_sentences.map((tokenized_sentence, index) => {
+        if (tokenized_sentence.s_id == start_sentence.s_id) {
+            sentence_to_be_translated_index = index
+            updated_tokenized_sentences.push(tokenized_sentence)
+        } else if (tokenized_sentence.s_id == end_sentence.s_id) {
+            updated_tokenized_sentences[sentence_to_be_translated_index].text += ' ' + tokenized_sentence.text
+            updated_tokenized_sentences[sentence_to_be_translated_index].src += ' ' + tokenized_sentence.src
+            sentence_to_be_translated = updated_tokenized_sentences[sentence_to_be_translated_index]
+        }
+        else {
+            updated_tokenized_sentences.push(tokenized_sentence)
+        }
+    })
+    if (sentence_to_be_translated_index != -1) {
+        TranslateAnuvaad.translateFromAnuvaad([sentence_to_be_translated], pdf_parser.model ? pdf_parser.model.url_end_point : null, function (err, translation) {
+            if (err) {
+                LOG.error(err)
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+            else {
+                let translated_sentence = translation[0]
+                let sentence_before_translation = updated_tokenized_sentences[sentence_to_be_translated_index]
+                sentence_before_translation.tagged_src = translated_sentence.tagged_src
+                sentence_before_translation.tagged_tgt = translated_sentence.tagged_tgt
+                sentence_before_translation.target = translated_sentence.tgt
+                updated_tokenized_sentences[sentence_to_be_translated_index] = sentence_before_translation
+                BaseModel.updateData(PdfSentence, { tokenized_sentences: updated_tokenized_sentences }, sentence._id, function (err, data) {
+                    LOG.info('Data updated', sentence)
+                    let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                    return res.status(response.http.status).json(response);
                 })
 
             }
