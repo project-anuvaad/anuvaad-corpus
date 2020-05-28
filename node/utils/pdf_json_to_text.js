@@ -37,7 +37,7 @@ exports.mergeParagraphJsonNodes = function (items, cb) {
                 output.push(it)
             } else {
                 if (output[output.length - 1].page_no_end !== it.page_no_end) {
-                    if ((!(data.text.search(sentence_ends_regex) >= 0) || abbrivations2.indexOf(data.text.substring(data.text.length - 4, data.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(data.text.substring(data.text.length - 5, data.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(data.text.substring(data.text.length - 6, data.text.length).toLowerCase()) >= 0 || abbrivations6.indexOf(data.text.substring(data.text.length - 8, data.text.length).toLowerCase()) >= 0)) {
+                    if ((!(it.text.search(sentence_ends_regex) >= 0) || abbrivations2.indexOf(it.text.substring(it.text.length - 4, it.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(it.text.substring(it.text.length - 5, it.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(it.text.substring(it.text.length - 6, it.text.length).toLowerCase()) >= 0 || abbrivations6.indexOf(it.text.substring(it.text.length - 8, it.text.length).toLowerCase()) >= 0)) {
                         output[output.length - 1].text += it.text
                         output[output.length - 1].page_no_end = ' ' + it.page_no_end
                     }
