@@ -39,7 +39,7 @@ const TOKENIZED_HINDI_ENDPOINT = 'tokenize-hindi-sentence'
 const NER_END_POINT = 'v0/ner'
 const TOKENIZED_ENDPOINT = 'tokenize-sentence'
 
-const  AVERAGE_TRANSLATION_TIME  = 15
+const AVERAGE_TRANSLATION_TIME  = 10
 
 const NER_FIRST_PAGE_IDENTIFIERS = {
     'REPORTABLE_TYPE': { align: 'RIGHT', is_new_line: true, is_bold: true },
