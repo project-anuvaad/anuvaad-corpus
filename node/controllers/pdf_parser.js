@@ -33,6 +33,7 @@ const BASE_PATH_UPLOAD = 'corpusfiles/pdfs/'
 const STATUS_PROCESSING = 'PROCESSING'
 const STATUS_COMPLETED = 'COMPLETED'
 const STATUS_TRANSLATING = 'TRANSLATING'
+const STATUS_TRANSLATED = 'TRANSLATED'
 const STATUS_PENDING = 'PENDING'
 const TOKENIZED_HINDI_ENDPOINT = 'tokenize-hindi-sentence'
 const NER_END_POINT = 'v0/ner'
@@ -88,7 +89,7 @@ function saveTranslatedText(sentence, cb) {
                         let node_data = table_items[key][itemkey]
                         if (node_data.sentence_index == sentence['s_id']) {
                             let query_key = 'table_items.' + key + '.' + itemkey + ''
-                            query_param = { [query_key + '.target']: sentence['tgt'], [query_key + '.tagged_src']: sentence['tagged_src'], [query_key + '.tagged_tgt']: sentence['tagged_tgt'] }
+                            query_param = { status: STATUS_TRANSLATED, [query_key + '.target']: sentence['tgt'], [query_key + '.tagged_src']: sentence['tagged_src'], [query_key + '.tagged_tgt']: sentence['tagged_tgt'] }
                         }
                     }
                 }
@@ -102,7 +103,7 @@ function saveTranslatedText(sentence, cb) {
             tokenized_sentences.map((tokenized_sentence, index) => {
                 if (tokenized_sentence.sentence_index == sentence['s_id']) {
                     let query_key = 'tokenized_sentences.' + index
-                    query_param = { [query_key + '.target']: sentence['tgt'], [query_key + '.tagged_src']: sentence['tagged_src'], [query_key + '.tagged_tgt']: sentence['tagged_tgt'] }
+                    query_param = { status: STATUS_TRANSLATED, [query_key + '.target']: sentence['tgt'], [query_key + '.tagged_src']: sentence['tagged_src'], [query_key + '.tagged_tgt']: sentence['tagged_tgt'] }
                     data_available = true
                 }
             })
