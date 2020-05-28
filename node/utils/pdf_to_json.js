@@ -17,7 +17,7 @@ exports.converPdfToJson = function (filepath, cb) {
                 timeout: 30000,
             }
         ).then(function (api_res) {
-            axios.post(BASE_PATH + '/lines', {
+            axios.post(BASE_PATH + '/api/v2/ocr/lines', {
                 pdf_file_id: api_res.data.data.filepath
             }
                 , {

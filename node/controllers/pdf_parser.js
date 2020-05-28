@@ -766,7 +766,7 @@ exports.extractPdfToSentences = function (req, res) {
                         })
 
                     })
-                    PdfJsonToText.mergeJsonNodes(data, [], function (err, out, header_text, footer_text) {
+                    PdfJsonToText.mergeParagraphJsonNodes(data, function (err, out) {
                         axios.post(PYTHON_BASE_URL + TOKENIZED_HINDI_ENDPOINT,
                             {
                                 paragraphs: out
