@@ -597,18 +597,23 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                         if (dontsendres) {
                                                             LOG.info('Updating pdf obj')
                                                             let condition = { session_id: pdf_parser_process.session_id }
-                                                            BaseModel.findByCondition(PdfParser, condition, null, null, null, function (err, data) {
-                                                                if (data && data.length > 0) {
-                                                                    let pdfobj = data[0]._doc
-                                                                    let updateObj = { status: STATUS_TRANSLATING }
-                                                                    BaseModel.updateData(PdfParser, updateObj, pdfobj._id, function (err, doc) {
-                                                                        if (err) {
-                                                                            LOG.error(err)
-                                                                        } else {
-                                                                            LOG.info('Data updated')
+                                                            PdfSentence.countDocuments({ status: STATUS_PENDING }, function (err, totalcount) {
+                                                                BaseModel.findByCondition(PdfParser, condition, null, null, null, function (err, data) {
+                                                                    if (data && data.length > 0) {
+                                                                        let pdfobj = data[0]._doc
+                                                                        let updateObj = { status: STATUS_TRANSLATING}
+                                                                        if(totalcount){
+                                                                            updateObj['eta'] = totalcount * 10
                                                                         }
-                                                                    })
-                                                                }
+                                                                        BaseModel.updateData(PdfParser, updateObj, pdfobj._id, function (err, doc) {
+                                                                            if (err) {
+                                                                                LOG.error(err)
+                                                                            } else {
+                                                                                LOG.info('Data updated')
+                                                                            }
+                                                                        })
+                                                                    }
+                                                                })
                                                             })
                                                         } else {
                                                             LOG.info('Saving pdf obj')
