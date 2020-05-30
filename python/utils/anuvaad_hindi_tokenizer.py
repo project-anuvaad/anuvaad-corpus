@@ -22,6 +22,7 @@ class AnuvaadHinTokenizer(object):
     _date_abbrevations  = []
     _table_points_abbrevations = []
     _brackets_abbrevations = []
+    _decimal_abbrevations = []
     _dot_with_char_abbrevations = []
     _dot_with_quote_abbrevations = []
     _dot_with_number_abbrevations = []
@@ -53,6 +54,7 @@ class AnuvaadHinTokenizer(object):
         text = self.serialize_dot_with_number_beginning(text)
         text = self.serialize_quotes_with_number(text)
         text = self.serialize_bullet_points(text)
+        text = self.serialize_decimal(text)
         text = self.add_space_after_sentence_end(text)
         sentences = self._tokenizer.tokenize(text)
         output = []
@@ -61,6 +63,7 @@ class AnuvaadHinTokenizer(object):
             se = self.deserialize_pattern(se)
             se = self.deserialize_end(se)
             se = self.deserialize_dots(se)
+            se = self.deserialize_decimal(text)
             se = self.deserialize_brackets(se)
             se = self.deserialize_dot_with_number(se)
             se = self.deserialize_dot_with_number_beginning(se)
@@ -71,6 +74,26 @@ class AnuvaadHinTokenizer(object):
             output.append(se.strip())
         print('--------------Process finished-------------')
         return output
+
+    def serialize_decimal(self, text):
+        patterns = re.findall(r'(?:[ ][0-9]{1,}[.][0-9]{1,}[ ])',text)
+        index = 0
+        if patterns is not None and isinstance(patterns, list):
+            for pattern in patterns:
+                pattern_obj = re.compile(re.escape(pattern))
+                self._decimal_abbrevations.append(pattern)
+                text = pattern_obj.sub('DE_'+str(index)+'_DE', text)
+                index+=1
+        return text
+
+    def deserialize_decimal(self, text):
+        index = 0
+        if self._decimal_abbrevations is not None and isinstance(self._decimal_abbrevations, list):
+            for pattern in self._decimal_abbrevations:
+                pattern_obj = re.compile(re.escape('DE_'+str(index)+'_DE'), re.IGNORECASE)
+                text = pattern_obj.sub(pattern, text)
+                index+=1
+        return text
 
     def add_space_after_sentence_end(self, text):
         sentence_ends = ['.','?','!',';',':','।']
