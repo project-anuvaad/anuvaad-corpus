@@ -38,6 +38,7 @@ class AnuvaadHinTokenizer(object):
         self._brackets_abbrevations = []
         self._dot_with_char_abbrevations = []
         self._dot_with_number_abbrevations = []
+        self._decimal_abbrevations = []
         self._dot_with_beginning_number_abbrevations = []
         self._tokenizer = PunktSentenceTokenizer(lang_vars=SentenceEndLangVars())
 
@@ -63,7 +64,7 @@ class AnuvaadHinTokenizer(object):
             se = self.deserialize_pattern(se)
             se = self.deserialize_end(se)
             se = self.deserialize_dots(se)
-            se = self.deserialize_decimal(text)
+            se = self.deserialize_decimal(se)
             se = self.deserialize_brackets(se)
             se = self.deserialize_dot_with_number(se)
             se = self.deserialize_dot_with_number_beginning(se)
