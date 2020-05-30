@@ -29,7 +29,7 @@ const NER_BASE_URL = process.env.NER_BASE_URL ? process.env.NER_BASE_URL : 'http
 
 var COMPONENT = "pdf_parser";
 const BASE_PATH_NGINX = 'nginx/'
-const BASE_PATH_UPLOAD = 'corpusfiles/pdfs/'
+const BASE_PATH_UPLOAD = 'upload/'
 const STATUS_PROCESSING = 'PROCESSING'
 const STATUS_COMPLETED = 'COMPLETED'
 const STATUS_TRANSLATING = 'TRANSLATING'
@@ -768,6 +768,7 @@ exports.extractPdfToSentences = function (req, res) {
 
                     })
                     PdfJsonToText.mergeParagraphJsonNodes(data, function (err, out) {
+                        LOG.info(JSON.stringify(out))
                         axios.post(PYTHON_BASE_URL + TOKENIZED_HINDI_ENDPOINT,
                             {
                                 paragraphs: out
