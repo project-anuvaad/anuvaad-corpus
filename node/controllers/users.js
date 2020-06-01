@@ -506,6 +506,7 @@ exports.setPassword = function (req, res) {
                     let id = api_res.data.id
                     let oauth = {}
                     oauth.consumerId = id
+                    oauth.uuid = UUIDV4()
                     oauth.type = "oauth2"
                     axios.post(CREDENTIALS_URL, oauth).then((api_res) => {
                         BaseModel.updateData(UserRegister, { status: STATUS_ACTIVATED, activated_on: new Date() }, doc[0]._doc._id, function (err, doc) {
