@@ -1289,14 +1289,14 @@ exports.translatePdf = function (req, res) {
     pdf_parser_process.pdf_path = escape(file.name)
     pdf_parser_process.source_lang = req.body.source_lang
     pdf_parser_process.target_lang = req.body.target_lang
-    pdf_parser_process.download_source_path = pdf_parser_process.session_id + '_' + pdf_parser_process.pdf_path
+    pdf_parser_process.download_source_path = pdf_parser_process.session_id + '.pdf'
     pdf_parser_process.status = STATUS_PROCESSING
     pdf_parser_process.created_by = userId
     pdf_parser_process.model = model
     pdf_parser_process.created_on = new Date()
     fs.mkdir(BASE_PATH_UPLOAD + pdf_parser_process.session_id, function (e) {
         fs.writeFile(BASE_PATH_UPLOAD + pdf_parser_process.session_id + '/' + pdf_parser_process.pdf_path, file.data, function (err) {
-            fs.writeFile(BASE_PATH_NGINX + pdf_parser_process.session_id + '_' + pdf_parser_process.pdf_path, file.data, function (err) {
+            fs.writeFile(BASE_PATH_NGINX + pdf_parser_process.session_id +'.pdf', file.data, function (err) {
                 if (err) {
                     LOG.error(err)
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
