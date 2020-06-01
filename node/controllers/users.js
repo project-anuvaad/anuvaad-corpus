@@ -104,7 +104,7 @@ var html_content_forgot_password = `<!DOCTYPE html>
         </tr>
         <tr bgcolor="#f1f5f7">
             <td align="center" style="color:black;padding: 10px 0 5px 0; ">
-                <h1 style="color:#003366 ;margin-bottom: 10px; font-family: Arial, Helvetica, sans-serif;">Rest your password</h1>
+                <h1 style="color:#003366 ;margin-bottom: 10px; font-family: Arial, Helvetica, sans-serif;">Reset your password</h1>
                 <p style="font-size: 8x; align-items:center;font-style: italic;">You've received this email because you have requested for reset password on 
                 <br/> <a href="https://anuvaad.org" target="_blank" style="text-decoration: none;color:#1ca9c9">anuvaad.org.</a> 
                 </p>
