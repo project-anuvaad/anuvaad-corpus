@@ -497,14 +497,28 @@ exports.setPassword = function (req, res) {
         let base_auth = {}
         base_auth.credential = {}
         base_auth.credential.scopes = [INTERACTIVE_EDITOR_ROLE]
-        base_auth.credential.password = user.password
+        base_auth.credential.password = req.body.password
         base_auth.consumerId = id
         base_auth.type = 'basic-auth'
         axios.put(CREDENTIALS_URL + '/' + 'basic-auth' + '/' + id + '/status', { status: false }).then((api_res) => {
-            axios.post(CREDENTIALS_URL, base_auth).then((api_res) => {
-                BaseModel.updateData(UserRegister, { status: STATUS_ACTIVATED, activated_on: new Date() }, doc[0]._doc._id, function (err, doc) {
-                    let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
-                    return res.status(response.http.status).json(response);
+            axios.put(CREDENTIALS_URL + '/' + 'oauth2' + '/' + id + '/status', { status: false }).then((api_res) => {
+                axios.post(CREDENTIALS_URL, base_auth).then((api_res) => {
+                    let id = api_res.data.id
+                    let oauth = {}
+                    oauth.consumerId = id
+                    oauth.type = "oauth2"
+                    axios.post(CREDENTIALS_URL, oauth).then((api_res) => {
+                        BaseModel.updateData(UserRegister, { status: STATUS_ACTIVATED, activated_on: new Date() }, doc[0]._doc._id, function (err, doc) {
+                            let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                            return res.status(response.http.status).json(response);
+                        })
+                    }).catch((e) => {
+
+                    })
+                }).catch((e) => {
+                    LOG.error(e)
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
                 })
             }).catch((e) => {
                 LOG.error(e)
