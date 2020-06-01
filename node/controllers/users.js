@@ -479,3 +479,44 @@ exports.forgotPassword = function (req, res) {
 }
 
 
+exports.setPassword = function (req, res) {
+    if (!req || !req.body || !req.body.r_id || !req.body.u_id || !req.body.password) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    BaseModel.findByCondition(UserRegister, { user_id: req.body.u_id, r_id: req.body.r_id, status: STATUS_PENDING }, null, null, null, function (err, doc) {
+        if (err) {
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+        else if (!doc || doc.length == 0) {
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+        let id = req.body.u_id
+        let base_auth = {}
+        base_auth.credential = {}
+        base_auth.credential.scopes = [INTERACTIVE_EDITOR_ROLE]
+        base_auth.credential.password = user.password
+        base_auth.consumerId = id
+        base_auth.type = 'basic-auth'
+        axios.put(CREDENTIALS_URL + '/' + 'basic-auth' + '/' + id + '/status', { status: false }).then((api_res) => {
+            axios.post(CREDENTIALS_URL, base_auth).then((api_res) => {
+                BaseModel.updateData(UserRegister, { status: STATUS_ACTIVATED, activated_on: new Date() }, doc[0]._doc._id, function (err, doc) {
+                    let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                    return res.status(response.http.status).json(response);
+                })
+            }).catch((e) => {
+                LOG.error(e)
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            })
+        }).catch((e) => {
+            LOG.error(e)
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        })
+    })
+}
+
+

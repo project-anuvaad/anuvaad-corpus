@@ -23,6 +23,9 @@ module.exports = function (router) {
     router.route('/forgot-user-password')
         .post(userController.forgotPassword);
 
+    router.route('/set-user-password')
+        .post(userController.setPassword);
+
     router.route('/update-user-status')
         .post(userController.updateUserStatus);
 
