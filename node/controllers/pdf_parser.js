@@ -39,7 +39,7 @@ const TOKENIZED_HINDI_ENDPOINT = 'tokenize-hindi-sentence'
 const NER_END_POINT = 'v0/ner'
 const TOKENIZED_ENDPOINT = 'tokenize-sentence'
 
-const AVERAGE_TRANSLATION_TIME  = 5
+const AVERAGE_TRANSLATION_TIME = 5
 
 const NER_FIRST_PAGE_IDENTIFIERS = {
     'REPORTABLE_TYPE': { align: 'RIGHT', is_new_line: true, is_bold: true },
@@ -565,18 +565,30 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                             }
                                                         }
                                                     ], function () {
+                                                        let translated = true
+                                                        tokenized_sentences.map((token) => {
+                                                            if (!token.target) {
+                                                                translated = false
+                                                            }
+                                                        })
                                                         data[tokenized_node_index].node_index = data[tokenized_node_index].node_index + ''
                                                         data[tokenized_node_index].version = 0
-                                                        data[tokenized_node_index].status = STATUS_PENDING
+                                                        data[tokenized_node_index].status = translated ? STATUS_TRANSLATED : STATUS_PENDING
                                                         data[tokenized_node_index].session_id = pdf_parser_process.session_id
                                                         data[tokenized_node_index].tokenized_sentences = tokenized_sentences
                                                         cb()
                                                     })
 
                                                 } else {
+                                                    let translated = true
+                                                    tokenized_sentences.map((token) => {
+                                                        if (!token.target) {
+                                                            translated = false
+                                                        }
+                                                    })
                                                     data[index - 1].node_index = data[index - 1].node_index + ''
                                                     data[index - 1].version = 0
-                                                    data[index - 1].status = STATUS_PENDING
+                                                    data[index - 1].status = translated ? STATUS_TRANSLATED : STATUS_PENDING
                                                     data[index - 1].session_id = pdf_parser_process.session_id
                                                     data[index - 1].tokenized_sentences = tokenized_sentences
                                                     cb()
@@ -604,8 +616,8 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                                 BaseModel.findByCondition(PdfParser, condition, null, null, null, function (err, data) {
                                                                     if (data && data.length > 0) {
                                                                         let pdfobj = data[0]._doc
-                                                                        let updateObj = { status: STATUS_TRANSLATING}
-                                                                        if(totalcount){
+                                                                        let updateObj = { status: STATUS_TRANSLATING }
+                                                                        if (totalcount) {
                                                                             updateObj['eta'] = totalcount * AVERAGE_TRANSLATION_TIME
                                                                         }
                                                                         BaseModel.updateData(PdfParser, updateObj, pdfobj._id, function (err, doc) {
