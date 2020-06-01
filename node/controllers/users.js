@@ -452,10 +452,10 @@ exports.forgotPassword = function (req, res) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
-    axios.get(USERS_REQ_URL + '/' + req.body.username).then((api_res) => {
+    axios.get(USERS_REQ_URL + '/' + req.body.email).then((api_res) => {
         if (api_res && api_res.data) {
             let r_id = UUIDV4()
-            let user_register = { user_id: api_res.data.id, r_id: r_id, email: user.email, created_on: new Date(), status: STATUS_PENDING }
+            let user_register = { user_id: api_res.data.id, r_id: r_id, email: req.body.email, created_on: new Date(), status: STATUS_PENDING }
             BaseModel.saveData(UserRegister, [user_register], function (err, doc) {
                 if (err) {
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
