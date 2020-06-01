@@ -20,6 +20,9 @@ module.exports = function (router) {
     router.route('/signup-user')
         .post(userController.signUpUser);
 
+    router.route('/forgot-user-password')
+        .post(userController.forgotPassword);
+
     router.route('/update-user-status')
         .post(userController.updateUserStatus);
 

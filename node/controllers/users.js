@@ -85,6 +85,58 @@ var html_content = `<!DOCTYPE html>
 
 </html>`
 
+var html_content_forgot_password = `<!DOCTYPE html>
+<html>
+
+<head>
+  
+</head>
+
+<body style="margin: 0; padding: 10px;">
+    <table align="center" border="0" cellpadding="0" cellspacing="0" width="630"
+        style="font-family: Arial, Helvetica, sans-serif;">
+        <tr bgcolor="#f1f5f7">
+            <td align="center" style=" padding:  0px 0 30px 0;">
+
+                <img src="https://auth.anuvaad.org/download/anuvaad_logo.png" alt="anuvaad logo" width="630" height="250px"
+                    style="display: block;" />
+            </td>
+        </tr>
+        <tr bgcolor="#f1f5f7">
+            <td align="center" style="color:black;padding: 10px 0 5px 0; ">
+                <h1 style="color:#003366 ;margin-bottom: 10px; font-family: Arial, Helvetica, sans-serif;">Rest your password</h1>
+                <p style="font-size: 8x; align-items:center;font-style: italic;">You've received this email because you have requested for reset password on 
+                <br/> <a href="https://anuvaad.org" target="_blank" style="text-decoration: none;color:#1ca9c9">anuvaad.org.</a> 
+                </p>
+                <br/>
+                <hr style="height:2px; border-width: 0; width: 80%; background-Color:  #D8D8D8; color: #D8D8D8;border: 0;">
+            </td>
+        </tr>
+        <tr bgcolor="#f1f5f7">
+            <td align="center" style="padding: 5px 0 100px 0;">
+                <p style="font-size: 16px; font-family: Arial, Helvetica, sans-serif;">Please click here to reset your password.</p>
+                <a href="$REG_URL$" style="background-Color: #1ca9c9;
+                border-radius:25px ;border:0;
+                color: #ffffff;
+                display: inline-block;
+                font-family: Arial, Helvetica, sans-serif;
+                font-size: 14px;
+                font-weight: regular;
+                line-height: 42px;
+                text-align: center;
+                text-decoration: none;
+                width: 66%;"> 
+                
+                        Reset Password
+                    </a>
+                <!-- <button type="button" class="btn btn-success btn-lg" ><b>Sign Up</b></button>   -->
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>`
+
 
 exports.listUsers = function (req, res) {
     axios.get(USERS_REQ_URL + '?count=100000').then((api_res) => {
@@ -268,7 +320,7 @@ exports.signUpUser = function (req, res) {
     } else if (!req.body.email.match(mailformat) || req.body.email.length > 90) {
         let apistatus = new APIStatus(StatusCode.ERR_INVALID_EMAIL, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
-    }else if(req.body.firstname.length > 20 || req.body.lastname.length > 20){
+    } else if (req.body.firstname.length > 20 || req.body.lastname.length > 20) {
         let apistatus = new APIStatus(StatusCode.ERR_INVALID_NAME, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
@@ -391,6 +443,38 @@ exports.signUpUser = function (req, res) {
             let apistatus = new APIStatus(e.response.status == 409 ? StatusCode.ERR_DATA_EXIST : StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
             return res.status(apistatus.http.status).json(apistatus);
         }
+    })
+}
+
+
+exports.forgotPassword = function (req, res) {
+    if (!req || !req.body || !req.body.email) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    axios.get(USERS_REQ_URL + '/' + req.body.username).then((api_res) => {
+        if (api_res && api_res.data) {
+            let r_id = UUIDV4()
+            let user_register = { user_id: api_res.data.id, r_id: r_id, email: user.email, created_on: new Date(), status: STATUS_PENDING }
+            BaseModel.saveData(UserRegister, [user_register], function (err, doc) {
+                if (err) {
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
+                let url = BASE_URL + 'set-password/' + id + '/' + r_id
+                var html_content_data = html_content_forgot_password.replace('$REG_URL$', url)
+                Mailer.send_email(user.email, 'Reset Password for Anuvaad', html_content_data)
+                let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                return res.status(response.http.status).json(response);
+            })
+        } else {
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+    }).catch((e) => {
+        LOG.error(e)
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
     })
 }
 
