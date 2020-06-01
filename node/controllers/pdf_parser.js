@@ -1289,35 +1289,38 @@ exports.translatePdf = function (req, res) {
     pdf_parser_process.pdf_path = escape(file.name)
     pdf_parser_process.source_lang = req.body.source_lang
     pdf_parser_process.target_lang = req.body.target_lang
+    pdf_parser_process.download_source_path = pdf_parser_process.session_id + '_' + pdf_parser_process.pdf_path
     pdf_parser_process.status = STATUS_PROCESSING
     pdf_parser_process.created_by = userId
     pdf_parser_process.model = model
     pdf_parser_process.created_on = new Date()
     fs.mkdir(BASE_PATH_UPLOAD + pdf_parser_process.session_id, function (e) {
         fs.writeFile(BASE_PATH_UPLOAD + pdf_parser_process.session_id + '/' + pdf_parser_process.pdf_path, file.data, function (err) {
-            if (err) {
-                LOG.error(err)
-                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                return res.status(apistatus.http.status).json(apistatus);
-            }
-            PdfToHtml.convertPdfToHtmlPagewise(BASE_PATH_UPLOAD, pdf_parser_process.pdf_path, 'output.html', pdf_parser_process.session_id, function (err, data) {
+            fs.writeFile(BASE_PATH_NGINX + pdf_parser_process.session_id + '_' + pdf_parser_process.pdf_path, file.data, function (err) {
                 if (err) {
                     LOG.error(err)
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);
                 }
-                BaseModel.saveData(PdfParser, [pdf_parser_process], function (err, doc) {
+                PdfToHtml.convertPdfToHtmlPagewise(BASE_PATH_UPLOAD, pdf_parser_process.pdf_path, 'output.html', pdf_parser_process.session_id, function (err, data) {
                     if (err) {
                         LOG.error(err)
                         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                         return res.status(apistatus.http.status).json(apistatus);
-                    } else {
-                        let index = 1
-                        let output_res = {}
-                        processHtml(pdf_parser_process, index, output_res, false, 1, true, true, model, res, true, userId)
-                        let response = new Response(StatusCode.SUCCESS, doc).getRsp()
-                        return res.status(response.http.status).json(response);
                     }
+                    BaseModel.saveData(PdfParser, [pdf_parser_process], function (err, doc) {
+                        if (err) {
+                            LOG.error(err)
+                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                            return res.status(apistatus.http.status).json(apistatus);
+                        } else {
+                            let index = 1
+                            let output_res = {}
+                            processHtml(pdf_parser_process, index, output_res, false, 1, true, true, model, res, true, userId)
+                            let response = new Response(StatusCode.SUCCESS, doc).getRsp()
+                            return res.status(response.http.status).json(response);
+                        }
+                    })
                 })
             })
         })
