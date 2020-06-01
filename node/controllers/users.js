@@ -461,7 +461,7 @@ exports.forgotPassword = function (req, res) {
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);
                 }
-                let url = BASE_URL + 'set-password/' + id + '/' + r_id
+                let url = BASE_URL + 'set-password/' + api_res.data.id + '/' + r_id
                 var html_content_data = html_content_forgot_password.replace('$REG_URL$', url)
                 Mailer.send_email(user.email, 'Reset Password for Anuvaad', html_content_data)
                 let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
