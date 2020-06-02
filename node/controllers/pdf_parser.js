@@ -1186,7 +1186,6 @@ function handleSameParaMergeReq(sentences, start_sentence, end_sentence, pdf_par
             updated_tokenized_sentences.push(tokenized_sentence)
         }
         else if (beginning_found && !end_found) {
-            LOG.info(updated_tokenized_sentences)
             updated_tokenized_sentences[updated_tokenized_sentences.length - 1].text += ' ' + tokenized_sentence.text
             updated_tokenized_sentences[updated_tokenized_sentences.length - 1].src += ' ' + tokenized_sentence.src
             sentence_to_be_translated = updated_tokenized_sentences[updated_tokenized_sentences.length - 1]
@@ -1221,6 +1220,10 @@ function handleSameParaMergeReq(sentences, start_sentence, end_sentence, pdf_par
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
+}
+
+exports.updatePdfSourceSentences = function (req, res) {
+
 }
 
 exports.savePdfParserProcess = function (req, res) {
@@ -1298,7 +1301,7 @@ exports.translatePdf = function (req, res) {
     pdf_parser_process.created_on = new Date()
     fs.mkdir(BASE_PATH_UPLOAD + pdf_parser_process.session_id, function (e) {
         fs.writeFile(BASE_PATH_UPLOAD + pdf_parser_process.session_id + '/' + pdf_parser_process.pdf_path, file.data, function (err) {
-            fs.writeFile(BASE_PATH_NGINX + pdf_parser_process.session_id +'.pdf', file.data, function (err) {
+            fs.writeFile(BASE_PATH_NGINX + pdf_parser_process.session_id + '.pdf', file.data, function (err) {
                 if (err) {
                     LOG.error(err)
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
@@ -1361,22 +1364,30 @@ exports.fetchPdfParserProcess = function (req, res) {
 exports.fetchPdfSentences = function (req, res) {
     let status = req.query.status
     let session_id = req.query.session_id
+    let userId = req.headers['ad-userid']
     var pagesize = req.query.pagesize
     var pageno = req.query.pageno
     let condition = {}
+    if (!session_id) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
     if (status) {
         condition = { status: status }
     }
-    if (session_id) {
-        condition['session_id'] = session_id
-    }
+    condition['session_id'] = session_id
+    let pdf_process_condition = { session_id: session_id, created_by: userId }
     PdfSentence.countDocuments(condition, function (err, count) {
         if (err) {
             LOG.error(err)
             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
             return res.status(apistatus.http.status).json(apistatus);
         }
-        BaseModel.findByCondition(PdfParser, condition, null, null, null, function (err, models) {
+        BaseModel.findByCondition(PdfParser, pdf_process_condition, null, null, null, function (err, models) {
+            if (!models || models.length == 0) {
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
             let pdf_process = models[0]._doc
             BaseModel.findByCondition(PdfSentence, condition, pagesize, pageno, 'sentence_index', function (err, models) {
                 if (err) {
