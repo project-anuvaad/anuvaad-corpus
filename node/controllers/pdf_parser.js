@@ -571,6 +571,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                                 translated = false
                                                             }
                                                         })
+                                                        data[tokenized_node_index].para_index = tokenized_node_index
                                                         data[tokenized_node_index].node_index = data[tokenized_node_index].node_index + ''
                                                         data[tokenized_node_index].version = 0
                                                         data[tokenized_node_index].status = translated ? STATUS_TRANSLATED : STATUS_PENDING
@@ -588,6 +589,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                                                     })
                                                     data[index - 1].node_index = data[index - 1].node_index + ''
                                                     data[index - 1].version = 0
+                                                    data[index - 1].para_index = index - 1
                                                     data[index - 1].status = translated ? STATUS_TRANSLATED : STATUS_PENDING
                                                     data[index - 1].session_id = pdf_parser_process.session_id
                                                     data[index - 1].tokenized_sentences = tokenized_sentences
