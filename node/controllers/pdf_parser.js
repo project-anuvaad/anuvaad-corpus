@@ -819,6 +819,64 @@ exports.extractPdfToSentences = function (req, res) {
     })
 }
 
+exports.updatePdfSourceSentences = function (req, res) {
+    let userId = req.headers['ad-userid']
+    if (!req || !req.body || !req.body.sentences || !req.body.update_sentence) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let sentences = req.body.sentences
+    let update_sentence = req.body.update_sentence
+    BaseModel.findByCondition(PdfParser, { session_id: sentences[0].session_id }, null, null, null, function (err, doc) {
+        if (doc && doc.length > 0) {
+            let pdf_parser = doc[0]._doc
+            let sentence = sentences[0]
+            let updated_tokenized_sentences = []
+            let sentence_to_be_translated = {}
+            let sentence_to_be_translated_index = -1
+            sentence.tokenized_sentences.map((tokenized_sentence, index) => {
+                if (tokenized_sentence.s_id == update_sentence.s_id) {
+                    sentence_to_be_translated_index = index
+                    updated_tokenized_sentences.push(update_sentence)
+                    sentence_to_be_translated = update_sentence
+                }
+                else {
+                    updated_tokenized_sentences.push(tokenized_sentence)
+                }
+            })
+            if (sentence_to_be_translated_index != -1) {
+                TranslateAnuvaad.translateFromAnuvaad([sentence_to_be_translated], pdf_parser.model ? pdf_parser.model.url_end_point : null, function (err, translation) {
+                    if (err) {
+                        LOG.error(err)
+                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                        return res.status(apistatus.http.status).json(apistatus);
+                    }
+                    else {
+                        let translated_sentence = translation[0]
+                        let sentence_before_translation = updated_tokenized_sentences[sentence_to_be_translated_index]
+                        sentence_before_translation.tagged_src = translated_sentence.tagged_src
+                        sentence_before_translation.tagged_tgt = translated_sentence.tagged_tgt
+                        sentence_before_translation.target = translated_sentence.tgt
+                        updated_tokenized_sentences[sentence_to_be_translated_index] = sentence_before_translation
+                        BaseModel.updateData(PdfSentence, { tokenized_sentences: updated_tokenized_sentences }, sentence._id, function (err, data) {
+                            LOG.info('Data updated', sentence)
+                            let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                            return res.status(response.http.status).json(response);
+                        })
+
+                    }
+                })
+            } else {
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+        } else {
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+    })
+}
+
 exports.mergeSplitSentence = function (req, res) {
     let userId = req.headers['ad-userid']
     if (!req || !req.body || !req.body.sentences || !req.body.operation_type || !req.body.start_sentence) {
@@ -856,6 +914,9 @@ exports.mergeSplitSentence = function (req, res) {
                 }
                 handleSentenceSplitReq(sentences, req.body.start_sentence, req.body.selected_text, pdf_parser, res)
             }
+        } else {
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
         }
     })
 
@@ -1222,9 +1283,6 @@ function handleSameParaMergeReq(sentences, start_sentence, end_sentence, pdf_par
     }
 }
 
-exports.updatePdfSourceSentences = function (req, res) {
-
-}
 
 exports.savePdfParserProcess = function (req, res) {
     let userId = req.headers['ad-userid']
