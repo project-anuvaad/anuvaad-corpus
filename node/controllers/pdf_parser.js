@@ -903,7 +903,7 @@ exports.updatePdfSourceTable = function (req, res) {
                 }
                 if (operation_type == 'add-column') {
                     sentence_index++
-                    sentence.table_items[row][column_count + 1] = sentence.table_items[row][column_count]
+                    sentence.table_items[row][column_count + 1] = Object.assign({},sentence.table_items[row][column_count])
                     sentence.table_items[row][column_count + 1].sentence_index = sentence_index
                     sentence.table_items[row][column_count + 1].text = ''
                     sentence.table_items[row][column_count + 1].target = ''
@@ -914,7 +914,7 @@ exports.updatePdfSourceTable = function (req, res) {
                 }
             }
             if (operation_type == 'add-row') {
-                sentence.table_items[row_count + 1] = sentence.table_items[row_count]
+                sentence.table_items[row_count + 1] = Object.assign({},sentence.table_items[row_count])
                 for (var col in sentence.table_items[row_count + 1]) {
                     sentence_index++
                     let row = row_count + 1
