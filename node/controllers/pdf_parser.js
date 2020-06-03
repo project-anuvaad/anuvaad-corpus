@@ -914,18 +914,19 @@ exports.updatePdfSourceTable = function (req, res) {
                 }
             }
             if (operation_type == 'add-row') {
-                sentence.table_items[row_count + 1] = Object.assign({},sentence.table_items[row_count])
-                for (var col in sentence.table_items[row_count + 1]) {
+                let new_row = Object.assign({},sentence.table_items[row_count])
+                for (var col in new_row) {
                     sentence_index++
                     let row = row_count + 1
-                    sentence.table_items[row][col].sentence_index = sentence_index
-                    sentence.table_items[row][col].text = ''
-                    sentence.table_items[row][col].target = ''
-                    sentence.table_items[row][col].tagged_src = ''
-                    sentence.table_items[row][col].tagged_tgt = ''
-                    sentence.table_items[row][col].table_row = row
-                    updated_tokenized_sentences.push(sentence.table_items[row][col])
+                    new_row[col].sentence_index = sentence_index
+                    new_row[col].text = ''
+                    new_row[col].target = ''
+                    new_row[col].tagged_src = ''
+                    new_row[col].tagged_tgt = ''
+                    new_row[col].table_row = row
+                    updated_tokenized_sentences.push(new_row[col])
                 }
+                sentence.table_items[row_count + 1] = new_row
             }
             BaseModel.updateData(PdfSentence, { tokenized_sentences: updated_tokenized_sentences, table_items: sentence.table_items }, sentence._id, function (err, data) {
                 LOG.info('Data updated', sentence)
