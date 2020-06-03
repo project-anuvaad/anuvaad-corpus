@@ -827,7 +827,7 @@ exports.updatePdfSourceSentences = function (req, res) {
     }
     let sentences = req.body.sentences
     let update_sentence = req.body.update_sentence
-    BaseModel.findByCondition(PdfParser, { session_id: sentences[0].session_id }, null, null, null, function (err, doc) {
+    BaseModel.findByCondition(PdfParser, { session_id: sentences[0].session_id, created_by: userId }, null, null, null, function (err, doc) {
         if (doc && doc.length > 0) {
             let pdf_parser = doc[0]._doc
             let sentence = sentences[0]
@@ -870,6 +870,70 @@ exports.updatePdfSourceSentences = function (req, res) {
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
+        } else {
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+    })
+}
+
+exports.updatePdfSourceTable = function (req, res) {
+    let userId = req.headers['ad-userid']
+    if (!req || !req.body || !req.body.sentences || !req.body.operation_type) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let sentences = req.body.sentences
+    let operation_type = req.body.operation_type
+    BaseModel.findByCondition(PdfParser, { session_id: sentences[0].session_id }, null, null, null, function (err, doc) {
+        if (doc && doc.length > 0) {
+            let pdf_parser = doc[0]._doc
+            let sentence = sentences[0]
+            let updated_tokenized_sentences = []
+            let row_count = -1
+            let sentence_index = -1
+            for (var row in sentence.table_items) {
+                row_count++
+                let column_count = -1
+                for (var column in sentence.table_items[row]) {
+                    column_count = column;
+                    sentence_index++
+                    sentence.table_items[row][column].sentence_index = sentence_index
+                    updated_tokenized_sentences.push(sentence.table_items[row][column])
+                }
+                if (operation_type == 'add-column') {
+                    sentence_index++
+                    sentence.table_items[row][column_count + 1] = sentence.table_items[row][column_count]
+                    sentence.table_items[row][column_count + 1].sentence_index = sentence_index
+                    sentence.table_items[row][column_count + 1].text = ''
+                    sentence.table_items[row][column_count + 1].target = ''
+                    sentence.table_items[row][column_count + 1].tagged_src = ''
+                    sentence.table_items[row][column_count + 1].tagged_tgt = ''
+                    sentence.table_items[row][column_count + 1].table_column = column_count + 1
+                    updated_tokenized_sentences.push(sentence.table_items[row][column_count + 1])
+                }
+            }
+            if (operation_type == 'add-row') {
+                sentence.table_items[row_count + 1] = sentence.table_items[row_count]
+                for (var col in sentence.table_items[row_count + 1]) {
+                    sentence_index++
+                    let row = row_count + 1
+                    sentence.table_items[row][col].sentence_index = sentence_index
+                    sentence.table_items[row][col].text = ''
+                    sentence.table_items[row][col].target = ''
+                    sentence.table_items[row][col].tagged_src = ''
+                    sentence.table_items[row][col].tagged_tgt = ''
+                    sentence.table_items[row][col].table_row = row
+                    updated_tokenized_sentences.push(sentence.table_items[row][col])
+                }
+            }
+            BaseModel.updateData(PdfSentence, { tokenized_sentences: updated_tokenized_sentences, table_items: sentence.table_items }, sentence._id, function (err, data) {
+                LOG.info('Data updated', sentence)
+                let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                return res.status(response.http.status).json(response);
+            })
+
+
         } else {
             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
             return res.status(apistatus.http.status).json(apistatus);
