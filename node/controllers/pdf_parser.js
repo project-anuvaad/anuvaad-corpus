@@ -914,17 +914,19 @@ exports.updatePdfSourceTable = function (req, res) {
                 }
             }
             if (operation_type == 'add-row') {
-                let new_row = Object.assign({},sentence.table_items[row_count])
-                for (var col in new_row) {
+                let new_row = {}
+                let row = row_count + 1
+                for (var col in sentence.table_items[row_count]) {
                     sentence_index++
-                    let row = row_count + 1
-                    new_row[col].sentence_index = sentence_index
-                    new_row[col].text = ''
-                    new_row[col].target = ''
-                    new_row[col].tagged_src = ''
-                    new_row[col].tagged_tgt = ''
-                    new_row[col].table_row = row
-                    updated_tokenized_sentences.push(new_row[col])
+                    let column = Object.assign({},sentence.table_items[row_count][col])
+                    column.sentence_index = sentence_index
+                    column.text = ''
+                    column.target = ''
+                    column.tagged_src = ''
+                    column.tagged_tgt = ''
+                    column.table_row = row
+                    new_row[col] = column
+                    updated_tokenized_sentences.push(column)
                 }
                 sentence.table_items[row_count + 1] = new_row
             }
