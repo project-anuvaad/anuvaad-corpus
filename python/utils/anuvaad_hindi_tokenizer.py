@@ -81,7 +81,7 @@ class AnuvaadHinTokenizer(object):
         return output
 
     def serialize_url(self, text):
-        patterns = re.findall(r'(?:((https?):((//)|(\\\\))+([\w\d:#@%/;$()~_?\+-=\\\.&](#!)?)*))',text)
+        patterns = re.findall(r'(?:(?:https?):?:(?:(?://)|(?:\\\\))+(?:(?:[\w\d:#@%/;$()~_?\+-=\\\.&](?:#!)?))*)',text)
         index = 0
         if patterns is not None and isinstance(patterns, list):
             for pattern in patterns:
@@ -176,7 +176,6 @@ class AnuvaadHinTokenizer(object):
         index = 0
         if patterns is not None and isinstance(patterns, list):
             for pattern in patterns:
-                print(pattern)
                 pattern_obj = re.compile(re.escape(pattern))
                 self._brackets_abbrevations.append(pattern)
                 text = pattern_obj.sub('WW_'+str(index)+'_WW', text)
