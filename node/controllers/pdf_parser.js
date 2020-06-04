@@ -865,6 +865,7 @@ exports.updatePdfSourceSentences = function (req, res) {
                                         if (sentence.table_items[row][col].sentence_index == update_sentence.s_id) {
                                             let sentence_before_translation = sentence.table_items[row][col]
                                             sentence_before_translation.tagged_src = translated_sentence.tagged_src
+                                            sentence_before_translation.text = sentence_before_translation.src
                                             sentence_before_translation.tagged_tgt = translated_sentence.tagged_tgt
                                             sentence_before_translation.target = translated_sentence.tgt
                                             sentence.table_items[row][col] = sentence_before_translation
