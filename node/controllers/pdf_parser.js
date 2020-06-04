@@ -865,7 +865,7 @@ exports.updatePdfSourceSentences = function (req, res) {
                                         if (sentence.table_items[row][col].sentence_index == update_sentence.s_id) {
                                             let sentence_before_translation = sentence.table_items[row][col]
                                             sentence_before_translation.tagged_src = translated_sentence.tagged_src
-                                            sentence_before_translation.text = sentence_before_translation.src
+                                            sentence_before_translation.text = translated_sentence.src
                                             sentence_before_translation.tagged_tgt = translated_sentence.tagged_tgt
                                             sentence_before_translation.target = translated_sentence.tgt
                                             sentence.table_items[row][col] = sentence_before_translation
@@ -931,13 +931,14 @@ exports.updatePdfSourceTable = function (req, res) {
                 }
                 if (operation_type == 'add-column') {
                     sentence_index++
+                    column_count = parseInt(column_count)
                     sentence.table_items[row][column_count + 1] = Object.assign({}, sentence.table_items[row][column_count])
                     sentence.table_items[row][column_count + 1].sentence_index = sentence_index
                     sentence.table_items[row][column_count + 1].text = ''
                     sentence.table_items[row][column_count + 1].target = ''
                     sentence.table_items[row][column_count + 1].tagged_src = ''
                     sentence.table_items[row][column_count + 1].tagged_tgt = ''
-                    sentence.table_items[row][column_count + 1].table_column = parseInt(column_count) + 1
+                    sentence.table_items[row][column_count + 1].table_column = column_count + 1
                     let tokenized_sentence = Object.assign({}, tokenized_sentences[tokenized_node_index])
                     tokenized_sentence.sentence_index = sentence_index
                     tokenized_sentence.s_id = sentence_index
@@ -946,7 +947,7 @@ exports.updatePdfSourceTable = function (req, res) {
                     tokenized_sentence.target = ''
                     tokenized_sentence.tagged_src = ''
                     tokenized_sentence.tagged_tgt = ''
-                    tokenized_sentence.table_column = parseInt(column_count) + 1
+                    tokenized_sentence.table_column = column_count + 1
                     updated_tokenized_sentences.push(tokenized_sentence)
                 }
             }
