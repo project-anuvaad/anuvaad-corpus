@@ -821,16 +821,15 @@ exports.extractPdfToSentences = function (req, res) {
 
 exports.updatePdfSourceSentences = function (req, res) {
     let userId = req.headers['ad-userid']
-    if (!req || !req.body || !req.body.sentences || !req.body.update_sentence) {
+    if (!req || !req.body || !req.body.sentence || !req.body.update_sentence) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
-    let sentences = req.body.sentences
+    let sentence = req.body.sentence
     let update_sentence = req.body.update_sentence
-    BaseModel.findByCondition(PdfParser, { session_id: sentences[0].session_id }, null, null, null, function (err, doc) {
+    BaseModel.findByCondition(PdfParser, { session_id: sentence.session_id, created_by: userId }, null, null, null, function (err, doc) {
         if (doc && doc.length > 0) {
             let pdf_parser = doc[0]._doc
-            let sentence = sentences[0]
             let updated_tokenized_sentences = []
             let sentence_to_be_translated = {}
             let sentence_to_be_translated_index = -1
@@ -902,16 +901,15 @@ exports.updatePdfSourceSentences = function (req, res) {
 
 exports.updatePdfSourceTable = function (req, res) {
     let userId = req.headers['ad-userid']
-    if (!req || !req.body || !req.body.sentences || !req.body.operation_type) {
+    if (!req || !req.body || !req.body.sentence || !req.body.operation_type) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
-    let sentences = req.body.sentences
+    let sentence = req.body.sentence
     let operation_type = req.body.operation_type
-    BaseModel.findByCondition(PdfParser, { session_id: sentences[0].session_id, created_by: userId }, null, null, null, function (err, doc) {
+    BaseModel.findByCondition(PdfParser, { session_id: sentence.session_id, created_by: userId }, null, null, null, function (err, doc) {
         if (doc && doc.length > 0) {
             let pdf_parser = doc[0]._doc
-            let sentence = sentences[0]
             let updated_tokenized_sentences = []
             let row_count = -1
             let sentence_index = -1
