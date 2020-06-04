@@ -827,7 +827,7 @@ exports.updatePdfSourceSentences = function (req, res) {
     }
     let sentences = req.body.sentences
     let update_sentence = req.body.update_sentence
-    BaseModel.findByCondition(PdfParser, { session_id: sentences[0].session_id, created_by: userId }, null, null, null, function (err, doc) {
+    BaseModel.findByCondition(PdfParser, { session_id: sentences[0].session_id }, null, null, null, function (err, doc) {
         if (doc && doc.length > 0) {
             let pdf_parser = doc[0]._doc
             let sentence = sentences[0]
@@ -858,11 +858,33 @@ exports.updatePdfSourceSentences = function (req, res) {
                         sentence_before_translation.tagged_tgt = translated_sentence.tagged_tgt
                         sentence_before_translation.target = translated_sentence.tgt
                         updated_tokenized_sentences[sentence_to_be_translated_index] = sentence_before_translation
-                        BaseModel.updateData(PdfSentence, { tokenized_sentences: updated_tokenized_sentences }, sentence._id, function (err, data) {
-                            LOG.info('Data updated', sentence)
-                            let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
-                            return res.status(response.http.status).json(response);
-                        })
+                        if (sentence.is_table) {
+                            if (sentence.table_items) {
+                                for (var row in sentence.table_items) {
+                                    for (var col in sentence.table_items[row]) {
+                                        if (sentence.table_items[row][col].sentence_index == update_sentence.s_id) {
+                                            let sentence_before_translation = sentence.table_items[row][col]
+                                            sentence_before_translation.tagged_src = translated_sentence.tagged_src
+                                            sentence_before_translation.tagged_tgt = translated_sentence.tagged_tgt
+                                            sentence_before_translation.target = translated_sentence.tgt
+                                            sentence.table_items[row][col] = sentence_before_translation
+                                            break
+                                        }
+                                    }
+                                }
+                            }
+                            BaseModel.updateData(PdfSentence, { tokenized_sentences: updated_tokenized_sentences, table_items: sentence.table_items }, sentence._id, function (err, data) {
+                                LOG.info('Data updated', sentence)
+                                let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                                return res.status(response.http.status).json(response);
+                            })
+                        } else {
+                            BaseModel.updateData(PdfSentence, { tokenized_sentences: updated_tokenized_sentences }, sentence._id, function (err, data) {
+                                LOG.info('Data updated', sentence)
+                                let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                                return res.status(response.http.status).json(response);
+                            })
+                        }
 
                     }
                 })
@@ -885,7 +907,7 @@ exports.updatePdfSourceTable = function (req, res) {
     }
     let sentences = req.body.sentences
     let operation_type = req.body.operation_type
-    BaseModel.findByCondition(PdfParser, { session_id: sentences[0].session_id }, null, null, null, function (err, doc) {
+    BaseModel.findByCondition(PdfParser, { session_id: sentences[0].session_id, created_by: userId }, null, null, null, function (err, doc) {
         if (doc && doc.length > 0) {
             let pdf_parser = doc[0]._doc
             let sentence = sentences[0]
@@ -903,7 +925,7 @@ exports.updatePdfSourceTable = function (req, res) {
                 }
                 if (operation_type == 'add-column') {
                     sentence_index++
-                    sentence.table_items[row][column_count + 1] = Object.assign({},sentence.table_items[row][column_count])
+                    sentence.table_items[row][column_count + 1] = Object.assign({}, sentence.table_items[row][column_count])
                     sentence.table_items[row][column_count + 1].sentence_index = sentence_index
                     sentence.table_items[row][column_count + 1].text = ''
                     sentence.table_items[row][column_count + 1].target = ''
@@ -918,7 +940,7 @@ exports.updatePdfSourceTable = function (req, res) {
                 let row = row_count + 1
                 for (var col in sentence.table_items[row_count]) {
                     sentence_index++
-                    let column = Object.assign({},sentence.table_items[row_count][col])
+                    let column = Object.assign({}, sentence.table_items[row_count][col])
                     column.sentence_index = sentence_index
                     column.text = ''
                     column.target = ''
@@ -951,7 +973,7 @@ exports.mergeSplitSentence = function (req, res) {
         return res.status(apistatus.http.status).json(apistatus);
     }
     let sentences = req.body.sentences
-    BaseModel.findByCondition(PdfParser, { session_id: sentences[0].session_id }, null, null, null, function (err, doc) {
+    BaseModel.findByCondition(PdfParser, { session_id: sentences[0].session_id, created_by: userId }, null, null, null, function (err, doc) {
         if (doc && doc.length > 0) {
             let pdf_parser = doc[0]._doc
             if (req.body.operation_type === 'merge') {
