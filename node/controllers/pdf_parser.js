@@ -914,14 +914,19 @@ exports.updatePdfSourceTable = function (req, res) {
             let updated_tokenized_sentences = []
             let row_count = -1
             let sentence_index = -1
+            let tokenized_node_index = -1
+            let tokenized_sentences = sentence.tokenized_sentences
             for (var row in sentence.table_items) {
                 row_count++
                 let column_count = -1
                 for (var column in sentence.table_items[row]) {
+                    tokenized_node_index++
                     column_count = column;
                     sentence_index++
                     sentence.table_items[row][column].sentence_index = sentence_index
-                    updated_tokenized_sentences.push(sentence.table_items[row][column])
+                    tokenized_sentences[tokenized_node_index].s_id = sentence_index
+                    tokenized_sentences[tokenized_node_index].sentence_index = sentence_index
+                    updated_tokenized_sentences.push(tokenized_sentences[tokenized_node_index])
                 }
                 if (operation_type == 'add-column') {
                     sentence_index++
@@ -931,13 +936,21 @@ exports.updatePdfSourceTable = function (req, res) {
                     sentence.table_items[row][column_count + 1].target = ''
                     sentence.table_items[row][column_count + 1].tagged_src = ''
                     sentence.table_items[row][column_count + 1].tagged_tgt = ''
-                    sentence.table_items[row][column_count + 1].table_column = column_count + 1
-                    updated_tokenized_sentences.push(sentence.table_items[row][column_count + 1])
+                    sentence.table_items[row][column_count + 1].table_column = parseInt(column_count) + 1
+                    let tokenized_sentence = Object.assign({}, tokenized_sentences[tokenized_node_index])
+                    tokenized_sentence.sentence_index = sentence_index
+                    tokenized_sentence.s_id = sentence_index
+                    tokenized_sentence.text = ''
+                    tokenized_sentence.target = ''
+                    tokenized_sentence.tagged_src = ''
+                    tokenized_sentence.tagged_tgt = ''
+                    tokenized_sentence.table_column = parseInt(column_count) + 1
+                    updated_tokenized_sentences.push(tokenized_sentence)
                 }
             }
             if (operation_type == 'add-row') {
                 let new_row = {}
-                let row = row_count + 1
+                let row = parseInt(row_count) + 1
                 for (var col in sentence.table_items[row_count]) {
                     sentence_index++
                     let column = Object.assign({}, sentence.table_items[row_count][col])
@@ -948,7 +961,16 @@ exports.updatePdfSourceTable = function (req, res) {
                     column.tagged_tgt = ''
                     column.table_row = row
                     new_row[col] = column
-                    updated_tokenized_sentences.push(column)
+                    let tokenized_sentence = Object.assign({}, tokenized_sentences[tokenized_node_index])
+                    tokenized_sentence.sentence_index = sentence_index
+                    tokenized_sentence.s_id = sentence_index
+                    tokenized_sentence.text = ''
+                    tokenized_sentence.target = ''
+                    tokenized_sentence.tagged_src = ''
+                    tokenized_sentence.tagged_tgt = ''
+                    tokenized_sentence.table_column = parseInt(col)
+                    tokenized_sentence.table_row = parseInt(row)
+                    updated_tokenized_sentences.push(tokenized_sentence)
                 }
                 sentence.table_items[row_count + 1] = new_row
             }
