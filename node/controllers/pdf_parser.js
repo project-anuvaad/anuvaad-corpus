@@ -35,6 +35,7 @@ const STATUS_COMPLETED = 'COMPLETED'
 const STATUS_TRANSLATING = 'TRANSLATING'
 const STATUS_TRANSLATED = 'TRANSLATED'
 const STATUS_PENDING = 'PENDING'
+const STATUS_DELETED = 'DELETED'
 const TOKENIZED_HINDI_ENDPOINT = 'tokenize-hindi-sentence'
 const NER_END_POINT = 'v0/ner'
 const TOKENIZED_ENDPOINT = 'tokenize-sentence'
@@ -899,6 +900,27 @@ exports.updatePdfSourceSentences = function (req, res) {
     })
 }
 
+exports.deleteSentence = function (req, res) {
+    let userId = req.headers['ad-userid']
+    if (!req || !req.body || !req.body.sentence) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let sentence = req.body.sentence
+    BaseModel.findByCondition(PdfParser, { session_id: sentence.session_id, created_by: userId }, null, null, null, function (err, doc) {
+        if (doc && doc.length > 0) {
+            BaseModel.updateData(PdfSentence, { status: DELETED }, sentence._id, function (err, data) {
+                let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                return res.status(response.http.status).json(response);
+            })
+        }
+        else {
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+    })
+}
+
 exports.updatePdfSourceTable = function (req, res) {
     let userId = req.headers['ad-userid']
     if (!req || !req.body || !req.body.sentence || !req.body.operation_type) {
@@ -1546,6 +1568,7 @@ exports.fetchPdfSentences = function (req, res) {
     if (status) {
         condition = { status: status }
     }
+    condition['status'] = { $ne: STATUS_DELETED }
     condition['session_id'] = session_id
     let pdf_process_condition = { session_id: session_id, created_by: userId }
     PdfSentence.countDocuments(condition, function (err, count) {

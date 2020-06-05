@@ -47,4 +47,7 @@ module.exports = function (router) {
     router.route('/update-pdf-source-table')
         .post(pdfParserController.updatePdfSourceTable);
 
+    router.route('/delete-sentence')
+        .post(pdfParserController.deleteSentence);
+
 }
