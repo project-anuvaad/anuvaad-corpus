@@ -112,7 +112,7 @@ function saveTranslatedText(sentence, cb) {
             })
             if (data_available) {
                 BaseModel.updateData(PdfSentence, query_param, sentencedb._id, function (err, data) {
-                    BaseModel.findByCondition(PdfSentence, { session_id: sentencedb.session_id }, null, null, null, function (err, doc) {
+                    BaseModel.findByCondition(PdfSentence, { session_id: sentencedb.session_id, status: { $ne: STATUS_DELETED } }, null, null, null, function (err, doc) {
                         let data_completed = true
                         if (!err && doc && doc.length > 0) {
                             doc.map((data) => {
