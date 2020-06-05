@@ -909,7 +909,7 @@ exports.deleteSentence = function (req, res) {
     let sentence = req.body.sentence
     BaseModel.findByCondition(PdfParser, { session_id: sentence.session_id, created_by: userId }, null, null, null, function (err, doc) {
         if (doc && doc.length > 0) {
-            BaseModel.updateData(PdfSentence, { status: DELETED }, sentence._id, function (err, data) {
+            BaseModel.updateData(PdfSentence, { status: STATUS_DELETED }, sentence._id, function (err, data) {
                 let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
                 return res.status(response.http.status).json(response);
             })
