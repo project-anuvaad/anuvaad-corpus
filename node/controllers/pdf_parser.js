@@ -1583,7 +1583,7 @@ exports.fetchPdfSentences = function (req, res) {
                 return res.status(apistatus.http.status).json(apistatus);
             }
             let pdf_process = models[0]._doc
-            BaseModel.findByCondition(PdfSentence, condition, pagesize, pageno, 'sentence_index', function (err, models) {
+            BaseModel.findByCondition(PdfSentence, condition, pagesize, pageno, 'para_index', function (err, models) {
                 if (err) {
                     LOG.error(err)
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
