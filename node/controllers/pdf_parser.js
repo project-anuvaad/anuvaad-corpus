@@ -1438,7 +1438,6 @@ function handleSameParaMergeReq(sentences, start_sentence, end_sentence, pdf_par
     }
 }
 
-
 exports.savePdfParserProcess = function (req, res) {
     let userId = req.headers['ad-userid']
     if (!req || !req.body || !req.body.process_name || !req.files || !req.files.pdf_data) {
