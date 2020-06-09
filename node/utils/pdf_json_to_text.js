@@ -29,8 +29,35 @@ function checkForTable(text_node, image_data) {
     return table_check_obj
 }
 
+exports.mergeParagraphJsonNodes = function (items, cb) {
+    let output = []
+    items.map((obj, pageindex) => {
+        obj.map((it, index) => {
+            if (output.length == 0) {
+                output.push(it)
+            } else {
+                if (output[output.length - 1].page_no_end !== it.page_no_end) {
+                    if ((!(it.text.search(sentence_ends_regex) >= 0) || abbrivations2.indexOf(it.text.substring(it.text.length - 4, it.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(it.text.substring(it.text.length - 5, it.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(it.text.substring(it.text.length - 6, it.text.length).toLowerCase()) >= 0 || abbrivations6.indexOf(it.text.substring(it.text.length - 8, it.text.length).toLowerCase()) >= 0)) {
+                        output[output.length - 1].text += ' '+it.text
+                        output[output.length - 1].page_no_end = it.page_no_end
+                    }else{
+                        output.push(it)
+                    }
+                } else {
+                    if (output[output.length - 1].block_num == it.block_num) {
+                        output[output.length - 1].text += ' ' + it.text
+                        output[output.length - 1].page_no_end = it.page_no_end
+                    } else {
+                        output.push(it)
+                    }
+                }
+            }
+        })
+    })
+    cb(null, output)
+}
 
-exports.mergeJsonNodes = function (items,image_data, cb) {
+exports.mergeJsonNodes = function (items, image_data, cb) {
     let output = []
     let style_map = {}
     //Find header or footer

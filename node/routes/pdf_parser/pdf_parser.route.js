@@ -41,4 +41,13 @@ module.exports = function (router) {
     router.route('/merge-split-sentence')
         .post(pdfParserController.mergeSplitSentence);
 
+    router.route('/update-pdf-source-sentences')
+        .post(pdfParserController.updatePdfSourceSentences);
+
+    router.route('/update-pdf-source-table')
+        .post(pdfParserController.updatePdfSourceTable);
+
+    router.route('/delete-sentence')
+        .post(pdfParserController.deleteSentence);
+
 }

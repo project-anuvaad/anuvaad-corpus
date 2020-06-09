@@ -22,6 +22,7 @@ class AnuvaadEngTokenizer(object):
     _date_abbrevations  = []
     _table_points_abbrevations = []
     _brackets_abbrevations = []
+    _url_abbrevations = []
     _dot_with_char_abbrevations = []
     _dot_with_quote_abbrevations = []
     _dot_with_number_abbrevations = []
@@ -37,6 +38,7 @@ class AnuvaadEngTokenizer(object):
         self._regex_search_texts = []
         self._date_abbrevations = []
         self._dot_abbrevations = []
+        self._url_abbrevations = []
         self._table_points_abbrevations = []
         self._brackets_abbrevations = []
         self._dot_with_char_abbrevations = []
@@ -48,6 +50,7 @@ class AnuvaadEngTokenizer(object):
         print('--------------Process started-------------')
         text = self.serialize_dates(text)
         text = self.serialize_with_abbrevations(text)
+        text = self.serialize_url(text)
         text = self.serialize_table_points(text)
         text = self.serialize_pattern(text)
         text = self.serialize_dots(text)
@@ -61,6 +64,7 @@ class AnuvaadEngTokenizer(object):
         for se in sentences:
             se = self.deserialize_dates(se)
             se = self.deserialize_pattern(se)
+            se = self.deserialize_url(se)
             se = self.deserialize_dots(se)
             se = self.deserialize_brackets(se)
             se = self.deserialize_dot_with_number(se)
@@ -72,6 +76,26 @@ class AnuvaadEngTokenizer(object):
             output.append(se.strip())
         print('--------------Process finished-------------')
         return output
+
+    def serialize_url(self, text):
+        patterns = re.findall(r'(?:(?:https?):?:(?:(?://)|(?:\\\\))+(?:(?:[\w\d:#@%/;$()~_?\+-=\\\.&](?:#!)?))*)',text)
+        index = 0
+        if patterns is not None and isinstance(patterns, list):
+            for pattern in patterns:
+                pattern_obj = re.compile(re.escape(pattern))
+                self._url_abbrevations.append(pattern)
+                text = pattern_obj.sub('URL_'+str(index)+'_URL', text)
+                index+=1
+        return text
+
+    def deserialize_url(self, text):
+        index = 0
+        if self._url_abbrevations is not None and isinstance(self._url_abbrevations, list):
+            for pattern in self._url_abbrevations:
+                pattern_obj = re.compile(re.escape('URL_'+str(index)+'_URL'), re.IGNORECASE)
+                text = pattern_obj.sub(pattern, text)
+                index+=1
+        return text
 
     def serialize_bullet_points(self, text):
         pattern = re.compile(r'(?!^)[•]')

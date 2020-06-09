@@ -22,6 +22,8 @@ class AnuvaadHinTokenizer(object):
     _date_abbrevations  = []
     _table_points_abbrevations = []
     _brackets_abbrevations = []
+    _decimal_abbrevations = []
+    _url_abbrevations = []
     _dot_with_char_abbrevations = []
     _dot_with_quote_abbrevations = []
     _dot_with_number_abbrevations = []
@@ -37,6 +39,8 @@ class AnuvaadHinTokenizer(object):
         self._brackets_abbrevations = []
         self._dot_with_char_abbrevations = []
         self._dot_with_number_abbrevations = []
+        self._decimal_abbrevations = []
+        self._url_abbrevations = []
         self._dot_with_beginning_number_abbrevations = []
         self._tokenizer = PunktSentenceTokenizer(lang_vars=SentenceEndLangVars())
 
@@ -45,6 +49,7 @@ class AnuvaadHinTokenizer(object):
         # text = self.serialize_with_abbrevations(text)
         text = self.serialize_dates(text)
         text = self.serialize_table_points(text)
+        text = self.serialize_url(text)
         text = self.serialize_pattern(text)
         text = self.serialize_end(text)
         text = self.serialize_dots(text)
@@ -53,14 +58,17 @@ class AnuvaadHinTokenizer(object):
         text = self.serialize_dot_with_number_beginning(text)
         text = self.serialize_quotes_with_number(text)
         text = self.serialize_bullet_points(text)
+        text = self.serialize_decimal(text)
         text = self.add_space_after_sentence_end(text)
         sentences = self._tokenizer.tokenize(text)
         output = []
         for se in sentences:
             se = self.deserialize_dates(se)
             se = self.deserialize_pattern(se)
+            se = self.deserialize_url(se)
             se = self.deserialize_end(se)
             se = self.deserialize_dots(se)
+            se = self.deserialize_decimal(se)
             se = self.deserialize_brackets(se)
             se = self.deserialize_dot_with_number(se)
             se = self.deserialize_dot_with_number_beginning(se)
@@ -71,6 +79,46 @@ class AnuvaadHinTokenizer(object):
             output.append(se.strip())
         print('--------------Process finished-------------')
         return output
+
+    def serialize_url(self, text):
+        patterns = re.findall(r'(?:(?:https?):?:(?:(?://)|(?:\\\\))+(?:(?:[\w\d:#@%/;$()~_?\+-=\\\.&](?:#!)?))*)',text)
+        index = 0
+        if patterns is not None and isinstance(patterns, list):
+            for pattern in patterns:
+                pattern_obj = re.compile(re.escape(pattern))
+                self._url_abbrevations.append(pattern)
+                text = pattern_obj.sub('URL_'+str(index)+'_URL', text)
+                index+=1
+        return text
+
+    def deserialize_url(self, text):
+        index = 0
+        if self._url_abbrevations is not None and isinstance(self._url_abbrevations, list):
+            for pattern in self._url_abbrevations:
+                pattern_obj = re.compile(re.escape('URL_'+str(index)+'_URL'), re.IGNORECASE)
+                text = pattern_obj.sub(pattern, text)
+                index+=1
+        return text
+
+    def serialize_decimal(self, text):
+        patterns = re.findall(r'(?:[ ][0-9]{1,}[.][0-9]{1,}[ ])',text)
+        index = 0
+        if patterns is not None and isinstance(patterns, list):
+            for pattern in patterns:
+                pattern_obj = re.compile(re.escape(pattern))
+                self._decimal_abbrevations.append(pattern)
+                text = pattern_obj.sub('DE_'+str(index)+'_DE', text)
+                index+=1
+        return text
+
+    def deserialize_decimal(self, text):
+        index = 0
+        if self._decimal_abbrevations is not None and isinstance(self._decimal_abbrevations, list):
+            for pattern in self._decimal_abbrevations:
+                pattern_obj = re.compile(re.escape('DE_'+str(index)+'_DE'), re.IGNORECASE)
+                text = pattern_obj.sub(pattern, text)
+                index+=1
+        return text
 
     def add_space_after_sentence_end(self, text):
         sentence_ends = ['.','?','!',';',':','।']
@@ -128,7 +176,6 @@ class AnuvaadHinTokenizer(object):
         index = 0
         if patterns is not None and isinstance(patterns, list):
             for pattern in patterns:
-                print(pattern)
                 pattern_obj = re.compile(re.escape(pattern))
                 self._brackets_abbrevations.append(pattern)
                 text = pattern_obj.sub('WW_'+str(index)+'_WW', text)
