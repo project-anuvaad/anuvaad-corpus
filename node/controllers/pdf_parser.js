@@ -902,12 +902,12 @@ exports.updatePdfSourceSentences = function (req, res) {
 
 exports.deleteSentence = function (req, res) {
     let userId = req.headers['ad-userid']
-    if (!req || !req.body || !req.body.sentence || !req.body.sentence_delete) {
+    if (!req || !req.body || !req.body.sentence || !req.body.sentences_delete || !Array.isArray(req.body.sentences_delete)) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
     let sentence = req.body.sentence
-    let sentence_delete = req.body.sentence_delete
+    let sentences_delete = req.body.sentences_delete
     BaseModel.findByCondition(PdfParser, { session_id: sentence.session_id, created_by: userId }, null, null, null, function (err, doc) {
         if (doc && doc.length > 0) {
             let condition = {}
@@ -917,9 +917,11 @@ exports.deleteSentence = function (req, res) {
                     let sentence_obj = sentences[0]._doc
                     let tokenized_data = []
                     sentence_obj.tokenized_sentences.map((t) => {
-                        if (t.s_id == sentence_delete.s_id) {
-                            t.status = STATUS_DELETED
-                        }
+                        sentences_delete.map((s)=>{
+                            if (t.s_id == s.s_id) {
+                                t.status = STATUS_DELETED
+                            }
+                        })
                         tokenized_data.push(t)
                     })
                     BaseModel.updateData(PdfSentence, { tokenized_sentences: tokenized_data }, sentence._id, function (err, data) {
