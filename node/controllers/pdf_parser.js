@@ -1601,7 +1601,7 @@ exports.fetchPdfSentences = function (req, res) {
                 return res.status(apistatus.http.status).json(apistatus);
             }
             let pdf_process = models[0]._doc
-            BaseModel.findByEmbeddedCondition(PdfSentence, condition, pagesize, pageno, 'para_index', { 'tokenized_sentences.$': 1 }, function (err, models) {
+            BaseModel.findByEmbeddedCondition(PdfSentence, condition, pagesize, pageno, 'para_index', { }, function (err, models) {
                 if (err) {
                     LOG.error(err)
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
