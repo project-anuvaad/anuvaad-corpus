@@ -50,4 +50,7 @@ module.exports = function (router) {
     router.route('/delete-sentence')
         .post(pdfParserController.deleteSentence);
 
+    router.route('/delete-table-sentence')
+        .post(pdfParserController.deleteTableSentence);
+
 }

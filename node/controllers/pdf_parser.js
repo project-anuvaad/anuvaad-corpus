@@ -941,6 +941,75 @@ exports.deleteSentence = function (req, res) {
     })
 }
 
+exports.deleteTableSentence = function (req, res) {
+    let userId = req.headers['ad-userid']
+    if (!req || !req.body || !req.body.sentence || !req.body.table_cell || !req.body.operation_type) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let sentence = req.body.sentence
+    let table_cell = req.body.table_cell
+    let operation_type = req.body.operation_type
+    BaseModel.findByCondition(PdfParser, { session_id: sentence.session_id, created_by: userId }, null, null, null, function (err, doc) {
+        if (doc && doc.length > 0) {
+            let condition = {}
+            condition['_id'] = mongoose.Types.ObjectId(sentence._id)
+            BaseModel.findByCondition(PdfSentence, condition, null, null, null, function (err, sentences) {
+                if (sentences && sentences.length > 0) {
+                    let sentence_obj = sentences[0]._doc
+                    let tokenized_data = []
+                    let sids = []
+                    if (operation_type == 'delete-row') {
+                        if (sentence_obj.table_items[table_cell.table_row]) {
+                            for (var col in sentence_obj.table_items[table_cell.table_row]) {
+                                let cell = sentence_obj.table_items[table_cell.table_row][col]
+                                sids.push(cell.sentence_index)
+                                sentence_obj.table_items[table_cell.table_row][col].status = STATUS_DELETED
+                            }
+                        }
+
+                    } else if (operation_type == 'delete-column') {
+                        for (var row in sentence_obj.table_items) {
+                            for (var col in sentence_obj.table_items[row]) {
+                                if (col == table_cell.table_column) {
+                                    let cell = sentence_obj.table_items[row][col]
+                                    sids.push(cell.sentence_index)
+                                    sentence_obj.table_items[row][col].status = STATUS_DELETED
+                                }
+                            }
+                        }
+                    } else {
+                        for (var row in sentence_obj.table_items) {
+                            for (var col in sentence_obj.table_items[row]) {
+                                let cell = sentence_obj.table_items[row][col]
+                                sids.push(cell.sentence_index)
+                                sentence_obj.table_items[row][col].status = STATUS_DELETED
+                            }
+                        }
+                    }
+                    sentence_obj.tokenized_sentences.map((t) => {
+                        if (sids.indexOf(t.s_id) >= 0) {
+                            t.status = STATUS_DELETED
+                        }
+                        tokenized_data.push(t)
+                    })
+                    BaseModel.updateData(PdfSentence, { tokenized_sentences: tokenized_data, table_items: sentence_obj.table_items}, sentence._id, function (err, data) {
+                        let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                        return res.status(response.http.status).json(response);
+                    })
+                } else {
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
+            })
+        }
+        else {
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+    })
+}
+
 exports.updatePdfSourceTable = function (req, res) {
     let userId = req.headers['ad-userid']
     if (!req || !req.body || !req.body.sentence || !req.body.operation_type) {
