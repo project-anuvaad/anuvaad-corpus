@@ -1099,7 +1099,7 @@ function getObjFromNode(sen_node, prev_next_node, para_index) {
         }
         node_to_be_saved.tokenized_sentences = tokenized_sentences
     } else {
-        let cell_obj = { src: "", text: "", target: "", tagged_src: "", tagged_tgt: "", s_id: 0, sentence_index: 0, n_id: node_to_be_saved.node_index + '__' + node_to_be_saved.session_id }
+        let cell_obj = { page_no: node_to_be_saved.page_no,src: "", text: "", target: "", tagged_src: "", tagged_tgt: "", s_id: 0, sentence_index: 0, n_id: node_to_be_saved.node_index + '__' + node_to_be_saved.session_id }
         tokenized_sentences.push(cell_obj)
         node_to_be_saved.tokenized_sentences = tokenized_sentences
     }
