@@ -50,6 +50,7 @@ Basemodel.findByEmbeddedCondition = function (schema, condition, pagesize, pagen
     if (!sort_column) {
         sort_column = '_id'
     }
+    LOG.info(condition, embedded_condition, (pagesize && pageno ? { skip: (pageno - 1) * pagesize, limit: parseInt(pagesize), sort: { sort_column: -1 } } : { sort: { sort_column: -1 } }))
     schema.find(condition, embedded_condition, (pagesize && pageno ? { skip: (pageno - 1) * pagesize, limit: parseInt(pagesize), sort: { sort_column: -1 } } : { sort: { sort_column: -1 } }), function (err, data) {
         if (err) {
             LOG.error("Unable to find data due to [%s]", JSON.stringify(err));

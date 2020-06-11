@@ -1021,7 +1021,7 @@ exports.addSentenceNode = function (req, res) {
     let next_node = req.body.next_node
     BaseModel.findByCondition(PdfParser, { session_id: next_node ? next_node.session_id : previous_node.session_id, created_by: userId }, null, null, null, function (err, doc) {
         if (doc && doc.length > 0) {
-            BaseModel.findByCondition(PdfSentence, { session_id: next_node ? next_node.session_id : previous_node.session_id }, null, null, null, function (err, sentences) {
+            BaseModel.findByCondition(PdfSentence, { session_id: next_node ? next_node.session_id : previous_node.session_id }, null, null, 'para_index', function (err, sentences) {
                 if (sentences && sentences.length > 0) {
                     let para_index = 0;
                     async_lib.each(sentences, (sentence, cb) => {
