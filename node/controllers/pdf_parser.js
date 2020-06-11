@@ -1082,6 +1082,7 @@ function getObjFromNode(sen_node, prev_next_node, para_index) {
     node_to_be_saved.session_id = prev_next_node.session_id
     node_to_be_saved.node_index = UUIDV4()
     node_to_be_saved.para_index = para_index
+    node_to_be_saved.text = ""
     if (sen_node.type == 'table') {
         node_to_be_saved.is_table = true
         node_to_be_saved.table_items = {}
