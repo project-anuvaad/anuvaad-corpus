@@ -1033,7 +1033,7 @@ exports.addSentenceNode = function (req, res) {
                                 BaseModel.updateData(PdfSentence, { para_index: para_index }, sentence._doc._id, function (err, data) {
                                     if (err) {
                                         LOG.error(err)
-                                    } 
+                                    }
                                     cb()
                                 })
                             })
@@ -1054,7 +1054,7 @@ exports.addSentenceNode = function (req, res) {
                             BaseModel.updateData(PdfSentence, { para_index: para_index }, sentence._doc._id, function (err, data) {
                                 if (err) {
                                     LOG.error(err)
-                                } 
+                                }
                                 cb()
                             })
                         }
@@ -1075,8 +1075,8 @@ exports.addSentenceNode = function (req, res) {
 
 function getObjFromNode(sen_node, prev_next_node, para_index) {
     let node_to_be_saved = {}
-    node_to_be_saved.page_no = parseInt(prev_next_node.page_no)
-    node_to_be_saved.page_no_end = parseInt(prev_next_node.page_no_end)
+    node_to_be_saved.page_no = prev_next_node.page_no
+    node_to_be_saved.page_no_end = prev_next_node.page_no_end
     node_to_be_saved.class_style = prev_next_node.class_style
     node_to_be_saved.status = STATUS_TRANSLATED
     node_to_be_saved.session_id = prev_next_node.session_id
@@ -1091,7 +1091,7 @@ function getObjFromNode(sen_node, prev_next_node, para_index) {
         for (var i = 0; i < sen_node.row_count; i++) {
             node_to_be_saved.table_items[i] = {}
             for (var t = 0; t < sen_node.column_count; t++) {
-                let cell_obj = { src: "", text: "", target: "", tagged_src: "", tagged_tgt: "", s_id: sentence_index, sentence_index: sentence_index, n_id: node_to_be_saved.node_index + '__' + node_to_be_saved.session_id }
+                let cell_obj = { page_no: node_to_be_saved.page_no, src: "", text: "", target: "", tagged_src: "", tagged_tgt: "", s_id: sentence_index, sentence_index: sentence_index, n_id: node_to_be_saved.node_index + '__' + node_to_be_saved.session_id }
                 node_to_be_saved.table_items[i][t] = cell_obj
                 tokenized_sentences.push(cell_obj)
                 sentence_index++
