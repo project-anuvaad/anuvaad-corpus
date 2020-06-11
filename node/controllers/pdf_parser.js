@@ -1033,9 +1033,7 @@ exports.addSentenceNode = function (req, res) {
                                 BaseModel.updateData(PdfSentence, { para_index: para_index }, sentence._doc._id, function (err, data) {
                                     if (err) {
                                         LOG.error(err)
-                                    } else {
-                                        LOG.info('Data updated', sentence)
-                                    }
+                                    } 
                                     cb()
                                 })
                             })
@@ -1047,7 +1045,7 @@ exports.addSentenceNode = function (req, res) {
                                     if (err) {
                                         LOG.error(err)
                                     } else {
-                                        LOG.info('Data Saved', sentence)
+                                        LOG.info('Data Saved', node_to_be_saved)
                                     }
                                     cb()
                                 })
@@ -1056,9 +1054,7 @@ exports.addSentenceNode = function (req, res) {
                             BaseModel.updateData(PdfSentence, { para_index: para_index }, sentence._doc._id, function (err, data) {
                                 if (err) {
                                     LOG.error(err)
-                                } else {
-                                    LOG.info('Data updated', sentence)
-                                }
+                                } 
                                 cb()
                             })
                         }
