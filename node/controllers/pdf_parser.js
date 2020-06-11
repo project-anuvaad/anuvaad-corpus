@@ -1083,10 +1083,10 @@ function getObjFromNode(sen_node, prev_next_node, para_index) {
     node_to_be_saved.node_index = UUIDV4()
     node_to_be_saved.para_index = para_index
     node_to_be_saved.text = ""
+    let tokenized_sentences = []
     if (sen_node.type == 'table') {
         node_to_be_saved.is_table = true
         node_to_be_saved.table_items = {}
-        let tokenized_sentences = []
         let sentence_index = 0
         for (var i = 0; i < sen_node.row_count; i++) {
             node_to_be_saved.table_items[i] = {}
