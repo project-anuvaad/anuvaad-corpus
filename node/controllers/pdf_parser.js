@@ -1026,7 +1026,7 @@ exports.addSentenceNode = function (req, res) {
                     let para_index = 0;
                     async_lib.each(sentences, (sentence, cb) => {
                         let sentencedb = sentence._doc
-                        if (next_node && sentencedb._id != next_node._id) {
+                        if (next_node && sentencedb._id == next_node._id) {
                             let node_to_be_saved = getObjFromNode(sen_node, next_node, para_index)
                             para_index++
                             BaseModel.saveData(PdfSentence, [node_to_be_saved], function (err, doc) {
@@ -1037,7 +1037,7 @@ exports.addSentenceNode = function (req, res) {
                                     cb()
                                 })
                             })
-                        } else if (!next_node && previous_node && sentencedb._id != previous_node._id) {
+                        } else if (!next_node && previous_node && sentencedb._id == previous_node._id) {
                             let node_to_be_saved = getObjFromNode(sen_node, previous_node, para_index + 1)
                             para_index++
                             BaseModel.updateData(PdfSentence, { para_index: para_index - 1 }, sentence._doc._id, function (err, data) {
