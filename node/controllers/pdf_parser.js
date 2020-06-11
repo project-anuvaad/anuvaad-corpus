@@ -917,7 +917,7 @@ exports.deleteSentence = function (req, res) {
                     let sentence_obj = sentences[0]._doc
                     let tokenized_data = []
                     sentence_obj.tokenized_sentences.map((t) => {
-                        sentences_delete.map((s)=>{
+                        sentences_delete.map((s) => {
                             if (t.s_id == s.s_id) {
                                 t.status = STATUS_DELETED
                             }
@@ -993,7 +993,7 @@ exports.deleteTableSentence = function (req, res) {
                         }
                         tokenized_data.push(t)
                     })
-                    BaseModel.updateData(PdfSentence, { tokenized_sentences: tokenized_data, table_items: sentence_obj.table_items}, sentence._id, function (err, data) {
+                    BaseModel.updateData(PdfSentence, { tokenized_sentences: tokenized_data, table_items: sentence_obj.table_items }, sentence._id, function (err, data) {
                         let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
                         return res.status(response.http.status).json(response);
                     })
@@ -1008,6 +1008,108 @@ exports.deleteTableSentence = function (req, res) {
             return res.status(apistatus.http.status).json(apistatus);
         }
     })
+}
+
+exports.addSentenceNode = function (req, res) {
+    let userId = req.headers['ad-userid']
+    if (!req || !req.body || !req.body.sen_node || !(req.body.previous_node || req.body.next_node)) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let sen_node = req.body.sen_node
+    let previous_node = req.body.previous_node
+    let next_node = req.body.next_node
+    BaseModel.findByCondition(PdfParser, { session_id: sentence.session_id, created_by: userId }, null, null, null, function (err, doc) {
+        if (doc && doc.length > 0) {
+            if (next_node) {
+                BaseModel.findByCondition(PdfSentence, { session_id: next_node.session_id }, null, null, null, function (err, sentences) {
+                    if (sentences && sentences.length > 0) {
+                        let para_index = 0;
+                        async_lib.each(sentences, (sentence, cb) => {
+                            let sentencedb = sentence._doc
+                            if (next_node && sentencedb._id != next_node._id) {
+                                let node_to_be_saved = getObjFromNode(sen_node, next_node, para_index)
+                                para_index++
+                                BaseModel.saveData(PdfSentence, [node_to_be_saved], function (err, doc) {
+                                    BaseModel.updateData(PdfSentence, { para_index: para_index }, sentence._doc._id, function (err, data) {
+                                        if (err) {
+                                            LOG.error(err)
+                                        } else {
+                                            LOG.info('Data updated', sentence)
+                                        }
+                                        cb()
+                                    })
+                                })
+                            } else if (!next_node && previous_node && sentencedb._id != previous_node._id) {
+                                let node_to_be_saved = getObjFromNode(sen_node, previous_node, para_index + 1)
+                                para_index++
+                                BaseModel.updateData(PdfSentence, { para_index: para_index - 1 }, sentence._doc._id, function (err, data) {
+                                    BaseModel.saveData(PdfSentence, [node_to_be_saved], function (err, doc) {
+                                        if (err) {
+                                            LOG.error(err)
+                                        } else {
+                                            LOG.info('Data Saved', sentence)
+                                        }
+                                        cb()
+                                    })
+                                })
+                            } else {
+                                BaseModel.updateData(PdfSentence, { para_index: para_index }, sentence._doc._id, function (err, data) {
+                                    if (err) {
+                                        LOG.error(err)
+                                    } else {
+                                        LOG.info('Data updated', sentence)
+                                    }
+                                    cb()
+                                })
+                            }
+                            para_index++
+                        }, function (err) {
+                            let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                            return res.status(response.http.status).json(response);
+                        })
+                    }
+                })
+            }
+        }
+        else {
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+    })
+}
+
+function getObjFromNode(sen_node, prev_next_node, para_index) {
+    let node_to_be_saved = {}
+    node_to_be_saved.page_no = prev_next_node.page_no
+    node_to_be_saved.page_no_end = prev_next_node.page_no_end
+    node_to_be_saved.class_style = prev_next_node.class_style
+    node_to_be_saved.status = STATUS_TRANSLATED
+    node_to_be_saved.session_id = prev_next_node.session_id
+    node_to_be_saved.node_index = UUIDV4()
+    node_to_be_saved.para_index = para_index
+    if (sen_node.type == 'table') {
+        node_to_be_saved.is_table = true
+        node_to_be_saved.table_items = {}
+        let tokenized_sentences = []
+        let sentence_index = 0
+        for (var i = 0; i < sen_node.row_count; i++) {
+            node_to_be_saved.table_items[i] = {}
+            for (var t = 0; t < sen_node.column_count; t++) {
+                let cell_obj = { src: "", text: "", target: "", tagged_src: "", tagged_tgt: "", s_id: sentence_index, sentence_index: sentence_index, n_id: node_to_be_saved.node_index + '__' + node_to_be_saved.session_id }
+                node_to_be_saved.table_items[i][t] = cell_obj
+                tokenized_sentences.push(cell_obj)
+                sentence_index++
+            }
+        }
+        node_to_be_saved.tokenized_sentences = tokenized_sentences
+    } else {
+        let cell_obj = { src: "", text: "", target: "", tagged_src: "", tagged_tgt: "", s_id: 0, sentence_index: 0, n_id: node_to_be_saved.node_index + '__' + node_to_be_saved.session_id }
+        tokenized_sentences.push(cell_obj)
+        node_to_be_saved.tokenized_sentences = tokenized_sentences
+    }
+
+    return node_to_be_saved
 }
 
 exports.updatePdfSourceTable = function (req, res) {
@@ -1672,7 +1774,7 @@ exports.fetchPdfSentences = function (req, res) {
                 return res.status(apistatus.http.status).json(apistatus);
             }
             let pdf_process = models[0]._doc
-            BaseModel.findByEmbeddedCondition(PdfSentence, condition, pagesize, pageno, 'para_index', { }, function (err, models) {
+            BaseModel.findByEmbeddedCondition(PdfSentence, condition, pagesize, pageno, 'para_index', {}, function (err, models) {
                 if (err) {
                     LOG.error(err)
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
