@@ -1075,8 +1075,8 @@ exports.addSentenceNode = function (req, res) {
 
 function getObjFromNode(sen_node, prev_next_node, para_index) {
     let node_to_be_saved = {}
-    node_to_be_saved.page_no = prev_next_node.page_no
-    node_to_be_saved.page_no_end = prev_next_node.page_no_end
+    node_to_be_saved.page_no = parseInt(prev_next_node.page_no)
+    node_to_be_saved.page_no_end = parseInt(prev_next_node.page_no_end)
     node_to_be_saved.class_style = prev_next_node.class_style
     node_to_be_saved.status = STATUS_TRANSLATED
     node_to_be_saved.session_id = prev_next_node.session_id
