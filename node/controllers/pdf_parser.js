@@ -1019,41 +1019,17 @@ exports.addSentenceNode = function (req, res) {
     let sen_node = req.body.sen_node
     let previous_node = req.body.previous_node
     let next_node = req.body.next_node
-    BaseModel.findByCondition(PdfParser, { session_id: sentence.session_id, created_by: userId }, null, null, null, function (err, doc) {
+    BaseModel.findByCondition(PdfParser, { session_id: next_node ? next_node.session_id : previous_node.session_id, created_by: userId }, null, null, null, function (err, doc) {
         if (doc && doc.length > 0) {
-            if (next_node) {
-                BaseModel.findByCondition(PdfSentence, { session_id: next_node.session_id }, null, null, null, function (err, sentences) {
-                    if (sentences && sentences.length > 0) {
-                        let para_index = 0;
-                        async_lib.each(sentences, (sentence, cb) => {
-                            let sentencedb = sentence._doc
-                            if (next_node && sentencedb._id != next_node._id) {
-                                let node_to_be_saved = getObjFromNode(sen_node, next_node, para_index)
-                                para_index++
-                                BaseModel.saveData(PdfSentence, [node_to_be_saved], function (err, doc) {
-                                    BaseModel.updateData(PdfSentence, { para_index: para_index }, sentence._doc._id, function (err, data) {
-                                        if (err) {
-                                            LOG.error(err)
-                                        } else {
-                                            LOG.info('Data updated', sentence)
-                                        }
-                                        cb()
-                                    })
-                                })
-                            } else if (!next_node && previous_node && sentencedb._id != previous_node._id) {
-                                let node_to_be_saved = getObjFromNode(sen_node, previous_node, para_index + 1)
-                                para_index++
-                                BaseModel.updateData(PdfSentence, { para_index: para_index - 1 }, sentence._doc._id, function (err, data) {
-                                    BaseModel.saveData(PdfSentence, [node_to_be_saved], function (err, doc) {
-                                        if (err) {
-                                            LOG.error(err)
-                                        } else {
-                                            LOG.info('Data Saved', sentence)
-                                        }
-                                        cb()
-                                    })
-                                })
-                            } else {
+            BaseModel.findByCondition(PdfSentence, { session_id: next_node ? next_node.session_id : previous_node.session_id }, null, null, null, function (err, sentences) {
+                if (sentences && sentences.length > 0) {
+                    let para_index = 0;
+                    async_lib.each(sentences, (sentence, cb) => {
+                        let sentencedb = sentence._doc
+                        if (next_node && sentencedb._id != next_node._id) {
+                            let node_to_be_saved = getObjFromNode(sen_node, next_node, para_index)
+                            para_index++
+                            BaseModel.saveData(PdfSentence, [node_to_be_saved], function (err, doc) {
                                 BaseModel.updateData(PdfSentence, { para_index: para_index }, sentence._doc._id, function (err, data) {
                                     if (err) {
                                         LOG.error(err)
@@ -1062,15 +1038,37 @@ exports.addSentenceNode = function (req, res) {
                                     }
                                     cb()
                                 })
-                            }
+                            })
+                        } else if (!next_node && previous_node && sentencedb._id != previous_node._id) {
+                            let node_to_be_saved = getObjFromNode(sen_node, previous_node, para_index + 1)
                             para_index++
-                        }, function (err) {
-                            let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
-                            return res.status(response.http.status).json(response);
-                        })
-                    }
-                })
-            }
+                            BaseModel.updateData(PdfSentence, { para_index: para_index - 1 }, sentence._doc._id, function (err, data) {
+                                BaseModel.saveData(PdfSentence, [node_to_be_saved], function (err, doc) {
+                                    if (err) {
+                                        LOG.error(err)
+                                    } else {
+                                        LOG.info('Data Saved', sentence)
+                                    }
+                                    cb()
+                                })
+                            })
+                        } else {
+                            BaseModel.updateData(PdfSentence, { para_index: para_index }, sentence._doc._id, function (err, data) {
+                                if (err) {
+                                    LOG.error(err)
+                                } else {
+                                    LOG.info('Data updated', sentence)
+                                }
+                                cb()
+                            })
+                        }
+                        para_index++
+                    }, function (err) {
+                        let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                        return res.status(response.http.status).json(response);
+                    })
+                }
+            })
         }
         else {
             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
