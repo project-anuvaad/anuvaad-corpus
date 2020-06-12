@@ -874,13 +874,13 @@ exports.updatePdfSourceSentences = function (req, res) {
                                     }
                                 }
                             }
-                            BaseModel.updateData(PdfSentence, { tokenized_sentences: updated_tokenized_sentences, table_items: sentence.table_items }, sentence._id, function (err, data) {
+                            BaseModel.updateData(PdfSentence, { text_pending: false, tokenized_sentences: updated_tokenized_sentences, table_items: sentence.table_items }, sentence._id, function (err, data) {
                                 LOG.info('Data updated', sentence)
                                 let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
                                 return res.status(response.http.status).json(response);
                             })
                         } else {
-                            BaseModel.updateData(PdfSentence, { tokenized_sentences: updated_tokenized_sentences }, sentence._id, function (err, data) {
+                            BaseModel.updateData(PdfSentence, { text_pending: false, tokenized_sentences: updated_tokenized_sentences }, sentence._id, function (err, data) {
                                 LOG.info('Data updated', sentence)
                                 let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
                                 return res.status(response.http.status).json(response);
@@ -1082,6 +1082,7 @@ function getObjFromNode(sen_node, prev_next_node, para_index) {
     node_to_be_saved.session_id = prev_next_node.session_id
     node_to_be_saved.node_index = UUIDV4()
     node_to_be_saved.para_index = para_index
+    node_to_be_saved.text_pending = true
     node_to_be_saved.text = ""
     let tokenized_sentences = []
     if (sen_node.type == 'table') {
@@ -1099,7 +1100,7 @@ function getObjFromNode(sen_node, prev_next_node, para_index) {
         }
         node_to_be_saved.tokenized_sentences = tokenized_sentences
     } else {
-        let cell_obj = { page_no: node_to_be_saved.page_no,src: " ", text: " ", target: " ", tagged_src: " ", tagged_tgt: " ", s_id: 0, sentence_index: 0, n_id: node_to_be_saved.node_index + '__' + node_to_be_saved.session_id }
+        let cell_obj = { page_no: node_to_be_saved.page_no, src: " ", text: " ", target: " ", tagged_src: " ", tagged_tgt: " ", s_id: 0, sentence_index: 0, n_id: node_to_be_saved.node_index + '__' + node_to_be_saved.session_id }
         tokenized_sentences.push(cell_obj)
         node_to_be_saved.tokenized_sentences = tokenized_sentences
     }
