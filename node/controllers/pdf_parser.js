@@ -1021,13 +1021,14 @@ exports.addSentenceNode = function (req, res) {
     let next_node = req.body.next_node
     BaseModel.findByCondition(PdfParser, { session_id: next_node ? next_node.session_id : previous_node.session_id, created_by: userId }, null, null, null, function (err, doc) {
         if (doc && doc.length > 0) {
+            let model = doc[0]._doc.model
             BaseModel.findByCondition(PdfSentence, { session_id: next_node ? next_node.session_id : previous_node.session_id }, null, null, 'para_index', function (err, sentences) {
                 if (sentences && sentences.length > 0) {
                     let para_index = 0;
                     async_lib.each(sentences, (sentence, cb) => {
                         let sentencedb = sentence._doc
                         if (next_node && sentencedb._id == next_node._id) {
-                            let node_to_be_saved = getObjFromNode(sen_node, next_node, para_index)
+                            let node_to_be_saved = getObjFromNode(sen_node, next_node, para_index, model)
                             para_index++
                             const para_index_to_be_saved = para_index
                             BaseModel.saveData(PdfSentence, [node_to_be_saved], function (err, doc) {
@@ -1039,7 +1040,7 @@ exports.addSentenceNode = function (req, res) {
                                 })
                             })
                         } else if (!next_node && previous_node && sentencedb._id == previous_node._id) {
-                            let node_to_be_saved = getObjFromNode(sen_node, previous_node, para_index + 1)
+                            let node_to_be_saved = getObjFromNode(sen_node, previous_node, para_index + 1, model)
                             para_index++
                             const para_index_to_be_saved = para_index
                             BaseModel.updateData(PdfSentence, { para_index: para_index_to_be_saved - 1 }, sentence._doc._id, function (err, data) {
@@ -1075,7 +1076,7 @@ exports.addSentenceNode = function (req, res) {
     })
 }
 
-function getObjFromNode(sen_node, prev_next_node, para_index) {
+function getObjFromNode(sen_node, prev_next_node, para_index, model) {
     let node_to_be_saved = {}
     node_to_be_saved.page_no = prev_next_node.page_no
     node_to_be_saved.page_no_end = prev_next_node.page_no_end
@@ -1094,7 +1095,7 @@ function getObjFromNode(sen_node, prev_next_node, para_index) {
         for (var i = 0; i < sen_node.row_count; i++) {
             node_to_be_saved.table_items[i] = {}
             for (var t = 0; t < sen_node.column_count; t++) {
-                let cell_obj = { page_no: node_to_be_saved.page_no, src: "", text: "", target: "", tagged_src: "", tagged_tgt: "", s_id: sentence_index, sentence_index: sentence_index, n_id: node_to_be_saved.node_index + '__' + node_to_be_saved.session_id }
+                let cell_obj = { page_no: node_to_be_saved.page_no, id: parseInt(model.model_id), src: "", text: "", target: "", tagged_src: "", tagged_tgt: "", s_id: sentence_index, sentence_index: sentence_index, n_id: node_to_be_saved.node_index + '__' + node_to_be_saved.session_id }
                 node_to_be_saved.table_items[i][t] = cell_obj
                 tokenized_sentences.push(cell_obj)
                 sentence_index++
@@ -1102,7 +1103,7 @@ function getObjFromNode(sen_node, prev_next_node, para_index) {
         }
         node_to_be_saved.tokenized_sentences = tokenized_sentences
     } else {
-        let cell_obj = { page_no: node_to_be_saved.page_no, src: " ", text: " ", target: " ", tagged_src: " ", tagged_tgt: " ", s_id: 0, sentence_index: 0, n_id: node_to_be_saved.node_index + '__' + node_to_be_saved.session_id }
+        let cell_obj = { page_no: node_to_be_saved.page_no, src: " ", text: " ",id: parseInt(model.model_id), target: " ", tagged_src: " ", tagged_tgt: " ", s_id: 0, sentence_index: 0, n_id: node_to_be_saved.node_index + '__' + node_to_be_saved.session_id }
         tokenized_sentences.push(cell_obj)
         node_to_be_saved.tokenized_sentences = tokenized_sentences
     }
