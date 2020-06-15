@@ -1029,8 +1029,9 @@ exports.addSentenceNode = function (req, res) {
                         if (next_node && sentencedb._id == next_node._id) {
                             let node_to_be_saved = getObjFromNode(sen_node, next_node, para_index)
                             para_index++
+                            const para_index_to_be_saved = para_index
                             BaseModel.saveData(PdfSentence, [node_to_be_saved], function (err, doc) {
-                                BaseModel.updateData(PdfSentence, { para_index: para_index }, sentence._doc._id, function (err, data) {
+                                BaseModel.updateData(PdfSentence, { para_index: para_index_to_be_saved }, sentence._doc._id, function (err, data) {
                                     if (err) {
                                         LOG.error(err)
                                     }
@@ -1040,7 +1041,8 @@ exports.addSentenceNode = function (req, res) {
                         } else if (!next_node && previous_node && sentencedb._id == previous_node._id) {
                             let node_to_be_saved = getObjFromNode(sen_node, previous_node, para_index + 1)
                             para_index++
-                            BaseModel.updateData(PdfSentence, { para_index: para_index - 1 }, sentence._doc._id, function (err, data) {
+                            const para_index_to_be_saved = para_index
+                            BaseModel.updateData(PdfSentence, { para_index: para_index_to_be_saved - 1 }, sentence._doc._id, function (err, data) {
                                 BaseModel.saveData(PdfSentence, [node_to_be_saved], function (err, doc) {
                                     if (err) {
                                         LOG.error(err)
