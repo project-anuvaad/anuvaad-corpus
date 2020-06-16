@@ -1095,7 +1095,7 @@ function getObjFromNode(sen_node, prev_next_node, para_index, model) {
         for (var i = 0; i < sen_node.row_count; i++) {
             node_to_be_saved.table_items[i] = {}
             for (var t = 0; t < sen_node.column_count; t++) {
-                let cell_obj = { table_column: j, table_row: i, page_no: node_to_be_saved.page_no, id: parseInt(model.model_id), src: "", text: "", target: "", tagged_src: "", tagged_tgt: "", s_id: sentence_index, sentence_index: sentence_index, n_id: node_to_be_saved.node_index + '__' + node_to_be_saved.session_id }
+                let cell_obj = { table_column: t, table_row: i, page_no: node_to_be_saved.page_no, id: parseInt(model.model_id), src: "", text: "", target: "", tagged_src: "", tagged_tgt: "", s_id: sentence_index, sentence_index: sentence_index, n_id: node_to_be_saved.node_index + '__' + node_to_be_saved.session_id }
                 node_to_be_saved.table_items[i][t] = cell_obj
                 tokenized_sentences.push(cell_obj)
                 sentence_index++
