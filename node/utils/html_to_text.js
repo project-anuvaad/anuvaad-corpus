@@ -436,7 +436,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                 o.parent_table.rect.map((rect) => {
                     if (!table_items[rect.index[0]])
                         table_items[rect.index[0]] = {}
-                    table_items[rect.index[0]][rect.index[1]] = { 'text': '', 'page_no': o.page_no, node_index: new Date().getTime() }
+                    table_items[rect.index[0]][rect.index[1]] = { 'table_row':rect.index[0],'table_column':rect.index[1],'text': '', 'page_no': o.page_no, node_index: new Date().getTime() }
                 })
 
                 table_items[o.table_row][o.table_column] = table_item
