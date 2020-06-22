@@ -11,7 +11,8 @@ const PAGE_BREAK_IDENTIFIER = '__LINE_BREAK__'
 const DIGITAL_SIGN_IDENTIFIER = '__DIGITAL_SIGN__'
 
 
-exports.convertHtmlTextToJson = function (text, cb) {
+
+exports.convertHtmlTextToJson = function(text, cb) {
     htmlToJson.parse(text, function () {
         return this.map('p', function ($item) {
             let obj = {}
@@ -50,7 +51,7 @@ exports.convertHtmlTextToJson = function (text, cb) {
             if(index==0){
                 output = it
             }
-            if(it.text.length > 0){  
+            if(it.text.length > 0 && index!=0){  
                 output.text+=" "+it.text;
             }
         })
