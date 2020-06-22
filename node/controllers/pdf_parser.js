@@ -1859,13 +1859,13 @@ exports.makeDocFromSentences = function (req, res) {
     let condition = { session_id: req.body.session_id }
     BaseModel.findByCondition(PdfParser, condition, null, null, null, function (err, pdf_parsers) {
         let pdf_parser_obj = pdf_parsers[0]._doc
-        BaseModel.findByCondition(PdfSentence, condition, null, null, 'sentence_index', function (err, models) {
+        BaseModel.findByCondition(PdfSentence, condition, null, null, 'para_index', function (err, sentences) {
             if (err) {
                 LOG.error(err)
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
-            DocxCreator.covertJsonToDocForSentences(models, 'target', BASE_PATH_NGINX, pdf_parser_obj.process_name, function (err, filepath) {
+            DocxCreator.covertJsonToDocForSentences(sentences, 'target', BASE_PATH_NGINX, pdf_parser_obj.process_name, function (err, filepath) {
                 if (err) {
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);
