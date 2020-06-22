@@ -828,75 +828,83 @@ exports.updatePdfSourceSentences = function (req, res) {
     }
     let sentence = req.body.sentence
     let update_sentence = req.body.update_sentence
-    BaseModel.findByCondition(PdfParser, { session_id: sentence.session_id, created_by: userId }, null, null, null, function (err, doc) {
-        if (doc && doc.length > 0) {
-            let pdf_parser = doc[0]._doc
-            let updated_tokenized_sentences = []
-            let sentence_to_be_translated = {}
-            let sentence_to_be_translated_index = -1
-            sentence.tokenized_sentences.map((tokenized_sentence, index) => {
-                if (tokenized_sentence.s_id == update_sentence.s_id) {
-                    sentence_to_be_translated_index = index
-                    updated_tokenized_sentences.push(update_sentence)
-                    sentence_to_be_translated = update_sentence
-                }
-                else {
-                    updated_tokenized_sentences.push(tokenized_sentence)
-                }
-            })
-            if (sentence_to_be_translated_index != -1) {
-                TranslateAnuvaad.translateFromAnuvaad([sentence_to_be_translated], pdf_parser.model ? pdf_parser.model.url_end_point : null, function (err, translation) {
-                    if (err) {
-                        LOG.error(err)
-                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                        return res.status(apistatus.http.status).json(apistatus);
+    HtmlToText.convertHtmlTextToJson(update_sentence.src, function (err, output) {
+        if(output.text){
+            update_sentence.text = output.text
+            update_sentence.src = output.src
+            update_sentence.underline = output.underline
+            update_sentence.is_bold = output.is_bold
+        }
+        BaseModel.findByCondition(PdfParser, { session_id: sentence.session_id, created_by: userId }, null, null, null, function (err, doc) {
+            if (doc && doc.length > 0) {
+                let pdf_parser = doc[0]._doc
+                let updated_tokenized_sentences = []
+                let sentence_to_be_translated = {}
+                let sentence_to_be_translated_index = -1
+                sentence.tokenized_sentences.map((tokenized_sentence, index) => {
+                    if (tokenized_sentence.s_id == update_sentence.s_id) {
+                        sentence_to_be_translated_index = index
+                        updated_tokenized_sentences.push(update_sentence)
+                        sentence_to_be_translated = update_sentence
                     }
                     else {
-                        let translated_sentence = translation[0]
-                        let sentence_before_translation = updated_tokenized_sentences[sentence_to_be_translated_index]
-                        sentence_before_translation.tagged_src = translated_sentence.tagged_src
-                        sentence_before_translation.tagged_tgt = translated_sentence.tagged_tgt
-                        sentence_before_translation.target = translated_sentence.tgt
-                        updated_tokenized_sentences[sentence_to_be_translated_index] = sentence_before_translation
-                        if (sentence.is_table) {
-                            if (sentence.table_items) {
-                                for (var row in sentence.table_items) {
-                                    for (var col in sentence.table_items[row]) {
-                                        if (sentence.table_items[row][col].sentence_index == update_sentence.s_id) {
-                                            let sentence_before_translation = sentence.table_items[row][col]
-                                            sentence_before_translation.tagged_src = translated_sentence.tagged_src
-                                            sentence_before_translation.text = translated_sentence.src
-                                            sentence_before_translation.tagged_tgt = translated_sentence.tagged_tgt
-                                            sentence_before_translation.target = translated_sentence.tgt
-                                            sentence.table_items[row][col] = sentence_before_translation
-                                            break
+                        updated_tokenized_sentences.push(tokenized_sentence)
+                    }
+                })
+                if (sentence_to_be_translated_index != -1) {
+                    TranslateAnuvaad.translateFromAnuvaad([sentence_to_be_translated], pdf_parser.model ? pdf_parser.model.url_end_point : null, function (err, translation) {
+                        if (err) {
+                            LOG.error(err)
+                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                            return res.status(apistatus.http.status).json(apistatus);
+                        }
+                        else {
+                            let translated_sentence = translation[0]
+                            let sentence_before_translation = updated_tokenized_sentences[sentence_to_be_translated_index]
+                            sentence_before_translation.tagged_src = translated_sentence.tagged_src
+                            sentence_before_translation.tagged_tgt = translated_sentence.tagged_tgt
+                            sentence_before_translation.target = translated_sentence.tgt
+                            updated_tokenized_sentences[sentence_to_be_translated_index] = sentence_before_translation
+                            if (sentence.is_table) {
+                                if (sentence.table_items) {
+                                    for (var row in sentence.table_items) {
+                                        for (var col in sentence.table_items[row]) {
+                                            if (sentence.table_items[row][col].sentence_index == update_sentence.s_id) {
+                                                let sentence_before_translation = sentence.table_items[row][col]
+                                                sentence_before_translation.tagged_src = translated_sentence.tagged_src
+                                                sentence_before_translation.text = translated_sentence.src
+                                                sentence_before_translation.tagged_tgt = translated_sentence.tagged_tgt
+                                                sentence_before_translation.target = translated_sentence.tgt
+                                                sentence.table_items[row][col] = sentence_before_translation
+                                                break
+                                            }
                                         }
                                     }
                                 }
+                                BaseModel.updateData(PdfSentence, { text_pending: false, tokenized_sentences: updated_tokenized_sentences, table_items: sentence.table_items }, sentence._id, function (err, data) {
+                                    LOG.info('Data updated', sentence)
+                                    let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                                    return res.status(response.http.status).json(response);
+                                })
+                            } else {
+                                BaseModel.updateData(PdfSentence, { text_pending: false, tokenized_sentences: updated_tokenized_sentences }, sentence._id, function (err, data) {
+                                    LOG.info('Data updated', sentence)
+                                    let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                                    return res.status(response.http.status).json(response);
+                                })
                             }
-                            BaseModel.updateData(PdfSentence, { text_pending: false, tokenized_sentences: updated_tokenized_sentences, table_items: sentence.table_items }, sentence._id, function (err, data) {
-                                LOG.info('Data updated', sentence)
-                                let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
-                                return res.status(response.http.status).json(response);
-                            })
-                        } else {
-                            BaseModel.updateData(PdfSentence, { text_pending: false, tokenized_sentences: updated_tokenized_sentences }, sentence._id, function (err, data) {
-                                LOG.info('Data updated', sentence)
-                                let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
-                                return res.status(response.http.status).json(response);
-                            })
-                        }
 
-                    }
-                })
+                        }
+                    })
+                } else {
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
             } else {
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
-        } else {
-            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
-            return res.status(apistatus.http.status).json(apistatus);
-        }
+        })
     })
 }
 
