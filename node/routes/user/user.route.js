@@ -17,10 +17,10 @@ module.exports = function (router) {
     router.route('/create-user')
         .post(userController.createUser);
 
-    router.route('/signup-user')
+    router.route('/v1/user/signup-user')
         .post(userController.signUpUser);
 
-    router.route('/forgot-user-password')
+    router.route('/v1/user/forgot-user-password')
         .post(userController.forgotPassword);
 
     router.route('/set-user-password')
@@ -29,6 +29,6 @@ module.exports = function (router) {
     router.route('/update-user-status')
         .post(userController.updateUserStatus);
 
-    router.route('/activate-account')
+    router.route('/v1/user/activate-account')
         .post(userController.activateAccount);
 }
