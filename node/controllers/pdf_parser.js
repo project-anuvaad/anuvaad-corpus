@@ -831,7 +831,7 @@ exports.updatePdfSourceSentences = function (req, res) {
     HtmlToText.convertHtmlTextToJson(update_sentence.src, function (err, output) {
         if(output.text){
             update_sentence.text = output.text
-            update_sentence.src = output.src
+            update_sentence.src = output.text
             update_sentence.underline = output.underline
             update_sentence.is_bold = output.is_bold
         }
