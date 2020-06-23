@@ -6,6 +6,7 @@
  */
 var pdfParserController = require('../../controllers/pdf_parser');
 const BASE_PATH = '/v1/interactive-editor'
+const BASE_PATH_V2 = '/v2/interactive-editor'
 
 module.exports = function (router) {
     router.route(BASE_PATH + '/start-pdf-parse-process')
@@ -37,6 +38,9 @@ module.exports = function (router) {
 
     router.route(BASE_PATH + '/extract-pdf-to-sentences')
         .post(pdfParserController.extractPdfToSentences);
+
+    router.route(BASE_PATH_V2 + '/extract-pdf-to-sentences')
+        .post(pdfParserController.extractPdfToSentencesV2);
 
     router.route(BASE_PATH + '/merge-split-sentence')
         .post(pdfParserController.mergeSplitSentence);

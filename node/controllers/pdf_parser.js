@@ -820,6 +820,82 @@ exports.extractPdfToSentences = function (req, res) {
     })
 }
 
+exports.extractPdfToSentencesV2 = function (req, res) {
+    if (!req || !req.body || !req.files || !req.files.pdf_data || !req.body.lang) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let file = req.files.pdf_data
+    let pdf_parser_process = {}
+    pdf_parser_process.session_id = UUIDV4()
+    pdf_parser_process.pdf_path = escape(file.name)
+    fs.mkdir(BASE_PATH_UPLOAD + pdf_parser_process.session_id, function (e) {
+        fs.writeFile(BASE_PATH_UPLOAD + pdf_parser_process.session_id + '/' + pdf_parser_process.pdf_path, file.data, function (err) {
+            if (err) {
+                LOG.error(err)
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+            // if (req.body.lang == 'hi') {
+                PdfToText.converPdfToJsonV2(BASE_PATH_UPLOAD + pdf_parser_process.session_id + '/' + pdf_parser_process.pdf_path, function (err, data) {
+                    if (err) {
+                        LOG.error(err)
+                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                        return res.status(apistatus.http.status).json(apistatus);
+                    }
+                    let previous_height = -1;
+                    data.map((page_wise) => {
+                        page_wise.line_data.map((d) => {
+                            if (previous_height == -1) {
+                                previous_height = d.height
+                            } else if (Math.abs(previous_height - d.height) <= 5) {
+                                d.height = previous_height
+                            }
+                            d.node_index = d.pdf_index
+                            d.page_no_end = d.page_no
+                            d.class_style = { 'font-size': d.height + 'px', 'font-family': 'Times' }
+                            previous_height = d.height
+                        })
+
+                    })
+                    PdfJsonToText.mergeParagraphJsonNodesV2(data, function (err, out) {
+                        // axios.post(PYTHON_BASE_URL + (req.body.lang == 'hi' ? TOKENIZED_HINDI_ENDPOINT : TOKENIZED_ENDPOINT),
+                        //     {
+                        //         paragraphs: out
+                        //     }
+                        // ).then(function (api_res) {
+                        //     let sentences = []
+                        //     if (api_res && api_res.data) {
+                        //         api_res.data.data.map((d) => {
+                        //             sentences = sentences.concat(d.text)
+                        //         })
+                        //     }
+                        //     let response = new Response(StatusCode.SUCCESS, sentences).getRsp()
+                        //     return res.status(response.http.status).json(response);
+                        // }).catch(e => {
+                            LOG.error(e)
+                            let response = new Response(StatusCode.SUCCESS, out).getRsp()
+                            return res.status(response.http.status).json(response);
+                        // })
+
+                    })
+                })
+            // } else {
+            //     PdfToHtml.convertPdfToHtmlPagewise(BASE_PATH_UPLOAD, pdf_parser_process.pdf_path, 'output.html', pdf_parser_process.session_id, function (err, data) {
+            //         if (err) {
+            //             LOG.error(err)
+            //             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            //             return res.status(apistatus.http.status).json(apistatus);
+            //         }
+            //         let index = 1
+            //         let output_res = {}
+            //         processHtml(pdf_parser_process, index, output_res, false, 1, true, false, null, res, false, null, true, true)
+            //     })
+            // }
+        })
+    })
+}
+
 exports.updatePdfSourceSentences = function (req, res) {
     let userId = req.headers['ad-userid']
     if (!req || !req.body || !req.body.sentence || !req.body.update_sentence) {
