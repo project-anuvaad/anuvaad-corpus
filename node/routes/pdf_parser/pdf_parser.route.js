@@ -51,6 +51,9 @@ module.exports = function (router) {
     router.route(BASE_PATH + '/update-pdf-source-table')
         .post(pdfParserController.updatePdfSourceTable);
 
+    router.route(BASE_PATH + '/etl-merge-nodes')
+        .post(pdfParserController.etlMergeNodes);
+
     router.route(BASE_PATH + '/delete-sentence')
         .post(pdfParserController.deleteSentence);
 
