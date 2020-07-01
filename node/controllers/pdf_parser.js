@@ -840,7 +840,7 @@ exports.etlMergeNodes = function (req, res) {
             })
         })
     }, function (err) {
-        let output = { jobID: req.body.jobID, state: 'MERGE-PDF-NODES', output: { files: output_files }, status: 'SUCCESS', taskID: 'MergePdfNodes' + new Date().getTime(), workflowCode: req.body.workflowCode, taskStarttime: task_start_time, taskendTime: new Date().getTime() }
+        let output = { jobID: req.body.jobID, state: 'MERGE-PDF-NODES', output: { files: output_files }, status: 'SUCCESS', taskID: 'MergePdfNodes' + new Date().getTime(), workflowCode: req.body.workflowCode, taskStartTime: task_start_time, taskEndTime: new Date().getTime() }
         return res.status(200).json(output);
     })
 }
