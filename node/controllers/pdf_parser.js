@@ -30,7 +30,6 @@ const NER_BASE_URL = process.env.NER_BASE_URL ? process.env.NER_BASE_URL : 'http
 var COMPONENT = "pdf_parser";
 const BASE_PATH_NGINX = 'nginx/'
 const BASE_PATH_UPLOAD = 'corpusfiles/pdfs/'
-const ETL_UPLOAD = 'upload/'
 const STATUS_PROCESSING = 'PROCESSING'
 const STATUS_COMPLETED = 'COMPLETED'
 const STATUS_TRANSLATING = 'TRANSLATING'
@@ -831,11 +830,11 @@ exports.etlMergeNodes = function (req, res) {
     let files = req.body.input.files
     let output_files = []
     async_lib.each(files, (file, cb) => {
-        let rawdata = fs.readFileSync(ETL_UPLOAD + file.path);
+        let rawdata = fs.readFileSync(BASE_PATH_NGINX + file.path);
         let data = JSON.parse(rawdata);
         HtmlToText.mergeHtmlNodes(data, function (err, data, header_text, footer_text) {
             let file_name = new Date().getTime() + '_' + UUIDV4() + '.json'
-            fs.writeFile(ETL_UPLOAD + file_name, JSON.stringify({ data: data, header_text: header_text, footer_text: footer_text }), function (err) {
+            fs.writeFile(BASE_PATH_NGINX + file_name, JSON.stringify({ data: data, header_text: header_text, footer_text: footer_text }), function (err) {
                 output_files.push({ inputFile: file.path, outputFile: file_name, outputLocale: file.locale, outputType: 'json' })
                 cb()
             })
