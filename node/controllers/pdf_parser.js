@@ -822,11 +822,12 @@ exports.extractPdfToSentences = function (req, res) {
 }
 
 exports.etlMergeNodes = function (req, res) {
+    let task_start_time = new Date().getTime();
     if (!req || !req.body || !req.body.input || !req.body.input.files || !Array.isArray(req.body.input.files) || req.body.input.files.length == 0) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
-        return res.status(apistatus.http.status).json(apistatus);
+        let err_output = { jobID: req.body.jobID, state: 'MERGE-PDF-NODES', status: 'FAILED', error: StatusCode.ERR_GLOBAL_MISSING_PARAMETERS.why, code: StatusCode.ERR_GLOBAL_MISSING_PARAMETERS.http.status, taskID: 'MergePdfNodes' + new Date().getTime(), workflowCode: req.body.workflowCode, taskStartTime: task_start_time, taskEndTime: new Date().getTime(), stepOrder: req.body.stepOrder }
+        return res.status(apistatus.http.status).json(err_output);
     }
-    let task_start_time = new Date().getTime();
     let files = req.body.input.files
     let output_files = []
     async_lib.each(files, (file, cb) => {
@@ -840,7 +841,7 @@ exports.etlMergeNodes = function (req, res) {
             })
         })
     }, function (err) {
-        let output = { jobID: req.body.jobID, state: 'MERGE-PDF-NODES', output: { files: output_files }, status: 'SUCCESS', taskID: 'MergePdfNodes' + new Date().getTime(), workflowCode: req.body.workflowCode, taskStartTime: task_start_time, taskEndTime: new Date().getTime() }
+        let output = { jobID: req.body.jobID, state: 'MERGE-PDF-NODES', output: { files: output_files }, status: 'SUCCESS', taskID: 'MergePdfNodes' + new Date().getTime(), workflowCode: req.body.workflowCode, taskStartTime: task_start_time, taskEndTime: new Date().getTime(), stepOrder: req.body.stepOrder }
         return res.status(200).json(output);
     })
 }

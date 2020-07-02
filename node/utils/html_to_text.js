@@ -166,7 +166,7 @@ exports.convertHtmlToJsonPagewise = function (basefolder, inputfilename, session
 
 function checkForTable(text_node, image_data) {
     let table_check_obj = { is_table: false, class_identifier: null }
-    if (image_data.tables && Array.isArray(image_data.tables)) {
+    if (image_data && image_data.tables && Array.isArray(image_data.tables)) {
         image_data.tables.map((table) => {
             if (parseInt(text_node.y) >= table.y && parseInt(text_node.y) <= table.y + table.h) {
                 table.rect.map((rect) => {
