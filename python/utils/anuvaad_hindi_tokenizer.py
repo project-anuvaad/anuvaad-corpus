@@ -14,8 +14,8 @@ class AnuvaadHinTokenizer(object):
     """
     Default abbrevations
     """
-    _abbrevations_with_space = [' ऐ.',' बी.',' सी.',' डी.',' ई.',' एफ.',' जी.',' एच.',' आइ.',' जे.',' के.',' एल.',' एम.',' एन.',' ओ.',' पी.',' क्यू.',' आर.',' एस.',' टी.',' यू.',' वी.',' डब्लू.',' एक्स.',' वायी.',' ज़ेड.','डॉ.','पं.']
-    # _abbrevations_without_space = ['Crl.']
+    _abbrevations_with_space = [' ऐ.',' बी.',' सी.',' डी.',' ई.',' एफ.',' जी.',' एच.',' आइ.',' जे.',' के.',' एल.',' एम.',' एन.',' ओ.',' पी.',' क्यू.',' आर.',' एस.',' टी.',' यू.',' वी.',' डब्लू.',' एक्स.',' वायी.',' ज़ेड.']
+    _abbrevations_without_space = ['डॉ.','पं.']
     _tokenizer = None
     _regex_search_texts = []
     _date_abbrevations  = []
@@ -305,17 +305,25 @@ class AnuvaadHinTokenizer(object):
         index_for_without_space = 0
         for abbrev in self._abbrevations_with_space:
             pattern = re.compile(abbrev, re.IGNORECASE)
-            text = pattern.sub(' #'+str(index)+'# ', text)
+            text = pattern.sub(' #'+str(index)+'#', text)
             index += 1
+        for abbrev in self._abbrevations_without_space:
+            pattern = re.compile(re.escape(abbrev), re.IGNORECASE)
+            text = pattern.sub('#'+str(index_for_without_space)+'##', text)
+            index_for_without_space += 1
         return text
 
     def deserialize_with_abbrevations(self, text):
         index = 0
         index_for_without_space = 0
         for abbrev in self._abbrevations_with_space:
-            pattern = re.compile(re.escape('#'+str(index)+'# '), re.IGNORECASE)
+            pattern = re.compile(re.escape(' #'+str(index)+'#'), re.IGNORECASE)
             text = pattern.sub(abbrev, text)
             index += 1
+        for abbrev in self._abbrevations_without_space:
+            pattern = re.compile(re.escape('#'+str(index_for_without_space)+'##'), re.IGNORECASE)
+            text = pattern.sub(abbrev, text)
+            index_for_without_space += 1
         return text
 
 
