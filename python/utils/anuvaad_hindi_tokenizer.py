@@ -318,14 +318,14 @@ class AnuvaadHinTokenizer(object):
     def deserialize_with_abbrevations(self, text):
         index = 0
         index_for_without_space = 0
-        for abbrev in self._abbrevations_with_space:
-            pattern = re.compile(re.escape(' #'+str(index)+'#'), re.IGNORECASE)
-            text = pattern.sub(abbrev, text)
-            index += 1
         for abbrev in self._abbrevations_without_space:
             pattern = re.compile(re.escape('#'+str(index_for_without_space)+'##'), re.IGNORECASE)
             text = pattern.sub(abbrev, text)
             index_for_without_space += 1
+        for abbrev in self._abbrevations_with_space:
+            pattern = re.compile(re.escape(' #'+str(index)+'#'), re.IGNORECASE)
+            text = pattern.sub(abbrev, text)
+            index += 1
         return text
 
 
