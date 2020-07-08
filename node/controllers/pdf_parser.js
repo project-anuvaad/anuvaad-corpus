@@ -820,6 +820,107 @@ exports.extractPdfToSentences = function (req, res) {
     })
 }
 
+exports.etlMergeNodes = function (req, res) {
+    let task_start_time = new Date().getTime();
+    if (!req || !req.body || !req.body.input || !req.body.input.files || !Array.isArray(req.body.input.files) || req.body.input.files.length == 0) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        let err_output = { jobID: req.body.jobID, state: 'MERGE-PDF-NODES', status: 'FAILED', error: StatusCode.ERR_GLOBAL_MISSING_PARAMETERS.why, code: StatusCode.ERR_GLOBAL_MISSING_PARAMETERS.http.status, taskID: 'MergePdfNodes' + new Date().getTime(), workflowCode: req.body.workflowCode, taskStartTime: task_start_time, taskEndTime: new Date().getTime(), stepOrder: req.body.stepOrder }
+        return res.status(apistatus.http.status).json(err_output);
+    }
+    let files = req.body.input.files
+    let output_files = []
+    async_lib.each(files, (file, cb) => {
+        let rawdata = fs.readFileSync(BASE_PATH_NGINX + file.path);
+        let data = JSON.parse(rawdata);
+        HtmlToText.mergeHtmlNodes(data, function (err, data, header_text, footer_text) {
+            let file_name = new Date().getTime() + '_' + UUIDV4() + '.json'
+            fs.writeFile(BASE_PATH_NGINX + file_name, JSON.stringify({ data: data, header_text: header_text, footer_text: footer_text }), function (err) {
+                output_files.push({ inputFile: file.path, outputFile: file_name, outputLocale: file.locale, outputType: 'json' })
+                cb()
+            })
+        })
+    }, function (err) {
+        let output = { jobID: req.body.jobID, state: 'MERGE-PDF-NODES', output: { files: output_files }, status: 'SUCCESS', taskID: 'MergePdfNodes' + new Date().getTime(), workflowCode: req.body.workflowCode, taskStartTime: task_start_time, taskEndTime: new Date().getTime(), stepOrder: req.body.stepOrder }
+        return res.status(200).json(output);
+    })
+}
+
+exports.extractPdfToSentencesV2 = function (req, res) {
+    if (!req || !req.body || !req.files || !req.files.pdf_data || !req.body.lang) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let file = req.files.pdf_data
+    let pdf_parser_process = {}
+    pdf_parser_process.session_id = UUIDV4()
+    pdf_parser_process.pdf_path = escape(file.name)
+    fs.mkdir(BASE_PATH_UPLOAD + pdf_parser_process.session_id, function (e) {
+        fs.writeFile(BASE_PATH_UPLOAD + pdf_parser_process.session_id + '/' + pdf_parser_process.pdf_path, file.data, function (err) {
+            if (err) {
+                LOG.error(err)
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
+            // if (req.body.lang == 'hi') {
+            PdfToText.converPdfToJsonV2(BASE_PATH_UPLOAD + pdf_parser_process.session_id + '/' + pdf_parser_process.pdf_path, function (err, data) {
+                if (err) {
+                    LOG.error(err)
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
+                let previous_height = -1;
+                data.map((page_wise) => {
+                    page_wise.line_data.map((d) => {
+                        if (previous_height == -1) {
+                            previous_height = d.height
+                        } else if (Math.abs(previous_height - d.height) <= 5) {
+                            d.height = previous_height
+                        }
+                        d.node_index = d.pdf_index
+                        d.page_no_end = d.page_no
+                        d.class_style = { 'font-size': d.height + 'px', 'font-family': 'Times' }
+                        previous_height = d.height
+                    })
+
+                })
+                PdfJsonToText.mergeParagraphJsonNodesV2(data, function (err, out) {
+                    // axios.post(PYTHON_BASE_URL + (req.body.lang == 'hi' ? TOKENIZED_HINDI_ENDPOINT : TOKENIZED_ENDPOINT),
+                    //     {
+                    //         paragraphs: out
+                    //     }
+                    // ).then(function (api_res) {
+                    //     let sentences = []
+                    //     if (api_res && api_res.data) {
+                    //         api_res.data.data.map((d) => {
+                    //             sentences = sentences.concat(d.text)
+                    //         })
+                    //     }
+                    //     let response = new Response(StatusCode.SUCCESS, sentences).getRsp()
+                    //     return res.status(response.http.status).json(response);
+                    // }).catch(e => {
+                    LOG.error(e)
+                    let response = new Response(StatusCode.SUCCESS, out).getRsp()
+                    return res.status(response.http.status).json(response);
+                    // })
+
+                })
+            })
+            // } else {
+            //     PdfToHtml.convertPdfToHtmlPagewise(BASE_PATH_UPLOAD, pdf_parser_process.pdf_path, 'output.html', pdf_parser_process.session_id, function (err, data) {
+            //         if (err) {
+            //             LOG.error(err)
+            //             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            //             return res.status(apistatus.http.status).json(apistatus);
+            //         }
+            //         let index = 1
+            //         let output_res = {}
+            //         processHtml(pdf_parser_process, index, output_res, false, 1, true, false, null, res, false, null, true, true)
+            //     })
+            // }
+        })
+    })
+}
+
 exports.updatePdfSourceSentences = function (req, res) {
     let userId = req.headers['ad-userid']
     if (!req || !req.body || !req.body.sentence || !req.body.update_sentence) {
@@ -828,75 +929,83 @@ exports.updatePdfSourceSentences = function (req, res) {
     }
     let sentence = req.body.sentence
     let update_sentence = req.body.update_sentence
-    BaseModel.findByCondition(PdfParser, { session_id: sentence.session_id, created_by: userId }, null, null, null, function (err, doc) {
-        if (doc && doc.length > 0) {
-            let pdf_parser = doc[0]._doc
-            let updated_tokenized_sentences = []
-            let sentence_to_be_translated = {}
-            let sentence_to_be_translated_index = -1
-            sentence.tokenized_sentences.map((tokenized_sentence, index) => {
-                if (tokenized_sentence.s_id == update_sentence.s_id) {
-                    sentence_to_be_translated_index = index
-                    updated_tokenized_sentences.push(update_sentence)
-                    sentence_to_be_translated = update_sentence
-                }
-                else {
-                    updated_tokenized_sentences.push(tokenized_sentence)
-                }
-            })
-            if (sentence_to_be_translated_index != -1) {
-                TranslateAnuvaad.translateFromAnuvaad([sentence_to_be_translated], pdf_parser.model ? pdf_parser.model.url_end_point : null, function (err, translation) {
-                    if (err) {
-                        LOG.error(err)
-                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                        return res.status(apistatus.http.status).json(apistatus);
+    HtmlToText.convertHtmlTextToJson(update_sentence.src, function (err, output) {
+        if (output.text) {
+            update_sentence.text = output.text
+            update_sentence.src = output.text
+            update_sentence.underline = output.underline
+            update_sentence.is_bold = output.is_bold
+        }
+        BaseModel.findByCondition(PdfParser, { session_id: sentence.session_id, created_by: userId }, null, null, null, function (err, doc) {
+            if (doc && doc.length > 0) {
+                let pdf_parser = doc[0]._doc
+                let updated_tokenized_sentences = []
+                let sentence_to_be_translated = {}
+                let sentence_to_be_translated_index = -1
+                sentence.tokenized_sentences.map((tokenized_sentence, index) => {
+                    if (tokenized_sentence.s_id == update_sentence.s_id) {
+                        sentence_to_be_translated_index = index
+                        updated_tokenized_sentences.push(update_sentence)
+                        sentence_to_be_translated = update_sentence
                     }
                     else {
-                        let translated_sentence = translation[0]
-                        let sentence_before_translation = updated_tokenized_sentences[sentence_to_be_translated_index]
-                        sentence_before_translation.tagged_src = translated_sentence.tagged_src
-                        sentence_before_translation.tagged_tgt = translated_sentence.tagged_tgt
-                        sentence_before_translation.target = translated_sentence.tgt
-                        updated_tokenized_sentences[sentence_to_be_translated_index] = sentence_before_translation
-                        if (sentence.is_table) {
-                            if (sentence.table_items) {
-                                for (var row in sentence.table_items) {
-                                    for (var col in sentence.table_items[row]) {
-                                        if (sentence.table_items[row][col].sentence_index == update_sentence.s_id) {
-                                            let sentence_before_translation = sentence.table_items[row][col]
-                                            sentence_before_translation.tagged_src = translated_sentence.tagged_src
-                                            sentence_before_translation.text = translated_sentence.src
-                                            sentence_before_translation.tagged_tgt = translated_sentence.tagged_tgt
-                                            sentence_before_translation.target = translated_sentence.tgt
-                                            sentence.table_items[row][col] = sentence_before_translation
-                                            break
+                        updated_tokenized_sentences.push(tokenized_sentence)
+                    }
+                })
+                if (sentence_to_be_translated_index != -1) {
+                    TranslateAnuvaad.translateFromAnuvaad([sentence_to_be_translated], pdf_parser.model ? pdf_parser.model.url_end_point : null, function (err, translation) {
+                        if (err) {
+                            LOG.error(err)
+                            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                            return res.status(apistatus.http.status).json(apistatus);
+                        }
+                        else {
+                            let translated_sentence = translation[0]
+                            let sentence_before_translation = updated_tokenized_sentences[sentence_to_be_translated_index]
+                            sentence_before_translation.tagged_src = translated_sentence.tagged_src
+                            sentence_before_translation.tagged_tgt = translated_sentence.tagged_tgt
+                            sentence_before_translation.target = translated_sentence.tgt
+                            updated_tokenized_sentences[sentence_to_be_translated_index] = sentence_before_translation
+                            if (sentence.is_table) {
+                                if (sentence.table_items) {
+                                    for (var row in sentence.table_items) {
+                                        for (var col in sentence.table_items[row]) {
+                                            if (sentence.table_items[row][col].sentence_index == update_sentence.s_id) {
+                                                let sentence_before_translation = sentence.table_items[row][col]
+                                                sentence_before_translation.tagged_src = translated_sentence.tagged_src
+                                                sentence_before_translation.text = translated_sentence.src
+                                                sentence_before_translation.tagged_tgt = translated_sentence.tagged_tgt
+                                                sentence_before_translation.target = translated_sentence.tgt
+                                                sentence.table_items[row][col] = sentence_before_translation
+                                                break
+                                            }
                                         }
                                     }
                                 }
+                                BaseModel.updateData(PdfSentence, { text_pending: false, tokenized_sentences: updated_tokenized_sentences, table_items: sentence.table_items }, sentence._id, function (err, data) {
+                                    LOG.info('Data updated', sentence)
+                                    let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                                    return res.status(response.http.status).json(response);
+                                })
+                            } else {
+                                BaseModel.updateData(PdfSentence, { text_pending: false, tokenized_sentences: updated_tokenized_sentences }, sentence._id, function (err, data) {
+                                    LOG.info('Data updated', sentence)
+                                    let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                                    return res.status(response.http.status).json(response);
+                                })
                             }
-                            BaseModel.updateData(PdfSentence, { tokenized_sentences: updated_tokenized_sentences, table_items: sentence.table_items }, sentence._id, function (err, data) {
-                                LOG.info('Data updated', sentence)
-                                let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
-                                return res.status(response.http.status).json(response);
-                            })
-                        } else {
-                            BaseModel.updateData(PdfSentence, { tokenized_sentences: updated_tokenized_sentences }, sentence._id, function (err, data) {
-                                LOG.info('Data updated', sentence)
-                                let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
-                                return res.status(response.http.status).json(response);
-                            })
-                        }
 
-                    }
-                })
+                        }
+                    })
+                } else {
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
             } else {
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
-        } else {
-            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
-            return res.status(apistatus.http.status).json(apistatus);
-        }
+        })
     })
 }
 
@@ -917,7 +1026,7 @@ exports.deleteSentence = function (req, res) {
                     let sentence_obj = sentences[0]._doc
                     let tokenized_data = []
                     sentence_obj.tokenized_sentences.map((t) => {
-                        sentences_delete.map((s)=>{
+                        sentences_delete.map((s) => {
                             if (t.s_id == s.s_id) {
                                 t.status = STATUS_DELETED
                             }
@@ -939,6 +1048,176 @@ exports.deleteSentence = function (req, res) {
             return res.status(apistatus.http.status).json(apistatus);
         }
     })
+}
+
+exports.deleteTableSentence = function (req, res) {
+    let userId = req.headers['ad-userid']
+    if (!req || !req.body || !req.body.sentence || !req.body.table_cell || !req.body.operation_type) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let sentence = req.body.sentence
+    let table_cell = req.body.table_cell
+    let operation_type = req.body.operation_type
+    BaseModel.findByCondition(PdfParser, { session_id: sentence.session_id, created_by: userId }, null, null, null, function (err, doc) {
+        if (doc && doc.length > 0) {
+            let condition = {}
+            condition['_id'] = mongoose.Types.ObjectId(sentence._id)
+            BaseModel.findByCondition(PdfSentence, condition, null, null, null, function (err, sentences) {
+                if (sentences && sentences.length > 0) {
+                    let sentence_obj = sentences[0]._doc
+                    let tokenized_data = []
+                    let sids = []
+                    if (operation_type == 'delete-row') {
+                        if (sentence_obj.table_items[table_cell.table_row]) {
+                            for (var col in sentence_obj.table_items[table_cell.table_row]) {
+                                let cell = sentence_obj.table_items[table_cell.table_row][col]
+                                sids.push(cell.sentence_index)
+                                sentence_obj.table_items[table_cell.table_row][col].status = STATUS_DELETED
+                            }
+                        }
+
+                    } else if (operation_type == 'delete-column') {
+                        for (var row in sentence_obj.table_items) {
+                            for (var col in sentence_obj.table_items[row]) {
+                                if (col == table_cell.table_column) {
+                                    let cell = sentence_obj.table_items[row][col]
+                                    sids.push(cell.sentence_index)
+                                    sentence_obj.table_items[row][col].status = STATUS_DELETED
+                                }
+                            }
+                        }
+                    } else {
+                        for (var row in sentence_obj.table_items) {
+                            for (var col in sentence_obj.table_items[row]) {
+                                let cell = sentence_obj.table_items[row][col]
+                                sids.push(cell.sentence_index)
+                                sentence_obj.table_items[row][col].status = STATUS_DELETED
+                            }
+                        }
+                    }
+                    sentence_obj.tokenized_sentences.map((t) => {
+                        if (sids.indexOf(t.s_id) >= 0) {
+                            t.status = STATUS_DELETED
+                        }
+                        tokenized_data.push(t)
+                    })
+                    BaseModel.updateData(PdfSentence, { tokenized_sentences: tokenized_data, table_items: sentence_obj.table_items }, sentence._id, function (err, data) {
+                        let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                        return res.status(response.http.status).json(response);
+                    })
+                } else {
+                    let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
+                    return res.status(apistatus.http.status).json(apistatus);
+                }
+            })
+        }
+        else {
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+    })
+}
+
+exports.addSentenceNode = function (req, res) {
+    let userId = req.headers['ad-userid']
+    if (!req || !req.body || !req.body.sen_node || !(req.body.previous_node || req.body.next_node)) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let sen_node = req.body.sen_node
+    let previous_node = req.body.previous_node
+    let next_node = req.body.next_node
+    BaseModel.findByCondition(PdfParser, { session_id: next_node ? next_node.session_id : previous_node.session_id, created_by: userId }, null, null, null, function (err, doc) {
+        if (doc && doc.length > 0) {
+            let model = doc[0]._doc.model
+            BaseModel.findByCondition(PdfSentence, { session_id: next_node ? next_node.session_id : previous_node.session_id }, null, null, 'para_index', function (err, sentences) {
+                if (sentences && sentences.length > 0) {
+                    let para_index = 0;
+                    async_lib.each(sentences, (sentence, cb) => {
+                        let sentencedb = sentence._doc
+                        if (next_node && sentencedb._id == next_node._id) {
+                            let node_to_be_saved = getObjFromNode(sen_node, next_node, para_index, model)
+                            para_index++
+                            const para_index_to_be_saved = para_index
+                            BaseModel.saveData(PdfSentence, [node_to_be_saved], function (err, doc) {
+                                BaseModel.updateData(PdfSentence, { para_index: para_index_to_be_saved }, sentence._doc._id, function (err, data) {
+                                    if (err) {
+                                        LOG.error(err)
+                                    }
+                                    cb()
+                                })
+                            })
+                        } else if (!next_node && previous_node && sentencedb._id == previous_node._id) {
+                            let node_to_be_saved = getObjFromNode(sen_node, previous_node, para_index + 1, model)
+                            para_index++
+                            const para_index_to_be_saved = para_index
+                            BaseModel.updateData(PdfSentence, { para_index: para_index_to_be_saved - 1 }, sentence._doc._id, function (err, data) {
+                                BaseModel.saveData(PdfSentence, [node_to_be_saved], function (err, doc) {
+                                    if (err) {
+                                        LOG.error(err)
+                                    } else {
+                                        LOG.info('Data Saved', node_to_be_saved)
+                                    }
+                                    cb()
+                                })
+                            })
+                        } else {
+                            BaseModel.updateData(PdfSentence, { para_index: para_index }, sentence._doc._id, function (err, data) {
+                                if (err) {
+                                    LOG.error(err)
+                                }
+                                cb()
+                            })
+                        }
+                        para_index++
+                    }, function (err) {
+                        let response = new Response(StatusCode.SUCCESS, COMPONENT).getRsp()
+                        return res.status(response.http.status).json(response);
+                    })
+                }
+            })
+        }
+        else {
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_DATA_NOTFOUND, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+    })
+}
+
+function getObjFromNode(sen_node, prev_next_node, para_index, model) {
+    let node_to_be_saved = {}
+    node_to_be_saved.page_no = prev_next_node.page_no
+    node_to_be_saved.page_no_end = prev_next_node.page_no_end
+    node_to_be_saved.class_style = prev_next_node.class_style
+    node_to_be_saved.status = STATUS_TRANSLATED
+    node_to_be_saved.session_id = prev_next_node.session_id
+    node_to_be_saved.node_index = UUIDV4()
+    node_to_be_saved.para_index = para_index
+    node_to_be_saved.text_pending = true
+    node_to_be_saved.text = ""
+    let tokenized_sentences = []
+    if (sen_node.type == 'table') {
+        node_to_be_saved.is_table = true
+        node_to_be_saved.table_items = {}
+        let sentence_index = 0
+        for (var i = 0; i < sen_node.row_count; i++) {
+            node_to_be_saved.table_items[i] = {}
+            for (var t = 0; t < sen_node.column_count; t++) {
+                let cell_obj = { table_column: t, table_row: i, page_no: node_to_be_saved.page_no, id: parseInt(model.model_id), src: "", text: "", target: "", tagged_src: "", tagged_tgt: "", s_id: sentence_index, sentence_index: sentence_index, n_id: node_to_be_saved.node_index + '__' + node_to_be_saved.session_id }
+                node_to_be_saved.table_items[i][t] = cell_obj
+                tokenized_sentences.push(cell_obj)
+                sentence_index++
+            }
+        }
+        node_to_be_saved.tokenized_sentences = tokenized_sentences
+    } else {
+        let cell_obj = { page_no: node_to_be_saved.page_no, src: " ", text: " ", id: parseInt(model.model_id), target: " ", tagged_src: " ", tagged_tgt: " ", s_id: 0, sentence_index: 0, n_id: node_to_be_saved.node_index + '__' + node_to_be_saved.session_id }
+        tokenized_sentences.push(cell_obj)
+        node_to_be_saved.tokenized_sentences = tokenized_sentences
+    }
+
+    return node_to_be_saved
 }
 
 exports.updatePdfSourceTable = function (req, res) {
@@ -1602,7 +1881,7 @@ exports.fetchPdfSentences = function (req, res) {
                 return res.status(apistatus.http.status).json(apistatus);
             }
             let pdf_process = models[0]._doc
-            BaseModel.findByEmbeddedCondition(PdfSentence, condition, pagesize, pageno, 'para_index', { }, function (err, models) {
+            BaseModel.findByEmbeddedCondition(PdfSentence, condition, pagesize, pageno, 'para_index', {}, function (err, models) {
                 if (err) {
                     LOG.error(err)
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
@@ -1680,13 +1959,13 @@ exports.makeDocFromSentences = function (req, res) {
     let condition = { session_id: req.body.session_id }
     BaseModel.findByCondition(PdfParser, condition, null, null, null, function (err, pdf_parsers) {
         let pdf_parser_obj = pdf_parsers[0]._doc
-        BaseModel.findByCondition(PdfSentence, condition, null, null, 'sentence_index', function (err, models) {
+        BaseModel.findByCondition(PdfSentence, condition, null, null, 'para_index', function (err, sentences) {
             if (err) {
                 LOG.error(err)
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
-            DocxCreator.covertJsonToDocForSentences(models, 'target', BASE_PATH_NGINX, pdf_parser_obj.process_name, function (err, filepath) {
+            DocxCreator.covertJsonToDocForSentences(sentences, 'target', BASE_PATH_NGINX, pdf_parser_obj.process_name, function (err, filepath) {
                 if (err) {
                     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                     return res.status(apistatus.http.status).json(apistatus);

@@ -10,6 +10,55 @@ const sentence_ends = ['.', '"', '?', '!', '”']
 const PAGE_BREAK_IDENTIFIER = '__LINE_BREAK__'
 const DIGITAL_SIGN_IDENTIFIER = '__DIGITAL_SIGN__'
 
+
+
+exports.convertHtmlTextToJson = function(text, cb) {
+    htmlToJson.parse(text, function () {
+        return this.map('p', function ($item) {
+            let obj = {}
+            var is_bold = false
+            var underline = false
+            if ($item['0'].children) {
+                $item['0'].children.map((child) => {
+                    if ((child.name === 'b' || child.name === 'strong')) {
+                        is_bold = true
+                    }
+                    if (child.name === 'u') {
+                        underline = true
+                    }
+                    if (child.children) {
+                        child.children.map((c) => {
+                            if ((c.name === 'b' || c.name === 'strong')) {
+                                is_bold = true
+                            }
+                            if (c.name === 'u') {
+                                underline = true
+                            }
+                        })
+                    }
+                })
+            }
+            obj.is_bold = is_bold
+            obj.underline = underline
+            obj.text = $item.text()
+            obj.text = obj.text.replace(/\n/g, '')
+            obj.text = obj.text.trim()
+            return obj
+        })
+    }).done(function (items) {
+        let output = {}
+        items.map((it, index)=>{
+            if(index==0){
+                output = it
+            }
+            if(it.text.length > 0 && index!=0){  
+                output.text+=" "+it.text;
+            }
+        })
+        cb(null, output)
+    })
+}
+
 exports.convertHtmlToJsonPagewise = function (basefolder, inputfilename, session_id, merge, pageno, start_node_index, cb) {
     fs.readFile(basefolder + session_id + "/" + inputfilename, 'utf8', function (err, data) {
         let output = []
@@ -117,7 +166,7 @@ exports.convertHtmlToJsonPagewise = function (basefolder, inputfilename, session
 
 function checkForTable(text_node, image_data) {
     let table_check_obj = { is_table: false, class_identifier: null }
-    if (image_data.tables && Array.isArray(image_data.tables)) {
+    if (image_data && image_data.tables && Array.isArray(image_data.tables)) {
         image_data.tables.map((table) => {
             if (parseInt(text_node.y) >= table.y && parseInt(text_node.y) <= table.y + table.h) {
                 table.rect.map((rect) => {
@@ -249,7 +298,7 @@ exports.mergeHtmlNodes = function (items, cb) {
         let obj = items[key].html_nodes
         let image_data = items[key].image_data
         let footer_check_node = obj[obj.length - 1]
-        if (image_data.lines && image_data.lines.length > 0 && parseInt(image_data.lines[0].x) < 170) {
+        if (image_data && image_data.lines && image_data.lines.length > 0 && parseInt(image_data.lines[0].x) < 170) {
             let margin = (parseInt(footer_check_node.y) - parseInt(image_data.lines[0].y)) / parseInt(footer_check_node.y)
             if (margin > 0 && margin * 100 < 12) {
                 footer_available = true
@@ -334,7 +383,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                     class_identifier = previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold
                     if (isNaN(it.text.trim()) || (previous_node.y_end == it.y_end && parseInt(it.y_end) + parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y_end) + parseInt(previous_node.class_style['font-size'].split('px')[0]))) {
                         same_line = true
-                    }else{
+                    } else {
                         is_super = true
                     }
                     // else if ((parseInt(previous_node.y_end) >= parseInt(it.y_end) && parseInt(it.y_end) + parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y_end))) {
@@ -436,7 +485,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                 o.parent_table.rect.map((rect) => {
                     if (!table_items[rect.index[0]])
                         table_items[rect.index[0]] = {}
-                    table_items[rect.index[0]][rect.index[1]] = { 'text': '', 'page_no': o.page_no, node_index: new Date().getTime() }
+                    table_items[rect.index[0]][rect.index[1]] = { 'table_row': rect.index[0], 'table_column': rect.index[1], 'text': '', 'page_no': o.page_no, node_index: new Date().getTime() }
                 })
 
                 table_items[o.table_row][o.table_column] = table_item

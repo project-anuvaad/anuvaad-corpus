@@ -14,8 +14,7 @@ class AnuvaadHinTokenizer(object):
     """
     Default abbrevations
     """
-    # _abbrevations_with_space_pattern = [r'^W[.]E[.]F[.][ ]|[ ]W[.]E[.]F[.][ ]',r'^O[.]A[.][ ]|[ ]O[.]A[.][ ]',r'^Sr[.][ ]|[ ]Sr[.][ ]',r'^NO[.][ ]|[ ]NO[.][ ]',r'^Pvt[.][ ]|[ ]Pvt[.][ ]', r'^NOS[.][ ]|[ ]NOS[.][ ]',r'^Smt[.][ ]|[ ]Smt[.][ ]',r'^Sec[.][ ]|[ ]Sec[.][ ]',r'^Spl[.][ ]|[ ]Spl[.][ ]',r'^Mr[.][ ]|[ ]Mr[.][ ]',r'^ft[.][ ]|[ ]ft[.][ ]',r'^kgs[.][ ]|[ ]kgs[.][ ]',r'^kg[.][ ]|[ ]kg[.][ ]',r'^Dr[.][ ]|[ ]Dr[.][ ]',r'^Ms[.][ ]|[ ]Ms[.][ ]',r'^Ltd[.][ ]|[ ]Ltd[.][ ]',r'^Pty[.][ ]|[ ]Pty[.][ ]',r'^Assn[.][ ]|[ ]Assn[.][ ]',r'^St[.][ ]|[ ]St[.][ ]',r'^Vol[.][ ]|[ ]Vol[.][ ]',r'^pp[.][ ]|[ ]pp[.][ ]',r'^Co[.][ ]|[ ]Co[.][ ]',r'^Pty[.][ ]|[ ]Pty[.][ ]',r'^rs[.][ ]|[ ]rs[.][ ]',r'^Sh[.][ ]|[ ]Sh[.][ ]',r'^M/S[.][ ]|[ ]M/S[.][ ]',r'^Mrs[.][ ]|[ ]Mrs[.][ ]',r'^Vs[.][ ]|[ ]Vs[.][ ]',r'^viz[.][ ]|[ ]viz[.][ ]',r'^ex[.][ ]|[ ]ex[.][ ]',r'^etc[.][ ]|[ ]etc[.][ ]',r'^i[.]e[.][ ]|[ ]i[.]e[.][ ]']
-    # _abbrevations_with_space = ['W.E.F. ','O.A. ','Sr. ','NO. ','Pvt. ', 'NOS. ','Smt. ','Sec. ','Spl. ','Mr. ','ft. ','kgs. ','kg. ','Dr. ','Ms. ','Ltd. ','Pty. ','Assn. ','St. ','Vol. ','pp. ','Co. ','Pty. ','Rs. ','Sh. ','M/S. ','Mrs. ','Vs. ','viz. ','ex. ','etc. ','i.e. ']
+    _abbrevations_with_space = [' ऐ.',' बी.',' सी.',' डी.',' ई.',' एफ.',' जी.',' एच.',' आइ.',' जे.',' के.',' एल.',' एम.',' एन.',' ओ.',' पी.',' क्यू.',' आर.',' एस.',' टी.',' यू.',' वी.',' डब्लू.',' एक्स.',' वायी.',' ज़ेड.','डॉ.','पं.']
     # _abbrevations_without_space = ['Crl.']
     _tokenizer = None
     _regex_search_texts = []
@@ -46,7 +45,7 @@ class AnuvaadHinTokenizer(object):
 
     def tokenize(self, text):
         print('--------------Process started-------------')
-        # text = self.serialize_with_abbrevations(text)
+        text = self.serialize_with_abbrevations(text)
         text = self.serialize_dates(text)
         text = self.serialize_table_points(text)
         text = self.serialize_url(text)
@@ -73,7 +72,7 @@ class AnuvaadHinTokenizer(object):
             se = self.deserialize_dot_with_number(se)
             se = self.deserialize_dot_with_number_beginning(se)
             se = self.deserialize_quotes_with_number(se)
-            # se = self.deserialize_with_abbrevations(se)
+            se = self.deserialize_with_abbrevations(se)
             se = self.deserialize_bullet_points(se)
             se = self.deserialize_table_points(se)
             output.append(se.strip())
@@ -304,14 +303,10 @@ class AnuvaadHinTokenizer(object):
     def serialize_with_abbrevations(self, text):
         index = 0
         index_for_without_space = 0
-        for abbrev in self._abbrevations_with_space_pattern:
+        for abbrev in self._abbrevations_with_space:
             pattern = re.compile(abbrev, re.IGNORECASE)
             text = pattern.sub(' #'+str(index)+'# ', text)
             index += 1
-        for abbrev in self._abbrevations_without_space:
-            pattern = re.compile(re.escape(abbrev), re.IGNORECASE)
-            text = pattern.sub('#'+str(index_for_without_space)+'##', text)
-            index_for_without_space += 1
         return text
 
     def deserialize_with_abbrevations(self, text):
@@ -321,10 +316,6 @@ class AnuvaadHinTokenizer(object):
             pattern = re.compile(re.escape('#'+str(index)+'# '), re.IGNORECASE)
             text = pattern.sub(abbrev, text)
             index += 1
-        for abbrev in self._abbrevations_without_space:
-            pattern = re.compile(re.escape('#'+str(index_for_without_space)+'##'), re.IGNORECASE)
-            text = pattern.sub(abbrev, text)
-            index_for_without_space += 1
         return text
 
 
@@ -337,7 +328,7 @@ class SentenceEndLangVars(PunktLanguageVars):
     # # punkt = PunktTrainer()
     # # punkt.train(text,finalize=False, verbose=False)
     # # punkt.finalize_training(verbose=True)
-# text = 'वाशिंगटन: दुनिया के सबसे (शक्तिशाली. देश) के राष्ट्रपति बराक ओबामा ने प्रधानमंत्री नरेंद्र मोदी के संदर्भ में \'टाइम\' पत्रिका में लिखा, "नरेंद्र मोदी ने अपने बाल्यकाल में अपने परिवार की सहायता करने के लिए अपने पिता की चाय बेचने में मदद की थी। आज वह दुनिया के सबसे बड़े लोकतंत्र के नेता हैं और गरीबी से प्रधानमंत्री तक की उनकी जिंदगी की कहानी भारत के उदय की गतिशीलता और क्षमता को परिलक्षित करती है।'
+# text = 'डॉ.उपराष्ट्रपति तथा राज्यसभा सभापति श्री एम.वेंकैया नायडू ने आज सुबह उप राष्ट्रपति निवास पर लोकसभा अध्यक्ष श्री ओम बिरला से भेंट की।'
 # # with open('data5.txt', encoding='utf8') as f:
 # #     text = f.read()
 # tokenizer = AnuvaadHinTokenizer()
