@@ -15,6 +15,9 @@ module.exports = function (router) {
     router.route(BASE_PATH + '/translate-pdf')
         .post(pdfParserController.translatePdf);
 
+    router.route(BASE_PATH_V2 + '/translate-pdf')
+        .post(pdfParserController.translatePdfV2);
+
     router.route(BASE_PATH + '/fetch-pdf-parse-process')
         .get(pdfParserController.fetchPdfParserProcess);
 

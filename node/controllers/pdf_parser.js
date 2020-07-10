@@ -13,6 +13,7 @@ var KafkaTopics = require('../config/kafka-topics').KafkTopics
 var PdfToHtml = require('../utils/pdf_to_html')
 var TranslateAnuvaad = require('../utils/translate_anuvaad')
 var PdfToText = require('../utils/pdf_to_json')
+var PdfToLines = require('../utils/pdf_to_lines')
 var KafkaProducer = require('../kafka/producer');
 var HtmlToText = require('../utils/html_to_text')
 var PdfJsonToText = require('../utils/pdf_json_to_text')
@@ -1822,6 +1823,41 @@ exports.translatePdf = function (req, res) {
             })
         })
     })
+}
+
+exports.translatePdfV2 = function (req, res) {
+    let userId = req.headers['ad-userid']
+    if (!req || !req.body || !req.files || !req.files.pdf_data) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let file = req.files.pdf_data
+    let pdf_parser_process = {}
+    pdf_parser_process.session_id = UUIDV4()
+    pdf_parser_process.process_name = req.body.process_name
+    pdf_parser_process.pdf_path = escape(file.name)
+    pdf_parser_process.source_lang = req.body.source_lang
+    pdf_parser_process.target_lang = req.body.target_lang
+    pdf_parser_process.download_source_path = pdf_parser_process.session_id + '.pdf'
+    pdf_parser_process.status = STATUS_PROCESSING
+    pdf_parser_process.created_by = userId
+    pdf_parser_process.model = model
+    pdf_parser_process.created_on = new Date()
+    pdf_parser_process.api_version = 2
+    fs.writeFile(BASE_PATH_NGINX + pdf_parser_process.session_id + '.pdf', file.data, function (err) {
+        if (err) {
+            LOG.error(err)
+            let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+            return res.status(apistatus.http.status).json(apistatus);
+        }
+        PdfToLines.converPdfToLines(pdf_parser_process.session_id + '.pdf', function (err, output_res) {
+            HtmlToText.mergeHtmlNodes(output_res.output, function (err, data, header_text, footer_text) {
+                let response = new Response(StatusCode.SUCCESS, data).getRsp()
+                return res.status(response.http.status).json(response);
+            })
+        })
+    })
+
 }
 
 exports.fetchPdfParserProcess = function (req, res) {

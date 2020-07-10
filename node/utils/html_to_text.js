@@ -335,7 +335,7 @@ exports.mergeHtmlNodes = function (items, cb) {
             }
 
             //Text in footer which is not common in all pages
-            else if (footer_available && image_data.lines[0].y < it.y) {
+            else if (footer_available && image_data && image_data.lines[0].y < it.y) {
                 if (it.text.trim().length > 0) {
                     it.is_footer = true
                     if (previous_footer_node && ((parseInt(previous_footer_node.y) <= parseInt(it.y) && parseInt(it.y) <= parseInt(previous_footer_node.y) + parseInt(previous_footer_node.class_style['font-size'].split('px')[0])) || (parseInt(previous_footer_node.y) >= parseInt(it.y) && parseInt(it.y) + parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_footer_node.y)))) {
