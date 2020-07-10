@@ -1841,7 +1841,7 @@ exports.translatePdfV2 = function (req, res) {
     pdf_parser_process.download_source_path = pdf_parser_process.session_id + '.pdf'
     pdf_parser_process.status = STATUS_PROCESSING
     pdf_parser_process.created_by = userId
-    pdf_parser_process.model = model
+    // pdf_parser_process.model = model
     pdf_parser_process.created_on = new Date()
     pdf_parser_process.api_version = 2
     fs.writeFile(BASE_PATH_NGINX + pdf_parser_process.session_id + '.pdf', file.data, function (err) {
