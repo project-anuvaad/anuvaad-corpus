@@ -1851,6 +1851,11 @@ exports.translatePdfV2 = function (req, res) {
             return res.status(apistatus.http.status).json(apistatus);
         }
         PdfToLines.converPdfToLines(pdf_parser_process.session_id + '.pdf', function (err, output_res) {
+            if (err) {
+                LOG.error(err)
+                let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                return res.status(apistatus.http.status).json(apistatus);
+            }
             HtmlToText.mergeHtmlNodes(output_res.output, function (err, data, header_text, footer_text) {
                 let response = new Response(StatusCode.SUCCESS, data).getRsp()
                 return res.status(response.http.status).json(response);

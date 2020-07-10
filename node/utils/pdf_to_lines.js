@@ -7,7 +7,7 @@ var UUIDV4 = require('uuid/v4')
 
 exports.converPdfToLines = function (filepath, cb) {
     LOG.info(filepath)
-    axios.post(BASE_PATH + '/api/v3/ocr/lines', {
+    axios.post(BASE_PATH + '/anuvaad-etl/extractor/sentence/v1/sentences/extract_lines', {
         "workflowCode": "DP_WFLOW_test",
         "jobID": "12345",
         "tool": "<tool_name>",
