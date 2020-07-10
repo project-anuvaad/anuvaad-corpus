@@ -102,7 +102,7 @@ class AnuvaadHinTokenizer(object):
         return text
 
     def serialize_decimal(self, text):
-        patterns = re.findall(r'(?:[ ][0-9]{1,}[.][0-9]{1,}[ ])',text)
+        patterns = re.findall(r'(?:(?:[ ]|[(]|[-])[0-9]{1,}[.][0-9]{1,}(?:[ ]|[)]|[%]))',text)
         index = 0
         if patterns is not None and isinstance(patterns, list):
             for pattern in patterns:
@@ -338,7 +338,7 @@ class SentenceEndLangVars(PunktLanguageVars):
     # # punkt = PunktTrainer()
     # # punkt.train(text,finalize=False, verbose=False)
     # # punkt.finalize_training(verbose=True)
-# text = 'डॉ.उपराष्ट्रपति तथा राज्यसभा सभापति श्री एम.वेंकैया नायडू ने आज सुबह उप राष्ट्रपति निवास पर लोकसभा अध्यक्ष श्री ओम बिरला से भेंट की।'
+# text = "जिन मुख्य जिन्स समूहों  के मूल्यों में अप्रैल 2020 में अप्रैल 2019 की तुलना में नकारात्मक वृद्धि दर्ज की गई वो हैं- रत्न और आभूषण (-98.74%), चमड़ा और चमड़े के उत्पाद (-93.28%), "
 # # with open('data5.txt', encoding='utf8') as f:
 # #     text = f.read()
 # tokenizer = AnuvaadHinTokenizer()
