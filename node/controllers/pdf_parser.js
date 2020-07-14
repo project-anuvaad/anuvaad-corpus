@@ -1856,7 +1856,7 @@ exports.translatePdfV2 = function (req, res) {
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
-            HtmlToText.mergeHtmlNodes(output_res.output, function (err, data, header_text, footer_text) {
+            HtmlToText.mergeHtmlNodes(output_res, function (err, data, header_text, footer_text) {
                 let response = new Response(StatusCode.SUCCESS, data).getRsp()
                 return res.status(response.http.status).json(response);
             })
