@@ -407,7 +407,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                     }
                 }
                 
-                if (style_map[class_identifier] && it.page_no_end - style_map[class_identifier].data.page_no_end <= 1 && !it.underline && !(!is_super && !same_line && it.visual_break == 1)) {
+                if (style_map[class_identifier] && it.page_no_end - style_map[class_identifier].data.page_no_end <= 1 && !it.underline && !(previous_node && previous_node.visual_break == 1)) {
                     let old_data = style_map[class_identifier]
                     let data = old_data.data
                     //If previous node class identifier is different than the current node then current node is a new sentence
@@ -438,6 +438,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                             } else {
                                 old_data.data.text += " " + it.text.replace(/\s+/g, " ").trim()
                             }
+                            old_data.data.visual_break = it.visual_break
                             old_data.data.y_end = it.y_end
                             old_data.data.node_index = it.node_index
                             old_data.data.page_no_end = it.page_no_end
