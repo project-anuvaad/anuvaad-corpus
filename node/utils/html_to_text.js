@@ -407,7 +407,7 @@ exports.mergeHtmlNodes = function (items, cb) {
                     }
                 }
                 
-                if (style_map[class_identifier] && it.page_no_end - style_map[class_identifier].data.page_no_end <= 1 && !it.underline && !(previous_node && previous_node.visual_break == 1)) {
+                if (style_map[class_identifier] && it.page_no_end - style_map[class_identifier].data.page_no_end <= 1 && !it.underline && !(previous_node && previous_node.visual_break == 1 && !(it.page_no - previous_node.page_no == 1 && it.node_index - previous_node.node_index <= 4) )) {
                     let old_data = style_map[class_identifier]
                     let data = old_data.data
                     //If previous node class identifier is different than the current node then current node is a new sentence
