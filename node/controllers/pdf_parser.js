@@ -452,7 +452,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                     // }
                     useNerTags(ner_data && ner_data.data && ner_data.data.ner_result && ner_data.data.ner_result.length > 0 ? ner_data.data.ner_result : [], data, function (data) {
                         if (tokenize) {
-                            callKafkaForTranslate(data, translate, model, pdf_parser_process, send_sentences, userId, res);
+                            callKafkaForTranslate(data, translate, model, pdf_parser_process, send_sentences, userId, header_text, footer_text, res);
                             // axios.post(PYTHON_BASE_URL + TOKENIZED_ENDPOINT,
                             //     {
                             //         paragraphs: data
@@ -1867,7 +1867,7 @@ exports.translatePdfV2 = function (req, res) {
 }
 
 
-function callKafkaForTranslate(data, translate, model, pdf_parser_process, send_sentences, userId, res) {
+function callKafkaForTranslate(data, translate, model, pdf_parser_process, send_sentences, userId, header_text, footer_text, res) {
     axios.post(PYTHON_BASE_URL + TOKENIZED_ENDPOINT,
         {
             paragraphs: data
