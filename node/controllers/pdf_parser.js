@@ -452,7 +452,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                     // }
                     useNerTags(ner_data && ner_data.data && ner_data.data.ner_result && ner_data.data.ner_result.length > 0 ? ner_data.data.ner_result : [], data, function (data) {
                         if (tokenize) {
-                            callKafkaForTranslate(data, translate, model, pdf_parser_process, send_sentences, userId, header_text, footer_text,dontsendres, res);
+                            callKafkaForTranslate(data, translate, model, pdf_parser_process, send_sentences, userId, header_text, footer_text, dontsendres, res);
                             // axios.post(PYTHON_BASE_URL + TOKENIZED_ENDPOINT,
                             //     {
                             //         paragraphs: data
@@ -1828,7 +1828,17 @@ exports.translatePdf = function (req, res) {
 
 exports.translatePdfV2 = function (req, res) {
     let userId = req.headers['ad-userid']
-    if (!req || !req.body || !req.files || !req.files.pdf_data) {
+    if (!req || !req.body || !req.body.process_name || !req.files || !req.body.model || !req.files.pdf_data) {
+        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
+        return res.status(apistatus.http.status).json(apistatus);
+    }
+    let model = {}
+    if (typeof req.body.model == "string") {
+        model = JSON.parse(req.body.model)
+    } else {
+        model = req.body.model
+    }
+    if (!model.model_id) {
         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_MISSING_PARAMETERS, COMPONENT).getRspStatus()
         return res.status(apistatus.http.status).json(apistatus);
     }
@@ -1842,7 +1852,7 @@ exports.translatePdfV2 = function (req, res) {
     pdf_parser_process.download_source_path = pdf_parser_process.session_id + '.pdf'
     pdf_parser_process.status = STATUS_PROCESSING
     pdf_parser_process.created_by = userId
-    // pdf_parser_process.model = model
+    pdf_parser_process.model = model
     pdf_parser_process.created_on = new Date()
     pdf_parser_process.api_version = 2
     fs.writeFile(BASE_PATH_NGINX + pdf_parser_process.session_id + '.pdf', file.data, function (err) {
@@ -1858,8 +1868,18 @@ exports.translatePdfV2 = function (req, res) {
                 return res.status(apistatus.http.status).json(apistatus);
             }
             HtmlToText.mergeHtmlNodes(output_res, function (err, data, header_text, footer_text) {
-                let response = new Response(StatusCode.SUCCESS, data).getRsp()
-                return res.status(response.http.status).json(response);
+                BaseModel.saveData(PdfParser, [pdf_parser_process], function (err, doc) {
+                    if (err) {
+                        LOG.error(err)
+                        let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
+                        return res.status(apistatus.http.status).json(apistatus);
+                    } else {
+                        callKafkaForTranslate(data, true, model, pdf_parser_process, false, userId, header_text, footer_text, true, res)
+                        let response = new Response(StatusCode.SUCCESS, doc).getRsp()
+                        return res.status(response.http.status).json(response);
+                    }
+                })
+
             })
         })
     })
@@ -1867,7 +1887,7 @@ exports.translatePdfV2 = function (req, res) {
 }
 
 
-function callKafkaForTranslate(data, translate, model, pdf_parser_process, send_sentences, userId, header_text, footer_text,dontsendres, res) {
+function callKafkaForTranslate(data, translate, model, pdf_parser_process, send_sentences, userId, header_text, footer_text, dontsendres, res) {
     axios.post(PYTHON_BASE_URL + TOKENIZED_ENDPOINT,
         {
             paragraphs: data
