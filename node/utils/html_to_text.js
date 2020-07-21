@@ -67,8 +67,14 @@ exports.convertHtmlToJsonPagewise = function (basefolder, inputfilename, session
         data = data.replace(/<i\/>/g, ' ')
         htmlToJson.parse(data, function () {
             var style_text = ''
+            let page_height = 0
+            let page_width = 0
             this.map('style', function ($item) {
                 style_text += $item.toString()
+            })
+            this.map('img', function ($item) {
+                page_height = $item['0']['attribs']['height']
+                page_width = $item['0']['attribs']['width']
             })
             var node_index = start_node_index
             return this.map('p', function ($item) {
@@ -99,6 +105,8 @@ exports.convertHtmlToJsonPagewise = function (basefolder, inputfilename, session
                 obj['page_no'] = pageno
                 obj['is_bold'] = is_bold
                 obj['page_no_end'] = pageno
+                obj['page_height'] = page_height
+                obj['page_width'] = page_width
                 let class_style_text = style_text.split(obj['class'])[1].split('}')[0].split('{')[1]
                 let class_style_obj = {}
                 class_style_text = class_style_text.split(';')
