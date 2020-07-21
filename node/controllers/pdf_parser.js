@@ -1793,6 +1793,9 @@ exports.translatePdf = function (req, res) {
     pdf_parser_process.created_by = userId
     pdf_parser_process.model = model
     pdf_parser_process.created_on = new Date()
+    if(req.body.dont_use_ner == 'true' || req.body.dont_use_ner == 1){
+        pdf_parser_process.api_version = 3
+    }
     fs.mkdir(BASE_PATH_UPLOAD + pdf_parser_process.session_id, function (e) {
         fs.writeFile(BASE_PATH_UPLOAD + pdf_parser_process.session_id + '/' + pdf_parser_process.pdf_path, file.data, function (err) {
             fs.writeFile(BASE_PATH_NGINX + pdf_parser_process.session_id + '.pdf', file.data, function (err) {
