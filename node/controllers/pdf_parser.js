@@ -1815,7 +1815,7 @@ exports.translatePdf = function (req, res) {
                         } else {
                             let index = 1
                             let output_res = {}
-                            processHtml(pdf_parser_process, index, output_res, false, 1, true, true, model, res, true, userId, req.body.dont_use_ner == 'true' ? true : false)
+                            processHtml(pdf_parser_process, index, output_res, false, 1, true, true, model, res, true, userId, req.body.dont_use_ner == 'true' || req.body.dont_use_ner == 1 ? true : false)
                             let response = new Response(StatusCode.SUCCESS, doc).getRsp()
                             return res.status(response.http.status).json(response);
                         }
