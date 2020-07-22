@@ -2238,18 +2238,25 @@ exports.makeDocFromSentences = function (req, res) {
                 return res.status(apistatus.http.status).json(apistatus);
             }
             if (pdf_parser_obj.api_version == 2 || pdf_parser_obj.api_version == 3) {
-                sentences.map((sentence) => {
+                let previous_node = null
+                sentences.map((sentence, index) => {
                     let obj = sentence._doc
                     obj.is_ocr = true
+                    if (previous_node != null) {
+                        if (!(previous_node.y_end <= obj.y_end && previous_node.y_end + parseInt(previous_node.class_style['font-size'].split("px")[0]) >= obj.y_end)) {
+                            sentences[index-1]._doc.is_new_line = true
+                        }
+                    }
                     let padding = obj.x * 100 / obj.page_width
-                    if(padding<30){
+                    if (padding < 30) {
                         obj.align = 'LEFT'
-                    }else if(padding>=30 && padding < 70){
+                    } else if (padding >= 30 && padding < 70) {
                         obj.align = 'CENTER'
-                    }else{
+                    } else {
                         obj.align = 'RIGHT'
                     }
                     sentence._doc = obj
+                    previous_node = obj
                 })
             }
             DocxCreator.covertJsonToDocForSentences(sentences, 'target', BASE_PATH_NGINX, pdf_parser_obj.process_name, function (err, filepath) {

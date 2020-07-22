@@ -158,7 +158,7 @@ function constructRunForOcrSentences(n, key, children) {
     })
     ner_run_arr.push(tab_run)
     ner_run_arr.push(ner_run)
-    // if (n.is_new_line) {
+    if (n.is_new_line) {
         let text_run =
             new docx.Paragraph({
                 style: 'DEFAULT',
@@ -168,7 +168,7 @@ function constructRunForOcrSentences(n, key, children) {
         children.push(text_run)
         ner_run_arr = []
         tab_stops = []
-    // }
+    }
     return children
 }
 
