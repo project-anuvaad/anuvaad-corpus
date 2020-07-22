@@ -1793,7 +1793,7 @@ exports.translatePdf = function (req, res) {
     pdf_parser_process.created_by = userId
     pdf_parser_process.model = model
     pdf_parser_process.created_on = new Date()
-    if(req.body.dont_use_ner == 'true' || req.body.dont_use_ner == 1){
+    if (req.body.dont_use_ner == 'true' || req.body.dont_use_ner == 1) {
         pdf_parser_process.api_version = 3
     }
     fs.mkdir(BASE_PATH_UPLOAD + pdf_parser_process.session_id, function (e) {
@@ -2236,6 +2236,21 @@ exports.makeDocFromSentences = function (req, res) {
                 LOG.error(err)
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
+            }
+            if (pdf_parser_obj.api_version == 2 || pdf_parser_obj.api_version == 3) {
+                sentences.map((sentence) => {
+                    let obj = sentence._doc
+                    obj.is_ocr = true
+                    let padding = obj.x * 100 / obj.page_width
+                    if(padding<30){
+                        obj.align = 'LEFT'
+                    }else if(padding>=30 && padding < 70){
+                        obj.align = 'CENTER'
+                    }else{
+                        obj.align = 'RIGHT'
+                    }
+                    sentence._doc = obj
+                })
             }
             DocxCreator.covertJsonToDocForSentences(sentences, 'target', BASE_PATH_NGINX, pdf_parser_obj.process_name, function (err, filepath) {
                 if (err) {

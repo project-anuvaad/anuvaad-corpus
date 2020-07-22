@@ -141,6 +141,37 @@ function constructRunForNerSentences(n, key, children) {
     return children
 }
 
+function constructRunForOcrSentences(n, key, children) {
+    let tab_run = new docx.TextRun({
+        text: '\t',
+    })
+    let ner_run = new docx.TextRun({
+        text: n[key] + ' ',
+        size: FONT_SIZES[n.align] * 2,
+        font: 'Times',
+        bold: n.is_bold ? true : null,
+        underline: n.underline ? true : null
+    })
+    tab_stops.push({
+        type: docx.TabStopType[n.align],
+        position: POSITIONS[n.align],
+    })
+    ner_run_arr.push(tab_run)
+    ner_run_arr.push(ner_run)
+    // if (n.is_new_line) {
+        let text_run =
+            new docx.Paragraph({
+                style: 'DEFAULT',
+                children: ner_run_arr,
+                tabStops: tab_stops,
+            })
+        children.push(text_run)
+        ner_run_arr = []
+        tab_stops = []
+    // }
+    return children
+}
+
 exports.covertJsonToDocForSentences = function (data, text_key, nginx_path, name, cb) {
     let styles = []
     let children = []
@@ -213,6 +244,12 @@ exports.covertJsonToDocForSentences = function (data, text_key, nginx_path, name
                     type: docx.WidthType.DXA,
                 },
             }))
+        }else if(d.is_ocr){
+            d[text_key] = ''
+            d.tokenized_sentences.map((sen) => {
+                d[text_key] += sen[text_key] + ' '
+            })
+            children = constructRunForOcrSentences(d, text_key, children)
         }
         else if (!d.is_footer) {
             d[text_key] = ''
