@@ -443,7 +443,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                 return res.status(apistatus.http.status).json(apistatus);
             })
         } else {
-            HtmlToText.mergeHtmlNodes(output_res, function (err, data, header_text, footer_text) {
+            HtmlToText.mergeHtmlNodes(output_res, dont_use_ner, function (err, data, header_text, footer_text) {
                 performNer(data, dont_use_ner, function (err, ner_data) {
                     // if (err) {
                     //     LOG.error(err)
@@ -834,7 +834,7 @@ exports.etlMergeNodes = function (req, res) {
     async_lib.each(files, (file, cb) => {
         let rawdata = fs.readFileSync(BASE_PATH_NGINX + file.path);
         let data = JSON.parse(rawdata);
-        HtmlToText.mergeHtmlNodes(data, function (err, data, header_text, footer_text) {
+        HtmlToText.mergeHtmlNodes(data,false, function (err, data, header_text, footer_text) {
             let file_name = new Date().getTime() + '_' + UUIDV4() + '.json'
             fs.writeFile(BASE_PATH_NGINX + file_name, JSON.stringify({ data: data, header_text: header_text, footer_text: footer_text }), function (err) {
                 output_files.push({ inputFile: file.path, outputFile: file_name, outputLocale: file.locale, outputType: 'json' })
@@ -1870,7 +1870,7 @@ exports.translatePdfV2 = function (req, res) {
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
-            HtmlToText.mergeHtmlNodes(output_res, function (err, data, header_text, footer_text) {
+            HtmlToText.mergeHtmlNodes(output_res,false, function (err, data, header_text, footer_text) {
                 BaseModel.saveData(PdfParser, [pdf_parser_process], function (err, doc) {
                     if (err) {
                         LOG.error(err)

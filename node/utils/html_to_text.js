@@ -12,7 +12,7 @@ const DIGITAL_SIGN_IDENTIFIER = '__DIGITAL_SIGN__'
 
 
 
-exports.convertHtmlTextToJson = function(text, cb) {
+exports.convertHtmlTextToJson = function (text, cb) {
     htmlToJson.parse(text, function () {
         return this.map('p', function ($item) {
             let obj = {}
@@ -47,12 +47,12 @@ exports.convertHtmlTextToJson = function(text, cb) {
         })
     }).done(function (items) {
         let output = {}
-        items.map((it, index)=>{
-            if(index==0){
+        items.map((it, index) => {
+            if (index == 0) {
                 output = it
             }
-            if(it.text.length > 0 && index!=0){  
-                output.text+=" "+it.text;
+            if (it.text.length > 0 && index != 0) {
+                output.text += " " + it.text;
             }
         })
         cb(null, output)
@@ -189,7 +189,7 @@ function checkForTable(text_node, image_data) {
 }
 
 
-exports.mergeHtmlNodes = function (items, cb) {
+exports.mergeHtmlNodes = function (items, version, cb) {
     let output = []
     let style_map = {}
     //Find header or footer
@@ -384,13 +384,13 @@ exports.mergeHtmlNodes = function (items, cb) {
                 it.table_row = table_check.row
                 it.table_column = table_check.column
             }
-            
+
             if (output && output.length > 0) {
 
                 //Check for sub and super script
-               
+
                 if (!it.is_table && !style_map[class_identifier] && previous_node && previous_node.page_no === it.page_no && ((parseInt(previous_node.y_end) >= parseInt(it.y_end) && parseInt(it.y_end) + parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y_end)) || (parseInt(previous_node.y_end) <= parseInt(it.y_end) && parseInt(it.y_end) <= parseInt(previous_node.y_end) + parseInt(previous_node.class_style['font-size'].split('px')[0]))) && it.text.trim().length > 0) {
-                    
+
                     class_identifier = previous_node.class_style['font-size'] + previous_node.class_style['font-family'] + previous_node.is_bold
                     if (isNaN(it.text.trim()) || (previous_node.y_end == it.y_end && parseInt(it.y_end) + parseInt(it.class_style['font-size'].split('px')[0]) >= parseInt(previous_node.y_end) + parseInt(previous_node.class_style['font-size'].split('px')[0]))) {
                         same_line = true
@@ -414,8 +414,8 @@ exports.mergeHtmlNodes = function (items, cb) {
                         change_style_map = true
                     }
                 }
-                
-                if (style_map[class_identifier] && it.page_no_end - style_map[class_identifier].data.page_no_end <= 1 && !it.underline && !(previous_node && previous_node.visual_break == 1 && !(it.page_no - previous_node.page_no == 1 && it.node_index - previous_node.node_index <= 4) )) {
+
+                if (style_map[class_identifier] && it.page_no_end - style_map[class_identifier].data.page_no_end <= 1 && !it.underline && !(previous_node && previous_node.visual_break == 1 && !(it.page_no - previous_node.page_no == 1 && it.node_index - previous_node.node_index <= 4))) {
                     let old_data = style_map[class_identifier]
                     let data = old_data.data
                     //If previous node class identifier is different than the current node then current node is a new sentence
@@ -425,10 +425,10 @@ exports.mergeHtmlNodes = function (items, cb) {
                         class_identifier = it.class_style['font-size'] + it.class_style['font-family'] + it.is_bold
                     }
                     data.text = data.text.trim()
-                    
-                    if (same_line || is_super || is_sub || (!(data.text.search(sentence_ends_regex) >= 0) || abbrivations2.indexOf(data.text.substring(data.text.length - 4, data.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(data.text.substring(data.text.length - 5, data.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(data.text.substring(data.text.length - 6, data.text.length).toLowerCase()) >= 0 || abbrivations6.indexOf(data.text.substring(data.text.length - 8, data.text.length).toLowerCase()) >= 0)) {
+
+                    if (!(version && it.page_no == 1 && it.node_index < 8) && (same_line || is_super || is_sub || (!(data.text.search(sentence_ends_regex) >= 0) || abbrivations2.indexOf(data.text.substring(data.text.length - 4, data.text.length).toLowerCase()) >= 0 || abbrivations3.indexOf(data.text.substring(data.text.length - 5, data.text.length).toLowerCase()) >= 0 || abbrivations4.indexOf(data.text.substring(data.text.length - 6, data.text.length).toLowerCase()) >= 0 || abbrivations6.indexOf(data.text.substring(data.text.length - 8, data.text.length).toLowerCase()) >= 0))) {
                         if (it.is_table || !((it.node_index - data.node_index > 2) && it.page_no_end - old_data.data.page_no_end == 0) || (it.page_no_end - old_data.data.page_no_end == 1)) {
-                            
+
                             if (is_sub || is_super) {
                                 if (it.text.trim().length > 1 && isNaN(it.text)) {
                                     old_data.data.text += " " + it.text.replace(/\s+/g, " ").trim()
