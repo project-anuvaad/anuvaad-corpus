@@ -438,7 +438,7 @@ def tokenizer_factory(lang):
     if lang == 'Hindi':
         return AnuvaadHinTokenizer()
     else:
-        return AnuvaadTokenizer()
+        return AnuvaadEngTokenizer()
 
 def get_pending_nodes():
     no_of_nodes = 0
