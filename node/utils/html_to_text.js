@@ -1,7 +1,7 @@
 const htmlToJson = require('html-to-json')
 const fs = require('fs');
 var LOG = require('../logger/logger').logger
-const sentence_ends_regex = /(([\"|”|,|a-zA-Z\u0900-\u097F|0-9|.]{3,}[.|?|!|\"|”|:|;]|([:][ ][-]))$)/g;
+const sentence_ends_regex = /(([\"|”|,|a-zA-Z\u0900-\u097F|0-9|.]{3,}[।|.|?|!|\"|”|:|;]|([:][ ][-]))$)/g;
 const abbrivations2 = [' no.', ' mr.', ' ft.', ' kg.', ' dr.', ' ms.', ' st.', ' pp.', ' co.', ' rs.', ' sh.', ' vs.', ' ex.']
 const abbrivations3 = [' pvt.', ' nos.', ' smt.', ' sec.', ' spl.', ' kgs.', ' ltd.', ' pty.', ' vol.', ' pty.', ' m/s.', ' mrs.', ' i.e.', ' etc.', ' (ex.', ' o.s.', ' anr.', ' ors.', ' c.a.']
 const abbrivations4 = [' assn.']
