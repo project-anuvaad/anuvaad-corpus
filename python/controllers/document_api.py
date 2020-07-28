@@ -256,7 +256,7 @@ def tokenize_sentence():
 @document_api.route('/v2/tokenize-sentence', methods=['POST'])
 def v2_tokenize_sentence():
     body = request.get_json()
-    if body['paragraphs'] is None or not isinstance(body['paragraphs'], list) or body['lang'] is None:
+    if body['paragraphs'] is None or not isinstance(body['paragraphs'], list) or 'lang' not in body or body['lang'] is None:
         res = CustomResponse(
             Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
         return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
