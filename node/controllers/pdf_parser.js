@@ -40,6 +40,7 @@ const STATUS_DELETED = 'DELETED'
 const TOKENIZED_HINDI_ENDPOINT = 'tokenize-hindi-sentence'
 const NER_END_POINT = 'v0/ner'
 const TOKENIZED_ENDPOINT = 'tokenize-sentence'
+const TOKENIZED_ENDPOINT_V2 = 'v2/tokenize-sentence'
 
 const AVERAGE_TRANSLATION_TIME = 5
 
@@ -408,8 +409,6 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
         ImageProcessing.processImage(BASE_PATH_UPLOAD + '/' + pdf_parser_process.session_id + '/output' + image_index + '.png', 'output' + image_index + '.png', function (err, image_data) {
             if (err) {
                 LOG.error(err)
-                // let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                // return res.status(apistatus.http.status).json(apistatus);
             }
             HtmlToText.convertHtmlToJsonPagewise(BASE_PATH_UPLOAD, 'output-' + index + '.html', pdf_parser_process.session_id, merge, index, start_node_index, function (err, data) {
                 output_res[index + ''] = { html_nodes: data, image_data: image_data }
@@ -445,216 +444,9 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
         } else {
             HtmlToText.mergeHtmlNodes(output_res, dont_use_ner, function (err, data, header_text, footer_text) {
                 performNer(data, dont_use_ner, function (err, ner_data) {
-                    // if (err) {
-                    //     LOG.error(err)
-                    //     let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                    //     return res.status(apistatus.http.status).json(apistatus);
-                    // }
                     useNerTags(ner_data && ner_data.data && ner_data.data.ner_result && ner_data.data.ner_result.length > 0 ? ner_data.data.ner_result : [], data, function (data) {
                         if (tokenize) {
                             callKafkaForTranslate(data, translate, model, pdf_parser_process, send_sentences, userId, header_text, footer_text, dontsendres, res);
-                            // axios.post(PYTHON_BASE_URL + TOKENIZED_ENDPOINT,
-                            //     {
-                            //         paragraphs: data
-                            //     }
-                            // ).then(function (api_res) {
-                            //     if (api_res && api_res.data) {
-                            //         KafkaProducer.getInstance().getProducer((err, producer) => {
-                            //             if (err) {
-                            //                 LOG.error("Unable to connect to KafkaProducer");
-                            //             } else {
-                            //                 LOG.debug("KafkaProducer connected")
-                            //             }
-                            //             let index = 0
-                            //             if (send_sentences) {
-                            //                 let sentences = []
-                            //                 api_res.data.data.map(d => {
-                            //                     sentences = sentences.concat(d.text)
-                            //                 })
-                            //                 let response = new Response(StatusCode.SUCCESS, sentences).getRsp()
-                            //                 return res.status(response.http.status).json(response);
-                            //             }
-                            //             else {
-                            //                 async_lib.each(api_res.data.data, (d, cb) => {
-                            //                     let sentence_index = 0
-                            //                     let tokenized_sentences = []
-                            //                     const tokenized_node_index = index
-                            //                     if (data[tokenized_node_index].is_table) {
-                            //                         let tokenized_data = data[tokenized_node_index]
-                            //                         for (var key in tokenized_data.table_items) {
-                            //                             for (var itemkey in tokenized_data.table_items[key]) {
-                            //                                 let node_data = tokenized_data.table_items[key][itemkey]
-                            //                                 tokenized_data.table_items[key][itemkey].sentence_index = sentence_index
-                            //                                 tokenized_sentences.push(makeSenteceObj(node_data, node_data.text, sentence_index, tokenized_data.node_index, pdf_parser_process.session_id, model ? model.model_id : null))
-                            //                                 sentence_index++
-                            //                             }
-                            //                         }
-                            //                     } else if (data[tokenized_node_index].is_ner || data[tokenized_node_index].is_footer) {
-                            //                         tokenized_sentences.push(makeSenteceObj(data[tokenized_node_index], data[tokenized_node_index].text, sentence_index, data[tokenized_node_index].node_index, pdf_parser_process.session_id, model ? model.model_id : null))
-                            //                         sentence_index++
-                            //                     }
-                            //                     else {
-                            //                         d.text.map(function (tokenized_sentence) {
-                            //                             tokenized_sentences.push(makeSenteceObj(data[tokenized_node_index], tokenized_sentence, sentence_index, data[tokenized_node_index].node_index, pdf_parser_process.session_id, model ? model.model_id : null))
-                            //                             sentence_index++
-                            //                         })
-                            //                     }
-                            //                     index++
-                            //                     if (translate && model && producer) {
-                            //                         async_lib.waterfall([
-                            //                             function (callback) {
-                            //                                 if (tokenized_sentences.length > 25) {
-                            //                                     var i, j, temparray, chunk = 25;
-                            //                                     for (i = 0, j = tokenized_sentences.length; i < j; i += chunk) {
-                            //                                         temparray = tokenized_sentences.slice(i, i + chunk);
-                            //                                         temparray.filter(sent => !sent.target)
-                            //                                         let payloads = [
-                            //                                             {
-                            //                                                 topic: KafkaTopics.NMT_TRANSLATE, messages: JSON.stringify({ 'url_end_point': model.url_end_point, 'message': temparray }), partition: 0
-                            //                                             }
-                            //                                         ]
-                            //                                         producer.send(payloads, function (err, data) {
-                            //                                             LOG.debug('Produced')
-                            //                                         });
-                            //                                     }
-                            //                                     callback()
-                            //                                 } else {
-                            //                                     let kafka_sentences = []
-                            //                                     let tokenized_sentences_index = 0
-                            //                                     async_lib.each(tokenized_sentences, (sentence, rediscb) => {
-                            //                                         SentencesRedis.fetchSentence(sentence, userId + '_' + pdf_parser_process.target_lang, function (err, doc) {
-                            //                                             if (doc) {
-                            //                                                 let saved_sentence = JSON.parse(doc)
-                            //                                                 if (saved_sentence.target && saved_sentence.target.length > 0 && saved_sentence.target.trim().length > 0) {
-                            //                                                     LOG.info('Sentence found from redis', saved_sentence)
-                            //                                                     tokenized_sentences[tokenized_sentences_index].target = saved_sentence['target']
-                            //                                                     tokenized_sentences[tokenized_sentences_index].status = STATUS_TRANSLATED
-                            //                                                     tokenized_sentences[tokenized_sentences_index].tagged_src = saved_sentence.tagged_src
-                            //                                                     tokenized_sentences[tokenized_sentences_index].tagged_tgt = saved_sentence.tagged_tgt
-                            //                                                     if (data[tokenized_node_index].is_table) {
-                            //                                                         let tokenized_data = data[tokenized_node_index]
-                            //                                                         for (var key in tokenized_data.table_items) {
-                            //                                                             for (var itemkey in tokenized_data.table_items[key]) {
-                            //                                                                 let node_data = tokenized_data.table_items[key][itemkey]
-                            //                                                                 if (node_data.sentence_index == sentence.sentence_index) {
-                            //                                                                     data[tokenized_node_index].table_items[key][itemkey].target = saved_sentence['target']
-                            //                                                                     data[tokenized_node_index].table_items[key][itemkey].tagged_src = saved_sentence.tagged_src
-                            //                                                                     data[tokenized_node_index].table_items[key][itemkey].tagged_tgt = saved_sentence.tagged_tgt
-                            //                                                                 }
-                            //                                                             }
-                            //                                                         }
-                            //                                                     }
-                            //                                                 } else {
-                            //                                                     kafka_sentences.push(sentence)
-                            //                                                 }
-                            //                                             } else {
-                            //                                                 kafka_sentences.push(sentence)
-                            //                                             }
-                            //                                             tokenized_sentences_index++;
-                            //                                             rediscb()
-                            //                                         })
-
-                            //                                     }, function (err) {
-                            //                                         let payloads = [
-                            //                                             {
-                            //                                                 topic: KafkaTopics.NMT_TRANSLATE, messages: JSON.stringify({ 'url_end_point': model.url_end_point, 'message': kafka_sentences }), partition: 0
-                            //                                             }
-                            //                                         ]
-                            //                                         producer.send(payloads, function (err, data) {
-                            //                                             LOG.debug('Produced')
-                            //                                         });
-                            //                                         callback()
-                            //                                     })
-                            //                                 }
-                            //                             }
-                            //                         ], function () {
-                            //                             let translated = true
-                            //                             tokenized_sentences.map((token) => {
-                            //                                 if (!token.target) {
-                            //                                     translated = false
-                            //                                 }
-                            //                             })
-                            //                             data[tokenized_node_index].para_index = tokenized_node_index
-                            //                             data[tokenized_node_index].node_index = data[tokenized_node_index].node_index + ''
-                            //                             data[tokenized_node_index].version = 0
-                            //                             data[tokenized_node_index].status = translated ? STATUS_TRANSLATED : STATUS_PENDING
-                            //                             data[tokenized_node_index].session_id = pdf_parser_process.session_id
-                            //                             data[tokenized_node_index].tokenized_sentences = tokenized_sentences
-                            //                             cb()
-                            //                         })
-
-                            //                     } else {
-                            //                         let translated = true
-                            //                         tokenized_sentences.map((token) => {
-                            //                             if (!token.target) {
-                            //                                 translated = false
-                            //                             }
-                            //                         })
-                            //                         data[index - 1].node_index = data[index - 1].node_index + ''
-                            //                         data[index - 1].version = 0
-                            //                         data[index - 1].para_index = index - 1
-                            //                         data[index - 1].status = translated ? STATUS_TRANSLATED : STATUS_PENDING
-                            //                         data[index - 1].session_id = pdf_parser_process.session_id
-                            //                         data[index - 1].tokenized_sentences = tokenized_sentences
-                            //                         cb()
-                            //                     }
-
-                            //                 }, function (err) {
-                            //                     LOG.info('Saving pdf sentences')
-                            //                     if (header_text && header_text.length > 0) {
-                            //                         data.unshift({ text: header_text, is_header: true, session_id: pdf_parser_process.session_id, status: STATUS_PENDING, tokenized_sentences: [] })
-                            //                     }
-                            //                     if (footer_text && footer_text.length > 0) {
-                            //                         data.push({ text: footer_text, is_footer_text: true, session_id: pdf_parser_process.session_id, status: STATUS_PENDING, tokenized_sentences: [] })
-                            //                     }
-                            //                     BaseModel.saveData(PdfSentence, data, function (err, doc) {
-                            //                         if (err) {
-                            //                             LOG.error(err)
-                            //                             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                            //                             return res.status(apistatus.http.status).json(apistatus);
-                            //                         } else {
-
-                            //                             if (dontsendres) {
-                            //                                 LOG.info('Updating pdf obj')
-                            //                                 let condition = { session_id: pdf_parser_process.session_id }
-                            //                                 PdfSentence.countDocuments({ status: STATUS_PENDING }, function (err, totalcount) {
-                            //                                     BaseModel.findByCondition(PdfParser, condition, null, null, null, function (err, data) {
-                            //                                         if (data && data.length > 0) {
-                            //                                             let pdfobj = data[0]._doc
-                            //                                             let updateObj = { status: STATUS_TRANSLATING }
-                            //                                             if (totalcount) {
-                            //                                                 updateObj['eta'] = totalcount * AVERAGE_TRANSLATION_TIME
-                            //                                             }
-                            //                                             BaseModel.updateData(PdfParser, updateObj, pdfobj._id, function (err, doc) {
-                            //                                                 if (err) {
-                            //                                                     LOG.error(err)
-                            //                                                 } else {
-                            //                                                     LOG.info('Data updated')
-                            //                                                 }
-                            //                                             })
-                            //                                         }
-                            //                                     })
-                            //                                 })
-                            //                             } else {
-                            //                                 LOG.info('Saving pdf obj')
-                            //                                 BaseModel.saveData(PdfParser, [pdf_parser_process], function (err, doc) {
-                            //                                     if (err) {
-                            //                                         LOG.error(err)
-                            //                                         let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-                            //                                         return res.status(apistatus.http.status).json(apistatus);
-                            //                                     } else {
-                            //                                         let response = new Response(StatusCode.SUCCESS, doc).getRsp()
-                            //                                         return res.status(response.http.status).json(response);
-                            //                                     }
-                            //                                 })
-                            //                             }
-                            //                         }
-                            //                     })
-                            //                 })
-                            //             }
-                            //         })
-                            //     }
-                            // })
 
                         } else {
                             let response = new Response(StatusCode.SUCCESS, data, null, null, null, ner_data && ner_data.data && ner_data.data.ner_result && ner_data.data.ner_result.length > 0 ? ner_data.data.ner_result : []).getRsp()
@@ -886,39 +678,12 @@ exports.extractPdfToSentencesV2 = function (req, res) {
 
                 })
                 PdfJsonToText.mergeParagraphJsonNodesV2(data, function (err, out) {
-                    // axios.post(PYTHON_BASE_URL + (req.body.lang == 'hi' ? TOKENIZED_HINDI_ENDPOINT : TOKENIZED_ENDPOINT),
-                    //     {
-                    //         paragraphs: out
-                    //     }
-                    // ).then(function (api_res) {
-                    //     let sentences = []
-                    //     if (api_res && api_res.data) {
-                    //         api_res.data.data.map((d) => {
-                    //             sentences = sentences.concat(d.text)
-                    //         })
-                    //     }
-                    //     let response = new Response(StatusCode.SUCCESS, sentences).getRsp()
-                    //     return res.status(response.http.status).json(response);
-                    // }).catch(e => {
                     LOG.error(e)
                     let response = new Response(StatusCode.SUCCESS, out).getRsp()
                     return res.status(response.http.status).json(response);
-                    // })
 
                 })
             })
-            // } else {
-            //     PdfToHtml.convertPdfToHtmlPagewise(BASE_PATH_UPLOAD, pdf_parser_process.pdf_path, 'output.html', pdf_parser_process.session_id, function (err, data) {
-            //         if (err) {
-            //             LOG.error(err)
-            //             let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
-            //             return res.status(apistatus.http.status).json(apistatus);
-            //         }
-            //         let index = 1
-            //         let output_res = {}
-            //         processHtml(pdf_parser_process, index, output_res, false, 1, true, false, null, res, false, null, true, true)
-            //     })
-            // }
         })
     })
 }
@@ -1891,9 +1656,10 @@ exports.translatePdfV2 = function (req, res) {
 
 
 function callKafkaForTranslate(data, translate, model, pdf_parser_process, send_sentences, userId, header_text, footer_text, dontsendres, res) {
-    axios.post(PYTHON_BASE_URL + TOKENIZED_ENDPOINT,
+    axios.post(PYTHON_BASE_URL + TOKENIZED_ENDPOINT_V2,
         {
-            paragraphs: data
+            paragraphs: data,
+            lang: pdf_parser_process.source_lang
         }
     ).then(function (api_res) {
         if (api_res && api_res.data) {
