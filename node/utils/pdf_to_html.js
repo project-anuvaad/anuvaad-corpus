@@ -6,11 +6,9 @@ exports.convertPdfToHtmlPagewise = function (basefolder, inputfilname, outputfil
     exec(command, (error, stdout, stderr) => {
         if (error) {
             LOG.error(error);
-            cb(error, null)
         }
         if (stderr) {
             LOG.error(stderr);
-            cb(stderr, null)
         }
         cb(null, 'done')
     });
@@ -21,11 +19,9 @@ exports.convertPdfToHtml = function (basefolder, inputfilname, outputfilename, s
     exec(command, (error, stdout, stderr) => {
         if (error) {
             LOG.error(error);
-            cb(error, null)
         }
         if (stderr) {
             LOG.error(stderr);
-            cb(stderr, null)
         }
         cb(null, 'done')
     });
