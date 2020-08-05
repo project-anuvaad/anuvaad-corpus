@@ -8,6 +8,7 @@ var Users = require('../models/users');
 var UserHighCourt = require('../models/user_high_court');
 var BaseModel = require('../models/basemodel');
 var UserRegister = require('../models/user_register');
+var PdfParser = require('../models/pdf_parser');
 var Response = require('../models/response')
 var APIStatus = require('../errors/apistatus')
 var StatusCode = require('../errors/statuscodes').StatusCode
@@ -152,6 +153,7 @@ exports.listUsers = function (req, res) {
                         let res_array = []
                         async.each(api_res.data.data, function (data, callback) {
                             let condition = { user_id: data.id }
+                            let pdf_condition = { created_by: data.id }
                             UserHighCourt.findByCondition(condition, function (err, results) {
                                 if (results && results.length > 0) {
                                     let user_court = results[0]._doc
@@ -159,8 +161,11 @@ exports.listUsers = function (req, res) {
                                         data.high_court_code = user_court.high_court_code
                                     }
                                 }
-                                res_array.push(data)
-                                callback()
+                                PdfParser.countDocuments(pdf_condition, function (err, totalcount) {
+                                    data.document_count = totalcount
+                                    res_array.push(data)
+                                    callback()
+                                })
                             })
 
                         }, function (err) {
