@@ -14,7 +14,7 @@ var LOG = require('../logger/logger').logger;
 var client = redis.createClient({
     host: process.env.REDIS_URL ? process.env.REDIS_URL : config.REDIS_URL,
     port: process.env.REDIS_PORT ? process.env.REDIS_PORT : config.REDIS_PORT,
-    prefix: config.REDIS_PREFIX
+    prefix: process.env.REDIS_PREFIX ? process.env.REDIS_PREFIX : config.REDIS_PREFIX
 });
  
 client.on("error", function(error) {
