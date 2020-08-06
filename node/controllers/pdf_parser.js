@@ -443,7 +443,7 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                 return res.status(apistatus.http.status).json(apistatus);
             })
         } else {
-            if (output_res && Object.keys(output_res).length > 0 && output_res['0'].html_nodes && output_res['0'].html_nodes.length > 0) {
+            if (output_res && Object.keys(output_res).length > 0 && output_res[Object.keys(output_res)[0]].html_nodes && output_res[Object.keys(output_res)[0]].html_nodes.length > 0) {
                 HtmlToText.mergeHtmlNodes(output_res, dont_use_ner, function (err, data, header_text, footer_text) {
                     performNer(data, dont_use_ner, function (err, ner_data) {
                         useNerTags(ner_data && ner_data.data && ner_data.data.ner_result && ner_data.data.ner_result.length > 0 ? ner_data.data.ner_result : [], data, function (data) {
