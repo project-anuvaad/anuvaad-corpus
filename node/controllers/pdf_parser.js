@@ -37,6 +37,7 @@ const STATUS_TRANSLATING = 'TRANSLATING'
 const STATUS_TRANSLATED = 'TRANSLATED'
 const STATUS_PENDING = 'PENDING'
 const STATUS_DELETED = 'DELETED'
+const STATUS_FAILED = 'FAILED'
 const TOKENIZED_HINDI_ENDPOINT = 'tokenize-hindi-sentence'
 const NER_END_POINT = 'v0/ner'
 const TOKENIZED_ENDPOINT = 'tokenize-sentence'
@@ -442,19 +443,35 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
                 return res.status(apistatus.http.status).json(apistatus);
             })
         } else {
-            HtmlToText.mergeHtmlNodes(output_res, dont_use_ner, function (err, data, header_text, footer_text) {
-                performNer(data, dont_use_ner, function (err, ner_data) {
-                    useNerTags(ner_data && ner_data.data && ner_data.data.ner_result && ner_data.data.ner_result.length > 0 ? ner_data.data.ner_result : [], data, function (data) {
-                        if (tokenize) {
-                            callKafkaForTranslate(data, translate, model, pdf_parser_process, send_sentences, userId, header_text, footer_text, dontsendres, res);
-
-                        } else {
-                            let response = new Response(StatusCode.SUCCESS, data, null, null, null, ner_data && ner_data.data && ner_data.data.ner_result && ner_data.data.ner_result.length > 0 ? ner_data.data.ner_result : []).getRsp()
-                            return res.status(response.http.status).json(response);
-                        }
+            if (output_res && Object.keys(output_res).length > 0) {
+                HtmlToText.mergeHtmlNodes(output_res, dont_use_ner, function (err, data, header_text, footer_text) {
+                    performNer(data, dont_use_ner, function (err, ner_data) {
+                        useNerTags(ner_data && ner_data.data && ner_data.data.ner_result && ner_data.data.ner_result.length > 0 ? ner_data.data.ner_result : [], data, function (data) {
+                            if (tokenize) {
+                                callKafkaForTranslate(data, translate, model, pdf_parser_process, send_sentences, userId, header_text, footer_text, dontsendres, res);
+                            } else {
+                                let response = new Response(StatusCode.SUCCESS, data, null, null, null, ner_data && ner_data.data && ner_data.data.ner_result && ner_data.data.ner_result.length > 0 ? ner_data.data.ner_result : []).getRsp()
+                                return res.status(response.http.status).json(response);
+                            }
+                        })
                     })
                 })
-            })
+            } else {
+                let condition = { session_id: pdf_parser_process.session_id }
+                BaseModel.findByCondition(PdfParser, condition, null, null, null, function (err, data) {
+                    if (data && data.length > 0) {
+                        let pdfobj = data[0]._doc
+                        let updateObj = { status: STATUS_FAILED }
+                        BaseModel.updateData(PdfParser, updateObj, pdfobj._id, function (err, doc) {
+                            if (err) {
+                                LOG.error(err)
+                            } else {
+                                LOG.info('Data updated')
+                            }
+                        })
+                    }
+                })
+            }
         }
     }
 }
@@ -626,7 +643,7 @@ exports.etlMergeNodes = function (req, res) {
     async_lib.each(files, (file, cb) => {
         let rawdata = fs.readFileSync(BASE_PATH_NGINX + file.path);
         let data = JSON.parse(rawdata);
-        HtmlToText.mergeHtmlNodes(data,false, function (err, data, header_text, footer_text) {
+        HtmlToText.mergeHtmlNodes(data, false, function (err, data, header_text, footer_text) {
             let file_name = new Date().getTime() + '_' + UUIDV4() + '.json'
             fs.writeFile(BASE_PATH_NGINX + file_name, JSON.stringify({ data: data, header_text: header_text, footer_text: footer_text }), function (err) {
                 output_files.push({ inputFile: file.path, outputFile: file_name, outputLocale: file.locale, outputType: 'json' })
@@ -1635,7 +1652,7 @@ exports.translatePdfV2 = function (req, res) {
                 let apistatus = new APIStatus(StatusCode.ERR_GLOBAL_SYSTEM, COMPONENT).getRspStatus()
                 return res.status(apistatus.http.status).json(apistatus);
             }
-            HtmlToText.mergeHtmlNodes(output_res,false, function (err, data, header_text, footer_text) {
+            HtmlToText.mergeHtmlNodes(output_res, false, function (err, data, header_text, footer_text) {
                 BaseModel.saveData(PdfParser, [pdf_parser_process], function (err, doc) {
                     if (err) {
                         LOG.error(err)
@@ -2010,7 +2027,7 @@ exports.makeDocFromSentences = function (req, res) {
                     obj.is_ocr = true
                     if (previous_node != null) {
                         if (!(previous_node.y_end <= obj.y_end && previous_node.y_end + parseInt(previous_node.class_style['font-size'].split("px")[0]) >= obj.y_end)) {
-                            sentences[index-1]._doc.is_new_line = true
+                            sentences[index - 1]._doc.is_new_line = true
                         }
                     }
                     let padding = obj.x * 100 / obj.page_width
