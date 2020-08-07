@@ -150,11 +150,11 @@ function saveTranslatedText(sentence, cb) {
 
 exports.processTranslatedText = function (sentences) {
     async_lib.each(sentences, (sentence, cb) => {
-        try {
-            if (global.gc) { global.gc(); }
-        } catch (e) {
-            LOG.error("Garbage collector not started");
-        }
+        // try {
+        //     if (global.gc) { global.gc(); }
+        // } catch (e) {
+        //     LOG.error("Garbage collector not started");
+        // }
         saveTranslatedText(sentence, cb)
     }, function (err) {
         LOG.info('Process completed')
