@@ -3,5 +3,5 @@ COPY / /app
 WORKDIR /app
 RUN apk add poppler-utils
 RUN npm install
-CMD node app.js
+CMD node --expose-gc app.js
 #EXPOSE 8081

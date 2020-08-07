@@ -150,6 +150,11 @@ function saveTranslatedText(sentence, cb) {
 
 exports.processTranslatedText = function (sentences) {
     async_lib.each(sentences, (sentence, cb) => {
+        try {
+            if (global.gc) { global.gc(); }
+        } catch (e) {
+            LOG.error("Garbage collector not started");
+        }
         saveTranslatedText(sentence, cb)
     }, function (err) {
         LOG.info('Process completed')
@@ -430,11 +435,11 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
             axios.post(NER_BASE_URL + NER_END_POINT,
                 {
                     sentences: sentences
-                },{
-                    timeout: 3000000,
-                    maxContentLength: Infinity,
-                    maxBodyLength: Infinity
-                }
+                }, {
+                timeout: 3000000,
+                maxContentLength: Infinity,
+                maxBodyLength: Infinity
+            }
             ).then(function (api_res) {
                 if (api_res && api_res.data && api_res.data.ner_result) {
                     api_res.data.ner_result.map((d, index) => {
@@ -603,11 +608,11 @@ exports.extractPdfToSentences = function (req, res) {
                         axios.post(PYTHON_BASE_URL + TOKENIZED_HINDI_ENDPOINT,
                             {
                                 paragraphs: out
-                            },{
-                                timeout: 3000000,
-                                maxContentLength: Infinity,
-                                maxBodyLength: Infinity
-                            }
+                            }, {
+                            timeout: 3000000,
+                            maxContentLength: Infinity,
+                            maxBodyLength: Infinity
+                        }
                         ).then(function (api_res) {
                             let sentences = []
                             if (api_res && api_res.data) {
@@ -1687,11 +1692,11 @@ function callKafkaForTranslate(data, translate, model, pdf_parser_process, send_
         {
             paragraphs: data,
             lang: pdf_parser_process.source_lang
-        },{
-            timeout: 3000000,
-            maxContentLength: Infinity,
-            maxBodyLength: Infinity
-        }
+        }, {
+        timeout: 3000000,
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity
+    }
     ).then(function (api_res) {
         if (api_res && api_res.data) {
             KafkaProducer.getInstance().getProducer((err, producer) => {
