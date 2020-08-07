@@ -357,6 +357,8 @@ function performNer(data, dont_use_ner, cb) {
                 sentences: sentences
             }, {
             timeout: 3000000,
+            maxContentLength: Infinity,
+            maxBodyLength: Infinity
         }
         ).then(function (api_res) {
             if (api_res && api_res.data && api_res.data.ner_result) {
@@ -428,6 +430,10 @@ function processHtml(pdf_parser_process, index, output_res, merge, start_node_in
             axios.post(NER_BASE_URL + NER_END_POINT,
                 {
                     sentences: sentences
+                },{
+                    timeout: 3000000,
+                    maxContentLength: Infinity,
+                    maxBodyLength: Infinity
                 }
             ).then(function (api_res) {
                 if (api_res && api_res.data && api_res.data.ner_result) {
@@ -597,6 +603,10 @@ exports.extractPdfToSentences = function (req, res) {
                         axios.post(PYTHON_BASE_URL + TOKENIZED_HINDI_ENDPOINT,
                             {
                                 paragraphs: out
+                            },{
+                                timeout: 3000000,
+                                maxContentLength: Infinity,
+                                maxBodyLength: Infinity
                             }
                         ).then(function (api_res) {
                             let sentences = []
@@ -1677,6 +1687,10 @@ function callKafkaForTranslate(data, translate, model, pdf_parser_process, send_
         {
             paragraphs: data,
             lang: pdf_parser_process.source_lang
+        },{
+            timeout: 3000000,
+            maxContentLength: Infinity,
+            maxBodyLength: Infinity
         }
     ).then(function (api_res) {
         if (api_res && api_res.data) {
