@@ -22,6 +22,8 @@ exports.processImage = function (filepath, filename, cb) {
                         'Content-Type': `application/json`,
                     },
                     timeout: 30000,
+                    maxContentLength: Infinity,
+                    maxBodyLength: Infinity
                 }
             ).then(function (api_res) {
                 let res = api_res.data

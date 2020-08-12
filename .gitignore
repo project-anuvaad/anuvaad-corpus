@@ -14,8 +14,10 @@
 /python/corpusfiles/*
 !/python/corpusfiles/.gitkeep
 /python/upload/*
+/python/nginx/*
 /node/processing/*
 !/python/upload/.gitkeep
+!/python/nginx/.gitkeep
 !/node/corpusfiles/configs/.gitkeep
 !/node/corpusfiles/processing/pipeline_stage_1/.gitkeep
 !/node/corpusfiles/processing/pipeline_stage_2/.gitkeep

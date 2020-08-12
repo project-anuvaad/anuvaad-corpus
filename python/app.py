@@ -49,6 +49,7 @@ from controllers.admin_api import admin_api
 from controllers.corpus import corpus_api
 from controllers.document_api import document_api
 from controllers.elastic_search_api import indexer_api
+from controllers.file_converter import file_converter
 from elastic_utils.elastic_search_indexer import sentence_creator
 from utils.document_assembler import keep_on_running
 from utils.document_writer import write_document
@@ -122,6 +123,7 @@ app.register_blueprint(admin_api)
 app.register_blueprint(document_api)
 app.register_blueprint(indexer_api)
 app.register_blueprint(ner_annotation_api)
+app.register_blueprint(file_converter)
 
 UPLOAD_FOLDER = 'upload'
 STATUS_PENDING = 'PENDING'

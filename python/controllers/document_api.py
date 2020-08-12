@@ -253,6 +253,27 @@ def tokenize_sentence():
     res = CustomResponse(Status.SUCCESS.value, response)
     return res.getres()
 
+@document_api.route('/v2/tokenize-sentence', methods=['POST'])
+def v2_tokenize_sentence():
+    body = request.get_json()
+    if body['paragraphs'] is None or not isinstance(body['paragraphs'], list) or 'lang' not in body or body['lang'] is None:
+        res = CustomResponse(
+            Status.ERR_GLOBAL_MISSING_PARAMETERS.value, None)
+        return res.getres(), Status.ERR_GLOBAL_MISSING_PARAMETERS.value['http']['status']
+    response = []
+    for paragraph in body['paragraphs']:
+        tokenizer = tokenizer_factory(body['lang'])
+        if 'text' in paragraph:
+            tokenized_data = {}
+            tokenized_data['text'] = tokenizer.tokenize(paragraph['text'])
+            if 'page_no' in paragraph:
+                tokenized_data['page_no'] = paragraph['page_no']
+            response.append(tokenized_data)
+        else:
+            response.append(tokenizer.tokenize(paragraph))
+    res = CustomResponse(Status.SUCCESS.value, response)
+    return res.getres()
+
 @document_api.route('/tokenize-hindi-sentence', methods=['POST'])
 def tokenize_hin_sentence():
     body = request.get_json()
@@ -413,6 +434,11 @@ def translate_docx_v2():
             getcurrenttime() - start_time))
         return res.getres(),500
 
+def tokenizer_factory(lang):
+    if lang == 'Hindi':
+        return AnuvaadHinTokenizer()
+    else:
+        return AnuvaadEngTokenizer()
 
 def get_pending_nodes():
     no_of_nodes = 0

@@ -1,7 +1,10 @@
 FROM anuvaadio/anuvaad-corpus-python-base:3
 #FROM python:3.6-slim
+RUN apt-get update
+RUN apt-get install -y libreoffice
 COPY / /app
 WORKDIR /app
+
 RUN pip3 install -r requirements.txt
 COPY start.sh /usr/bin/start.sh
 RUN chmod +x /usr/bin/start.sh
