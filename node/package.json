@@ -58,6 +58,5 @@
   "author": "KD",
   "license": "ISC",
   "devDependencies": {
-    "firebase": "^5.9.1"
   }
 }
