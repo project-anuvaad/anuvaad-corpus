@@ -8,13 +8,13 @@ var languageController = require('../../controllers/language');
 
 
 module.exports = function (router) {
-    router.route('/fetch-languages')
+    router.route('/anuvaad-corpus/fetch-languages')
         .get(languageController.fetchLanguages);
 
-    router.route('/update-language')
+    router.route('/anuvaad-corpus/update-language')
         .post(languageController.updateLanguages);
 
-    router.route('/save-language')
+    router.route('/anuvaad-corpus/save-language')
         .post(languageController.saveLanguages);
 
 }
