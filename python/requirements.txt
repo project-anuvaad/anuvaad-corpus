@@ -103,7 +103,7 @@ qtconsole==4.5.5
 redis==3.3.7
 regex==2019.8.19
 requests==2.22.0
-rsa==4.0
+rsa==4.7
 schema==0.7.0
 schemas==0.7.1
 secure-smtplib==0.1.1
