@@ -4,6 +4,7 @@
 # -*- coding: utf-8 -*-
 
 from flask import Blueprint, request, current_app as app
+from werkzeug.utils import safe_join
 import flask
 import requests
 import time
@@ -75,7 +76,7 @@ def download_docx():
                 result.headers["x-suggested-filename"] = data
         except Exception as e:
             log.info('download-docx: error in finding process for basename : ' + str(n_filename))
-            result = flask.send_file(os.path.join('upload/', filename), as_attachment=True, attachment_filename="default.docx")
+            result = flask.send_file(safe_join('upload/', filename), as_attachment=True, attachment_filename="default.docx")
             result.headers["x-suggested-filename"] = filename
         return result
     except Exception as e:
